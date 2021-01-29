@@ -46,15 +46,20 @@ function panMap(pushEvent) {
     });
 }
 
-let zoomLevel = 0;
+let zoomLevel = 1.0;
 
 // Map zoom controls
 function zoomMap(wheelEvent) {
     wheelEvent.preventDefault()
-    // Adjust zoom velocity
-    zoomLevel += wheelEvent.deltaY * -0.01;
-
+    zoomLevel = wheelEvent.deltaY < 0 ? zoomLevel * 1.2 : zoomLevel * 0.8;
+    console.log(zoomLevel);
+    // Limit zoom level
+    if (zoomLevel < 0.1) {
+        zoomLevel = 0.1;
+    }
+    else if (zoomLevel > 2.0) {
+        zoomLevel = 2.0;
+    }
     // Resize map
-    this.style.transform = 'scale(' + (1 + 0.1 * zoomLevel) + ')';
-
+    this.style.transform = `scale(${zoomLevel})`;
 }
