@@ -14,16 +14,12 @@ body {
 aside {
     background-color: #CCCCCC;
     border: 2px solid #FFFFFF;
-    bottom: 10px;
     box-shadow: 0px 0px 100px #666666 inset;
     color: black;
-    height: 280px;
-    padding: 20px;
+    padding: 10px 20px 10px 20px;
     position: absolute;
-    right: 10px;
     width: 200px;
     z-index: 100;
-
 }
 aside span {
     font-size: 16pt;
@@ -36,13 +32,23 @@ aside table {
 aside th {
     text-align: left;
 }
+
+#baseInfo {
+    bottom: 10px;
+    right: 10px;
+}
+
+#mapLayerSelector {
+    bottom: 340px;
+    right: 10px;
+}
+
 .selector {
     margin: 10px;
     position: absolute;
     z-index: 100;
 }
 #viewport {
-    border: 1px solid #FFFFFF;
     height: 100%;
     overflow: hidden;
     position: absolute;
@@ -51,13 +57,14 @@ aside th {
 #map {
     height: 8192px;
     width: 8192px;
-    left: 0;
+    left: 4096;
     position: absolute;
-    top: 0;
+    top: 4096;
 }
 #map img {
     left: 0;
     top: 0;
     height: 100%;
+    position: absolute;
     width: 100%;
 }

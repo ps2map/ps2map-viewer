@@ -1,9 +1,20 @@
-window.addEventListener('load', attachEventListeners);
-
-function attachEventListeners() {
+// Lazy event listener association
+window.addEventListener('load', function () {
     let map = document.getElementById('map');
     map.addEventListener('mousedown', panMap);
     map.addEventListener('wheel', zoomMap);
+    document.getElementById('showMapTexture').addEventListener('click', toggleMapTexture);
+    document.getElementById('showHexes').addEventListener('click', toggleHexOutlines);
+});
+
+// Attach layer toggles
+function toggleMapTexture(clickEvent) {
+    let layer = document.getElementById('mapTextureLayer');
+    layer.style.display = this.checked ? "block" : "none";
+}
+function toggleHexOutlines(clickEvent) {
+    let layer = document.getElementById('mapHexLayer');
+    layer.style.display = this.checked ? "block" : "none";
 }
 
 
