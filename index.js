@@ -1,21 +1,35 @@
+/**
+ * Show or hide a map layer based on the state of a checkbox.
+ * 
+ * The layer will be switched between the display types `block` and `none`.
+ *
+ * This function is a callback factory and will return a closure with the
+ * despired properties that can be hooked onto the checkbox's `'click'` event.
+ * 
+ * @param {checkbox} checkbox Checkbox controlling the map layer's visibility
+ * @param {container} layer Map layer to show or hide
+ */
+function toggleMapLayer(checkbox, layer) {
+    return function () {
+        layer.style.display = checkbox.checked ? "block" : "none";
+    }
+}
+
+
 // Lazy event listener association
 window.addEventListener('load', function () {
     let map = document.getElementById('map');
     map.addEventListener('mousedown', panMap);
     map.addEventListener('wheel', zoomMap);
-    document.getElementById('showMapTexture').addEventListener('click', toggleMapTexture);
-    document.getElementById('showHexes').addEventListener('click', toggleHexOutlines);
-});
 
-// Attach layer toggles
-function toggleMapTexture() {
-    let layer = document.getElementById('mapTextureLayer');
-    layer.style.display = this.checked ? "block" : "none";
-}
-function toggleHexOutlines() {
-    let layer = document.getElementById('mapHexLayer');
-    layer.style.display = this.checked ? "block" : "none";
-}
+    // Hook up map layer controls
+    let TextureBtn = document.getElementById('showMapTexture');
+    let TextureLayer = document.getElementById('mapTextureLayer');
+    TextureBtn.addEventListener('click', toggleMapLayer(TextureBtn, TextureLayer));
+    let HexesBtn = document.getElementById('showHexes');
+    let HexesLayer = document.getElementById('mapHexLayer');
+    HexesBtn.addEventListener('click', toggleMapLayer(HexesBtn, HexesLayer));
+});
 
 
 // Map pan controls
