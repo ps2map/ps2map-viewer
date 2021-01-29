@@ -8,11 +8,11 @@ window.addEventListener('load', function () {
 });
 
 // Attach layer toggles
-function toggleMapTexture(clickEvent) {
+function toggleMapTexture() {
     let layer = document.getElementById('mapTextureLayer');
     layer.style.display = this.checked ? "block" : "none";
 }
-function toggleHexOutlines(clickEvent) {
+function toggleHexOutlines() {
     let layer = document.getElementById('mapHexLayer');
     layer.style.display = this.checked ? "block" : "none";
 }
@@ -41,7 +41,7 @@ function panMap(pushEvent) {
     map.addEventListener('mousemove', mapMover);
 
     // This ensures mouseup works throughout the entire document
-    document.addEventListener('mouseup', function (releaseEvent) {
+    document.addEventListener('mouseup', function () {
         map.removeEventListener('mousemove', mapMover);
     });
 }
