@@ -3,6 +3,7 @@ window.addEventListener('load', attachEventListeners);
 function attachEventListeners() {
     let map = document.getElementById('map');
     map.addEventListener('mousedown', panMap);
+    map.addEventListener('wheel', zoomMap);
 }
 
 
@@ -32,4 +33,17 @@ function panMap(pushEvent) {
     document.addEventListener('mouseup', function (releaseEvent) {
         map.removeEventListener('mousemove', mapMover);
     });
+}
+
+let zoomLevel = 0;
+
+// Map zoom controls
+function zoomMap(wheelEvent) {
+    wheelEvent.preventDefault()
+    // Adjust zoom velocity
+    zoomLevel += wheelEvent.deltaY * -0.01;
+
+    // Resize map
+    this.style.transform = 'scale(' + (1 + 0.1 * zoomLevel) + ')';
+
 }
