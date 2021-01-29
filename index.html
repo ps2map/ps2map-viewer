@@ -1,15 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <title>APL (Dev)</title>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+
     <link rel="stylesheet" href="index.css" />
 </head>
 
 <body>
     <!-- Map selector -->
     <div class="selector">
-        <label for="server_input">Server:</label>
+        <label for="server">Server:</label>
         <select id="server">
             <option value=1>Connery [US West]</option>
             <option value=13 selected="true">Cobalt [EU]</option>
@@ -17,7 +21,7 @@
             <option value=17>Emerald [US East]</option>
             <option value=40>SolTech [Asia]</option>
         </select>
-        <label for="continent_input">Continent:</label>
+        <label for="continent">Continent:</label>
         <select id="continent">
             <option value=2>Indar</option>
             <option value=4>Hossin</option>
@@ -78,7 +82,7 @@
     <!-- Map container -->
     <div id="viewport">
         <div id="map">
-            <img src="./Resources/Images/Maps/Amerish/LOD0.png" onmousedown="return false;" />
+            <img src="./img/amerish/lod0.png" alt="Map Texture" onmousedown="return false;" />
         </div>
     </div>
     <script src="index.js"></script>
