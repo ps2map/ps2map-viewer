@@ -66,7 +66,6 @@ let zoomLevel = 1.0;
 function zoomMap(wheelEvent) {
     wheelEvent.preventDefault()
     zoomLevel = wheelEvent.deltaY < 0 ? zoomLevel * 1.2 : zoomLevel * 0.8;
-    console.log(zoomLevel);
     // Limit zoom level
     if (zoomLevel < 0.1) {
         zoomLevel = 0.1;
