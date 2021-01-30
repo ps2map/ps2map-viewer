@@ -61,10 +61,17 @@ aside th {
     position: absolute;
     top: -3000px;
 }
-#map img {
+#map svg {
     left: 0;
-    top: 0;
-    height: 100%;
+    bottom: 0;
+    height: 8192px;
     position: absolute;
-    width: 100%;
+    width: 8192px;
+}
+#map polygon {
+    fill: #FFFFFF;
+    fill-opacity: 30%;
+    stroke: #000000;
+    stroke-width: 1px;
+    z-index: 50;
 }
