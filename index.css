@@ -57,9 +57,9 @@ aside th {
 #map {
     height: 8192px;
     width: 8192px;
-    left: 4096;
+    left: -3000px;
     position: absolute;
-    top: 4096;
+    top: -3000px;
 }
 #map img {
     left: 0;
