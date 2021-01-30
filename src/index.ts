@@ -10,7 +10,7 @@
  * @param layer Map layer to show or hide
  */
 function toggleMapLayer(checkbox: HTMLInputElement, layer: HTMLDivElement): () => void {
-    return function () {
+    return function (): void {
         layer.style.display = checkbox.checked ? "block" : "none";
     }
 }
@@ -64,7 +64,7 @@ function panMap(this: HTMLDivElement, pushEvent: MouseEvent): void {
     map.addEventListener('mousemove', mapMover);
 
     // This ensures mouseup works throughout the entire document
-    document.addEventListener('mouseup', (): void => {
+    document.addEventListener('mouseup', function (): void {
         map.removeEventListener('mousemove', mapMover);
     });
 }
