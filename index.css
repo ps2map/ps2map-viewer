@@ -62,11 +62,13 @@ aside th {
     top: -3000px;
 }
 #map svg {
-    left: 0;
-    bottom: 0;
+    left: 4735px;
+    bottom: 4850px;
     height: 8192px;
     position: absolute;
     width: 8192px;
+    transform: scale(1.155) scaleY(-1.0);
+    overflow: visible;
 }
 #map polygon {
     fill: #FFFFFF;
@@ -74,4 +76,9 @@ aside th {
     stroke: #000000;
     stroke-width: 1px;
     z-index: 50;
+}
+#map polygon:hover {
+    fill: #be3b3b;
+    stroke: #FFFFFF;
+    z-index: 5000 !important;
 }
