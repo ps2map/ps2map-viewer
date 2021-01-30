@@ -23,12 +23,12 @@ window.addEventListener('load', function () {
     map.addEventListener('wheel', zoomMap);
 
     // Hook up map layer controls
-    let TextureBtn = document.getElementById('showMapTexture');
-    let TextureLayer = document.getElementById('mapTextureLayer');
-    TextureBtn.addEventListener('click', toggleMapLayer(TextureBtn, TextureLayer));
-    let HexesBtn = document.getElementById('showHexes');
-    let HexesLayer = document.getElementById('mapHexLayer');
-    HexesBtn.addEventListener('click', toggleMapLayer(HexesBtn, HexesLayer));
+    let textureBtn = document.getElementById('showMapTexture');
+    let textureLayer = document.getElementById('mapTextureLayer');
+    textureBtn.addEventListener('click', toggleMapLayer(textureBtn, textureLayer));
+    let hexesBtn = document.getElementById('showHexes');
+    let hexesLayer = document.getElementById('mapHexLayer');
+    hexesBtn.addEventListener('click', toggleMapLayer(hexesBtn, hexesLayer));
 });
 
 
