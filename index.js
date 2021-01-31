@@ -130,7 +130,7 @@ var MapRenderer = (function () {
         this.zoomLevel = 1.0;
         this.viewport = viewport;
         this.mapContainer = mapContainer;
-        console.log(this.getMapTilePath('amerish', MapTileLOD.LOD0, 2, -3.0));
+        var lod = MapTileLOD.LOD0;
         for (var i = 4; i > -5; i--) {
             if (i == 0) {
                 continue;
@@ -139,8 +139,8 @@ var MapRenderer = (function () {
                 if (j == 0) {
                     continue;
                 }
-                var tile = this.getMapTilePath('amerish', MapTileLOD.LOD0, j, i);
-                this.mapContainer.innerHTML += "<img src=\"" + tile + "\" onmousedown=\"return false;\" />";
+                var tile = this.getMapTilePath('amerish', lod, j, i);
+                this.mapContainer.innerHTML += "<img src=\"" + tile + "\" alt=\"Map Tile (" + j + "," + i + "), LOD:" + lod + "\" onmousedown=\"return false;\" />";
             }
         }
     }

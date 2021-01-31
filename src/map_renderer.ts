@@ -43,7 +43,7 @@ class MapRenderer {
     constructor(viewport: HTMLDivElement, mapContainer: HTMLDivElement) {
         this.viewport = viewport;
         this.mapContainer = mapContainer;
-        console.log(this.getMapTilePath('amerish', MapTileLOD.LOD0, 2, -3.0));
+        const lod = MapTileLOD.LOD0;
 
         for (let i = 4; i > -5; i--) {
             if (i == 0) {
@@ -53,8 +53,8 @@ class MapRenderer {
                 if (j == 0) {
                     continue;
                 }
-                let tile = this.getMapTilePath('amerish', MapTileLOD.LOD0, j, i);
-                this.mapContainer.innerHTML += `<img src="${tile}" onmousedown="return false;" />`;
+                let tile = this.getMapTilePath('amerish', lod, j, i);
+                this.mapContainer.innerHTML += `<img src="${tile}" alt="Map Tile (${j},${i}), LOD:${lod}" onmousedown="return false;" />`;
             }
         }
     }
