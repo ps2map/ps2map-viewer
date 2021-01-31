@@ -145,7 +145,7 @@ var MapRenderer = (function () {
         }
     }
     MapRenderer.prototype.getMapTilePath = function (map, lod, tile_x, tile_y) {
-        return map_texture_dir + "/" + map + "/lod" + lod + "/lod" + lod + "_" + tile_x + "_" + tile_y + ".png";
+        return map_texture_dir + "/" + map + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
     };
     MapRenderer.prototype.calculateTextureResolution = function () {
         if (this.zoomLevel <= 0.2) {

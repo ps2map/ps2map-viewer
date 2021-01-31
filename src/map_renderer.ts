@@ -71,7 +71,7 @@ class MapRenderer {
      * @returns File path to the map tile
      */
     private getMapTilePath(map: string, lod: MapTileLOD, tile_x: number, tile_y: number): string {
-        return `${map_texture_dir}/${map}/lod${lod}/lod${lod}_${tile_x}_${tile_y}.png`;
+        return `${map_texture_dir}/${map}/lod${lod}/lod${lod}_${Math.round(tile_x)}_${Math.round(tile_y)}.png`;
     }
 
 
