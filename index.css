@@ -68,11 +68,9 @@ aside th {
     top: -3000px;
 }
 #map svg {
-    left: 4735px;
-    bottom: 4850px;
-    height: 8192px;
+    left: 4120px;
+    bottom: 4228px;
     position: absolute;
-    width: 8192px;
     transform: scale(1.155) scaleY(-1.0);
     overflow: visible;
 }
