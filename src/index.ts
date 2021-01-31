@@ -25,7 +25,7 @@ window.addEventListener("DOMContentLoaded", function (): void {
     hexesLayer.innerHTML = svg_strings;
 
     // Register event listeners for base SVGs (the callback filters for SVGs)
-    document.addEventListener("click", svgClickFilter);
+    document.addEventListener("auxclick", svgClickFilter);
 
     const viewport = <HTMLDivElement>document.getElementById("viewport");
     const mapContainer = <HTMLDivElement>document.getElementById("mapTextureLayer");
@@ -60,7 +60,9 @@ function svgClickFilter(event: MouseEvent): void {
     if (!(event.target instanceof SVGElement)) {
         return;
     }
-    cycleFactionColour(event.target, event);
+    if (event.button == 1) {
+        cycleFactionColour(event.target, event);
+    }
 }
 
 

@@ -83,7 +83,7 @@ window.addEventListener("DOMContentLoaded", function () {
     var hexesLayer = document.getElementById("mapHexLayer");
     hexesBtn.addEventListener("click", updateMapLayerVisibility(hexesBtn, hexesLayer));
     hexesLayer.innerHTML = svg_strings;
-    document.addEventListener("click", svgClickFilter);
+    document.addEventListener("auxclick", svgClickFilter);
     var viewport = document.getElementById("viewport");
     var mapContainer = document.getElementById("mapTextureLayer");
     new MapRenderer(viewport, mapContainer);
@@ -97,7 +97,9 @@ function svgClickFilter(event) {
     if (!(event.target instanceof SVGElement)) {
         return;
     }
-    cycleFactionColour(event.target, event);
+    if (event.button == 1) {
+        cycleFactionColour(event.target, event);
+    }
 }
 function cycleFactionColour(base, event) {
     if (!base.style.fill) {
