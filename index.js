@@ -7,31 +7,31 @@ function toggleMapLayer(checkbox, layer) {
     };
 }
 var ownershipColorsCSS = [
-    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-NULL').trim(),
-    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-NC').trim(),
-    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-TR').trim(),
-    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-VS').trim()
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NULL").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NC").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
 ];
-window.addEventListener('load', function () {
-    var map = document.getElementById('map');
-    map.addEventListener('mousedown', mapPanStart);
-    map.addEventListener('wheel', zoomMap);
-    var textureBtn = document.getElementById('showMapTexture');
-    var textureLayer = document.getElementById('mapTextureLayer');
-    textureBtn.addEventListener('click', updateMapLayerVisibility(textureBtn, textureLayer));
-    var hexesBtn = document.getElementById('showHexes');
-    var hexesLayer = document.getElementById('mapHexLayer');
-    hexesBtn.addEventListener('click', updateMapLayerVisibility(hexesBtn, hexesLayer));
+window.addEventListener("load", function () {
+    var map = document.getElementById("map");
+    map.addEventListener("mousedown", mapPanStart);
+    map.addEventListener("wheel", zoomMap);
+    var textureBtn = document.getElementById("showMapTexture");
+    var textureLayer = document.getElementById("mapTextureLayer");
+    textureBtn.addEventListener("click", updateMapLayerVisibility(textureBtn, textureLayer));
+    var hexesBtn = document.getElementById("showHexes");
+    var hexesLayer = document.getElementById("mapHexLayer");
+    hexesBtn.addEventListener("click", updateMapLayerVisibility(hexesBtn, hexesLayer));
     hexesLayer.innerHTML = svg_strings;
-    document.addEventListener('click', svgClickFilter);
+    document.addEventListener("click", svgClickFilter);
 });
 function updateMapLayerVisibility(checkbox, layer) {
     return function () {
-        layer.style.display = checkbox.checked ? 'block' : 'none';
+        layer.style.display = checkbox.checked ? "block" : "none";
     };
 }
 function mapPanStart(event) {
-    var map = document.getElementById('map');
+    var map = document.getElementById("map");
     var initialOffsetLeft = map.offsetLeft;
     var initialOffsetTop = map.offsetTop;
     var sizeX = map.clientWidth;
@@ -49,11 +49,11 @@ function mapPanStart(event) {
         }
     }
     function mapPanEnd() {
-        map.removeEventListener('mousemove', mapPanDrag);
-        document.removeEventListener('mouseup', mapPanEnd);
+        map.removeEventListener("mousemove", mapPanDrag);
+        document.removeEventListener("mouseup", mapPanEnd);
     }
-    map.addEventListener('mousemove', mapPanDrag);
-    document.addEventListener('mouseup', mapPanEnd);
+    map.addEventListener("mousemove", mapPanDrag);
+    document.addEventListener("mouseup", mapPanEnd);
 }
 function zoomMap(event) {
     event.preventDefault();

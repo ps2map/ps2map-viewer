@@ -1,44 +1,44 @@
-/// <reference path='./amerish_svgs.ts' />
+/// <reference path="./amerish_svgs.ts" />
 
 // Current map zoom level
 let zoomLevel = 1.0;
 
 // Faction colours
 const ownershipColorsCSS = [
-    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-NULL').trim(),
-    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-NC').trim(),
-    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-TR').trim(),
-    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-VS').trim()
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NULL").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NC").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
 ];
 
 // Setup code to run on page load
-window.addEventListener('load', function (): void {
-    const map = <HTMLDivElement>document.getElementById('map');
-    map.addEventListener('mousedown', mapPanStart);
-    map.addEventListener('wheel', zoomMap);
+window.addEventListener("load", function (): void {
+    const map = <HTMLDivElement>document.getElementById("map");
+    map.addEventListener("mousedown", mapPanStart);
+    map.addEventListener("wheel", zoomMap);
     // Hook up map layer controls
-    const textureBtn = <HTMLInputElement>document.getElementById('showMapTexture');
-    const textureLayer = <HTMLDivElement>document.getElementById('mapTextureLayer');
-    textureBtn.addEventListener('click', updateMapLayerVisibility(textureBtn, textureLayer));
-    const hexesBtn = <HTMLInputElement>document.getElementById('showHexes');
-    const hexesLayer = <HTMLDivElement>document.getElementById('mapHexLayer');
-    hexesBtn.addEventListener('click', updateMapLayerVisibility(hexesBtn, hexesLayer));
+    const textureBtn = <HTMLInputElement>document.getElementById("showMapTexture");
+    const textureLayer = <HTMLDivElement>document.getElementById("mapTextureLayer");
+    textureBtn.addEventListener("click", updateMapLayerVisibility(textureBtn, textureLayer));
+    const hexesBtn = <HTMLInputElement>document.getElementById("showHexes");
+    const hexesLayer = <HTMLDivElement>document.getElementById("mapHexLayer");
+    hexesBtn.addEventListener("click", updateMapLayerVisibility(hexesBtn, hexesLayer));
     // Load individual base SVGs
     hexesLayer.innerHTML = svg_strings;
 
     // Register event listeners for base SVGs (the callback filters for SVGs)
-    document.addEventListener('click', svgClickFilter);
+    document.addEventListener("click", svgClickFilter);
 });
 
 
 /**
  * Change the visibility of a map layer according to a checkbox.
  *
- * The container's `.style.display` attribute will be set to `'block'`
- * or `'none'` depending on whether the checkbox is checked or not.
+ * The container"s `.style.display` attribute will be set to `"block"`
+ * or `"none"` depending on whether the checkbox is checked or not.
  * @param checkbox The checkbox to check the state of
  * @param layer The HTML container to alter visibility of
- * @returns Callback to register for the checkbox's `'clicked'` event
+ * @returns Callback to register for the checkbox"s `"clicked"` event
  */
 function updateMapLayerVisibility(checkbox: HTMLInputElement, layer: HTMLDivElement): () => void {
     return function (): void {
@@ -50,11 +50,11 @@ function updateMapLayerVisibility(checkbox: HTMLInputElement, layer: HTMLDivElem
 /**
  * Hook to trigger map panning when the user clicks the map.
  *
- * To be registered for the `'mousedown'` event for the map container.
+ * To be registered for the `"mousedown"` event for the map container.
  * @param event The mouse click event
  */
 function mapPanStart(event: MouseEvent): void {
-    const map = <HTMLDivElement>document.getElementById('map');
+    const map = <HTMLDivElement>document.getElementById("map");
     // Starting position of the dragging motion
     const initialOffsetLeft = map.offsetLeft;
     const initialOffsetTop = map.offsetTop;
@@ -65,7 +65,7 @@ function mapPanStart(event: MouseEvent): void {
     /**
      * Continuous event callback for mouse movements while panning.
      * 
-     * To be temporarily registered for the `'mousemove'` event of the
+     * To be temporarily registered for the `"mousemove"` event of the
      * map container for as long as the mouse is pressed.
      * @param dragEvent The mouse move event
      */
@@ -95,21 +95,21 @@ function mapPanStart(event: MouseEvent): void {
      * as it triggers once.
      */
     function mapPanEnd(): void {
-        map.removeEventListener('mousemove', mapPanDrag);
-        document.removeEventListener('mouseup', mapPanEnd);
+        map.removeEventListener("mousemove", mapPanDrag);
+        document.removeEventListener("mouseup", mapPanEnd);
     }
 
     // Add the map panning event as the mouse was just pressed down
-    map.addEventListener('mousemove', mapPanDrag);
+    map.addEventListener("mousemove", mapPanDrag);
     // Unregister the event as soon as the mouse is released
-    document.addEventListener('mouseup', mapPanEnd);
+    document.addEventListener("mouseup", mapPanEnd);
 }
 
 
 /**
  * Adjust map zoom when scrolling.
  * 
- * To be registered as the callback for the `'wheel'` event.
+ * To be registered as the callback for the `"wheel"` event.
  * @param this The map frame to change size of
  * @param event The mouse wheel event
  */
@@ -150,7 +150,7 @@ function svgClickFilter(event: MouseEvent): void {
  */
 function cycleFactionColour(base: SVGElement, event: MouseEvent): void {
     // Set the initial colour value
-    // Due to the way the styles are applied, base polygons don't have
+    // Due to the way the styles are applied, base polygons don"t have
     // a specific colour, which is why this exists.
     if (!base.style.fill) {
         base.style.fill = ownershipColorsCSS[0];
