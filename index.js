@@ -72,7 +72,7 @@ var ownershipColorsCSS = [
     getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
     getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
 ];
-window.addEventListener("load", function () {
+window.addEventListener("DOMContentLoaded", function () {
     var map = document.getElementById("map");
     map.addEventListener("mousedown", mapPanStart);
     map.addEventListener("wheel", zoomMap);

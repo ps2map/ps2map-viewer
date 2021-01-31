@@ -10,7 +10,7 @@ const ownershipColorsCSS = [
 ];
 
 // Setup code to run on page load
-window.addEventListener("load", function (): void {
+window.addEventListener("DOMContentLoaded", function (): void {
     const map = <HTMLDivElement>document.getElementById("map");
     map.addEventListener("mousedown", mapPanStart);
     map.addEventListener("wheel", zoomMap);
