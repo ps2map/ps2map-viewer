@@ -44,7 +44,7 @@ window.addEventListener("DOMContentLoaded", function (): void {
  */
 function updateMapLayerVisibility(checkbox: HTMLInputElement, layer: HTMLDivElement): () => void {
     return function (): void {
-        layer.style.display = checkbox.checked ? "block" : "none";
+        layer.style.visibility = checkbox.checked ? "visible" : "hidden";
     }
 }
 
