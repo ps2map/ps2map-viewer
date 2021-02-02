@@ -54,7 +54,7 @@ class MapRenderer {
                     continue;
                 }
                 let tile = this.getMapTilePath('amerish', lod, j, i);
-                this.mapContainer.innerHTML += `<img src="${tile}" alt="Map Tile (${j},${i}), LOD:${lod}" onmousedown="return false;" />`;
+                this.mapContainer.innerHTML += `<div style="background-image: url(${tile})"></div>`;
             }
         }
     }
