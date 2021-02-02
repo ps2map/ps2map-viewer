@@ -3,6 +3,7 @@
     --COLOR-FG-CAPPED-NC: rgb(29, 70, 152);
     --COLOR-FG-CAPPED-TR: rgb(150, 17, 0);
     --COLOR-FG-CAPPED-VS: rgb(97, 37, 151);
+    --MAP-SIZE: 8192px;
 }
 
 html {
@@ -23,8 +24,8 @@ aside {
     border: 2px solid #FFFFFF;
     box-shadow: 0px 0px 100px #666666 inset;
     color: black;
-    padding: 10px 20px 10px 20px;
-    position: absolute;
+    padding: 10px 20px 20px 20px;
+    position: fixed;
     width: 200px;
     z-index: 100;
 }
@@ -32,11 +33,6 @@ aside {
 aside span {
     font-size: 16pt;
     font-weight: bold;
-}
-
-aside table {
-    margin-top: 10px;
-    margin-bottom: 20px;
 }
 
 aside th {
@@ -63,24 +59,23 @@ aside th {
 
 #viewport {
     height: 100%;
-    overflow: hidden;
-    position: absolute;
     width: 100%;
+    position: absolute;
 }
 
 #map {
-    height: 8192px;
-    width: 8192px;
-    left: -3000px;
-    position: absolute;
-    top: -3000px;
+    height: var(--MAP-SIZE);
+    width: var(--MAP-SIZE);
+    position: fixed;
+    left: calc(var(--MAP-SIZE) / -2 + 50vw);
+    top: calc(var(--MAP-SIZE) / -2 + 50vh);
 }
 
 /* Map layers */
 
-#map .layer {
-    height: 100%;
-    width: 100%;
+.layer {
+    height: inherit;
+    width: inherit;
     position: absolute;
 }
 
@@ -88,18 +83,19 @@ aside th {
 
 #mapTextureLayer {
     display: grid;
-    grid-template: repeat(8, 1024px) / repeat(8, 1024px);
-    /* Offset to (roughly) align tiles and outlines */
-    padding-top: 120px;
+    grid-template: repeat(8, calc(var(--MAP-SIZE) / 8)) / repeat(8, calc(var(--MAP-SIZE) / 8));
     z-index: -20;
 }
 
 /* Map hex outlines */
 
-#mapHexLayer svg {
-    height: 8192px;
-    width: 8192px;
+#mapHexLayer {
     z-index: -10;
+}
+
+#mapHexLayer svg {
+    height: inherit;
+    width: inherit;
 }
 
 /* Map outlines */
@@ -109,11 +105,10 @@ aside th {
     fill-opacity: 0.3;
     stroke: #000000;
     stroke-width: 2px;
-    z-index: 50;
 }
 
 #map polygon:hover {
-    fill-opacity: 0.5;
+    fill-opacity: 0.6;
 }
 
 /* Map center marker for debug purposes */
