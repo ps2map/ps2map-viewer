@@ -16,7 +16,7 @@
 
     <!-- No JS found banner -->
     <noscript>
-        <div id="no-js-modal-banner" style="z-index:5000;">
+        <div id="no-js-modal-banner">
             <h1>No JavaScript found</h1>
             <h2>This website does not work without JavaScript, please enable it and reload.</h2>
             <p>We do not use cookies, don't talk to third parties and all our code is necessary to make this tool work.
@@ -33,7 +33,7 @@
         <label for="server">Server:</label>
         <select id="server">
             <option value="1">Connery [US West]</option>
-            <option value="13" selected="true">Cobalt [EU]</option>
+            <option value="13" selected>Cobalt [EU]</option>
             <option value="10">Miller [EU]</option>
             <option value="17">Emerald [US East]</option>
             <option value="40">SolTech [Asia]</option>
@@ -43,9 +43,9 @@
             <option value="2">Indar</option>
             <option value="4">Hossin</option>
             <option value="8">Esamir</option>
-            <option value="6" selected="true">Amerish</option>
+            <option value="6" selected>Amerish</option>
         </select>
-        <input type="submit"></input>
+        <input type="submit" />
     </div>
     <!-- Base info widget -->
     <aside id="baseInfo">
@@ -106,11 +106,11 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><input type="checkbox" id="showMapTexture" checked="true" /></td>
+                    <td><input type="checkbox" id="showMapTexture" checked /></td>
                     <td><label for="showMapTexture">Terrain</label></td>
                 </tr>
                 <tr>
-                    <td><input type="checkbox" id="showHexes" checked="true" /></td>
+                    <td><input type="checkbox" id="showHexes" checked /></td>
                     <td><label for="showHexes">Hexes</label></td>
                 </tr>
             </tbody>
