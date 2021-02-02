@@ -120,3 +120,18 @@ aside th {
     top: 4090px;
     z-index: 100;
 }
+
+/* No JS found banner */
+
+#no-js-modal-banner {
+    position: fixed;
+    background-color: rgba(0, 0, 0, 0.5);
+    height: 90%;
+    width: 90%;
+    padding: 5%;
+    z-index: 10000;
+}
+
+#no-js-modal-banner a {
+    color: white;
+}
