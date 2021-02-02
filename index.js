@@ -66,6 +66,9 @@ function zoomMap(event) {
     }
     this.style.transform = "scale(" + zoomLevel + ")";
 }
+function preventSelection() {
+    return false;
+}
 var ownershipColorsCSS = [
     getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NULL").trim(),
     getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NC").trim(),
@@ -87,6 +90,7 @@ window.addEventListener("DOMContentLoaded", function () {
     var viewport = document.getElementById("viewport");
     var mapContainer = document.getElementById("mapTextureLayer");
     new MapRenderer(viewport, mapContainer);
+    map.addEventListener("selectstart", preventSelection);
 });
 function updateMapLayerVisibility(checkbox, layer) {
     return function () {

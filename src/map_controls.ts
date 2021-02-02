@@ -82,3 +82,11 @@ function zoomMap(this: HTMLDivElement, event: WheelEvent): void {
     this.style.transform = `scale(${zoomLevel})`;
 }
 
+
+/**
+ * Prevent selection of a container
+ * @returns Always false
+ */
+function preventSelection(): boolean {
+    return false;
+}

@@ -30,6 +30,9 @@ window.addEventListener("DOMContentLoaded", function (): void {
     const viewport = <HTMLDivElement>document.getElementById("viewport");
     const mapContainer = <HTMLDivElement>document.getElementById("mapTextureLayer");
     new MapRenderer(viewport, mapContainer);
+
+    // Prevent browser text selection of map layers
+    map.addEventListener("selectstart", preventSelection);
 });
 
 
