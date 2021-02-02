@@ -20,7 +20,7 @@ function mapPanStart(event: MouseEvent): void {
 
     /**
      * Continuous event callback for mouse movements while panning.
-     * 
+     *
      * To be temporarily registered for the `"mousemove"` event of the
      * map container for as long as the mouse is pressed.
      * @param dragEvent The mouse move event
@@ -46,7 +46,7 @@ function mapPanStart(event: MouseEvent): void {
 
     /**
      * Remove the map dragging event when the mouse is released.
-     * 
+     *
      * This is a single-shot event that will unregister itself as soon
      * as it triggers once.
      */
@@ -64,7 +64,7 @@ function mapPanStart(event: MouseEvent): void {
 
 /**
  * Adjust map zoom when scrolling.
- * 
+ *
  * To be registered as the callback for the `"wheel"` event.
  * @param this The map frame to change size of
  * @param event The mouse wheel event

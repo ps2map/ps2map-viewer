@@ -16,7 +16,7 @@ type PointXY = {
 
 /**
  * Map tile resolution enum
- * 
+ *
  * These tiles are based on the sizes used in the in-game map, add new
  * ones at your own risk.
  */
@@ -31,7 +31,7 @@ enum MapTileLOD {
 
 /**
  * Global map rendered instance.
- * 
+ *
  * This handles map interaction event listeners and dynamically loads
  * new tiles as zoom levels and camera position change.
  */
@@ -62,7 +62,7 @@ class MapRenderer {
 
     /**
      * Return the path to a given map tile.
-     * 
+     *
      * `tile_x` and `tile_y` will be truncated to integers.
      * @param map The base name of the map, e.g. "amerish"
      * @param lod The level of detail to load
@@ -77,7 +77,7 @@ class MapRenderer {
 
     /**
      * Return the appropriate map texture scale for the currenz zoom level.
-     * 
+     *
      * @returns A whole-number denoting the texture resolution to use.
      */
     private calculateTextureResolution(): MapTileLOD {
@@ -97,5 +97,21 @@ class MapRenderer {
             return MapTileLOD.LOD1;
         }
         return MapTileLOD.LOD0;
+    }
+}
+
+
+/**
+ * Change the visibility of a map layer according to a checkbox.
+ *
+ * The container"s `.style.display` attribute will be set to `"block"`
+ * or `"none"` depending on whether the checkbox is checked or not.
+ * @param checkbox The checkbox to check the state of
+ * @param layer The HTML container to alter visibility of
+ * @returns Callback to register for the checkbox"s `"clicked"` event
+ */
+function updateMapLayerVisibility(checkbox: HTMLInputElement, layer: HTMLDivElement): () => void {
+    return function (): void {
+        layer.style.visibility = checkbox.checked ? "visible" : "hidden";
     }
 }
