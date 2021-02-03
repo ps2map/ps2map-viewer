@@ -22,7 +22,7 @@ function onDOMLoaded(): void {
 
     // Load base outlines
     const hexesLayer = <HTMLDivElement>document.getElementById("mapHexLayer");
-    hexesLayer.innerHTML = svg_strings
+    hexesLayer.innerHTML = svg_strings;
 
     // Prevent browser text selection of map layers
     map.addEventListener("selectstart", preventSelection);
