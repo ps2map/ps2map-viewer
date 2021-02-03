@@ -1,4 +1,4 @@
-/// <reference path="./amerish_svgs.ts" />
+/// <reference path="./map.ts" />
 /// <reference path="./map_controls.ts" />
 /// <reference path="./debug_tile_colour.ts" />
 
@@ -8,30 +8,23 @@
  */
 function onDOMLoaded(): void {
 
-    // Map pan and zoom controls
     const map = <HTMLDivElement>document.getElementById("map");
+    const viewport = <HTMLDivElement>document.getElementById("viewport");
+
+    // Initialise map
+    const renderer = new MapRenderer(viewport, map, "amerish");
+
+    // Hook up map layer visibility toggles
+    renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
+    renderer.layerVisibilityHook("mapHexLayer", "showHexes");
+
+    /*********** Legacy ***********/
+
+    // Map pan and zoom controls
     map.addEventListener("mousedown", mapPanStart);
     map.addEventListener("wheel", zoomMap);
-    // Apply default zoom level
-    map.style.transform = `scale(${zoomLevel})`;
 
-    // Load map tiles    
-    const viewport = <HTMLDivElement>document.getElementById("viewport");
-    const textureLayer = <HTMLDivElement>document.getElementById("mapTextureLayer");
-    new MapRenderer(viewport, textureLayer);
-
-    // Load base outlines
-    const hexesLayer = <HTMLDivElement>document.getElementById("mapHexLayer");
-    hexesLayer.innerHTML = svg_strings;
-
-    // Prevent browser text selection of map layers
-    map.addEventListener("selectstart", preventSelection);
-
-    // Map layer visibility toggles
-    const textureBtn = <HTMLInputElement>document.getElementById("showMapTexture");
-    textureBtn.addEventListener("click", updateMapLayerVisibility(textureBtn, textureLayer));
-    const hexesBtn = <HTMLInputElement>document.getElementById("showHexes");
-    hexesBtn.addEventListener("click", updateMapLayerVisibility(hexesBtn, hexesLayer));
+    /*********** Debug ***********/
 
     // SVG colour switching via MMB (middle mouse button)
     document.addEventListener("auxclick", svgClickFilter);

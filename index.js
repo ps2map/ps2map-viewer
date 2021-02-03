@@ -30,6 +30,65 @@ function cycleFactionColour(base, event) {
         }
     }
 }
+var mapTextureDir = "./img/map";
+var MapTileLod;
+(function (MapTileLod) {
+    MapTileLod[MapTileLod["LOD0"] = 0] = "LOD0";
+    MapTileLod[MapTileLod["LOD1"] = 1] = "LOD1";
+    MapTileLod[MapTileLod["LOD2"] = 2] = "LOD2";
+    MapTileLod[MapTileLod["LOD3"] = 3] = "LOD3";
+})(MapTileLod || (MapTileLod = {}));
+var maxLod = 3;
+var MapRenderer = (function () {
+    function MapRenderer(viewport, map, continent) {
+        this.viewport = viewport;
+        this.map = map;
+        this.continent = continent;
+        map.style.transform = "scale(" + zoomLevel + ")";
+        map.addEventListener("selectstart", preventSelection);
+        var lod = MapTileLod.LOD0;
+        var mapTextureLayer = document.getElementById("mapTextureLayer");
+        this.loadMapTiles(mapTextureLayer, continent, lod);
+        var hexesLayer = document.getElementById("mapHexLayer");
+        this.loadMapHexes(hexesLayer, continent);
+    }
+    MapRenderer.prototype.layerVisibilityHook = function (layer_id, checkbox_id) {
+        var layer = document.getElementById(layer_id);
+        var checkbox = document.getElementById(checkbox_id);
+        checkbox.addEventListener("click", function () {
+            layer.style.visibility = checkbox.checked ? "visible" : "hidden";
+        });
+    };
+    MapRenderer.prototype.loadMapTiles = function (layer, continent, lod) {
+        if (lod === void 0) { lod = MapTileLod.LOD1; }
+        layer.innerHTML = "";
+        var numTiles = Math.pow(2, (maxLod - lod));
+        for (var y = numTiles / 2; y > -numTiles / 2 - 1; y--) {
+            if (y == 0) {
+                continue;
+            }
+            for (var x = -numTiles / 2; x < numTiles / 2 + 1; x++) {
+                if (x == 0) {
+                    continue;
+                }
+                var tile = this.getMapTilePath(continent, lod, x, y);
+                layer.innerHTML += "<div style=\"background-image: url(" + tile + ")\"></div>";
+            }
+        }
+    };
+    MapRenderer.prototype.loadMapHexes = function (layer, continent) {
+        layer.innerHTML = svg_strings;
+    };
+    MapRenderer.prototype.getMapTilePath = function (continent, lod, tile_x, tile_y) {
+        return mapTextureDir + "/" + continent + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
+    };
+    return MapRenderer;
+}());
+function updateMapLayerVisibility(checkbox, layer) {
+    return function () {
+        layer.style.visibility = checkbox.checked ? "visible" : "hidden";
+    };
+}
 var zoomLevel = 0.2;
 function mapPanStart(event) {
     var map = document.getElementById("map");
@@ -72,68 +131,12 @@ function preventSelection() {
 }
 function onDOMLoaded() {
     var map = document.getElementById("map");
+    var viewport = document.getElementById("viewport");
+    var renderer = new MapRenderer(viewport, map, "amerish");
+    renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
+    renderer.layerVisibilityHook("mapHexLayer", "showHexes");
     map.addEventListener("mousedown", mapPanStart);
     map.addEventListener("wheel", zoomMap);
-    map.style.transform = "scale(" + zoomLevel + ")";
-    var viewport = document.getElementById("viewport");
-    var textureLayer = document.getElementById("mapTextureLayer");
-    new MapRenderer(viewport, textureLayer);
-    var hexesLayer = document.getElementById("mapHexLayer");
-    hexesLayer.innerHTML = svg_strings;
-    map.addEventListener("selectstart", preventSelection);
-    var textureBtn = document.getElementById("showMapTexture");
-    textureBtn.addEventListener("click", updateMapLayerVisibility(textureBtn, textureLayer));
-    var hexesBtn = document.getElementById("showHexes");
-    hexesBtn.addEventListener("click", updateMapLayerVisibility(hexesBtn, hexesLayer));
     document.addEventListener("auxclick", svgClickFilter);
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
-var map_texture_dir = './img/map';
-var MapTileLOD;
-(function (MapTileLOD) {
-    MapTileLOD[MapTileLOD["LOD0"] = 0] = "LOD0";
-    MapTileLOD[MapTileLOD["LOD1"] = 1] = "LOD1";
-    MapTileLOD[MapTileLOD["LOD2"] = 2] = "LOD2";
-    MapTileLOD[MapTileLOD["LOD3"] = 3] = "LOD3";
-})(MapTileLOD || (MapTileLOD = {}));
-var MapRenderer = (function () {
-    function MapRenderer(viewport, mapContainer) {
-        this.zoomLevel = 1.0;
-        this.viewport = viewport;
-        this.mapContainer = mapContainer;
-        var lod = MapTileLOD.LOD0;
-        for (var i = 4; i > -5; i--) {
-            if (i == 0) {
-                continue;
-            }
-            for (var j = -4; j < 5; j++) {
-                if (j == 0) {
-                    continue;
-                }
-                var tile = this.getMapTilePath('amerish', lod, j, i);
-                this.mapContainer.innerHTML += "<div style=\"background-image: url(" + tile + ")\"></div>";
-            }
-        }
-    }
-    MapRenderer.prototype.getMapTilePath = function (map, lod, tile_x, tile_y) {
-        return map_texture_dir + "/" + map + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
-    };
-    MapRenderer.prototype.calculateTextureResolution = function () {
-        if (this.zoomLevel <= 0.2) {
-            return MapTileLOD.LOD3;
-        }
-        if (this.zoomLevel <= 0.5) {
-            return MapTileLOD.LOD2;
-        }
-        if (this.zoomLevel <= 0.9) {
-            return MapTileLOD.LOD1;
-        }
-        return MapTileLOD.LOD0;
-    };
-    return MapRenderer;
-}());
-function updateMapLayerVisibility(checkbox, layer) {
-    return function () {
-        layer.style.visibility = checkbox.checked ? "visible" : "hidden";
-    };
-}
