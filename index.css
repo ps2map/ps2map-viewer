@@ -3,7 +3,8 @@
     --COLOR-FG-CAPPED-NC: rgb(29, 70, 152);
     --COLOR-FG-CAPPED-TR: rgb(150, 17, 0);
     --COLOR-FG-CAPPED-VS: rgb(97, 37, 151);
-    --MAP-SIZE: 8192px;
+    --MAP-SIZE: min(100vh, 100vw);
+    --MAP-TILES-PER-AXIS: 8;
 }
 
 html {
@@ -83,19 +84,12 @@ aside th {
 
 #mapTextureLayer {
     display: grid;
-    grid-template: repeat(8, calc(var(--MAP-SIZE) / 8)) / repeat(8, calc(var(--MAP-SIZE) / 8));
-    z-index: -20;
+    grid-template: repeat(var(--MAP-TILES-PER-AXIS), calc(var(--MAP-SIZE) / var(--MAP-TILES-PER-AXIS))) / repeat(8, calc(var(--MAP-SIZE) / 8));
 }
 
-/* Map hex outlines */
-
-#mapHexLayer {
-    z-index: -10;
-}
-
-#mapHexLayer svg {
-    height: inherit;
-    width: inherit;
+#mapTextureLayer div {
+    /* This keeps the map tile images scaled to their tile div */
+    background-size: 100%;
 }
 
 /* Map outlines */
@@ -114,12 +108,12 @@ aside th {
 /* Map center marker for debug purposes */
 
 #crossHair {
-    border: 4px solid #FFFFFF;
+    border: 1px solid #FFFFFF;
     position: absolute;
-    width: 4px;
-    height: 4px;
-    left: 4090px;
-    top: 4090px;
+    width: 2px;
+    height: 2px;
+    left: calc((var(--MAP-SIZE) / 2) - 2px);
+    top: calc((var(--MAP-SIZE) / 2) - 2px);
     z-index: 100;
 }
 
