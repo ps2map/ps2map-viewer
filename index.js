@@ -31,6 +31,7 @@ function cycleFactionColour(base, event) {
     }
 }
 var mapTextureDir = "./img/map";
+var mapTextureResolution = 8192;
 var MapTileLod;
 (function (MapTileLod) {
     MapTileLod[MapTileLod["LOD0"] = 0] = "LOD0";
@@ -41,10 +42,10 @@ var MapTileLod;
 var maxLod = 3;
 var MapRenderer = (function () {
     function MapRenderer(viewport, map, continent) {
-        this.zoomLevel = 0.5;
         this.viewport = viewport;
         this.map = map;
         this.continent = continent;
+        this.zoom = this.minZoom;
         map.addEventListener("selectstart", this.preventSelection);
         var lod = MapTileLod.LOD0;
         var mapTextureLayer = document.getElementById("mapTextureLayer");
@@ -61,6 +62,27 @@ var MapRenderer = (function () {
             layer.style.visibility = checkbox.checked ? "visible" : "hidden";
         });
     };
+    Object.defineProperty(MapRenderer.prototype, "viewportMinorAxis", {
+        get: function () {
+            return Math.min(this.viewport.clientHeight, this.viewport.clientWidth);
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(MapRenderer.prototype, "minZoom", {
+        get: function () {
+            return 1;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(MapRenderer.prototype, "maxZoom", {
+        get: function () {
+            return 2 * mapTextureResolution / this.viewportMinorAxis;
+        },
+        enumerable: false,
+        configurable: true
+    });
     MapRenderer.prototype.loadMapTiles = function (layer, continent, lod) {
         if (lod === void 0) { lod = MapTileLod.LOD1; }
         layer.innerHTML = "";
@@ -81,22 +103,23 @@ var MapRenderer = (function () {
     MapRenderer.prototype.loadMapHexes = function (layer, continent) {
         layer.innerHTML = svg_strings;
     };
-    MapRenderer.prototype.applyZoomLevel = function () {
-        document.documentElement.style.setProperty("--MAP-SIZE", 4096 * this.zoomLevel + "px");
+    MapRenderer.prototype.applyZoomLevel = function (zoomLevel) {
+        this.zoom = zoomLevel;
+        document.documentElement.style.setProperty("--MAP-SIZE", this.viewportMinorAxis * zoomLevel + "px");
     };
     MapRenderer.prototype.getMapTilePath = function (continent, lod, tile_x, tile_y) {
         return mapTextureDir + "/" + continent + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
     };
     MapRenderer.prototype.mapZoomCallback = function (event) {
         event.preventDefault();
-        this.zoomLevel = event.deltaY < 0 ? this.zoomLevel * 1.2 : this.zoomLevel * 0.8;
-        if (this.zoomLevel < 0.2) {
-            this.zoomLevel = 0.2;
+        var newZoom = event.deltaY < 0 ? this.zoom * 1.2 : this.zoom * 0.8;
+        if (newZoom < this.minZoom) {
+            newZoom = this.minZoom;
         }
-        else if (this.zoomLevel > 4.0) {
-            this.zoomLevel = 4.0;
+        else if (newZoom > this.maxZoom) {
+            newZoom = this.maxZoom;
         }
-        this.applyZoomLevel();
+        this.applyZoomLevel(newZoom);
     };
     MapRenderer.prototype.mapPan = function (event) {
         if (event.button != 0) {

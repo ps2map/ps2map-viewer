@@ -2,6 +2,8 @@
 
 // This path is relative to the source HTML
 const mapTextureDir = "./img/map";
+// The base resolution of the map texture
+const mapTextureResolution = 8192;
 
 
 /**
@@ -36,7 +38,7 @@ const maxLod = 3;
  * new tiles as zoom levels and camera position change.
  */
 class MapRenderer {
-    private zoomLevel: number = 0.5;
+    private zoom: number;
     public continent: string;
     public viewport: HTMLDivElement;
     public map: HTMLDivElement;
@@ -45,6 +47,7 @@ class MapRenderer {
         this.viewport = viewport;
         this.map = map;
         this.continent = continent;
+        this.zoom = this.minZoom;
 
         // Prevent browser text selection of map layers
         map.addEventListener("selectstart", this.preventSelection);
@@ -80,6 +83,31 @@ class MapRenderer {
 
     // Internals
 
+    /**
+     * Get the minor axis of the viewport; i.e. the shorter side length.
+     */
+    private get viewportMinorAxis(): number {
+        return Math.min(this.viewport.clientHeight, this.viewport.clientWidth);
+    }
+
+    /**
+     * Return the minimum zoom level.
+     * 
+     * This returns the zoom level at which the map will just fit the viewport.
+     */
+    private get minZoom(): number {
+        return 1;
+    }
+
+    /**
+     * Return the maximum zoom leve.
+     * 
+     * This limits the zoom level to 1 texture pixel being the size of 2x2
+     * screen pixel at maximum zoom.
+     */
+    private get maxZoom(): number {
+        return 2 * mapTextureResolution / this.viewportMinorAxis;
+    }
 
     /**
      * Clear an repopulate a layer with map tiles of the given zoom level.
@@ -114,15 +142,24 @@ class MapRenderer {
     }
 
     /**
-     * Load the
-     * @param layer
+     * Load the SVG base outlines for the given continent into the given layer.
+     * @param layer Div container to populate with the SVG.
+     * @param continent Name of the continent to load.
      */
     private loadMapHexes(layer: HTMLDivElement, continent: string): void {
         layer.innerHTML = svg_strings;
     }
 
-    private applyZoomLevel(): void {
-        document.documentElement.style.setProperty("--MAP-SIZE", `${4096 * this.zoomLevel}px`)
+    /**
+     * Apply the given zoom level.
+     *
+     * This updates both the CSS variable and the `zoom` property.
+     * @param zoomLevel The new zoom level
+     */
+    private applyZoomLevel(zoomLevel: number): void {
+        this.zoom = zoomLevel;
+        document.documentElement.style.setProperty(
+            "--MAP-SIZE", `${this.viewportMinorAxis * zoomLevel}px`)
     }
 
     /**
@@ -139,7 +176,6 @@ class MapRenderer {
         return `${mapTextureDir}/${continent}/lod${lod}/lod${lod}_${Math.round(tile_x)}_${Math.round(tile_y)}.png`;
     }
 
-
     /**
      * Adjust map zoom when scrolling.
      *
@@ -148,15 +184,15 @@ class MapRenderer {
      */
     private mapZoomCallback(event: WheelEvent): void {
         event.preventDefault();
-        this.zoomLevel = event.deltaY < 0 ? this.zoomLevel * 1.2 : this.zoomLevel * 0.8;
+        let newZoom = event.deltaY < 0 ? this.zoom * 1.2 : this.zoom * 0.8;
         // Constrain zoom level
-        if (this.zoomLevel < 0.2) {
-            this.zoomLevel = 0.2;
+        if (newZoom < this.minZoom) {
+            newZoom = this.minZoom;
         }
-        else if (this.zoomLevel > 4.0) {
-            this.zoomLevel = 4.0;
+        else if (newZoom > this.maxZoom) {
+            newZoom = this.maxZoom;
         }
-        this.applyZoomLevel();
+        this.applyZoomLevel(newZoom);
     }
 
     /**
