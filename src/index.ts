@@ -1,5 +1,4 @@
 /// <reference path="./map.ts" />
-/// <reference path="./map_controls.ts" />
 /// <reference path="./debug_tile_colour.ts" />
 
 
@@ -17,11 +16,6 @@ function onDOMLoaded(): void {
     // Hook up map layer visibility toggles
     renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
     renderer.layerVisibilityHook("mapHexLayer", "showHexes");
-
-    /*********** Legacy ***********/
-
-    // Map pan controls
-    map.addEventListener("mousedown", mapPanStart);
 
     /*********** Debug ***********/
 

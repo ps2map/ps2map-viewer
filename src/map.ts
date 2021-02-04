@@ -58,8 +58,9 @@ class MapRenderer {
         const hexesLayer = <HTMLDivElement>document.getElementById("mapHexLayer");
         this.loadMapHexes(hexesLayer, continent)
 
-        // Attach map zoom hook
+        // Attach map pan and zoom hooks
         map.addEventListener("wheel", this.mapZoomCallback.bind(this));
+        map.addEventListener("mousedown", this.mapPan.bind(this));
     }
 
     // Public interface
@@ -157,6 +158,60 @@ class MapRenderer {
         }
         this.applyZoomLevel();
     }
+
+    /**
+     * Hook to trigger map panning when the user clicks the map.
+     *
+     * To be registered for the `"mousedown"` event for the map container.
+     * @param event The mouse click event
+     */
+    private mapPan(event: MouseEvent): void {
+        // Only allow left mouse button
+        if (event.button != 0) {
+            return;
+        }
+        const map = this.map;
+
+        const initialOffsetLeft = map.offsetLeft;
+        const initialOffsetTop = map.offsetTop;
+
+        function mapPanDrag(dragEvent: MouseEvent): void {
+            const deltaX = dragEvent.clientX - event.clientX;
+            const deltaY = dragEvent.clientY - event.clientY;
+            const newLeft = initialOffsetLeft + deltaX;
+            const newTop = initialOffsetTop + deltaY;
+            /**
+             * @todo: This is currently not taking zoom levels into account
+             * and is generally sketchy. But it does prevent the map from
+             * being lost in space and becoming undraggable, so it stays.
+             */
+            if (-map.clientWidth < newLeft && newLeft < 0) {
+                map.style.left = `${newLeft}px`;
+            }
+            if (-map.clientHeight < newTop && newTop < 0) {
+                map.style.top = `${newTop}px`;
+            }
+        }
+
+        function mapPanEnd(): void {
+            map.removeEventListener("mousemove", mapPanDrag);
+            document.removeEventListener("mouseup", mapPanEnd);
+        }
+
+        // Add the map panning event as the mouse was just pressed down
+        map.addEventListener("mousemove", mapPanDrag);
+        // Unregister the event as soon as the mouse is released
+        document.addEventListener("mouseup", mapPanEnd);
+    }
+
+    /**
+     * Prevent selection of a container
+     * @returns Always false
+     */
+    private preventSelection(): boolean {
+        return false;
+    }
+
 }
 
 

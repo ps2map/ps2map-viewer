@@ -52,6 +52,7 @@ var MapRenderer = (function () {
         var hexesLayer = document.getElementById("mapHexLayer");
         this.loadMapHexes(hexesLayer, continent);
         map.addEventListener("wheel", this.mapZoomCallback.bind(this));
+        map.addEventListener("mousedown", this.mapPan.bind(this));
     }
     MapRenderer.prototype.layerVisibilityHook = function (layer_id, checkbox_id) {
         var layer = document.getElementById(layer_id);
@@ -97,6 +98,35 @@ var MapRenderer = (function () {
         }
         this.applyZoomLevel();
     };
+    MapRenderer.prototype.mapPan = function (event) {
+        if (event.button != 0) {
+            return;
+        }
+        var map = this.map;
+        var initialOffsetLeft = map.offsetLeft;
+        var initialOffsetTop = map.offsetTop;
+        function mapPanDrag(dragEvent) {
+            var deltaX = dragEvent.clientX - event.clientX;
+            var deltaY = dragEvent.clientY - event.clientY;
+            var newLeft = initialOffsetLeft + deltaX;
+            var newTop = initialOffsetTop + deltaY;
+            if (-map.clientWidth < newLeft && newLeft < 0) {
+                map.style.left = newLeft + "px";
+            }
+            if (-map.clientHeight < newTop && newTop < 0) {
+                map.style.top = newTop + "px";
+            }
+        }
+        function mapPanEnd() {
+            map.removeEventListener("mousemove", mapPanDrag);
+            document.removeEventListener("mouseup", mapPanEnd);
+        }
+        map.addEventListener("mousemove", mapPanDrag);
+        document.addEventListener("mouseup", mapPanEnd);
+    };
+    MapRenderer.prototype.preventSelection = function () {
+        return false;
+    };
     return MapRenderer;
 }());
 function updateMapLayerVisibility(checkbox, layer) {
@@ -104,38 +134,12 @@ function updateMapLayerVisibility(checkbox, layer) {
         layer.style.visibility = checkbox.checked ? "visible" : "hidden";
     };
 }
-function mapPanStart(event) {
-    var map = document.getElementById("map");
-    var initialOffsetLeft = map.offsetLeft;
-    var initialOffsetTop = map.offsetTop;
-    var sizeX = map.clientWidth;
-    var sizeY = map.clientHeight;
-    function mapPanDrag(dragEvent) {
-        var deltaX = dragEvent.clientX - event.clientX;
-        var deltaY = dragEvent.clientY - event.clientY;
-        var newLeft = initialOffsetLeft + deltaX;
-        var newTop = initialOffsetTop + deltaY;
-        if (-sizeX < newLeft && newLeft < 0) {
-            this.style.left = newLeft + "px";
-        }
-        if (-sizeY < newTop && newTop < 0) {
-            this.style.top = newTop + "px";
-        }
-    }
-    function mapPanEnd() {
-        map.removeEventListener("mousemove", mapPanDrag);
-        document.removeEventListener("mouseup", mapPanEnd);
-    }
-    map.addEventListener("mousemove", mapPanDrag);
-    document.addEventListener("mouseup", mapPanEnd);
-}
 function onDOMLoaded() {
     var map = document.getElementById("map");
     var viewport = document.getElementById("viewport");
     var renderer = new MapRenderer(viewport, map, "amerish");
     renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
     renderer.layerVisibilityHook("mapHexLayer", "showHexes");
-    map.addEventListener("mousedown", mapPanStart);
     document.addEventListener("auxclick", svgClickFilter);
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
