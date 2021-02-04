@@ -47,7 +47,7 @@ class MapRenderer {
         this.continent = continent;
 
         // Prevent browser text selection of map layers
-        map.addEventListener("selectstart", preventSelection);
+        map.addEventListener("selectstart", this.preventSelection);
 
         // hard-coded dummy LOD for now
         const lod = MapTileLod.LOD0;

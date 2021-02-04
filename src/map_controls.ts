@@ -58,12 +58,3 @@ function mapPanStart(event: MouseEvent): void {
     // Unregister the event as soon as the mouse is released
     document.addEventListener("mouseup", mapPanEnd);
 }
-
-
-/**
- * Prevent selection of a container
- * @returns Always false
- */
-function preventSelection(): boolean {
-    return false;
-}

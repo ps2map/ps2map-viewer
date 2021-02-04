@@ -45,7 +45,7 @@ var MapRenderer = (function () {
         this.viewport = viewport;
         this.map = map;
         this.continent = continent;
-        map.addEventListener("selectstart", preventSelection);
+        map.addEventListener("selectstart", this.preventSelection);
         var lod = MapTileLod.LOD0;
         var mapTextureLayer = document.getElementById("mapTextureLayer");
         this.loadMapTiles(mapTextureLayer, continent, lod);
@@ -128,9 +128,6 @@ function mapPanStart(event) {
     }
     map.addEventListener("mousemove", mapPanDrag);
     document.addEventListener("mouseup", mapPanEnd);
-}
-function preventSelection() {
-    return false;
 }
 function onDOMLoaded() {
     var map = document.getElementById("map");
