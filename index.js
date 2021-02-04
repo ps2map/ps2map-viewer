@@ -41,16 +41,17 @@ var MapTileLod;
 var maxLod = 3;
 var MapRenderer = (function () {
     function MapRenderer(viewport, map, continent) {
+        this.zoomLevel = 0.5;
         this.viewport = viewport;
         this.map = map;
         this.continent = continent;
-        map.style.transform = "scale(" + zoomLevel + ")";
         map.addEventListener("selectstart", preventSelection);
         var lod = MapTileLod.LOD0;
         var mapTextureLayer = document.getElementById("mapTextureLayer");
         this.loadMapTiles(mapTextureLayer, continent, lod);
         var hexesLayer = document.getElementById("mapHexLayer");
         this.loadMapHexes(hexesLayer, continent);
+        map.addEventListener("wheel", this.mapZoomCallback.bind(this));
     }
     MapRenderer.prototype.layerVisibilityHook = function (layer_id, checkbox_id) {
         var layer = document.getElementById(layer_id);
@@ -79,8 +80,22 @@ var MapRenderer = (function () {
     MapRenderer.prototype.loadMapHexes = function (layer, continent) {
         layer.innerHTML = svg_strings;
     };
+    MapRenderer.prototype.applyZoomLevel = function () {
+        document.documentElement.style.setProperty("--MAP-SIZE", 4096 * this.zoomLevel + "px");
+    };
     MapRenderer.prototype.getMapTilePath = function (continent, lod, tile_x, tile_y) {
         return mapTextureDir + "/" + continent + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
+    };
+    MapRenderer.prototype.mapZoomCallback = function (event) {
+        event.preventDefault();
+        this.zoomLevel = event.deltaY < 0 ? this.zoomLevel * 1.2 : this.zoomLevel * 0.8;
+        if (this.zoomLevel < 0.2) {
+            this.zoomLevel = 0.2;
+        }
+        else if (this.zoomLevel > 4.0) {
+            this.zoomLevel = 4.0;
+        }
+        this.applyZoomLevel();
     };
     return MapRenderer;
 }());
@@ -89,7 +104,6 @@ function updateMapLayerVisibility(checkbox, layer) {
         layer.style.visibility = checkbox.checked ? "visible" : "hidden";
     };
 }
-var zoomLevel = 0.2;
 function mapPanStart(event) {
     var map = document.getElementById("map");
     var initialOffsetLeft = map.offsetLeft;
@@ -115,17 +129,6 @@ function mapPanStart(event) {
     map.addEventListener("mousemove", mapPanDrag);
     document.addEventListener("mouseup", mapPanEnd);
 }
-function zoomMap(event) {
-    event.preventDefault();
-    zoomLevel = event.deltaY < 0 ? zoomLevel * 1.2 : zoomLevel * 0.8;
-    if (zoomLevel < 0.1) {
-        zoomLevel = 0.1;
-    }
-    else if (zoomLevel > 2.0) {
-        zoomLevel = 2.0;
-    }
-    this.style.transform = "scale(" + zoomLevel + ")";
-}
 function preventSelection() {
     return false;
 }
@@ -136,7 +139,6 @@ function onDOMLoaded() {
     renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
     renderer.layerVisibilityHook("mapHexLayer", "showHexes");
     map.addEventListener("mousedown", mapPanStart);
-    map.addEventListener("wheel", zoomMap);
     document.addEventListener("auxclick", svgClickFilter);
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);

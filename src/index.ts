@@ -20,9 +20,8 @@ function onDOMLoaded(): void {
 
     /*********** Legacy ***********/
 
-    // Map pan and zoom controls
+    // Map pan controls
     map.addEventListener("mousedown", mapPanStart);
-    map.addEventListener("wheel", zoomMap);
 
     /*********** Debug ***********/
 

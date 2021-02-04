@@ -1,7 +1,5 @@
 // This file defines map viewport controls like zoom and pan.
 
-// Current map zoom level
-let zoomLevel = 0.2;
 
 /**
  * Hook to trigger map panning when the user clicks the map.
@@ -59,27 +57,6 @@ function mapPanStart(event: MouseEvent): void {
     map.addEventListener("mousemove", mapPanDrag);
     // Unregister the event as soon as the mouse is released
     document.addEventListener("mouseup", mapPanEnd);
-}
-
-
-/**
- * Adjust map zoom when scrolling.
- *
- * To be registered as the callback for the `"wheel"` event.
- * @param this The map frame to change size of
- * @param event The mouse wheel event
- */
-function zoomMap(this: HTMLDivElement, event: WheelEvent): void {
-    event.preventDefault()
-    zoomLevel = event.deltaY < 0 ? zoomLevel * 1.2 : zoomLevel * 0.8;
-    // Constrain zoom level
-    if (zoomLevel < 0.1) {
-        zoomLevel = 0.1;
-    }
-    else if (zoomLevel > 2.0) {
-        zoomLevel = 2.0;
-    }
-    this.style.transform = `scale(${zoomLevel})`;
 }
 
 

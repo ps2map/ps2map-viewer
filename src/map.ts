@@ -30,13 +30,13 @@ const maxLod = 3;
 
 
 /**
- * Global map rendered instance.
+ * Global map renderer instance.
  *
  * This handles map interaction event listeners and dynamically loads
  * new tiles as zoom levels and camera position change.
  */
 class MapRenderer {
-    // private zoomLevel: number = 1.0
+    private zoomLevel: number = 0.5;
     public continent: string;
     public viewport: HTMLDivElement;
     public map: HTMLDivElement;
@@ -45,9 +45,6 @@ class MapRenderer {
         this.viewport = viewport;
         this.map = map;
         this.continent = continent;
-
-        // Apply initial zoom level
-        map.style.transform = `scale(${zoomLevel})`;
 
         // Prevent browser text selection of map layers
         map.addEventListener("selectstart", preventSelection);
@@ -60,6 +57,9 @@ class MapRenderer {
         this.loadMapTiles(mapTextureLayer, continent, lod);
         const hexesLayer = <HTMLDivElement>document.getElementById("mapHexLayer");
         this.loadMapHexes(hexesLayer, continent)
+
+        // Attach map zoom hook
+        map.addEventListener("wheel", this.mapZoomCallback.bind(this));
     }
 
     // Public interface
@@ -120,6 +120,9 @@ class MapRenderer {
         layer.innerHTML = svg_strings;
     }
 
+    private applyZoomLevel(): void {
+        document.documentElement.style.setProperty("--MAP-SIZE", `${4096 * this.zoomLevel}px`)
+    }
 
     /**
      * Return the path to a given map tile.
@@ -133,6 +136,26 @@ class MapRenderer {
      */
     private getMapTilePath(continent: string, lod: MapTileLod, tile_x: number, tile_y: number): string {
         return `${mapTextureDir}/${continent}/lod${lod}/lod${lod}_${Math.round(tile_x)}_${Math.round(tile_y)}.png`;
+    }
+
+
+    /**
+     * Adjust map zoom when scrolling.
+     *
+     * To be registered as the callback for the `"wheel"` event.
+     * @param event The mouse wheel event
+     */
+    private mapZoomCallback(event: WheelEvent): void {
+        event.preventDefault();
+        this.zoomLevel = event.deltaY < 0 ? this.zoomLevel * 1.2 : this.zoomLevel * 0.8;
+        // Constrain zoom level
+        if (this.zoomLevel < 0.2) {
+            this.zoomLevel = 0.2;
+        }
+        else if (this.zoomLevel > 4.0) {
+            this.zoomLevel = 4.0;
+        }
+        this.applyZoomLevel();
     }
 }
 
