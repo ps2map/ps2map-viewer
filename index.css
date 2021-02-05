@@ -84,7 +84,8 @@ aside th {
 
 #mapTextureLayer {
     display: grid;
-    grid-template: repeat(var(--MAP-TILES-PER-AXIS), calc(var(--MAP-SIZE) / var(--MAP-TILES-PER-AXIS))) / repeat(8, calc(var(--MAP-SIZE) / 8));
+    grid-template-rows: repeat(var(--MAP-TILES-PER-AXIS), calc(var(--MAP-SIZE) / var(--MAP-TILES-PER-AXIS)));
+    grid-template-columns: repeat(var(--MAP-TILES-PER-AXIS), calc(var(--MAP-SIZE) / var(--MAP-TILES-PER-AXIS)));
 }
 
 #mapTextureLayer div {
