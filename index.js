@@ -105,21 +105,29 @@ var MapRenderer = (function () {
     };
     MapRenderer.prototype.applyZoomLevel = function (zoomLevel) {
         this.zoom = zoomLevel;
-        document.documentElement.style.setProperty("--MAP-SIZE", this.viewportMinorAxis * zoomLevel + "px");
+        var newMapSize = Math.round(this.viewportMinorAxis * zoomLevel);
+        document.documentElement.style.setProperty("--MAP-SIZE", newMapSize + "px");
     };
     MapRenderer.prototype.getMapTilePath = function (continent, lod, tile_x, tile_y) {
         return mapTextureDir + "/" + continent + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
     };
     MapRenderer.prototype.mapZoomCallback = function (event) {
         event.preventDefault();
-        var newZoom = event.deltaY < 0 ? this.zoom * 1.2 : this.zoom * 0.8;
+        var newZoom = event.deltaY < 0 ? this.zoom * 1.25 : this.zoom * 0.8;
         if (newZoom < this.minZoom) {
             newZoom = this.minZoom;
         }
         else if (newZoom > this.maxZoom) {
             newZoom = this.maxZoom;
         }
+        var pixelDelta = this.viewportMinorAxis * newZoom - this.viewportMinorAxis * this.zoom;
+        var mapRelX = (event.clientX - this.map.offsetLeft) / this.map.clientWidth;
+        var mapRelY = (event.clientY - this.map.offsetTop) / this.map.clientHeight;
+        var newLeft = this.map.offsetLeft - pixelDelta * mapRelX;
+        var newTop = this.map.offsetTop - pixelDelta * mapRelY;
         this.applyZoomLevel(newZoom);
+        this.map.style.left = newLeft + "px";
+        this.map.style.top = newTop + "px";
     };
     MapRenderer.prototype.mapPan = function (event) {
         if (event.button != 0) {
@@ -133,12 +141,8 @@ var MapRenderer = (function () {
             var deltaY = dragEvent.clientY - event.clientY;
             var newLeft = initialOffsetLeft + deltaX;
             var newTop = initialOffsetTop + deltaY;
-            if (-map.clientWidth < newLeft && newLeft < 0) {
-                map.style.left = newLeft + "px";
-            }
-            if (-map.clientHeight < newTop && newTop < 0) {
-                map.style.top = newTop + "px";
-            }
+            map.style.left = newLeft + "px";
+            map.style.top = newTop + "px";
         }
         function mapPanEnd() {
             map.removeEventListener("mousemove", mapPanDrag);

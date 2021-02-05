@@ -158,8 +158,8 @@ class MapRenderer {
      */
     private applyZoomLevel(zoomLevel: number): void {
         this.zoom = zoomLevel;
-        document.documentElement.style.setProperty(
-            "--MAP-SIZE", `${this.viewportMinorAxis * zoomLevel}px`)
+        const newMapSize = Math.round(this.viewportMinorAxis * zoomLevel);
+        document.documentElement.style.setProperty("--MAP-SIZE", `${newMapSize}px`)
     }
 
     /**
@@ -184,7 +184,8 @@ class MapRenderer {
      */
     private mapZoomCallback(event: WheelEvent): void {
         event.preventDefault();
-        let newZoom = event.deltaY < 0 ? this.zoom * 1.2 : this.zoom * 0.8;
+        let newZoom = event.deltaY < 0 ? this.zoom * 1.25 : this.zoom * 0.8;
+
         // Constrain zoom level
         if (newZoom < this.minZoom) {
             newZoom = this.minZoom;
@@ -192,7 +193,23 @@ class MapRenderer {
         else if (newZoom > this.maxZoom) {
             newZoom = this.maxZoom;
         }
+
+        // Calculate the map size change in pixels
+        const pixelDelta = this.viewportMinorAxis * newZoom - this.viewportMinorAxis * this.zoom;
+
+        // Get the position of the mouse cursor relative to the map itself
+        const mapRelX = (event.clientX - this.map.offsetLeft) / this.map.clientWidth;
+        const mapRelY = (event.clientY - this.map.offsetTop) / this.map.clientHeight;
+
+        // Calculate the new map position
+        let newLeft = this.map.offsetLeft - pixelDelta * mapRelX;
+        let newTop = this.map.offsetTop - pixelDelta * mapRelY;
+
+        // Apply new zoom level
         this.applyZoomLevel(newZoom);
+        // Apply camera offset
+        this.map.style.left = `${newLeft}px`;
+        this.map.style.top = `${newTop}px`;
     }
 
     /**
@@ -221,12 +238,12 @@ class MapRenderer {
              * and is generally sketchy. But it does prevent the map from
              * being lost in space and becoming undraggable, so it stays.
              */
-            if (-map.clientWidth < newLeft && newLeft < 0) {
-                map.style.left = `${newLeft}px`;
-            }
-            if (-map.clientHeight < newTop && newTop < 0) {
-                map.style.top = `${newTop}px`;
-            }
+            // if (-map.clientWidth < newLeft && newLeft < 0) {
+            map.style.left = `${newLeft}px`;
+            // }
+            // if (-map.clientHeight < newTop && newTop < 0) {
+            map.style.top = `${newTop}px`;
+            // }
         }
 
         function mapPanEnd(): void {
