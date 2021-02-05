@@ -126,14 +126,14 @@ var MapRenderer = (function () {
         var newLeft = this.map.offsetLeft - pixelDelta * mapRelX;
         var newTop = this.map.offsetTop - pixelDelta * mapRelY;
         this.applyZoomLevel(newZoom);
-        this.map.style.left = newLeft + "px";
-        this.map.style.top = newTop + "px";
+        this.panCamera(newLeft, newTop);
     };
     MapRenderer.prototype.mapPan = function (event) {
         if (event.button != 0) {
             return;
         }
         var map = this.map;
+        var panCamera = this.panCamera.bind(this);
         var initialOffsetLeft = map.offsetLeft;
         var initialOffsetTop = map.offsetTop;
         function mapPanDrag(dragEvent) {
@@ -141,8 +141,7 @@ var MapRenderer = (function () {
             var deltaY = dragEvent.clientY - event.clientY;
             var newLeft = initialOffsetLeft + deltaX;
             var newTop = initialOffsetTop + deltaY;
-            map.style.left = newLeft + "px";
-            map.style.top = newTop + "px";
+            panCamera(newLeft, newTop);
         }
         function mapPanEnd() {
             map.removeEventListener("mousemove", mapPanDrag);
@@ -150,6 +149,44 @@ var MapRenderer = (function () {
         }
         map.addEventListener("mousemove", mapPanDrag);
         document.addEventListener("mouseup", mapPanEnd);
+    };
+    MapRenderer.prototype.panCamera = function (newLeft, newTop) {
+        this.map.style.left = newLeft + "px";
+        this.map.style.top = newTop + "px";
+        var zoomLimitX = this.viewport.clientWidth - this.map.clientWidth;
+        var zoomLimitY = this.viewport.clientHeight - this.map.clientHeight;
+        if (this.viewport.clientWidth < this.map.clientWidth) {
+            if (this.map.offsetLeft > 0) {
+                this.map.style.left = "0px";
+            }
+            else if (this.map.offsetLeft < zoomLimitX) {
+                this.map.style.left = zoomLimitX + "px";
+            }
+        }
+        else {
+            if (this.map.offsetLeft < 0) {
+                this.map.style.left = "0px";
+            }
+            else if (this.map.offsetLeft > zoomLimitX) {
+                this.map.style.left = zoomLimitX + "px";
+            }
+        }
+        if (this.viewport.clientHeight < this.map.clientHeight) {
+            if (this.map.offsetTop > 0) {
+                this.map.style.top = "0px";
+            }
+            else if (this.map.offsetTop < zoomLimitY) {
+                this.map.style.top = zoomLimitY + "px";
+            }
+        }
+        else {
+            if (this.map.offsetTop < 0) {
+                this.map.style.top = "0px";
+            }
+            else if (this.map.offsetTop > zoomLimitY) {
+                this.map.style.top = zoomLimitY + "px";
+            }
+        }
     };
     MapRenderer.prototype.preventSelection = function () {
         return false;

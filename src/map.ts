@@ -81,8 +81,6 @@ class MapRenderer {
         });
     }
 
-    // Internals
-
     /**
      * Get the minor axis of the viewport; i.e. the shorter side length.
      */
@@ -208,8 +206,7 @@ class MapRenderer {
         // Apply new zoom level
         this.applyZoomLevel(newZoom);
         // Apply camera offset
-        this.map.style.left = `${newLeft}px`;
-        this.map.style.top = `${newTop}px`;
+        this.panCamera(newLeft, newTop);
     }
 
     /**
@@ -224,6 +221,7 @@ class MapRenderer {
             return;
         }
         const map = this.map;
+        const panCamera = this.panCamera.bind(this);
 
         const initialOffsetLeft = map.offsetLeft;
         const initialOffsetTop = map.offsetTop;
@@ -233,17 +231,7 @@ class MapRenderer {
             const deltaY = dragEvent.clientY - event.clientY;
             const newLeft = initialOffsetLeft + deltaX;
             const newTop = initialOffsetTop + deltaY;
-            /**
-             * @todo: This is currently not taking zoom levels into account
-             * and is generally sketchy. But it does prevent the map from
-             * being lost in space and becoming undraggable, so it stays.
-             */
-            // if (-map.clientWidth < newLeft && newLeft < 0) {
-            map.style.left = `${newLeft}px`;
-            // }
-            // if (-map.clientHeight < newTop && newTop < 0) {
-            map.style.top = `${newTop}px`;
-            // }
+            panCamera(newLeft, newTop);
         }
 
         function mapPanEnd(): void {
@@ -255,6 +243,59 @@ class MapRenderer {
         map.addEventListener("mousemove", mapPanDrag);
         // Unregister the event as soon as the mouse is released
         document.addEventListener("mouseup", mapPanEnd);
+    }
+
+    private panCamera(newLeft: number, newTop: number): void {
+        this.map.style.left = `${newLeft}px`;
+        this.map.style.top = `${newTop}px`;
+        const zoomLimitX = this.viewport.clientWidth - this.map.clientWidth;
+        const zoomLimitY = this.viewport.clientHeight - this.map.clientHeight;
+        // Horizontal limits (map wider than viewport)
+        if (this.viewport.clientWidth < this.map.clientWidth) {
+            // Left
+            if (this.map.offsetLeft > 0) {
+                this.map.style.left = "0px";
+            }
+            // Right
+            else if (this.map.offsetLeft < zoomLimitX) {
+                this.map.style.left = `${zoomLimitX}px`;
+
+            }
+        }
+        // Horizontal limits (viewport wider than map)
+        else {
+            // Left
+            if (this.map.offsetLeft < 0) {
+                this.map.style.left = "0px";
+            }
+            // Right
+            else if (this.map.offsetLeft > zoomLimitX) {
+                this.map.style.left = `${zoomLimitX}px`;
+            }
+        }
+        // Vertical limits (map taller than viewport)
+        if (this.viewport.clientHeight < this.map.clientHeight) {
+            // Top
+            if (this.map.offsetTop > 0) {
+                this.map.style.top = "0px";
+            }
+            // Bottom
+            else if (this.map.offsetTop < zoomLimitY) {
+                this.map.style.top = `${zoomLimitY}px`;
+
+            }
+        }
+        // Vertical limits (viewport taller than map)
+        else {
+            // Top
+            if (this.map.offsetTop < 0) {
+                this.map.style.top = "0px";
+            }
+            // Bottom
+            else if (this.map.offsetTop > zoomLimitY) {
+                this.map.style.top = `${zoomLimitY}px`;
+            }
+        }
     }
 
     /**
