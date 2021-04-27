@@ -14,7 +14,7 @@ interface BaseInfo {
 }
 
 /**
- * Dynamic base update
+ * Dynamic base status
  */
 interface BaseStatus {
     readonly id: number;
@@ -38,7 +38,7 @@ interface ContinentInfo {
 }
 
 /**
- * Dynamic continent update
+ * Dynamic continent status
  */
 interface ContinentStatus {
     readonly id: number;
@@ -59,7 +59,9 @@ interface Population {
     readonly TR: number;
     readonly VS: number;
     readonly NSO: number;
-}/**
+}
+
+/**
  * Static data representation of an player outfit.
  */
 interface OutfitInfo {
@@ -82,7 +84,7 @@ interface ServerInfo {
 /**
  * Dynamic server data used for status display.
  */
-interface ServerUpdate {
+interface ServerStatus {
     readonly id: number;
     readonly status: string;
     readonly population: Population;
