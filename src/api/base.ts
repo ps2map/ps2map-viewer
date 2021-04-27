@@ -1,6 +1,5 @@
 /// <reference path="./interfaces.ts" />
-
-const rest_endpoint = "http://127.0.0.1:5000/";
+/// <reference path="constants.ts" />
 
 
 async function getBaseInfo(continent_id: number): Promise<Array<BaseInfo>> {

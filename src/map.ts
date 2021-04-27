@@ -1,5 +1,6 @@
-/// <reference path="./amerish_svgs.ts" />
 /// <reference path="./api/interfaces.ts" />
+/// <reference path="./api/base.ts" />
+/// <reference path="./api/continent.ts" />
 
 // This path is relative to the source HTML
 const mapTextureDir = "./img/map";
@@ -165,8 +166,16 @@ class MapRenderer {
      * @param layer Div container to populate with the SVG.
      * @param continent Name of the continent to load.
      */
-    private loadMapHexes(layer: HTMLDivElement, continent: string): void {
-        layer.innerHTML = svg_strings;
+    private async loadMapHexes(layer: HTMLDivElement, continent: string): Promise<void> {
+        const cInfo = await getContinentInfo(6);
+        const baseMap = cInfo.map_base_svgs;
+        let innerHtml = "";
+        const size = Object.keys(baseMap).length;
+        for (let i = 0; i < size; i++) {
+            const key = Object.keys(baseMap)[i];
+            innerHtml += baseMap[key];
+        }
+        layer.innerHTML = innerHtml;
     }
 
     private async setBaseNames(layer: HTMLDivElement, continent: number): Promise<void> {

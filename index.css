@@ -95,6 +95,10 @@ aside th {
 
 /* Map outlines */
 
+#map svg {
+    position: absolute;
+}
+
 #map polygon {
     fill: #FFFFFF;
     fill-opacity: 0.3;
