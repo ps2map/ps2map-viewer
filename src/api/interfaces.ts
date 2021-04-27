@@ -32,9 +32,8 @@ interface ContinentInfo {
     readonly id: number;
     readonly name: string;
     readonly description: string;
-    readonly bases: Array<BaseInfo>;
     readonly lattice_links: Array<[number, number]>; // Numbers are base IDs
-    readonly map_outlines_svg: string;
+    readonly map_base_svgs: BaseSvgMapping;
     readonly map_tileset: string;
 }
 
@@ -88,4 +87,11 @@ interface ServerUpdate {
     readonly status: string;
     readonly population: Population;
     readonly open_continents: Array<number>;
+}
+
+/**
+ * Mapping of string base IDs to their outline SVG.
+ */
+interface BaseSvgMapping {
+    [key: string]: string
 }
