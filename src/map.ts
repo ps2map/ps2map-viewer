@@ -1,6 +1,7 @@
 /// <reference path="./api/interfaces.ts" />
 /// <reference path="./api/base.ts" />
 /// <reference path="./api/continent.ts" />
+/// <reference path="./debug_tile_colour.ts" />
 
 // This path is relative to the source HTML
 const mapTextureDir = "./img/map";
@@ -176,6 +177,7 @@ class MapRenderer {
             innerHtml += baseMap[key];
         }
         layer.innerHTML = innerHtml;
+        registerDebugFactionCycler();
     }
 
     private async setBaseNames(layer: HTMLDivElement, continent: number): Promise<void> {
@@ -396,4 +398,12 @@ function updateMapLayerVisibility(checkbox: HTMLInputElement, layer: HTMLDivElem
     return function (): void {
         layer.style.visibility = checkbox.checked ? "visible" : "hidden";
     }
+}
+
+
+/** DEBUG */
+
+function registerDebugFactionCycler(): void {
+    const mapHexLayer = <HTMLDivElement>document.getElementById("mapHexLayer");
+    mapHexLayer.addEventListener("auxclick", cycleFactionColour);
 }

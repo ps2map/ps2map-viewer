@@ -1,5 +1,4 @@
 /// <reference path="./map.ts" />
-/// <reference path="./debug_tile_colour.ts" />
 
 
 /**
@@ -17,11 +16,6 @@ function onDOMLoaded(): void {
     renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
     renderer.layerVisibilityHook("mapHexLayer", "showHexes");
     renderer.layerVisibilityHook("mapBaseNameLayer", "showBaseNames");
-
-    /*********** Debug ***********/
-
-    // SVG colour switching via MMB (middle mouse button)
-    document.addEventListener("auxclick", svgClickFilter);
 }
 
 window.addEventListener("DOMContentLoaded", onDOMLoaded);

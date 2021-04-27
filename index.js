@@ -41,25 +41,23 @@ var ownershipColorsCSS = [
     getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
     getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
 ];
-function svgClickFilter(event) {
+function cycleFactionColour(event) {
     if (!(event.target instanceof SVGElement)) {
         return;
     }
-    if (event.button == 1) {
-        cycleFactionColour(event.target, event);
+    if (event.button != 1) {
+        return;
     }
-}
-function cycleFactionColour(base, event) {
-    if (!base.style.fill) {
-        base.style.fill = ownershipColorsCSS[0];
+    if (!event.target.style.fill) {
+        event.target.style.fill = ownershipColorsCSS[0];
     }
     for (var i = 0; i < ownershipColorsCSS.length; i++) {
-        if (base.style.fill == ownershipColorsCSS[i]) {
+        if (event.target.style.fill == ownershipColorsCSS[i]) {
             if (i + 1 < ownershipColorsCSS.length) {
-                base.style.fill = ownershipColorsCSS[i + 1];
+                event.target.style.fill = ownershipColorsCSS[i + 1];
             }
             else {
-                base.style.fill = ownershipColorsCSS[0];
+                event.target.style.fill = ownershipColorsCSS[0];
             }
             break;
         }
@@ -194,6 +192,7 @@ var MapRenderer = (function () {
                             innerHtml += baseMap[key];
                         }
                         layer.innerHTML = innerHtml;
+                        registerDebugFactionCycler();
                         return [2];
                 }
             });
@@ -339,6 +338,10 @@ function updateMapLayerVisibility(checkbox, layer) {
         layer.style.visibility = checkbox.checked ? "visible" : "hidden";
     };
 }
+function registerDebugFactionCycler() {
+    var mapHexLayer = document.getElementById("mapHexLayer");
+    mapHexLayer.addEventListener("auxclick", cycleFactionColour);
+}
 function onDOMLoaded() {
     var map = document.getElementById("map");
     var viewport = document.getElementById("viewport");
@@ -346,6 +349,5 @@ function onDOMLoaded() {
     renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
     renderer.layerVisibilityHook("mapHexLayer", "showHexes");
     renderer.layerVisibilityHook("mapBaseNameLayer", "showBaseNames");
-    document.addEventListener("auxclick", svgClickFilter);
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);

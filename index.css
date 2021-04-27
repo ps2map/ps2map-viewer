@@ -97,17 +97,19 @@ aside th {
 
 #map svg {
     position: absolute;
-}
-
-#map polygon {
     fill: #FFFFFF;
     fill-opacity: 0.3;
     stroke: #000000;
     stroke-width: 2px;
+    pointer-events: none;
 }
 
-#map polygon:hover {
+#map svg:hover {
     fill-opacity: 0.6;
+}
+
+#map svg polygon {
+    pointer-events: visiblePainted;
 }
 
 /* Map base names */
