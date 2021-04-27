@@ -1,4 +1,5 @@
 /// <reference path="./amerish_svgs.ts" />
+/// <reference path="./api/interfaces.ts" />
 
 // This path is relative to the source HTML
 const mapTextureDir = "./img/map";
