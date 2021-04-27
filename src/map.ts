@@ -10,15 +10,6 @@ const mapTextureResolution = 8192;
 
 
 /**
- * A custom type used for two-value tuples denoting position
- */
-type PointXY = {
-    x: number;
-    y: number;
-}
-
-
-/**
  * Map tile resolution enum
  *
  * These tiles are based on the sizes used in the in-game map, add new
