@@ -60,10 +60,13 @@ class MapRenderer {
         const mapTextureLayer = <HTMLDivElement>document.getElementById("mapTextureLayer");
         this.loadMapTiles(mapTextureLayer, continent, lod);
         const hexesLayer = <HTMLDivElement>document.getElementById("mapHexLayer");
-        this.loadMapHexes(hexesLayer, continent)
+        this.loadMapHexes(hexesLayer, continent);
+        const baseNameLayer = <HTMLDivElement>document.getElementById("mapBaseNameLayer");
+        this.setBaseNames(baseNameLayer, 6);
 
         // Attach map pan and zoom hooks
-        map.addEventListener("wheel", this.mapZoomCallback.bind(this));
+        map.addEventListener("wheel", this.mapZoomCallback.bind(this),
+            { "passive": false });
         map.addEventListener("mousedown", this.mapPan.bind(this));
     }
 
@@ -150,7 +153,9 @@ class MapRenderer {
                 }
                 // Create a new div with the given tile as the background image
                 let tile = this.getMapTilePath(continent, lod, x, y);
-                layer.innerHTML += `<div style="background-image: url(${tile})"></div>`;
+                let div = document.createElement("div");
+                div.style.backgroundImage = `url(${tile})`;
+                layer.appendChild(div);
             }
         }
     }
@@ -162,6 +167,22 @@ class MapRenderer {
      */
     private loadMapHexes(layer: HTMLDivElement, continent: string): void {
         layer.innerHTML = svg_strings;
+    }
+
+    private async setBaseNames(layer: HTMLDivElement, continent: number): Promise<void> {
+        const bases = await getBaseInfo(continent);
+
+        bases.forEach(base => {
+            let container = document.createElement("div");
+            let offsetX = (4120 + base.map_pos[0]) * this.zoom / 9;
+            let offsetY = (4200 + base.map_pos[1]) * this.zoom / 9;
+            container.style.left = `${offsetX}px`;
+            container.style.bottom = `${offsetY}px`;
+            let name = document.createElement("span");
+            name.innerHTML = base.name;
+            container.appendChild(name);
+            layer.appendChild(container);
+        });
     }
 
     /**
@@ -180,6 +201,10 @@ class MapRenderer {
         const mapTextureLayer = <HTMLDivElement>document.getElementById("mapTextureLayer");
         document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
         this.loadMapTiles(mapTextureLayer, this.continent, lod);
+        // Update base name div offsets
+        const mapBaseNameLayer = <HTMLDivElement>document.getElementById("mapBaseNameLayer");
+        mapBaseNameLayer.innerHTML = "";
+        this.setBaseNames(mapBaseNameLayer, 6);
     }
 
     /**

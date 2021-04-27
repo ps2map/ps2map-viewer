@@ -88,7 +88,9 @@ var MapRenderer = (function () {
         this.loadMapTiles(mapTextureLayer, continent, lod);
         var hexesLayer = document.getElementById("mapHexLayer");
         this.loadMapHexes(hexesLayer, continent);
-        map.addEventListener("wheel", this.mapZoomCallback.bind(this));
+        var baseNameLayer = document.getElementById("mapBaseNameLayer");
+        this.setBaseNames(baseNameLayer, 6);
+        map.addEventListener("wheel", this.mapZoomCallback.bind(this), { "passive": false });
         map.addEventListener("mousedown", this.mapPan.bind(this));
     }
     MapRenderer.prototype.layerVisibilityHook = function (layer_id, checkbox_id) {
@@ -140,12 +142,39 @@ var MapRenderer = (function () {
                     continue;
                 }
                 var tile = this.getMapTilePath(continent, lod, x, y);
-                layer.innerHTML += "<div style=\"background-image: url(" + tile + ")\"></div>";
+                var div = document.createElement("div");
+                div.style.backgroundImage = "url(" + tile + ")";
+                layer.appendChild(div);
             }
         }
     };
     MapRenderer.prototype.loadMapHexes = function (layer, continent) {
         layer.innerHTML = svg_strings;
+    };
+    MapRenderer.prototype.setBaseNames = function (layer, continent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var bases;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, getBaseInfo(continent)];
+                    case 1:
+                        bases = _a.sent();
+                        bases.forEach(function (base) {
+                            var container = document.createElement("div");
+                            var offsetX = (4120 + base.map_pos[0]) * _this.zoom / 9;
+                            var offsetY = (4200 + base.map_pos[1]) * _this.zoom / 9;
+                            container.style.left = offsetX + "px";
+                            container.style.bottom = offsetY + "px";
+                            var name = document.createElement("span");
+                            name.innerHTML = base.name;
+                            container.appendChild(name);
+                            layer.appendChild(container);
+                        });
+                        return [2];
+                }
+            });
+        });
     };
     MapRenderer.prototype.applyZoomLevel = function (zoomLevel) {
         this.zoom = zoomLevel;
@@ -156,6 +185,9 @@ var MapRenderer = (function () {
         var mapTextureLayer = document.getElementById("mapTextureLayer");
         document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
         this.loadMapTiles(mapTextureLayer, this.continent, lod);
+        var mapBaseNameLayer = document.getElementById("mapBaseNameLayer");
+        mapBaseNameLayer.innerHTML = "";
+        this.setBaseNames(mapBaseNameLayer, 6);
     };
     MapRenderer.prototype.getMapTilePath = function (continent, lod, tile_x, tile_y) {
         return mapTextureDir + "/" + continent + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
@@ -265,6 +297,7 @@ function onDOMLoaded() {
     var renderer = new MapRenderer(viewport, map, "amerish");
     renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
     renderer.layerVisibilityHook("mapHexLayer", "showHexes");
+    renderer.layerVisibilityHook("mapBaseNameLayer", "showBaseNames");
     document.addEventListener("auxclick", svgClickFilter);
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);

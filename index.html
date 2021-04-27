@@ -106,6 +106,10 @@
             </thead>
             <tbody>
                 <tr>
+                    <td><input type="checkbox" id="showBaseNames" checked /></td>
+                    <td><label for="showBaseNames">Bases</label></td>
+                </tr>
+                <tr>
                     <td><input type="checkbox" id="showMapTexture" checked /></td>
                     <td><label for="showMapTexture">Terrain</label></td>
                 </tr>
@@ -121,6 +125,9 @@
         <div id="map">
             <div id="mapTextureLayer" class="layer">
                 <img src="./img/amerish/lod0.png" alt="Map Texture" onmousedown="return false;" />
+                <!-- This layer is populated on load -->
+            </div>
+            <div id="mapBaseNameLayer" class="layer">
                 <!-- This layer is populated on load -->
             </div>
             <div id="mapHexLayer" class="layer">

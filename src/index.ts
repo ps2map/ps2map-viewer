@@ -16,6 +16,7 @@ function onDOMLoaded(): void {
     // Hook up map layer visibility toggles
     renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
     renderer.layerVisibilityHook("mapHexLayer", "showHexes");
+    renderer.layerVisibilityHook("mapBaseNameLayer", "showBaseNames");
 
     /*********** Debug ***********/
 
