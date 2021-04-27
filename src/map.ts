@@ -168,7 +168,30 @@ class MapRenderer {
             innerHtml += baseMap[key];
         }
         layer.innerHTML = innerHtml;
+
         registerDebugFactionCycler();
+
+        // Register map info callbacks
+        for (let i = 0; i < size; i++) {
+            const element = <SVGElement>layer.children[i];
+            element.addEventListener("mouseenter", this.baseHoverCallback);
+        }
+    }
+
+    private async baseHoverCallback(event: MouseEvent) {
+        if (!(event.target instanceof SVGElement)) {
+            return;
+        }
+        const baseId = parseInt(event.target.id);
+        const bInfoList = await getBaseInfo(6);
+        let bInfo = bInfoList[0];
+        for (let i = 0; i < bInfoList.length; i++) {
+            if (bInfoList[i].id == baseId) {
+                bInfo = bInfoList[i];
+            }
+        }
+        const baseName = <HTMLSpanElement>document.getElementById("baseName");
+        baseName.innerHTML = bInfo.name;
     }
 
     private async setBaseNames(layer: HTMLDivElement, continent: number): Promise<void> {

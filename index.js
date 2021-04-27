@@ -1,4 +1,33 @@
 "use strict";
+var ownershipColorsCSS = [
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NULL").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NC").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
+];
+function cycleFactionColour(event) {
+    if (!(event.target instanceof SVGElement)) {
+        return;
+    }
+    if (event.button != 1) {
+        return;
+    }
+    if (!event.target.style.fill) {
+        event.target.style.fill = ownershipColorsCSS[0];
+    }
+    for (var i = 0; i < ownershipColorsCSS.length; i++) {
+        if (event.target.style.fill == ownershipColorsCSS[i]) {
+            if (i + 1 < ownershipColorsCSS.length) {
+                event.target.style.fill = ownershipColorsCSS[i + 1];
+            }
+            else {
+                event.target.style.fill = ownershipColorsCSS[0];
+            }
+            break;
+        }
+    }
+}
+var rest_endpoint = "http://127.0.0.1:5000/";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,35 +64,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var ownershipColorsCSS = [
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NULL").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NC").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
-];
-function cycleFactionColour(event) {
-    if (!(event.target instanceof SVGElement)) {
-        return;
-    }
-    if (event.button != 1) {
-        return;
-    }
-    if (!event.target.style.fill) {
-        event.target.style.fill = ownershipColorsCSS[0];
-    }
-    for (var i = 0; i < ownershipColorsCSS.length; i++) {
-        if (event.target.style.fill == ownershipColorsCSS[i]) {
-            if (i + 1 < ownershipColorsCSS.length) {
-                event.target.style.fill = ownershipColorsCSS[i + 1];
-            }
-            else {
-                event.target.style.fill = ownershipColorsCSS[0];
-            }
-            break;
-        }
-    }
-}
-var rest_endpoint = "http://127.0.0.1:5000/";
 function getBaseInfo(continent_id) {
     return __awaiter(this, void 0, void 0, function () {
         var url;
@@ -178,7 +178,7 @@ var MapRenderer = (function () {
     };
     MapRenderer.prototype.loadMapHexes = function (layer, continent) {
         return __awaiter(this, void 0, void 0, function () {
-            var cInfo, baseMap, innerHtml, size, i, key;
+            var cInfo, baseMap, innerHtml, size, i, key, i, element;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4, getContinentInfo(6)];
@@ -193,6 +193,36 @@ var MapRenderer = (function () {
                         }
                         layer.innerHTML = innerHtml;
                         registerDebugFactionCycler();
+                        for (i = 0; i < size; i++) {
+                            element = layer.children[i];
+                            element.addEventListener("mouseenter", this.baseHoverCallback);
+                        }
+                        return [2];
+                }
+            });
+        });
+    };
+    MapRenderer.prototype.baseHoverCallback = function (event) {
+        return __awaiter(this, void 0, void 0, function () {
+            var baseId, bInfoList, bInfo, i, baseName;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!(event.target instanceof SVGElement)) {
+                            return [2];
+                        }
+                        baseId = parseInt(event.target.id);
+                        return [4, getBaseInfo(6)];
+                    case 1:
+                        bInfoList = _a.sent();
+                        bInfo = bInfoList[0];
+                        for (i = 0; i < bInfoList.length; i++) {
+                            if (bInfoList[i].id == baseId) {
+                                bInfo = bInfoList[i];
+                            }
+                        }
+                        baseName = document.getElementById("baseName");
+                        baseName.innerHTML = bInfo.name;
                         return [2];
                 }
             });
