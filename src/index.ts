@@ -1,3 +1,4 @@
+/// <reference path="./api/getters.ts" />
 /// <reference path="./layers/baseNameLayer.ts" />
 /// <reference path="./layers/hexLayer.ts" />
 /// <reference path="./layers/tileLayer.ts" />
@@ -42,6 +43,14 @@ function onDOMLoaded(): void {
     // showHideNameLayer.addEventListener("click", () =>
     //     baseNameLayer.setVisibility(showHideNameLayer.checked)
     // );
+
+    // Hook up remaining signals
+    const asideBaseName = <HTMLSpanElement>document.getElementById("baseName");
+    hexLayer.baseHoverCallback = (baseId) => {
+        getBase(baseId).then((base) => {
+            asideBaseName.textContent = base.name;
+        });
+    };
 }
 
 window.addEventListener("DOMContentLoaded", onDOMLoaded);

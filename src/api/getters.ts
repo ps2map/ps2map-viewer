@@ -25,6 +25,23 @@ function getBasesFromContinent(continentId: number): Promise<Array<BaseInfo>> {
 }
 
 /**
+ * Return the BaseInfo payload for the given base.
+ * @param baseId ID of the base to retrieve. Will be rounded to an
+ * integer as part of the URL generation.
+ */
+function getBase(baseId: number): Promise<BaseInfo> {
+    const rounded = Math.round(baseId);
+    const url = `${restEndpoint}bases/info?base_id=${rounded}`;
+    return fetch(url)
+        .then((value) => {
+            return (value.json() as unknown) as Array<BaseInfo>;
+        })
+        .then((contInfoList) => {
+            return contInfoList[0];
+        });
+}
+
+/**
  * Return the ContinentInfo payload for the given continent.
  * @param continentId ID of the continent to retrieve. Will be rounded
  * to an integer as part of the URL generation.

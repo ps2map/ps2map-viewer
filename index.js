@@ -35,6 +35,36 @@ function cycleFactionColour(event) {
         }
     }
 }
+var restEndpoint = "http://127.0.0.1:5000/";
+function getBasesFromContinent(continentId) {
+    var rounded = Math.round(continentId);
+    var url = restEndpoint + "bases/info?continent_id=" + rounded;
+    return fetch(url).then(function (value) {
+        return value.json();
+    });
+}
+function getBase(baseId) {
+    var rounded = Math.round(baseId);
+    var url = restEndpoint + "bases/info?base_id=" + rounded;
+    return fetch(url)
+        .then(function (value) {
+        return value.json();
+    })
+        .then(function (contInfoList) {
+        return contInfoList[0];
+    });
+}
+function getContinent(continentId) {
+    var rounded = Math.round(continentId);
+    var url = restEndpoint + "continents/info?continent_id=" + rounded;
+    return fetch(url)
+        .then(function (value) {
+        return value.json();
+    })
+        .then(function (contInfoList) {
+        return contInfoList[0];
+    });
+}
 function elementFromString(html) {
     var factory = document.createElement("template");
     factory.innerHTML = html.trim();
@@ -197,25 +227,6 @@ var HexLayer = (function (_super) {
     };
     return HexLayer;
 }(MapLayer));
-var restEndpoint = "http://127.0.0.1:5000/";
-function getBasesFromContinent(continentId) {
-    var rounded = Math.round(continentId);
-    var url = restEndpoint + "bases/info?continent_id=" + rounded;
-    return fetch(url).then(function (value) {
-        return value.json();
-    });
-}
-function getContinent(continentId) {
-    var rounded = Math.round(continentId);
-    var url = restEndpoint + "continents/info?continent_id=" + rounded;
-    return fetch(url)
-        .then(function (value) {
-        return value.json();
-    })
-        .then(function (contInfoList) {
-        return contInfoList[0];
-    });
-}
 var tileDir = "./img/map";
 var mapBaseRes = 8192;
 var TileLayer = (function (_super) {
@@ -320,5 +331,11 @@ function onDOMLoaded() {
     showHideTexturelayer.addEventListener("click", function () {
         return tileLayer.setVisibility(showHideTexturelayer.checked);
     });
+    var asideBaseName = document.getElementById("baseName");
+    hexLayer.baseHoverCallback = function (baseId) {
+        getBase(baseId).then(function (base) {
+            asideBaseName.textContent = base.name;
+        });
+    };
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
