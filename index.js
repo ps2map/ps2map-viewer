@@ -424,3 +424,91 @@ var HexLayer = (function (_super) {
     };
     return HexLayer;
 }(MapLayer));
+var tileDir = "./img/map";
+var mapBaseRes = 8192;
+var TileLayer = (function (_super) {
+    __extends(TileLayer, _super);
+    function TileLayer(layer, initialContinentId) {
+        var _this = _super.call(this, layer, initialContinentId) || this;
+        _this.lod = 3;
+        _this.tileSet = "bogus";
+        return _this;
+    }
+    TileLayer.prototype.setContinent = function (continentId) {
+        if (this.continentId == continentId) {
+            return;
+        }
+        this.continentId = continentId;
+        this.setTileSet(continentId);
+    };
+    TileLayer.prototype.onZoom = function (zoomLevel) {
+        var newLod = 0;
+        if (zoomLevel >= 8) {
+            newLod = 0;
+        }
+        else if (zoomLevel >= 4) {
+            newLod = 1;
+        }
+        else if (zoomLevel >= 2) {
+            newLod = 2;
+        }
+        else {
+            newLod = 3;
+        }
+        var numTiles = this.getNumTiles(newLod);
+        document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
+    };
+    TileLayer.prototype.setTileSet = function (continentId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var cont;
+            var _this = this;
+            return __generator(this, function (_a) {
+                cont = getContinent(continentId);
+                cont.then(function (contInfo) {
+                    _this.tileSet = contInfo.map_tileset;
+                    _this.updateTiles();
+                });
+                return [2];
+            });
+        });
+    };
+    TileLayer.prototype.updateTiles = function () {
+        var _this = this;
+        var numTiles = this.getNumTiles(this.lod);
+        if (numTiles <= 1) {
+            var tile = this.getMapTilePath(this.tileSet, this.lod, 0, 0);
+            var str = "<div style=\"background-image: url(" + tile + ")\"></div>";
+            var element = elementFromString(str);
+            this.clear();
+            this.layer.appendChild(element);
+            return;
+        }
+        var newTiles = [];
+        for (var y = numTiles / 2; y > -numTiles / 2 - 1; y--) {
+            if (y == 0) {
+                continue;
+            }
+            for (var x = -numTiles / 2; x < numTiles / 2 + 1; x++) {
+                if (x == 0) {
+                    continue;
+                }
+                var tile = this.getMapTilePath(this.tileSet, this.lod, x, y);
+                var div = document.createElement("div");
+                div.style.backgroundImage = "url(" + tile + ")";
+                newTiles.push(div);
+            }
+        }
+        this.clear();
+        newTiles.forEach(function (tile) { return _this.layer.appendChild(tile); });
+    };
+    TileLayer.prototype.getNumTiles = function (lod) {
+        if (lod < 0) {
+            throw "lod must be greater than zero";
+        }
+        return Math.pow(2, (3 - lod));
+    };
+    TileLayer.prototype.getMapTilePath = function (tileName, lod, tileX, tileY) {
+        return tileDir + "/" + tileName + "/lod" + lod + "/lod" + lod + "_" + Math.round(tileX) + "_" + Math.round(tileY) + ".png";
+    };
+    return TileLayer;
+}(MapLayer));
