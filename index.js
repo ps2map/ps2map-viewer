@@ -186,6 +186,9 @@ var HexLayer = (function (_super) {
     function HexLayer(layer, initialContinentId) {
         var _this = _super.call(this, layer, initialContinentId) || this;
         _this.baseHoverCallback = function () { return null; };
+        _this.layer.addEventListener("auxclick", function (evt) {
+            cycleFactionColour(evt);
+        });
         return _this;
     }
     HexLayer.prototype.setContinent = function (continentId) {

@@ -6,6 +6,7 @@
  */
 
 /// <reference path="./base.ts" />
+/// <reference path="../debug_tile_colour.ts" />
 
 /**
  * MapLayer subclass used to draw base outlines on the map.
@@ -15,6 +16,11 @@ class HexLayer extends MapLayer {
 
     constructor(layer: HTMLDivElement, initialContinentId: number) {
         super(layer, initialContinentId);
+
+        // Debug base painter
+        this.layer.addEventListener("auxclick", (evt) => {
+            cycleFactionColour(evt);
+        });
     }
 
     /**
