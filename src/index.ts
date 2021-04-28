@@ -60,6 +60,15 @@ function onDOMLoaded(): void {
             asideBaseName.textContent = base.name;
         });
     };
+
+    const zoomInc = <HTMLInputElement>document.getElementById("zoomInc");
+    zoomInc.addEventListener("click", (evt) => {
+        controller.incDecZoom(true);
+    });
+    const zoomDec = <HTMLInputElement>document.getElementById("zoomDec");
+    zoomDec.addEventListener("click", (evt) => {
+        controller.incDecZoom(false);
+    });
 }
 
 window.addEventListener("DOMContentLoaded", onDOMLoaded);

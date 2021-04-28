@@ -347,8 +347,17 @@ function onDOMLoaded() {
             asideBaseName.textContent = base.name;
         });
     };
+    var zoomInc = document.getElementById("zoomInc");
+    zoomInc.addEventListener("click", function (evt) {
+        controller.incDecZoom(true);
+    });
+    var zoomDec = document.getElementById("zoomDec");
+    zoomDec.addEventListener("click", function (evt) {
+        controller.incDecZoom(false);
+    });
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
+var zoomLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 var MapController = (function () {
     function MapController(map, viewport, initialContinentId) {
         this.onZoom = [];
@@ -361,6 +370,27 @@ var MapController = (function () {
             passive: false
         });
     }
+    MapController.prototype.incDecZoom = function (increase) {
+        var index = zoomLevels.indexOf(this.zoomLevel);
+        if (index < 0) {
+            for (var i = 0; i < zoomLevels.length; i++) {
+                var refLevel = zoomLevels[i];
+                if (refLevel > this.zoomLevel) {
+                    if (increase) {
+                        this.zoomLevel = refLevel;
+                        break;
+                    }
+                    this.zoomLevel = zoomLevels[i - 1];
+                    break;
+                }
+            }
+        }
+        else {
+            this.zoomLevel += increase ? 1 : -1;
+        }
+        this.constrainZoom();
+        this.zoomDispatch();
+    };
     MapController.prototype.mousePan = function (evtDown) {
         if (evtDown.button != 0) {
             return;

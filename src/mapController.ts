@@ -5,6 +5,8 @@
  * zoom and pan controls for touch and mouse.
  */
 
+const zoomLevels: Array<number> = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
 /**
  * Main controller for map interactions and rendering.
  */
@@ -32,6 +34,37 @@ class MapController {
         map.addEventListener("wheel", this.mouseWheel.bind(this), {
             passive: false,
         });
+    }
+
+    /**
+     * Bump the zoom level by one.
+     * @param increase If true, increase zoom level (+), otherwise
+     * reduce it (-).
+     */
+    public incDecZoom(increase: boolean) {
+        const index = zoomLevels.indexOf(this.zoomLevel);
+        if (index < 0) {
+            // Zoom level is an odd value, jump to the next fixed value
+            for (let i = 0; i < zoomLevels.length; i++) {
+                const refLevel = zoomLevels[i];
+                if (refLevel > this.zoomLevel) {
+                    if (increase) {
+                        this.zoomLevel = refLevel;
+                        break;
+                    }
+                    // When decrementing, we want to jump to the next
+                    // level that is smaller, so we take the one before
+                    this.zoomLevel = zoomLevels[i - 1];
+                    break;
+                }
+            }
+        } else {
+            // Zoom level is a fixed value, modify by 1
+            this.zoomLevel += increase ? 1 : -1;
+        }
+        // Limit zoom level
+        this.constrainZoom();
+        this.zoomDispatch();
     }
 
     /**

@@ -10,7 +10,7 @@
 html {
     background-color: #051010;
     color: white;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: "Segoe UI", sans-serif;
     font-weight: 500;
     touch-action: none;
 }
@@ -23,8 +23,8 @@ body {
 /* Side widgets */
 
 aside {
-    background-color: #CCCCCC;
-    border: 2px solid #FFFFFF;
+    background-color: #cccccc;
+    border: 2px solid #ffffff;
     box-shadow: 0px 0px 100px #666666 inset;
     color: black;
     padding: 10px 20px 20px 20px;
@@ -40,6 +40,22 @@ aside span {
 
 aside th {
     text-align: left;
+}
+
+#zoomControls {
+    background: none;
+    box-shadow: none;
+    border: none;
+    position: fixed;
+    right: 10px;
+    top: 30px;
+    width: 20px;
+}
+
+#zoomControls input {
+    font-size: 16pt;
+    height: 30px;
+    width: 30px;
 }
 
 #baseInfo {
@@ -66,7 +82,7 @@ aside th {
     position: absolute;
     overflow: scroll;
     overscroll-behavior: contain;
-    -ms-overflow-style: none;  /* IE and Edge */
+    -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
 }
 
@@ -92,8 +108,14 @@ aside th {
 
 #mapTextureLayer {
     display: grid;
-    grid-template-rows: repeat(var(--MAP-TILES-PER-AXIS), calc(var(--MAP-SIZE) / var(--MAP-TILES-PER-AXIS)));
-    grid-template-columns: repeat(var(--MAP-TILES-PER-AXIS), calc(var(--MAP-SIZE) / var(--MAP-TILES-PER-AXIS)));
+    grid-template-rows: repeat(
+        var(--MAP-TILES-PER-AXIS),
+        calc(var(--MAP-SIZE) / var(--MAP-TILES-PER-AXIS))
+    );
+    grid-template-columns: repeat(
+        var(--MAP-TILES-PER-AXIS),
+        calc(var(--MAP-SIZE) / var(--MAP-TILES-PER-AXIS))
+    );
 }
 
 #mapTextureLayer div {
@@ -105,7 +127,7 @@ aside th {
 
 #map svg {
     position: absolute;
-    fill: #FFFFFF;
+    fill: #ffffff;
     fill-opacity: 0.3;
     stroke: #000000;
     stroke-width: 2px;
@@ -149,7 +171,7 @@ aside th {
 /* Map center marker for debug purposes */
 
 #crossHair {
-    border: 1px solid #FFFFFF;
+    border: 1px solid #ffffff;
     position: absolute;
     width: 2px;
     height: 2px;
