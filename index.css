@@ -12,10 +12,12 @@ html {
     color: white;
     font-family: 'Segoe UI', sans-serif;
     font-weight: 500;
+    touch-action: none;
 }
 
 body {
     margin: 0;
+    overscroll-behavior: none;
 }
 
 /* Side widgets */
@@ -62,14 +64,20 @@ aside th {
     height: 100%;
     width: 100%;
     position: absolute;
+    overflow: scroll;
+    overscroll-behavior: contain;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+#viewport::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
 }
 
 #map {
     height: var(--MAP-SIZE);
     width: var(--MAP-SIZE);
-    position: fixed;
-    left: calc(var(--MAP-SIZE) / -2 + 50vw);
-    top: calc(var(--MAP-SIZE) / -2 + 50vh);
+    position: absolute;
 }
 
 /* Map layers */

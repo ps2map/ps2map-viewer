@@ -273,30 +273,13 @@ class MapRenderer {
     private mapZoomCallback(event: WheelEvent): void {
         event.preventDefault();
         let newZoom = event.deltaY < 0 ? this.zoom * 1.25 : this.zoom * 0.8;
-
-        // Constrain zoom level
         if (newZoom < this.minZoom) {
             newZoom = this.minZoom;
         }
         else if (newZoom > this.maxZoom) {
             newZoom = this.maxZoom;
         }
-
-        // Calculate the map size change in pixels
-        const pixelDelta = this.viewportMinorAxis * newZoom - this.viewportMinorAxis * this.zoom;
-
-        // Get the position of the mouse cursor relative to the map itself
-        const mapRelX = (event.clientX - this.map.offsetLeft) / this.map.clientWidth;
-        const mapRelY = (event.clientY - this.map.offsetTop) / this.map.clientHeight;
-
-        // Calculate the new map position
-        let newLeft = this.map.offsetLeft - pixelDelta * mapRelX;
-        let newTop = this.map.offsetTop - pixelDelta * mapRelY;
-
-        // Apply new zoom level
         this.applyZoomLevel(newZoom);
-        // Apply camera offset
-        this.panCamera(newLeft, newTop);
     }
 
     /**
@@ -311,17 +294,15 @@ class MapRenderer {
             return;
         }
         const map = this.map;
-        const panCamera = this.panCamera.bind(this);
-
-        const initialOffsetLeft = map.offsetLeft;
-        const initialOffsetTop = map.offsetTop;
+        const viewport = this.viewport;
+        const panStartLeft = viewport.scrollLeft;
+        const panStartTop = viewport.scrollTop;
 
         function mapPanDrag(dragEvent: MouseEvent): void {
             const deltaX = dragEvent.clientX - event.clientX;
             const deltaY = dragEvent.clientY - event.clientY;
-            const newLeft = initialOffsetLeft + deltaX;
-            const newTop = initialOffsetTop + deltaY;
-            panCamera(newLeft, newTop);
+            viewport.scrollLeft = panStartLeft - deltaX;
+            viewport.scrollTop = panStartTop - deltaY;
         }
 
         function mapPanEnd(): void {
@@ -333,59 +314,6 @@ class MapRenderer {
         map.addEventListener("mousemove", mapPanDrag);
         // Unregister the event as soon as the mouse is released
         document.addEventListener("mouseup", mapPanEnd);
-    }
-
-    private panCamera(newLeft: number, newTop: number): void {
-        this.map.style.left = `${newLeft}px`;
-        this.map.style.top = `${newTop}px`;
-        const zoomLimitX = this.viewport.clientWidth - this.map.clientWidth;
-        const zoomLimitY = this.viewport.clientHeight - this.map.clientHeight;
-        // Horizontal limits (map wider than viewport)
-        if (this.viewport.clientWidth < this.map.clientWidth) {
-            // Left
-            if (this.map.offsetLeft > 0) {
-                this.map.style.left = "0px";
-            }
-            // Right
-            else if (this.map.offsetLeft < zoomLimitX) {
-                this.map.style.left = `${zoomLimitX}px`;
-
-            }
-        }
-        // Horizontal limits (viewport wider than map)
-        else {
-            // Left
-            if (this.map.offsetLeft < 0) {
-                this.map.style.left = "0px";
-            }
-            // Right
-            else if (this.map.offsetLeft > zoomLimitX) {
-                this.map.style.left = `${zoomLimitX}px`;
-            }
-        }
-        // Vertical limits (map taller than viewport)
-        if (this.viewport.clientHeight < this.map.clientHeight) {
-            // Top
-            if (this.map.offsetTop > 0) {
-                this.map.style.top = "0px";
-            }
-            // Bottom
-            else if (this.map.offsetTop < zoomLimitY) {
-                this.map.style.top = `${zoomLimitY}px`;
-
-            }
-        }
-        // Vertical limits (viewport taller than map)
-        else {
-            // Top
-            if (this.map.offsetTop < 0) {
-                this.map.style.top = "0px";
-            }
-            // Bottom
-            else if (this.map.offsetTop > zoomLimitY) {
-                this.map.style.top = `${zoomLimitY}px`;
-            }
-        }
     }
 
     /**
