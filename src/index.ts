@@ -17,13 +17,13 @@ function onDOMLoaded(): void {
         document.getElementById("mapTextureLayer")
     );
     const tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
-    // const baseNameLayerDiv = <HTMLDivElement>(
-    //     document.getElementById("mapBaseNameLayer")
-    // );
-    // const baseNameLayer = new BaseNameLayer(
-    //     baseNameLayerDiv,
-    //     initialContinentId
-    // );
+    const baseNameLayerDiv = <HTMLDivElement>(
+        document.getElementById("mapBaseNameLayer")
+    );
+    const baseNameLayer = new BaseNameLayer(
+        baseNameLayerDiv,
+        initialContinentId
+    );
 
     // Create map controller
 
@@ -46,12 +46,12 @@ function onDOMLoaded(): void {
     showHideTexturelayer.addEventListener("click", () =>
         tileLayer.setVisibility(showHideTexturelayer.checked)
     );
-    // const showHideNameLayer = <HTMLInputElement>(
-    //     document.getElementById("showBaseNames")
-    // );
-    // showHideNameLayer.addEventListener("click", () =>
-    //     baseNameLayer.setVisibility(showHideNameLayer.checked)
-    // );
+    const showHideNameLayer = <HTMLInputElement>(
+        document.getElementById("showBaseNames")
+    );
+    showHideNameLayer.addEventListener("click", () =>
+        baseNameLayer.setVisibility(showHideNameLayer.checked)
+    );
 
     // Hook up remaining signals
     const asideBaseName = <HTMLSpanElement>document.getElementById("baseName");

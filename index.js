@@ -329,6 +329,8 @@ function onDOMLoaded() {
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
     var tileLayerDiv = (document.getElementById("mapTextureLayer"));
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
+    var baseNameLayerDiv = (document.getElementById("mapBaseNameLayer"));
+    var baseNameLayer = new BaseNameLayer(baseNameLayerDiv, initialContinentId);
     var map = document.getElementById("map");
     var viewport = document.getElementById("viewport");
     var controller = new MapController(map, viewport, initialContinentId);
@@ -340,6 +342,10 @@ function onDOMLoaded() {
     var showHideTexturelayer = (document.getElementById("showMapTexture"));
     showHideTexturelayer.addEventListener("click", function () {
         return tileLayer.setVisibility(showHideTexturelayer.checked);
+    });
+    var showHideNameLayer = (document.getElementById("showBaseNames"));
+    showHideNameLayer.addEventListener("click", function () {
+        return baseNameLayer.setVisibility(showHideNameLayer.checked);
     });
     var asideBaseName = document.getElementById("baseName");
     hexLayer.baseHoverCallback = function (baseId) {
