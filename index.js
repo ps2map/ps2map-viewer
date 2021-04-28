@@ -323,6 +323,9 @@ function onDOMLoaded() {
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
     var tileLayerDiv = (document.getElementById("mapTextureLayer"));
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
+    var map = document.getElementById("map");
+    var viewport = document.getElementById("viewport");
+    new MapController(map, viewport, initialContinentId);
     var showHideHexLayer = (document.getElementById("showHexes"));
     showHideHexLayer.addEventListener("click", function () {
         return hexLayer.setVisibility(showHideHexLayer.checked);
@@ -339,3 +342,34 @@ function onDOMLoaded() {
     };
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
+var MapController = (function () {
+    function MapController(map, viewport, initialContinentId) {
+        this.continentId = initialContinentId;
+        this.map = map;
+        this.viewport = viewport;
+        this.zoomLevel = 1.0;
+        map.addEventListener("mousedown", this.mousePan.bind(this));
+    }
+    MapController.prototype.mousePan = function (evtDown) {
+        if (evtDown.button != 0) {
+            return;
+        }
+        var viewport = this.viewport;
+        var map = this.map;
+        var initialScrollLeft = viewport.scrollLeft;
+        var initialScrollTop = viewport.scrollTop;
+        function mouseDrag(evtDrag) {
+            var deltaX = evtDrag.clientX - evtDown.clientX;
+            var deltaY = evtDrag.clientY - evtDown.clientY;
+            viewport.scrollLeft = initialScrollLeft - deltaX;
+            viewport.scrollTop = initialScrollTop - deltaY;
+        }
+        function mouseUp() {
+            map.removeEventListener("mousemove", mouseDrag);
+            document.removeEventListener("mouseup", mouseUp);
+        }
+        map.addEventListener("mousemove", mouseDrag);
+        document.addEventListener("mouseup", mouseUp);
+    };
+    return MapController;
+}());

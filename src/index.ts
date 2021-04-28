@@ -9,6 +9,8 @@
 function onDOMLoaded(): void {
     const initialContinentId = 6;
 
+    // Add map layers
+
     const hexLayerDiv = <HTMLDivElement>document.getElementById("mapHexLayer");
     const hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
     const tileLayerDiv = <HTMLDivElement>(
@@ -22,6 +24,12 @@ function onDOMLoaded(): void {
     //     baseNameLayerDiv,
     //     initialContinentId
     // );
+
+    // Create map controller
+
+    const map = <HTMLDivElement>document.getElementById("map");
+    const viewport = <HTMLDivElement>document.getElementById("viewport");
+    new MapController(map, viewport, initialContinentId);
 
     // Hook up map layer visibility toggles
 
