@@ -8,9 +8,16 @@
 /// <reference path="../utils.ts" />
 /// <reference path="./base.ts" />
 
+/**
+ * MapLayer subclass used to draw base names and icons on the map.
+ */
 class BaseNameLayer extends MapLayer {
     // TODO: Hide small bases at small zoom levels
 
+    /**
+     * Switch the currently active continent.
+     * @param continentId ID of the new continent to display.
+     */
     public setContinent(continentId: number): void {
         // Hard-coded base names for now
         const bases = getBasesFromContinent(continentId);

@@ -11,6 +11,9 @@
 const tileDir = "./img/map";
 const mapBaseRes = 8192;
 
+/**
+ * MapLayer subclass used to draw the terrain textures on the map.
+ */
 class TileLayer extends MapLayer {
     private lod: number;
     private tileSet: string;
@@ -21,6 +24,10 @@ class TileLayer extends MapLayer {
         this.tileSet = "bogus";
     }
 
+    /**
+     * Switch the currently active continent.
+     * @param continentId ID of the new continent to display.
+     */
     public setContinent(continentId: number): void {
         if (this.continentId == continentId) {
             return;
@@ -30,6 +37,10 @@ class TileLayer extends MapLayer {
         this.setTileSet(continentId);
     }
 
+    /**
+     * Update the map tile resolution for the new zoom level.
+     * @param zoomLevel The new zoom level to use
+     */
     public onZoom(zoomLevel: number): void {
         // Update map tile LOD
         let newLod = 0;
@@ -51,6 +62,13 @@ class TileLayer extends MapLayer {
         // Update tile size and LOD
     }
 
+    /**
+     * Switch the map tile set used.
+     *
+     * This updates all tile elements with the textures from the given
+     * tile set.
+     * @param continentId
+     */
     private async setTileSet(continentId: number): Promise<void> {
         const cont = getContinent(continentId);
         cont.then((contInfo) => {
@@ -59,6 +77,9 @@ class TileLayer extends MapLayer {
         });
     }
 
+    /**
+     * Redraw all map tiles for the current LOD and tile set.
+     */
     private updateTiles(): void {
         const numTiles = this.getNumTiles(this.lod);
         // Special case for single-tile map LOD
@@ -108,8 +129,6 @@ class TileLayer extends MapLayer {
 
     /**
      * Return the path to a given map tile.
-     *
-     * `tileX` and `tileY` will be truncated to integers.
      * @param tileName base name of the map tiles, e.g. "amerish"
      * @param lod The level of detail to load
      * @param tileX Map tile X coordinate
@@ -122,8 +141,8 @@ class TileLayer extends MapLayer {
         tileX: number,
         tileY: number
     ): string {
-        return `${tileDir}/${tileName}/lod${lod}/lod${lod}_${Math.round(
-            tileX
-        )}_${Math.round(tileY)}.png`;
+        const dir = `${tileDir}/${tileName}/lod${lod}/`;
+        const name = `lod${lod}_${Math.round(tileX)}_${Math.round(tileY)}.png`;
+        return dir + name;
     }
 }

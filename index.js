@@ -154,7 +154,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var HexLayer = (function (_super) {
     __extends(HexLayer, _super);
     function HexLayer(layer, initialContinentId) {
-        return _super.call(this, layer, initialContinentId) || this;
+        var _this = _super.call(this, layer, initialContinentId) || this;
+        _this.baseHoverCallback = function () { return null; };
+        return _this;
     }
     HexLayer.prototype.setContinent = function (continentId) {
         var _this = this;
@@ -171,17 +173,26 @@ var HexLayer = (function (_super) {
     HexLayer.prototype.getBaseHexes = function (continentId) {
         return __awaiter(this, void 0, void 0, function () {
             var cont, elements;
+            var _this = this;
             return __generator(this, function (_a) {
                 cont = getContinent(continentId);
                 elements = cont.then(function (contInfo) {
                     var svgs = [];
                     for (var key in contInfo.map_base_svgs) {
-                        svgs.push(elementFromString(contInfo.map_base_svgs[key]));
+                        var element = elementFromString(contInfo.map_base_svgs[key]);
+                        _this.registerHoverCallback(element);
+                        svgs.push(element);
                     }
                     return svgs;
                 });
                 return [2, elements];
             });
+        });
+    };
+    HexLayer.prototype.registerHoverCallback = function (element) {
+        var _this = this;
+        element.addEventListener("mouseover", function (evt) {
+            _this.baseHoverCallback(parseInt(element.id));
         });
     };
     return HexLayer;
@@ -289,7 +300,9 @@ var TileLayer = (function (_super) {
         return Math.pow(2, (3 - lod));
     };
     TileLayer.prototype.getMapTilePath = function (tileName, lod, tileX, tileY) {
-        return tileDir + "/" + tileName + "/lod" + lod + "/lod" + lod + "_" + Math.round(tileX) + "_" + Math.round(tileY) + ".png";
+        var dir = tileDir + "/" + tileName + "/lod" + lod + "/";
+        var name = "lod" + lod + "_" + Math.round(tileX) + "_" + Math.round(tileY) + ".png";
+        return dir + name;
     };
     return TileLayer;
 }(MapLayer));

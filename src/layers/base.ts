@@ -5,6 +5,14 @@
  * layers by the UI.
  */
 
+/**
+ * Main base class for map layers.
+ *
+ * This class defines utilities for toggling map layers, changing
+ * continents, or clearing the current layer, as well as hooks for
+ * responding to external events like zoom level changes or other UI
+ * state changes.
+ */
 class MapLayer {
     readonly layer: HTMLDivElement;
     protected continentId: number;
@@ -15,6 +23,10 @@ class MapLayer {
         this.setContinent(initialContinentId);
     }
 
+    /**
+     * Switch the currently active continent.
+     * @param continentId ID of the new continent to display.
+     */
     public setContinent(continentId: number): void {
         if (this.continentId != continentId) {
             return;
@@ -22,11 +34,17 @@ class MapLayer {
         this.continentId = continentId;
     }
 
+    /**
+     * Change visibility of the layer.
+     *
+     * This switches between the "visible" and "hidden" CSS states. The
+     * layer's elements will still be used for layout, but will not be
+     * visible to the user.
+     * @param visible The new visibility state of the layer.
+     */
     public setVisibility(visible: boolean): void {
         this.layer.style.visibility = visible ? "visible" : "hidden";
     }
-
-    /* Event hooks */
 
     /**
      * Event hook for changes in zoom level. The base implementation
@@ -34,8 +52,6 @@ class MapLayer {
      * @param zoomLevel The new zoom level to use
      */
     public onZoom(zoomLevel: number): void {}
-
-    /* Utilities */
 
     /**
      * Remove all child elements from the container.
