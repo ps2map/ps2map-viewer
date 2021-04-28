@@ -188,33 +188,21 @@ var HexLayer = (function (_super) {
 }(MapLayer));
 var restEndpoint = "http://127.0.0.1:5000/";
 function getBasesFromContinent(continentId) {
-    return __awaiter(this, void 0, void 0, function () {
-        var url;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    url = restEndpoint + "bases/info?continent_id=" + Math.round(continentId);
-                    return [4, fetch(url).then(function (value) {
-                            return value.json();
-                        })];
-                case 1: return [2, _a.sent()];
-            }
-        });
+    var rounded = Math.round(continentId);
+    var url = restEndpoint + "bases/info?continent_id=" + rounded;
+    return fetch(url).then(function (value) {
+        return value.json();
     });
 }
 function getContinent(continentId) {
-    return __awaiter(this, void 0, void 0, function () {
-        var url;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    url = restEndpoint + "continents/info?continent_id=" + Math.round(continentId);
-                    return [4, fetch(url).then(function (value) {
-                            return value.json();
-                        })];
-                case 1: return [2, (_a.sent())[0]];
-            }
-        });
+    var rounded = Math.round(continentId);
+    var url = restEndpoint + "continents/info?continent_id=" + rounded;
+    return fetch(url)
+        .then(function (value) {
+        return value.json();
+    })
+        .then(function (contInfoList) {
+        return contInfoList[0];
     });
 }
 var tileDir = "./img/map";

@@ -16,13 +16,10 @@ const restEndpoint = "http://127.0.0.1:5000/";
  * @param continentId ID of the continent for which to retrieve bases.
  * Will be rounded to an integer as part of the URL generation.
  */
-async function getBasesFromContinent(
-    continentId: number
-): Promise<Array<BaseInfo>> {
-    const url = `${restEndpoint}bases/info?continent_id=${Math.round(
-        continentId
-    )}`;
-    return await fetch(url).then((value) => {
+function getBasesFromContinent(continentId: number): Promise<Array<BaseInfo>> {
+    const rounded = Math.round(continentId);
+    const url = `${restEndpoint}bases/info?continent_id=${rounded}`;
+    return fetch(url).then((value) => {
         return (value.json() as unknown) as Array<BaseInfo>;
     });
 }
@@ -32,13 +29,14 @@ async function getBasesFromContinent(
  * @param continentId ID of the continent to retrieve. Will be rounded
  * to an integer as part of the URL generation.
  */
-async function getContinent(continentId: number): Promise<ContinentInfo> {
-    const url = `${restEndpoint}continents/info?continent_id=${Math.round(
-        continentId
-    )}`;
-    return (
-        await fetch(url).then((value) => {
+function getContinent(continentId: number): Promise<ContinentInfo> {
+    const rounded = Math.round(continentId);
+    const url = `${restEndpoint}continents/info?continent_id=${rounded}`;
+    return fetch(url)
+        .then((value) => {
             return (value.json() as unknown) as Array<ContinentInfo>;
         })
-    )[0];
+        .then((contInfoList) => {
+            return contInfoList[0];
+        });
 }
