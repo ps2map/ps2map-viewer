@@ -67,12 +67,12 @@ class MapRenderer {
 
     /**
      * Attach a checkbox to a map layer to control its visibility.
-     * @param layer_id DOM ID of the layer to control
-     * @param checkbox_id DOM ID of the checkbox
+     * @param layerId DOM ID of the layer to control
+     * @param checkboxId DOM ID of the checkbox
      */
-    public layerVisibilityHook(layer_id: string, checkbox_id: string): void {
-        const layer = <HTMLDivElement>document.getElementById(layer_id);
-        const checkbox = <HTMLInputElement>document.getElementById(checkbox_id);
+    public layerVisibilityHook(layerId: string, checkboxId: string): void {
+        const layer = <HTMLDivElement>document.getElementById(layerId);
+        const checkbox = <HTMLInputElement>document.getElementById(checkboxId);
         checkbox.addEventListener("click", function (): void {
             layer.style.visibility = checkbox.checked ? "visible" : "hidden";
         });
@@ -238,15 +238,15 @@ class MapRenderer {
     /**
      * Return the path to a given map tile.
      *
-     * `tile_x` and `tile_y` will be truncated to integers.
-     * @param continent The base name of the map, e.g. "amerish"
+     * `tileX` and `tileY` will be truncated to integers.
+     * @param tileSet The base name of the map, e.g. "amerish"
      * @param lod The level of detail to load
-     * @param tile_x Map tile X coordinate
-     * @param tile_y Map tile Y coordinate
+     * @param tileX Map tile X coordinate
+     * @param tileY Map tile Y coordinate
      * @returns File path to the map tile
      */
-    private getMapTilePath(continent: string, lod: MapTileLod, tile_x: number, tile_y: number): string {
-        return `${mapTextureDir}/${continent}/lod${lod}/lod${lod}_${Math.round(tile_x)}_${Math.round(tile_y)}.png`;
+    private getMapTilePath(tileSet: string, lod: MapTileLod, tileX: number, tileY: number): string {
+        return `${mapTextureDir}/${tileSet}/lod${lod}/lod${lod}_${Math.round(tileX)}_${Math.round(tileY)}.png`;
     }
 
     /**

@@ -27,7 +27,7 @@ function cycleFactionColour(event) {
         }
     }
 }
-var rest_endpoint = "http://127.0.0.1:5000/";
+var restEndpoint = "http://127.0.0.1:5000/";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -64,13 +64,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-function getBaseInfo(continent_id) {
+function getBaseInfo(continentId) {
     return __awaiter(this, void 0, void 0, function () {
         var url;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    url = rest_endpoint + ("bases/info?continent_id=" + continent_id);
+                    url = restEndpoint + ("bases/info?continent_id=" + continentId);
                     return [4, fetch(url).then(function (value) {
                             return value.json();
                         })];
@@ -79,13 +79,13 @@ function getBaseInfo(continent_id) {
         });
     });
 }
-function getContinentInfo(continent_id) {
+function getContinentInfo(continentId) {
     return __awaiter(this, void 0, void 0, function () {
         var url;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    url = rest_endpoint + "continents/info?continent_id=" + continent_id;
+                    url = restEndpoint + "continents/info?continent_id=" + continentId;
                     return [4, fetch(url).then(function (value) {
                             return value.json();
                         })];
@@ -121,9 +121,9 @@ var MapRenderer = (function () {
         map.addEventListener("wheel", this.mapZoomCallback.bind(this), { "passive": false });
         map.addEventListener("mousedown", this.mapPan.bind(this));
     }
-    MapRenderer.prototype.layerVisibilityHook = function (layer_id, checkbox_id) {
-        var layer = document.getElementById(layer_id);
-        var checkbox = document.getElementById(checkbox_id);
+    MapRenderer.prototype.layerVisibilityHook = function (layerId, checkboxId) {
+        var layer = document.getElementById(layerId);
+        var checkbox = document.getElementById(checkboxId);
         checkbox.addEventListener("click", function () {
             layer.style.visibility = checkbox.checked ? "visible" : "hidden";
         });
@@ -270,8 +270,8 @@ var MapRenderer = (function () {
         mapBaseNameLayer.innerHTML = "";
         this.setBaseNames(mapBaseNameLayer, 6);
     };
-    MapRenderer.prototype.getMapTilePath = function (continent, lod, tile_x, tile_y) {
-        return mapTextureDir + "/" + continent + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
+    MapRenderer.prototype.getMapTilePath = function (tileSet, lod, tileX, tileY) {
+        return mapTextureDir + "/" + tileSet + "/lod" + lod + "/lod" + lod + "_" + Math.round(tileX) + "_" + Math.round(tileY) + ".png";
     };
     MapRenderer.prototype.getLodForZoomLevel = function (zoomLevel) {
         if (zoomLevel >= 8) {
