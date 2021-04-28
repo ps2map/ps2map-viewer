@@ -389,6 +389,37 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var BaseNameLayer = (function (_super) {
+    __extends(BaseNameLayer, _super);
+    function BaseNameLayer() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    BaseNameLayer.prototype.setContinent = function (continentId) {
+        var _this = this;
+        var bases = getBasesFromContinent(continentId);
+        bases.then(function (bases) {
+            var elements = [];
+            bases.forEach(function (base) {
+                var container = document.createElement("div");
+                var offsetX = (4096 + base.map_pos[0]) / 81.92;
+                var offsetY = (4096 + base.map_pos[1]) / 81.92;
+                container.style.left = offsetX + "%";
+                container.style.bottom = offsetY + "%";
+                var icon = document.createElement("object");
+                icon.setAttribute("data", "img/icons/warp-gate.svg");
+                icon.setAttribute("type", "image/svg+xml");
+                container.appendChild(icon);
+                var name = document.createElement("span");
+                name.innerHTML = base.name;
+                container.appendChild(name);
+                elements.push(container);
+            });
+            _this.clear();
+            elements.forEach(function (element) { return _this.layer.appendChild(element); });
+        });
+    };
+    return BaseNameLayer;
+}(MapLayer));
 var HexLayer = (function (_super) {
     __extends(HexLayer, _super);
     function HexLayer(layer, initialContinentId) {
