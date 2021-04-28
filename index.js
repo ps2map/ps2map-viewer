@@ -239,10 +239,14 @@ var MapRenderer = (function () {
                         bases = _a.sent();
                         bases.forEach(function (base) {
                             var container = document.createElement("div");
-                            var offsetX = (4120 + base.map_pos[0]) * _this.zoom / 9;
-                            var offsetY = (4200 + base.map_pos[1]) * _this.zoom / 9;
+                            var offsetX = (4096 + base.map_pos[0]) * _this.zoom / 8.8;
+                            var offsetY = (4096 + base.map_pos[1]) * _this.zoom / 8.8;
                             container.style.left = offsetX + "px";
                             container.style.bottom = offsetY + "px";
+                            var icon = document.createElement("object");
+                            icon.setAttribute("data", "img/icons/warp-gate.svg");
+                            icon.setAttribute("type", "image/svg+xml");
+                            container.appendChild(icon);
                             var name = document.createElement("span");
                             name.innerHTML = base.name;
                             container.appendChild(name);

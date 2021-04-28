@@ -196,13 +196,16 @@ class MapRenderer {
 
     private async setBaseNames(layer: HTMLDivElement, continent: number): Promise<void> {
         const bases = await getBaseInfo(continent);
-
         bases.forEach(base => {
             let container = document.createElement("div");
-            let offsetX = (4120 + base.map_pos[0]) * this.zoom / 9;
-            let offsetY = (4200 + base.map_pos[1]) * this.zoom / 9;
+            let offsetX = (4096 + base.map_pos[0]) * this.zoom / 8.8;
+            let offsetY = (4096 + base.map_pos[1]) * this.zoom / 8.8;
             container.style.left = `${offsetX}px`;
             container.style.bottom = `${offsetY}px`;
+            let icon = document.createElement("object");
+            icon.setAttribute("data", "img/icons/warp-gate.svg");
+            icon.setAttribute("type", "image/svg+xml");
+            container.appendChild(icon);
             let name = document.createElement("span");
             name.innerHTML = base.name;
             container.appendChild(name);
