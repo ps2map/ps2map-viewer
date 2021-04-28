@@ -14,9 +14,9 @@ function onDOMLoaded(): void {
         document.getElementById("mapTextureLayer")
     );
     const tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
-    const baseNameLayerDiv = <HTMLDivElement>(
-        document.getElementById("mapBaseNameLayer")
-    );
+    // const baseNameLayerDiv = <HTMLDivElement>(
+    //     document.getElementById("mapBaseNameLayer")
+    // );
     // const baseNameLayer = new BaseNameLayer(
     //     baseNameLayerDiv,
     //     initialContinentId

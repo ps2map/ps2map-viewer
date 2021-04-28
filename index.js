@@ -312,7 +312,6 @@ function onDOMLoaded() {
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
     var tileLayerDiv = (document.getElementById("mapTextureLayer"));
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
-    var baseNameLayerDiv = (document.getElementById("mapBaseNameLayer"));
     var showHideHexLayer = (document.getElementById("showHexes"));
     showHideHexLayer.addEventListener("click", function () {
         return hexLayer.setVisibility(showHideHexLayer.checked);
