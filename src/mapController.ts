@@ -17,6 +17,7 @@ class MapController {
     private continentId: number;
     readonly map: HTMLDivElement;
     readonly viewport: HTMLDivElement;
+    public onZoom: Array<(newZoomLevel: number) => void> = [];
 
     constructor(
         map: HTMLDivElement,
@@ -28,6 +29,9 @@ class MapController {
         this.viewport = viewport;
         this.zoomLevel = 1.0;
         map.addEventListener("mousedown", this.mousePan.bind(this));
+        map.addEventListener("wheel", this.mouseWheel.bind(this), {
+            passive: false,
+        });
     }
 
     /**
@@ -61,5 +65,35 @@ class MapController {
         }
         map.addEventListener("mousemove", mouseDrag);
         document.addEventListener("mouseup", mouseUp);
+    }
+
+    /**
+     * Constraint the zoom level within the valid range.
+     */
+    private constrainZoom(): void {
+        if (this.zoomLevel < 1.0) {
+            this.zoomLevel = 1.0;
+        } else if (this.zoomLevel > 12.0) {
+            this.zoomLevel = 12.0;
+        }
+    }
+
+    /**
+     * Event listener callback for mouse scroll.
+     */
+    private mouseWheel(evt: WheelEvent): void {
+        evt.preventDefault(); // Prevent vertical scrolling
+        this.zoomLevel -= 0.005 * evt.deltaY;
+        this.constrainZoom();
+        this.zoomDispatch();
+    }
+
+    /**
+     * Dispatch the current zoom level to all registered callbacks.
+     */
+    private zoomDispatch(): void {
+        this.onZoom.forEach((callback) => {
+            callback(Math.round(this.zoomLevel));
+        });
     }
 }

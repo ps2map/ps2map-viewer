@@ -53,13 +53,20 @@ class TileLayer extends MapLayer {
         } else {
             newLod = 3;
         }
-        // Update CSS grids
+        this.lod = newLod;
+        // Update CSS grid size
         const numTiles = this.getNumTiles(newLod);
         document.documentElement.style.setProperty(
             "--MAP-TILES-PER-AXIS",
             numTiles.toString()
         );
-        // Update tile size and LOD
+        // Update CSS texture size
+        document.documentElement.style.setProperty(
+            "--MAP-SIZE",
+            `calc(min(100vh, 100vw) * ${zoomLevel})`
+        );
+        // Redraw map tiles
+        this.updateTiles();
     }
 
     /**

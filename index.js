@@ -258,8 +258,11 @@ var TileLayer = (function (_super) {
         else {
             newLod = 3;
         }
+        this.lod = newLod;
         var numTiles = this.getNumTiles(newLod);
         document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
+        document.documentElement.style.setProperty("--MAP-SIZE", "calc(min(100vh, 100vw) * " + zoomLevel + ")");
+        this.updateTiles();
     };
     TileLayer.prototype.setTileSet = function (continentId) {
         return __awaiter(this, void 0, void 0, function () {
@@ -325,7 +328,8 @@ function onDOMLoaded() {
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
     var map = document.getElementById("map");
     var viewport = document.getElementById("viewport");
-    new MapController(map, viewport, initialContinentId);
+    var controller = new MapController(map, viewport, initialContinentId);
+    controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
     var showHideHexLayer = (document.getElementById("showHexes"));
     showHideHexLayer.addEventListener("click", function () {
         return hexLayer.setVisibility(showHideHexLayer.checked);
@@ -344,11 +348,15 @@ function onDOMLoaded() {
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
 var MapController = (function () {
     function MapController(map, viewport, initialContinentId) {
+        this.onZoom = [];
         this.continentId = initialContinentId;
         this.map = map;
         this.viewport = viewport;
         this.zoomLevel = 1.0;
         map.addEventListener("mousedown", this.mousePan.bind(this));
+        map.addEventListener("wheel", this.mouseWheel.bind(this), {
+            passive: false
+        });
     }
     MapController.prototype.mousePan = function (evtDown) {
         if (evtDown.button != 0) {
@@ -370,6 +378,26 @@ var MapController = (function () {
         }
         map.addEventListener("mousemove", mouseDrag);
         document.addEventListener("mouseup", mouseUp);
+    };
+    MapController.prototype.constrainZoom = function () {
+        if (this.zoomLevel < 1.0) {
+            this.zoomLevel = 1.0;
+        }
+        else if (this.zoomLevel > 12.0) {
+            this.zoomLevel = 12.0;
+        }
+    };
+    MapController.prototype.mouseWheel = function (evt) {
+        evt.preventDefault();
+        this.zoomLevel -= 0.005 * evt.deltaY;
+        this.constrainZoom();
+        this.zoomDispatch();
+    };
+    MapController.prototype.zoomDispatch = function () {
+        var _this = this;
+        this.onZoom.forEach(function (callback) {
+            callback(Math.round(_this.zoomLevel));
+        });
     };
     return MapController;
 }());
