@@ -309,6 +309,15 @@ function onDOMLoaded() {
     renderer.layerVisibilityHook("mapBaseNameLayer", "showBaseNames");
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
+function elementFromString(html) {
+    var factory = document.createElement("template");
+    factory.innerHTML = html.trim();
+    var child = factory.content.firstChild;
+    if (child == null) {
+        throw "given string did not result in a valid DOM object";
+    }
+    return child;
+}
 var restEndpoint = "http://127.0.0.1:5000/";
 function getBasesFromContinent(continentId) {
     return __awaiter(this, void 0, void 0, function () {
@@ -340,3 +349,78 @@ function getContinent(continentId) {
         });
     });
 }
+var MapLayer = (function () {
+    function MapLayer(layer, initialContinentId) {
+        this.continentId = 0;
+        this.layer = layer;
+        this.setContinent(initialContinentId);
+    }
+    MapLayer.prototype.setContinent = function (continentId) {
+        if (this.continentId != continentId) {
+            return;
+        }
+        this.continentId = continentId;
+    };
+    MapLayer.prototype.setVisibility = function (visible) {
+        this.layer.style.visibility = visible ? "visible" : "hidden";
+    };
+    MapLayer.prototype.onZoom = function (zoomLevel) { };
+    MapLayer.prototype.clear = function () {
+        var numChildren = this.layer.children.length;
+        for (var i = numChildren - 1; i >= 0; i--) {
+            var child = this.layer.children[i];
+            this.layer.removeChild(child);
+        }
+    };
+    return MapLayer;
+}());
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var HexLayer = (function (_super) {
+    __extends(HexLayer, _super);
+    function HexLayer(layer, initialContinentId) {
+        return _super.call(this, layer, initialContinentId) || this;
+    }
+    HexLayer.prototype.setContinent = function (continentId) {
+        var _this = this;
+        if (this.continentId == continentId) {
+            return;
+        }
+        this.continentId = continentId;
+        var outlines = this.getBaseHexes(continentId);
+        outlines.then(function (elements) {
+            _this.clear();
+            elements.forEach(function (child) { return _this.layer.appendChild(child); });
+        });
+    };
+    HexLayer.prototype.getBaseHexes = function (continentId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var cont, elements;
+            return __generator(this, function (_a) {
+                cont = getContinent(continentId);
+                elements = cont.then(function (contInfo) {
+                    var svgs = [];
+                    for (var key in contInfo.map_base_svgs) {
+                        svgs.push(elementFromString(contInfo.map_base_svgs[key]));
+                    }
+                    return svgs;
+                });
+                return [2, elements];
+            });
+        });
+    };
+    return HexLayer;
+}(MapLayer));
