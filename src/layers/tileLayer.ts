@@ -1,6 +1,6 @@
 /**
  * Tile-based map layer.
- * 
+ *
  * This handles the multi-LOD (level of detail) map texture tiles used
  * for the raster map textures.
  */
@@ -10,7 +10,6 @@
 
 const tileDir = "./img/map";
 const mapBaseRes = 8192;
-
 
 class TileLayer extends MapLayer {
     private lod: number;
@@ -36,28 +35,28 @@ class TileLayer extends MapLayer {
         let newLod = 0;
         if (zoomLevel >= 8) {
             newLod = 0;
-        }
-        else if (zoomLevel >= 4) {
+        } else if (zoomLevel >= 4) {
             newLod = 1;
-        }
-        else if (zoomLevel >= 2) {
+        } else if (zoomLevel >= 2) {
             newLod = 2;
-        }
-        else {
+        } else {
             newLod = 3;
         }
         // Update CSS grids
         const numTiles = this.getNumTiles(newLod);
-        document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
+        document.documentElement.style.setProperty(
+            "--MAP-TILES-PER-AXIS",
+            numTiles.toString()
+        );
         // Update tile size and LOD
     }
 
     private async setTileSet(continentId: number): Promise<void> {
         const cont = getContinent(continentId);
-        cont.then(contInfo => {
+        cont.then((contInfo) => {
             this.tileSet = contInfo.map_tileset;
             this.updateTiles();
-        })
+        });
     }
 
     private updateTiles(): void {
@@ -92,7 +91,7 @@ class TileLayer extends MapLayer {
             }
         }
         this.clear();
-        newTiles.forEach(tile => this.layer.appendChild(tile));
+        newTiles.forEach((tile) => this.layer.appendChild(tile));
     }
 
     /**
@@ -117,7 +116,14 @@ class TileLayer extends MapLayer {
      * @param tileY Map tile Y coordinate
      * @returns File path to the map tile
      */
-    private getMapTilePath(tileName: string, lod: number, tileX: number, tileY: number): string {
-        return `${tileDir}/${tileName}/lod${lod}/lod${lod}_${Math.round(tileX)}_${Math.round(tileY)}.png`;
+    private getMapTilePath(
+        tileName: string,
+        lod: number,
+        tileX: number,
+        tileY: number
+    ): string {
+        return `${tileDir}/${tileName}/lod${lod}/lod${lod}_${Math.round(
+            tileX
+        )}_${Math.round(tileY)}.png`;
     }
 }

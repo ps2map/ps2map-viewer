@@ -1,10 +1,9 @@
 /**
  * Shared base classes for map layers.
- * 
+ *
  * These define shared hooks and attributes allowing managemenet of
  * layers by the UI.
  */
-
 
 class MapLayer {
     readonly layer: HTMLDivElement;
@@ -34,7 +33,7 @@ class MapLayer {
      * does nothing.
      * @param zoomLevel The new zoom level to use
      */
-    public onZoom(zoomLevel: number): void { }
+    public onZoom(zoomLevel: number): void {}
 
     /* Utilities */
 

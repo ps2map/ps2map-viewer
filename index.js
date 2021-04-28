@@ -1,9 +1,17 @@
 "use strict";
 var ownershipColorsCSS = [
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NULL").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NC").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-NULL")
+        .trim(),
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-NC")
+        .trim(),
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-TR")
+        .trim(),
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-VS")
+        .trim(),
 ];
 function cycleFactionColour(event) {
     if (!(event.target instanceof SVGElement)) {
@@ -305,8 +313,12 @@ function onDOMLoaded() {
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
     var baseNameLayerDiv = (document.getElementById("mapBaseNameLayer"));
     var showHideHexLayer = (document.getElementById("showHexes"));
-    showHideHexLayer.addEventListener("click", function () { return hexLayer.setVisibility(showHideHexLayer.checked); });
+    showHideHexLayer.addEventListener("click", function () {
+        return hexLayer.setVisibility(showHideHexLayer.checked);
+    });
     var showHideTexturelayer = (document.getElementById("showMapTexture"));
-    showHideTexturelayer.addEventListener("click", function () { return tileLayer.setVisibility(showHideTexturelayer.checked); });
+    showHideTexturelayer.addEventListener("click", function () {
+        return tileLayer.setVisibility(showHideTexturelayer.checked);
+    });
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);

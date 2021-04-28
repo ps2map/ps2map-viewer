@@ -1,11 +1,18 @@
 // Faction colours
 const ownershipColorsCSS = [
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NULL").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NC").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-NULL")
+        .trim(),
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-NC")
+        .trim(),
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-TR")
+        .trim(),
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-VS")
+        .trim(),
 ];
-
 
 /**
  * Cycle the faction colours for a given SVG polygon.
@@ -29,8 +36,7 @@ function cycleFactionColour(event: MouseEvent): void {
         if (event.target.style.fill == ownershipColorsCSS[i]) {
             if (i + 1 < ownershipColorsCSS.length) {
                 event.target.style.fill = ownershipColorsCSS[i + 1];
-            }
-            else {
+            } else {
                 event.target.style.fill = ownershipColorsCSS[0];
             }
             break;

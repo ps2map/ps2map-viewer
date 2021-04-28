@@ -10,9 +10,13 @@ function onDOMLoaded(): void {
 
     const hexLayerDiv = <HTMLDivElement>document.getElementById("mapHexLayer");
     const hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
-    const tileLayerDiv = <HTMLDivElement>(document.getElementById("mapTextureLayer"));
+    const tileLayerDiv = <HTMLDivElement>(
+        document.getElementById("mapTextureLayer")
+    );
     const tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
-    const baseNameLayerDiv = <HTMLDivElement>(document.getElementById("mapBaseNameLayer"));
+    const baseNameLayerDiv = <HTMLDivElement>(
+        document.getElementById("mapBaseNameLayer")
+    );
     // const baseNameLayer = new BaseNameLayer(
     //     baseNameLayerDiv,
     //     initialContinentId
@@ -20,10 +24,18 @@ function onDOMLoaded(): void {
 
     // Hook up map layer visibility toggles
 
-    const showHideHexLayer = <HTMLInputElement>(document.getElementById("showHexes"));
-    showHideHexLayer.addEventListener("click", () => hexLayer.setVisibility(showHideHexLayer.checked));
-    const showHideTexturelayer = <HTMLInputElement>(document.getElementById("showMapTexture"));
-    showHideTexturelayer.addEventListener("click", () => tileLayer.setVisibility(showHideTexturelayer.checked));
+    const showHideHexLayer = <HTMLInputElement>(
+        document.getElementById("showHexes")
+    );
+    showHideHexLayer.addEventListener("click", () =>
+        hexLayer.setVisibility(showHideHexLayer.checked)
+    );
+    const showHideTexturelayer = <HTMLInputElement>(
+        document.getElementById("showMapTexture")
+    );
+    showHideTexturelayer.addEventListener("click", () =>
+        tileLayer.setVisibility(showHideTexturelayer.checked)
+    );
     // const showHideNameLayer = <HTMLInputElement>(
     //     document.getElementById("showBaseNames")
     // );

@@ -8,20 +8,22 @@
 
 /// <reference path="./payloads.ts" />
 
-
 // API endpoint to access
 const restEndpoint = "http://127.0.0.1:5000/";
-
 
 /**
  * Return an array of BaseInfo payloads for the given continent.
  * @param continentId ID of the continent for which to retrieve bases.
  * Will be rounded to an integer as part of the URL generation.
  */
-async function getBasesFromContinent(continentId: number): Promise<Array<BaseInfo>> {
-    const url = `${restEndpoint}bases/info?continent_id=${Math.round(continentId)}`;
+async function getBasesFromContinent(
+    continentId: number
+): Promise<Array<BaseInfo>> {
+    const url = `${restEndpoint}bases/info?continent_id=${Math.round(
+        continentId
+    )}`;
     return await fetch(url).then((value) => {
-        return (value.json() as unknown as Array<BaseInfo>);
+        return (value.json() as unknown) as Array<BaseInfo>;
     });
 }
 
@@ -31,8 +33,12 @@ async function getBasesFromContinent(continentId: number): Promise<Array<BaseInf
  * to an integer as part of the URL generation.
  */
 async function getContinent(continentId: number): Promise<ContinentInfo> {
-    const url = `${restEndpoint}continents/info?continent_id=${Math.round(continentId)}`;
-    return (await fetch(url).then((value) => {
-        return (value.json() as unknown as Array<ContinentInfo>);
-    }))[0];
+    const url = `${restEndpoint}continents/info?continent_id=${Math.round(
+        continentId
+    )}`;
+    return (
+        await fetch(url).then((value) => {
+            return (value.json() as unknown) as Array<ContinentInfo>;
+        })
+    )[0];
 }

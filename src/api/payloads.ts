@@ -95,5 +95,5 @@ interface ServerStatus {
  * Mapping of string base IDs to their outline SVG.
  */
 interface BaseSvgMapping {
-    [key: string]: string
+    [key: string]: string;
 }
