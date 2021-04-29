@@ -225,6 +225,9 @@ var HexLayer = (function (_super) {
     HexLayer.prototype.registerHoverCallback = function (element) {
         var _this = this;
         element.addEventListener("mouseover", function (evt) {
+            if (evt.buttons % 4 > 0) {
+                return;
+            }
             _this.baseHoverCallback(parseInt(element.id));
         });
     };

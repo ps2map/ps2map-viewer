@@ -77,6 +77,10 @@ class HexLayer extends MapLayer {
      */
     private registerHoverCallback(element: SVGElement): void {
         element.addEventListener("mouseover", (evt) => {
+            // Only call hover callbacks if no mouse button is pressed
+            if (evt.buttons % 4 > 0) {
+                return;
+            }
             this.baseHoverCallback(parseInt(element.id));
         });
     }
