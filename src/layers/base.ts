@@ -43,7 +43,7 @@ class MapLayer {
      * @param visible The new visibility state of the layer.
      */
     public setVisibility(visible: boolean): void {
-        this.layer.style.visibility = visible ? "visible" : "hidden";
+        this.layer.style.display = visible ? "grid" : "none";
     }
 
     /**

@@ -87,7 +87,7 @@ var MapLayer = (function () {
         this.continentId = continentId;
     };
     MapLayer.prototype.setVisibility = function (visible) {
-        this.layer.style.visibility = visible ? "visible" : "hidden";
+        this.layer.style.display = visible ? "grid" : "none";
     };
     MapLayer.prototype.onZoom = function (zoomLevel) { };
     MapLayer.prototype.clear = function () {
