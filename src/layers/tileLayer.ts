@@ -8,20 +8,25 @@
 /// <reference path="../api/getters.ts" />
 /// <reference path="./base.ts" />
 
-const tileDir = "./img/map";
 const mapBaseRes = 8192;
 
 /**
  * MapLayer subclass used to draw the terrain textures on the map.
  */
 class TileLayer extends MapLayer {
+    readonly tileBaseUrl: string;
     private lod: number;
     private tileSet: string;
 
-    constructor(layer: HTMLDivElement, initialContinentId: number) {
+    constructor(
+        layer: HTMLDivElement,
+        initialContinentId: number,
+        tileBaseUrl: string
+    ) {
         super(layer, initialContinentId);
         this.lod = 3;
         this.tileSet = "bogus";
+        this.tileBaseUrl = tileBaseUrl;
     }
 
     /**
@@ -91,7 +96,12 @@ class TileLayer extends MapLayer {
         const numTiles = this.getNumTiles(this.lod);
         // Special case for single-tile map LOD
         if (numTiles <= 1) {
-            const tile = this.getMapTilePath(this.tileSet, this.lod, 0, 0);
+            const tile = this.getMapTilePath(
+                this.tileSet.toLowerCase(),
+                this.lod,
+                0,
+                0
+            );
             const str = `<div style="background-image: url(${tile})"></div>`;
             const element = elementFromString<HTMLDivElement>(str);
             this.clear();
@@ -112,7 +122,12 @@ class TileLayer extends MapLayer {
                     continue;
                 }
                 // Create a new div with the given tile as the background image
-                const tile = this.getMapTilePath(this.tileSet, this.lod, x, y);
+                const tile = this.getMapTilePath(
+                    this.tileSet.toLowerCase(),
+                    this.lod,
+                    x,
+                    y
+                );
                 const div = document.createElement("div");
                 div.style.backgroundImage = `url(${tile})`;
                 newTiles.push(div);
@@ -148,8 +163,6 @@ class TileLayer extends MapLayer {
         tileX: number,
         tileY: number
     ): string {
-        const dir = `${tileDir}/${tileName}/lod${lod}/`;
-        const name = `lod${lod}_${Math.round(tileX)}_${Math.round(tileY)}.png`;
-        return dir + name;
+        return this.tileBaseUrl + `${tileName}/lod${lod}_${tileX}_${tileY}.png`;
     }
 }

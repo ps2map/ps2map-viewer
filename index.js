@@ -233,14 +233,14 @@ var HexLayer = (function (_super) {
     };
     return HexLayer;
 }(MapLayer));
-var tileDir = "./img/map";
 var mapBaseRes = 8192;
 var TileLayer = (function (_super) {
     __extends(TileLayer, _super);
-    function TileLayer(layer, initialContinentId) {
+    function TileLayer(layer, initialContinentId, tileBaseUrl) {
         var _this = _super.call(this, layer, initialContinentId) || this;
         _this.lod = 3;
         _this.tileSet = "bogus";
+        _this.tileBaseUrl = tileBaseUrl;
         return _this;
     }
     TileLayer.prototype.setContinent = function (continentId) {
@@ -288,7 +288,7 @@ var TileLayer = (function (_super) {
         var _this = this;
         var numTiles = this.getNumTiles(this.lod);
         if (numTiles <= 1) {
-            var tile = this.getMapTilePath(this.tileSet, this.lod, 0, 0);
+            var tile = this.getMapTilePath(this.tileSet.toLowerCase(), this.lod, 0, 0);
             var str = "<div style=\"background-image: url(" + tile + ")\"></div>";
             var element = elementFromString(str);
             this.clear();
@@ -304,7 +304,7 @@ var TileLayer = (function (_super) {
                 if (x == 0) {
                     continue;
                 }
-                var tile = this.getMapTilePath(this.tileSet, this.lod, x, y);
+                var tile = this.getMapTilePath(this.tileSet.toLowerCase(), this.lod, x, y);
                 var div = document.createElement("div");
                 div.style.backgroundImage = "url(" + tile + ")";
                 newTiles.push(div);
@@ -320,9 +320,7 @@ var TileLayer = (function (_super) {
         return Math.pow(2, (3 - lod));
     };
     TileLayer.prototype.getMapTilePath = function (tileName, lod, tileX, tileY) {
-        var dir = tileDir + "/" + tileName + "/lod" + lod + "/";
-        var name = "lod" + lod + "_" + Math.round(tileX) + "_" + Math.round(tileY) + ".png";
-        return dir + name;
+        return this.tileBaseUrl + (tileName + "/lod" + lod + "_" + tileX + "_" + tileY + ".png");
     };
     return TileLayer;
 }(MapLayer));
@@ -331,7 +329,8 @@ function onDOMLoaded() {
     var hexLayerDiv = document.getElementById("mapHexLayer");
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
     var tileLayerDiv = (document.getElementById("mapTextureLayer"));
-    var tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
+    var tileUrl = "http://127.0.0.1:5000/static/map/";
+    var tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
     var baseNameLayerDiv = (document.getElementById("mapBaseNameLayer"));
     var baseNameLayer = new BaseNameLayer(baseNameLayerDiv, initialContinentId);
     var map = document.getElementById("map");

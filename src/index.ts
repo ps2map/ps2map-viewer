@@ -16,7 +16,8 @@ function onDOMLoaded(): void {
     const tileLayerDiv = <HTMLDivElement>(
         document.getElementById("mapTextureLayer")
     );
-    const tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
+    const tileUrl = "http://127.0.0.1:5000/static/map/";
+    const tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
     const baseNameLayerDiv = <HTMLDivElement>(
         document.getElementById("mapBaseNameLayer")
     );
