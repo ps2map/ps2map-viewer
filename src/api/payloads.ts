@@ -44,7 +44,7 @@ interface ContinentStatus {
     readonly id: number;
     readonly server_id: number;
     readonly population: Population;
-    readonly status: string;
+    readonly status: "open" | "locked";
     readonly locked_by?: number;
     readonly alert_active: boolean;
     readonly alert_started?: number;
@@ -78,7 +78,7 @@ interface OutfitInfo {
 interface ServerInfo {
     readonly id: number; // Integer
     readonly name: string;
-    readonly region: string;
+    readonly region: "Asia" | "EU" | "US West" | "US East";
 }
 
 /**
@@ -86,7 +86,7 @@ interface ServerInfo {
  */
 interface ServerStatus {
     readonly id: number;
-    readonly status: string;
+    readonly status: "online" | "locked";
     readonly population: Population;
     readonly open_continents: Array<number>;
 }
