@@ -66,6 +66,30 @@ function zoomMap(event) {
     }
     this.style.transform = "scale(" + zoomLevel + ")";
 }
+var ownershipColorsCSS = [
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NULL").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NC").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
+];
+window.addEventListener("load", function () {
+    var map = document.getElementById("map");
+    map.addEventListener("mousedown", mapPanStart);
+    map.addEventListener("wheel", zoomMap);
+    var textureBtn = document.getElementById("showMapTexture");
+    var textureLayer = document.getElementById("mapTextureLayer");
+    textureBtn.addEventListener("click", updateMapLayerVisibility(textureBtn, textureLayer));
+    var hexesBtn = document.getElementById("showHexes");
+    var hexesLayer = document.getElementById("mapHexLayer");
+    hexesBtn.addEventListener("click", updateMapLayerVisibility(hexesBtn, hexesLayer));
+    hexesLayer.innerHTML = svg_strings;
+    document.addEventListener("click", svgClickFilter);
+});
+function updateMapLayerVisibility(checkbox, layer) {
+    return function () {
+        layer.style.display = checkbox.checked ? "block" : "none";
+    };
+}
 function svgClickFilter(event) {
     if (!(event.target instanceof SVGElement)) {
         return;
