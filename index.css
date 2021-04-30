@@ -86,3 +86,8 @@ aside th {
     stroke: #FFFFFF;
     z-index: 5000 !important;
 }
+#mapTextureLayer img {
+    /* Hacky offsets due to these not being positioned */
+    margin-bottom: -4px;
+    margin-right: -1px;
+}

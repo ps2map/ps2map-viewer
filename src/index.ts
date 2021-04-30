@@ -26,6 +26,10 @@ window.addEventListener("DOMContentLoaded", function (): void {
 
     // Register event listeners for base SVGs (the callback filters for SVGs)
     document.addEventListener("click", svgClickFilter);
+
+    const viewport = <HTMLDivElement>document.getElementById("viewport");
+    const mapContainer = <HTMLDivElement>document.getElementById("mapTextureLayer");
+    new MapRenderer(viewport, mapContainer);
 });
 
 

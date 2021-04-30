@@ -84,6 +84,9 @@ window.addEventListener("DOMContentLoaded", function () {
     hexesBtn.addEventListener("click", updateMapLayerVisibility(hexesBtn, hexesLayer));
     hexesLayer.innerHTML = svg_strings;
     document.addEventListener("click", svgClickFilter);
+    var viewport = document.getElementById("viewport");
+    var mapContainer = document.getElementById("mapTextureLayer");
+    new MapRenderer(viewport, mapContainer);
 });
 function updateMapLayerVisibility(checkbox, layer) {
     return function () {
@@ -112,3 +115,47 @@ function cycleFactionColour(base, event) {
         }
     }
 }
+var map_texture_dir = './img/map';
+var MapTileLOD;
+(function (MapTileLOD) {
+    MapTileLOD[MapTileLOD["LOD0"] = 0] = "LOD0";
+    MapTileLOD[MapTileLOD["LOD1"] = 1] = "LOD1";
+    MapTileLOD[MapTileLOD["LOD2"] = 2] = "LOD2";
+    MapTileLOD[MapTileLOD["LOD3"] = 3] = "LOD3";
+})(MapTileLOD || (MapTileLOD = {}));
+var MapRenderer = (function () {
+    function MapRenderer(viewport, mapContainer) {
+        this.zoomLevel = 1.0;
+        this.viewport = viewport;
+        this.mapContainer = mapContainer;
+        console.log(this.getMapTilePath('amerish', MapTileLOD.LOD0, 2, -3.0));
+        for (var i = 4; i > -5; i--) {
+            if (i == 0) {
+                continue;
+            }
+            for (var j = -4; j < 5; j++) {
+                if (j == 0) {
+                    continue;
+                }
+                var tile = this.getMapTilePath('amerish', MapTileLOD.LOD0, j, i);
+                this.mapContainer.innerHTML += "<img src=\"" + tile + "\" onmousedown=\"return false;\" />";
+            }
+        }
+    }
+    MapRenderer.prototype.getMapTilePath = function (map, lod, tile_x, tile_y) {
+        return map_texture_dir + "/" + map + "/lod" + lod + "/lod" + lod + "_" + tile_x + "_" + tile_y + ".png";
+    };
+    MapRenderer.prototype.calculateTextureResolution = function () {
+        if (this.zoomLevel <= 0.2) {
+            return MapTileLOD.LOD3;
+        }
+        if (this.zoomLevel <= 0.5) {
+            return MapTileLOD.LOD2;
+        }
+        if (this.zoomLevel <= 0.9) {
+            return MapTileLOD.LOD1;
+        }
+        return MapTileLOD.LOD0;
+    };
+    return MapRenderer;
+}());
