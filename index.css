@@ -4,7 +4,7 @@
     --COLOR-FG-CAPPED-TR: rgb(150, 17, 0);
     --COLOR-FG-CAPPED-VS: rgb(97, 37, 151);
     --MAP-SIZE: min(100vh, 100vw);
-    --MAP-TILES-PER-AXIS: 8;
+    --MAP-TILES-PER-AXIS: 1;
 }
 
 html {

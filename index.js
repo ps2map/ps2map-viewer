@@ -47,7 +47,7 @@ var MapRenderer = (function () {
         this.continent = continent;
         this.zoom = this.minZoom;
         map.addEventListener("selectstart", this.preventSelection);
-        var lod = MapTileLod.LOD0;
+        var lod = this.getLodForZoomLevel(this.zoom);
         var mapTextureLayer = document.getElementById("mapTextureLayer");
         this.loadMapTiles(mapTextureLayer, continent, lod);
         var hexesLayer = document.getElementById("mapHexLayer");
@@ -83,10 +83,18 @@ var MapRenderer = (function () {
         enumerable: false,
         configurable: true
     });
+    MapRenderer.prototype.getNumTiles = function (lod) {
+        return Math.pow(2, (maxLod - lod));
+    };
     MapRenderer.prototype.loadMapTiles = function (layer, continent, lod) {
         if (lod === void 0) { lod = MapTileLod.LOD1; }
         layer.innerHTML = "";
-        var numTiles = Math.pow(2, (maxLod - lod));
+        var numTiles = this.getNumTiles(lod);
+        if (numTiles <= 1) {
+            var tile = this.getMapTilePath(continent, lod, 0, 0);
+            layer.innerHTML = "<div style=\"background-image: url(" + tile + ")\"></div>";
+            return;
+        }
         for (var y = numTiles / 2; y > -numTiles / 2 - 1; y--) {
             if (y == 0) {
                 continue;
@@ -107,9 +115,26 @@ var MapRenderer = (function () {
         this.zoom = zoomLevel;
         var newMapSize = Math.round(this.viewportMinorAxis * zoomLevel);
         document.documentElement.style.setProperty("--MAP-SIZE", newMapSize + "px");
+        var lod = this.getLodForZoomLevel(zoomLevel);
+        var numTiles = this.getNumTiles(lod);
+        var mapTextureLayer = document.getElementById("mapTextureLayer");
+        document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
+        this.loadMapTiles(mapTextureLayer, this.continent, lod);
     };
     MapRenderer.prototype.getMapTilePath = function (continent, lod, tile_x, tile_y) {
         return mapTextureDir + "/" + continent + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
+    };
+    MapRenderer.prototype.getLodForZoomLevel = function (zoomLevel) {
+        if (zoomLevel >= 8) {
+            return MapTileLod.LOD0;
+        }
+        if (zoomLevel >= 4) {
+            return MapTileLod.LOD1;
+        }
+        if (zoomLevel >= 2) {
+            return MapTileLod.LOD2;
+        }
+        return MapTileLod.LOD3;
     };
     MapRenderer.prototype.mapZoomCallback = function (event) {
         event.preventDefault();

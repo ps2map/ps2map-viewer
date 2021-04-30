@@ -53,7 +53,7 @@ class MapRenderer {
         map.addEventListener("selectstart", this.preventSelection);
 
         // hard-coded dummy LOD for now
-        const lod = MapTileLod.LOD0;
+        const lod = this.getLodForZoomLevel(this.zoom);
 
         // Load layers
         const mapTextureLayer = <HTMLDivElement>document.getElementById("mapTextureLayer");
@@ -108,6 +108,15 @@ class MapRenderer {
     }
 
     /**
+     * Return the number of map tiles for the given LOD level
+     * @param lod The map LOD
+     * @returns Bumber of tiles per axis for this LOD level
+     */
+    private getNumTiles(lod: MapTileLod): number {
+        return 2 ** (maxLod - lod);
+    }
+
+    /**
      * Clear an repopulate a layer with map tiles of the given zoom level.
      *
      * The given layer must use a properly set up CSS grid style for the
@@ -119,7 +128,13 @@ class MapRenderer {
     private loadMapTiles(layer: HTMLDivElement, continent: string, lod: MapTileLod = MapTileLod.LOD1): void {
         layer.innerHTML = "";
         // Number of tiles per axis for the current map lod
-        const numTiles = 2 ** (maxLod - lod);
+        const numTiles = this.getNumTiles(lod);
+        // Special case for single-tile map LOD
+        if (numTiles <= 1) {
+            let tile = this.getMapTilePath(continent, lod, 0, 0);
+            layer.innerHTML = `<div style="background-image: url(${tile})"></div>`;
+            return
+        }
         // Iterate rows
         for (let y = numTiles / 2; y > -numTiles / 2 - 1; y--) {
             // Skip 0 index as we have an even number of map tiles
@@ -158,6 +173,12 @@ class MapRenderer {
         this.zoom = zoomLevel;
         const newMapSize = Math.round(this.viewportMinorAxis * zoomLevel);
         document.documentElement.style.setProperty("--MAP-SIZE", `${newMapSize}px`)
+        // Update map textures
+        const lod = this.getLodForZoomLevel(zoomLevel)
+        const numTiles = this.getNumTiles(lod);
+        const mapTextureLayer = <HTMLDivElement>document.getElementById("mapTextureLayer");
+        document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
+        this.loadMapTiles(mapTextureLayer, this.continent, lod);
     }
 
     /**
@@ -172,6 +193,24 @@ class MapRenderer {
      */
     private getMapTilePath(continent: string, lod: MapTileLod, tile_x: number, tile_y: number): string {
         return `${mapTextureDir}/${continent}/lod${lod}/lod${lod}_${Math.round(tile_x)}_${Math.round(tile_y)}.png`;
+    }
+
+    /**
+     * Return the appropriate map tile LOD for the given zoom level
+     * @param zoomLevel The current zoom level
+     * @returns MapTileLod enum value for the given zoom level
+     */
+    private getLodForZoomLevel(zoomLevel: number): MapTileLod {
+        if (zoomLevel >= 8) {
+            return MapTileLod.LOD0;
+        }
+        if (zoomLevel >= 4) {
+            return MapTileLod.LOD1;
+        }
+        if (zoomLevel >= 2) {
+            return MapTileLod.LOD2;
+        }
+        return MapTileLod.LOD3;
     }
 
     /**
