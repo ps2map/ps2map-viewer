@@ -67,13 +67,34 @@ aside th {
     position: absolute;
     top: -3000px;
 }
-#map svg {
-    left: 4120px;
-    bottom: 4228px;
-    position: absolute;
-    transform: scale(1.155) scaleY(-1.0);
-    overflow: visible;
+
+/* Map layers */
+
+#map .layer {
+    height: 100%;
+    width: 100%;
+    position: absolute;    
 }
+
+/* Map tile textures */
+
+#mapTextureLayer {
+    display: grid;
+    grid-template: repeat(8, 1024px) / repeat(8, 1024px);
+    padding-top: 120px; /* Offset to (roughly) align tiles and outlines */
+    z-index: -20;
+}
+
+/* Map hex outlines */
+
+#mapHexLayer svg {
+    height: 8192px;
+    width: 8192px;
+    z-index: -10;
+}
+
+/* Map outlines */
+
 #map polygon {
     fill: #FFFFFF;
     fill-opacity: 30%;
@@ -81,16 +102,15 @@ aside th {
     stroke-width: 1px;
     z-index: 50;
 }
+
 #map polygon:hover {
     fill-opacity: 50%;
     stroke: #FFFFFF;
     z-index: 5000 !important;
 }
-#mapTextureLayer img {
-    /* Hacky offsets due to these not being positioned */
-    margin-bottom: -4px;
-    margin-right: -1px;
-}
+
+/* Map center marker for debug purposes */
+
 #crossHair {
     border: 4px solid #FFFFFF;
     position: absolute;
