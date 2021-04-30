@@ -1,9 +1,17 @@
 "use strict";
 var ownershipColorsCSS = [
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NULL").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-NC").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-TR").trim(),
-    getComputedStyle(document.documentElement).getPropertyValue("--COLOR-FG-CAPPED-VS").trim()
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-NULL")
+        .trim(),
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-NC")
+        .trim(),
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-TR")
+        .trim(),
+    getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-VS")
+        .trim(),
 ];
 function cycleFactionColour(event) {
     if (!(event.target instanceof SVGElement)) {
@@ -27,7 +35,116 @@ function cycleFactionColour(event) {
         }
     }
 }
-var rest_endpoint = "http://127.0.0.1:5000/";
+var restEndpoint = "http://127.0.0.1:5000/";
+function getBasesFromContinent(continentId) {
+    var rounded = Math.round(continentId);
+    var url = restEndpoint + "bases/info?continent_id=" + rounded;
+    return fetch(url).then(function (value) {
+        return value.json();
+    });
+}
+function getBase(baseId) {
+    var rounded = Math.round(baseId);
+    var url = restEndpoint + "bases/info?base_id=" + rounded;
+    return fetch(url)
+        .then(function (value) {
+        return value.json();
+    })
+        .then(function (contInfoList) {
+        return contInfoList[0];
+    });
+}
+function getContinent(continentId) {
+    var rounded = Math.round(continentId);
+    var url = restEndpoint + "continents/info?continent_id=" + rounded;
+    return fetch(url)
+        .then(function (value) {
+        return value.json();
+    })
+        .then(function (contInfoList) {
+        return contInfoList[0];
+    });
+}
+function elementFromString(html) {
+    var factory = document.createElement("template");
+    factory.innerHTML = html.trim();
+    var child = factory.content.firstChild;
+    if (child == null) {
+        throw "given string did not result in a valid DOM object";
+    }
+    return child;
+}
+var MapLayer = (function () {
+    function MapLayer(layer, initialContinentId) {
+        this.continentId = 0;
+        this.layer = layer;
+        this.setContinent(initialContinentId);
+    }
+    MapLayer.prototype.setContinent = function (continentId) {
+        if (this.continentId != continentId) {
+            return;
+        }
+        this.continentId = continentId;
+    };
+    MapLayer.prototype.setVisibility = function (visible) {
+        this.layer.style.visibility = visible ? "visible" : "hidden";
+    };
+    MapLayer.prototype.onZoom = function (zoomLevel) { };
+    MapLayer.prototype.clear = function () {
+        var numChildren = this.layer.children.length;
+        for (var i = numChildren - 1; i >= 0; i--) {
+            var child = this.layer.children[i];
+            this.layer.removeChild(child);
+        }
+    };
+    return MapLayer;
+}());
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var BaseNameLayer = (function (_super) {
+    __extends(BaseNameLayer, _super);
+    function BaseNameLayer() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    BaseNameLayer.prototype.setContinent = function (continentId) {
+        var _this = this;
+        var bases = getBasesFromContinent(continentId);
+        bases.then(function (bases) {
+            var elements = [];
+            bases.forEach(function (base) {
+                var container = document.createElement("div");
+                var offsetX = (4096 + base.map_pos[0]) / 81.92;
+                var offsetY = (4096 + base.map_pos[1]) / 81.92;
+                container.style.left = offsetX + "%";
+                container.style.bottom = offsetY + "%";
+                var icon = document.createElement("object");
+                icon.setAttribute("data", "img/icons/warp-gate.svg");
+                icon.setAttribute("type", "image/svg+xml");
+                container.appendChild(icon);
+                var name = document.createElement("span");
+                name.innerHTML = base.name;
+                container.appendChild(name);
+                elements.push(container);
+            });
+            _this.clear();
+            elements.forEach(function (element) { return _this.layer.appendChild(element); });
+        });
+    };
+    return BaseNameLayer;
+}(MapLayer));
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -64,103 +181,118 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-function getBaseInfo(continent_id) {
-    return __awaiter(this, void 0, void 0, function () {
-        var url;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    url = rest_endpoint + ("bases/info?continent_id=" + continent_id);
-                    return [4, fetch(url).then(function (value) {
-                            return value.json();
-                        })];
-                case 1: return [2, _a.sent()];
-            }
+var HexLayer = (function (_super) {
+    __extends(HexLayer, _super);
+    function HexLayer(layer, initialContinentId) {
+        var _this = _super.call(this, layer, initialContinentId) || this;
+        _this.baseHoverCallback = function () { return null; };
+        _this.layer.addEventListener("auxclick", function (evt) {
+            cycleFactionColour(evt);
         });
-    });
-}
-function getContinentInfo(continent_id) {
-    return __awaiter(this, void 0, void 0, function () {
-        var url;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    url = rest_endpoint + "continents/info?continent_id=" + continent_id;
-                    return [4, fetch(url).then(function (value) {
-                            return value.json();
-                        })];
-                case 1: return [2, (_a.sent())[0]];
-            }
-        });
-    });
-}
-var mapTextureDir = "./img/map";
-var mapTextureResolution = 8192;
-var MapTileLod;
-(function (MapTileLod) {
-    MapTileLod[MapTileLod["LOD0"] = 0] = "LOD0";
-    MapTileLod[MapTileLod["LOD1"] = 1] = "LOD1";
-    MapTileLod[MapTileLod["LOD2"] = 2] = "LOD2";
-    MapTileLod[MapTileLod["LOD3"] = 3] = "LOD3";
-})(MapTileLod || (MapTileLod = {}));
-var maxLod = 3;
-var MapRenderer = (function () {
-    function MapRenderer(viewport, map, continent) {
-        this.viewport = viewport;
-        this.map = map;
-        this.continent = continent;
-        this.zoom = this.minZoom;
-        map.addEventListener("selectstart", this.preventSelection);
-        var lod = this.getLodForZoomLevel(this.zoom);
-        var mapTextureLayer = document.getElementById("mapTextureLayer");
-        this.loadMapTiles(mapTextureLayer, continent, lod);
-        var hexesLayer = document.getElementById("mapHexLayer");
-        this.loadMapHexes(hexesLayer, continent);
-        var baseNameLayer = document.getElementById("mapBaseNameLayer");
-        this.setBaseNames(baseNameLayer, 6);
-        map.addEventListener("wheel", this.mapZoomCallback.bind(this), { "passive": false });
-        map.addEventListener("mousedown", this.mapPan.bind(this));
+        return _this;
     }
-    MapRenderer.prototype.layerVisibilityHook = function (layer_id, checkbox_id) {
-        var layer = document.getElementById(layer_id);
-        var checkbox = document.getElementById(checkbox_id);
-        checkbox.addEventListener("click", function () {
-            layer.style.visibility = checkbox.checked ? "visible" : "hidden";
-        });
-    };
-    Object.defineProperty(MapRenderer.prototype, "viewportMinorAxis", {
-        get: function () {
-            return Math.min(this.viewport.clientHeight, this.viewport.clientWidth);
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(MapRenderer.prototype, "minZoom", {
-        get: function () {
-            return 1;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(MapRenderer.prototype, "maxZoom", {
-        get: function () {
-            return 2 * mapTextureResolution / this.viewportMinorAxis;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    MapRenderer.prototype.getNumTiles = function (lod) {
-        return Math.pow(2, (maxLod - lod));
-    };
-    MapRenderer.prototype.loadMapTiles = function (layer, continent, lod) {
-        if (lod === void 0) { lod = MapTileLod.LOD1; }
-        layer.innerHTML = "";
-        var numTiles = this.getNumTiles(lod);
-        if (numTiles <= 1) {
-            var tile = this.getMapTilePath(continent, lod, 0, 0);
-            layer.innerHTML = "<div style=\"background-image: url(" + tile + ")\"></div>";
+    HexLayer.prototype.setContinent = function (continentId) {
+        var _this = this;
+        if (this.continentId == continentId) {
             return;
         }
+        this.continentId = continentId;
+        var outlines = this.getBaseHexes(continentId);
+        outlines.then(function (elements) {
+            _this.clear();
+            elements.forEach(function (child) { return _this.layer.appendChild(child); });
+        });
+    };
+    HexLayer.prototype.getBaseHexes = function (continentId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var cont, elements;
+            var _this = this;
+            return __generator(this, function (_a) {
+                cont = getContinent(continentId);
+                elements = cont.then(function (contInfo) {
+                    var svgs = [];
+                    for (var key in contInfo.map_base_svgs) {
+                        var element = elementFromString(contInfo.map_base_svgs[key]);
+                        _this.registerHoverCallback(element);
+                        svgs.push(element);
+                    }
+                    return svgs;
+                });
+                return [2, elements];
+            });
+        });
+    };
+    HexLayer.prototype.registerHoverCallback = function (element) {
+        var _this = this;
+        element.addEventListener("mouseover", function (evt) {
+            _this.baseHoverCallback(parseInt(element.id));
+        });
+    };
+    return HexLayer;
+}(MapLayer));
+var tileDir = "./img/map";
+var mapBaseRes = 8192;
+var TileLayer = (function (_super) {
+    __extends(TileLayer, _super);
+    function TileLayer(layer, initialContinentId) {
+        var _this = _super.call(this, layer, initialContinentId) || this;
+        _this.lod = 3;
+        _this.tileSet = "bogus";
+        return _this;
+    }
+    TileLayer.prototype.setContinent = function (continentId) {
+        if (this.continentId == continentId) {
+            return;
+        }
+        this.continentId = continentId;
+        this.setTileSet(continentId);
+    };
+    TileLayer.prototype.onZoom = function (zoomLevel) {
+        var newLod = 0;
+        if (zoomLevel >= 8) {
+            newLod = 0;
+        }
+        else if (zoomLevel >= 4) {
+            newLod = 1;
+        }
+        else if (zoomLevel >= 2) {
+            newLod = 2;
+        }
+        else {
+            newLod = 3;
+        }
+        this.lod = newLod;
+        var numTiles = this.getNumTiles(newLod);
+        document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
+        document.documentElement.style.setProperty("--MAP-SIZE", "calc(min(100vh, 100vw) * " + zoomLevel + ")");
+        this.updateTiles();
+    };
+    TileLayer.prototype.setTileSet = function (continentId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var cont;
+            var _this = this;
+            return __generator(this, function (_a) {
+                cont = getContinent(continentId);
+                cont.then(function (contInfo) {
+                    _this.tileSet = contInfo.map_tileset;
+                    _this.updateTiles();
+                });
+                return [2];
+            });
+        });
+    };
+    TileLayer.prototype.updateTiles = function () {
+        var _this = this;
+        var numTiles = this.getNumTiles(this.lod);
+        if (numTiles <= 1) {
+            var tile = this.getMapTilePath(this.tileSet, this.lod, 0, 0);
+            var str = "<div style=\"background-image: url(" + tile + ")\"></div>";
+            var element = elementFromString(str);
+            this.clear();
+            this.layer.appendChild(element);
+            return;
+        }
+        var newTiles = [];
         for (var y = numTiles / 2; y > -numTiles / 2 - 1; y--) {
             if (y == 0) {
                 continue;
@@ -169,215 +301,136 @@ var MapRenderer = (function () {
                 if (x == 0) {
                     continue;
                 }
-                var tile = this.getMapTilePath(continent, lod, x, y);
+                var tile = this.getMapTilePath(this.tileSet, this.lod, x, y);
                 var div = document.createElement("div");
                 div.style.backgroundImage = "url(" + tile + ")";
-                layer.appendChild(div);
+                newTiles.push(div);
             }
         }
+        this.clear();
+        newTiles.forEach(function (tile) { return _this.layer.appendChild(tile); });
     };
-    MapRenderer.prototype.loadMapHexes = function (layer, continent) {
-        return __awaiter(this, void 0, void 0, function () {
-            var cInfo, baseMap, innerHtml, size, i, key, i, element;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, getContinentInfo(6)];
-                    case 1:
-                        cInfo = _a.sent();
-                        baseMap = cInfo.map_base_svgs;
-                        innerHtml = "";
-                        size = Object.keys(baseMap).length;
-                        for (i = 0; i < size; i++) {
-                            key = Object.keys(baseMap)[i];
-                            innerHtml += baseMap[key];
-                        }
-                        layer.innerHTML = innerHtml;
-                        registerDebugFactionCycler();
-                        for (i = 0; i < size; i++) {
-                            element = layer.children[i];
-                            element.addEventListener("mouseenter", this.baseHoverCallback);
-                        }
-                        return [2];
-                }
-            });
-        });
+    TileLayer.prototype.getNumTiles = function (lod) {
+        if (lod < 0) {
+            throw "lod must be greater than zero";
+        }
+        return Math.pow(2, (3 - lod));
     };
-    MapRenderer.prototype.baseHoverCallback = function (event) {
-        return __awaiter(this, void 0, void 0, function () {
-            var baseId, bInfoList, bInfo, i, baseName;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!(event.target instanceof SVGElement)) {
-                            return [2];
-                        }
-                        baseId = parseInt(event.target.id);
-                        return [4, getBaseInfo(6)];
-                    case 1:
-                        bInfoList = _a.sent();
-                        bInfo = bInfoList[0];
-                        for (i = 0; i < bInfoList.length; i++) {
-                            if (bInfoList[i].id == baseId) {
-                                bInfo = bInfoList[i];
-                            }
-                        }
-                        baseName = document.getElementById("baseName");
-                        baseName.innerHTML = bInfo.name;
-                        return [2];
-                }
-            });
-        });
+    TileLayer.prototype.getMapTilePath = function (tileName, lod, tileX, tileY) {
+        var dir = tileDir + "/" + tileName + "/lod" + lod + "/";
+        var name = "lod" + lod + "_" + Math.round(tileX) + "_" + Math.round(tileY) + ".png";
+        return dir + name;
     };
-    MapRenderer.prototype.setBaseNames = function (layer, continent) {
-        return __awaiter(this, void 0, void 0, function () {
-            var bases;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, getBaseInfo(continent)];
-                    case 1:
-                        bases = _a.sent();
-                        bases.forEach(function (base) {
-                            var container = document.createElement("div");
-                            var offsetX = (4120 + base.map_pos[0]) * _this.zoom / 9;
-                            var offsetY = (4200 + base.map_pos[1]) * _this.zoom / 9;
-                            container.style.left = offsetX + "px";
-                            container.style.bottom = offsetY + "px";
-                            var name = document.createElement("span");
-                            name.innerHTML = base.name;
-                            container.appendChild(name);
-                            layer.appendChild(container);
-                        });
-                        return [2];
-                }
-            });
-        });
-    };
-    MapRenderer.prototype.applyZoomLevel = function (zoomLevel) {
-        this.zoom = zoomLevel;
-        var newMapSize = Math.round(this.viewportMinorAxis * zoomLevel);
-        document.documentElement.style.setProperty("--MAP-SIZE", newMapSize + "px");
-        var lod = this.getLodForZoomLevel(zoomLevel);
-        var numTiles = this.getNumTiles(lod);
-        var mapTextureLayer = document.getElementById("mapTextureLayer");
-        document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
-        this.loadMapTiles(mapTextureLayer, this.continent, lod);
-        var mapBaseNameLayer = document.getElementById("mapBaseNameLayer");
-        mapBaseNameLayer.innerHTML = "";
-        this.setBaseNames(mapBaseNameLayer, 6);
-    };
-    MapRenderer.prototype.getMapTilePath = function (continent, lod, tile_x, tile_y) {
-        return mapTextureDir + "/" + continent + "/lod" + lod + "/lod" + lod + "_" + Math.round(tile_x) + "_" + Math.round(tile_y) + ".png";
-    };
-    MapRenderer.prototype.getLodForZoomLevel = function (zoomLevel) {
-        if (zoomLevel >= 8) {
-            return MapTileLod.LOD0;
-        }
-        if (zoomLevel >= 4) {
-            return MapTileLod.LOD1;
-        }
-        if (zoomLevel >= 2) {
-            return MapTileLod.LOD2;
-        }
-        return MapTileLod.LOD3;
-    };
-    MapRenderer.prototype.mapZoomCallback = function (event) {
-        event.preventDefault();
-        var newZoom = event.deltaY < 0 ? this.zoom * 1.25 : this.zoom * 0.8;
-        if (newZoom < this.minZoom) {
-            newZoom = this.minZoom;
-        }
-        else if (newZoom > this.maxZoom) {
-            newZoom = this.maxZoom;
-        }
-        var pixelDelta = this.viewportMinorAxis * newZoom - this.viewportMinorAxis * this.zoom;
-        var mapRelX = (event.clientX - this.map.offsetLeft) / this.map.clientWidth;
-        var mapRelY = (event.clientY - this.map.offsetTop) / this.map.clientHeight;
-        var newLeft = this.map.offsetLeft - pixelDelta * mapRelX;
-        var newTop = this.map.offsetTop - pixelDelta * mapRelY;
-        this.applyZoomLevel(newZoom);
-        this.panCamera(newLeft, newTop);
-    };
-    MapRenderer.prototype.mapPan = function (event) {
-        if (event.button != 0) {
-            return;
-        }
-        var map = this.map;
-        var panCamera = this.panCamera.bind(this);
-        var initialOffsetLeft = map.offsetLeft;
-        var initialOffsetTop = map.offsetTop;
-        function mapPanDrag(dragEvent) {
-            var deltaX = dragEvent.clientX - event.clientX;
-            var deltaY = dragEvent.clientY - event.clientY;
-            var newLeft = initialOffsetLeft + deltaX;
-            var newTop = initialOffsetTop + deltaY;
-            panCamera(newLeft, newTop);
-        }
-        function mapPanEnd() {
-            map.removeEventListener("mousemove", mapPanDrag);
-            document.removeEventListener("mouseup", mapPanEnd);
-        }
-        map.addEventListener("mousemove", mapPanDrag);
-        document.addEventListener("mouseup", mapPanEnd);
-    };
-    MapRenderer.prototype.panCamera = function (newLeft, newTop) {
-        this.map.style.left = newLeft + "px";
-        this.map.style.top = newTop + "px";
-        var zoomLimitX = this.viewport.clientWidth - this.map.clientWidth;
-        var zoomLimitY = this.viewport.clientHeight - this.map.clientHeight;
-        if (this.viewport.clientWidth < this.map.clientWidth) {
-            if (this.map.offsetLeft > 0) {
-                this.map.style.left = "0px";
-            }
-            else if (this.map.offsetLeft < zoomLimitX) {
-                this.map.style.left = zoomLimitX + "px";
-            }
-        }
-        else {
-            if (this.map.offsetLeft < 0) {
-                this.map.style.left = "0px";
-            }
-            else if (this.map.offsetLeft > zoomLimitX) {
-                this.map.style.left = zoomLimitX + "px";
-            }
-        }
-        if (this.viewport.clientHeight < this.map.clientHeight) {
-            if (this.map.offsetTop > 0) {
-                this.map.style.top = "0px";
-            }
-            else if (this.map.offsetTop < zoomLimitY) {
-                this.map.style.top = zoomLimitY + "px";
-            }
-        }
-        else {
-            if (this.map.offsetTop < 0) {
-                this.map.style.top = "0px";
-            }
-            else if (this.map.offsetTop > zoomLimitY) {
-                this.map.style.top = zoomLimitY + "px";
-            }
-        }
-    };
-    MapRenderer.prototype.preventSelection = function () {
-        return false;
-    };
-    return MapRenderer;
-}());
-function updateMapLayerVisibility(checkbox, layer) {
-    return function () {
-        layer.style.visibility = checkbox.checked ? "visible" : "hidden";
-    };
-}
-function registerDebugFactionCycler() {
-    var mapHexLayer = document.getElementById("mapHexLayer");
-    mapHexLayer.addEventListener("auxclick", cycleFactionColour);
-}
+    return TileLayer;
+}(MapLayer));
 function onDOMLoaded() {
+    var initialContinentId = 6;
+    var hexLayerDiv = document.getElementById("mapHexLayer");
+    var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
+    var tileLayerDiv = (document.getElementById("mapTextureLayer"));
+    var tileLayer = new TileLayer(tileLayerDiv, initialContinentId);
     var map = document.getElementById("map");
     var viewport = document.getElementById("viewport");
-    var renderer = new MapRenderer(viewport, map, "amerish");
-    renderer.layerVisibilityHook("mapTextureLayer", "showMapTexture");
-    renderer.layerVisibilityHook("mapHexLayer", "showHexes");
-    renderer.layerVisibilityHook("mapBaseNameLayer", "showBaseNames");
+    var controller = new MapController(map, viewport, initialContinentId);
+    controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
+    var showHideHexLayer = (document.getElementById("showHexes"));
+    showHideHexLayer.addEventListener("click", function () {
+        return hexLayer.setVisibility(showHideHexLayer.checked);
+    });
+    var showHideTexturelayer = (document.getElementById("showMapTexture"));
+    showHideTexturelayer.addEventListener("click", function () {
+        return tileLayer.setVisibility(showHideTexturelayer.checked);
+    });
+    var asideBaseName = document.getElementById("baseName");
+    hexLayer.baseHoverCallback = function (baseId) {
+        getBase(baseId).then(function (base) {
+            asideBaseName.textContent = base.name;
+        });
+    };
+    var zoomInc = document.getElementById("zoomInc");
+    zoomInc.addEventListener("click", function (evt) {
+        controller.incDecZoom(true);
+    });
+    var zoomDec = document.getElementById("zoomDec");
+    zoomDec.addEventListener("click", function (evt) {
+        controller.incDecZoom(false);
+    });
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
+var zoomLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+var MapController = (function () {
+    function MapController(map, viewport, initialContinentId) {
+        this.onZoom = [];
+        this.continentId = initialContinentId;
+        this.map = map;
+        this.viewport = viewport;
+        this.zoomLevel = 1.0;
+        map.addEventListener("mousedown", this.mousePan.bind(this));
+        map.addEventListener("wheel", this.mouseWheel.bind(this), {
+            passive: false
+        });
+    }
+    MapController.prototype.incDecZoom = function (increase) {
+        var index = zoomLevels.indexOf(this.zoomLevel);
+        if (index < 0) {
+            for (var i = 0; i < zoomLevels.length; i++) {
+                var refLevel = zoomLevels[i];
+                if (refLevel > this.zoomLevel) {
+                    if (increase) {
+                        this.zoomLevel = refLevel;
+                        break;
+                    }
+                    this.zoomLevel = zoomLevels[i - 1];
+                    break;
+                }
+            }
+        }
+        else {
+            this.zoomLevel += increase ? 1 : -1;
+        }
+        this.constrainZoom();
+        this.zoomDispatch();
+    };
+    MapController.prototype.mousePan = function (evtDown) {
+        if (evtDown.button != 0) {
+            return;
+        }
+        var viewport = this.viewport;
+        var map = this.map;
+        var initialScrollLeft = viewport.scrollLeft;
+        var initialScrollTop = viewport.scrollTop;
+        function mouseDrag(evtDrag) {
+            var deltaX = evtDrag.clientX - evtDown.clientX;
+            var deltaY = evtDrag.clientY - evtDown.clientY;
+            viewport.scrollLeft = initialScrollLeft - deltaX;
+            viewport.scrollTop = initialScrollTop - deltaY;
+        }
+        function mouseUp() {
+            map.removeEventListener("mousemove", mouseDrag);
+            document.removeEventListener("mouseup", mouseUp);
+        }
+        map.addEventListener("mousemove", mouseDrag);
+        document.addEventListener("mouseup", mouseUp);
+    };
+    MapController.prototype.constrainZoom = function () {
+        if (this.zoomLevel < 1.0) {
+            this.zoomLevel = 1.0;
+        }
+        else if (this.zoomLevel > 12.0) {
+            this.zoomLevel = 12.0;
+        }
+    };
+    MapController.prototype.mouseWheel = function (evt) {
+        evt.preventDefault();
+        this.zoomLevel -= 0.005 * evt.deltaY;
+        this.constrainZoom();
+        this.zoomDispatch();
+    };
+    MapController.prototype.zoomDispatch = function () {
+        var _this = this;
+        this.onZoom.forEach(function (callback) {
+            callback(Math.round(_this.zoomLevel));
+        });
+    };
+    return MapController;
+}());
