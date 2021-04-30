@@ -83,14 +83,24 @@ class MapController {
         const map = this.map;
         const initialScrollLeft = viewport.scrollLeft;
         const initialScrollTop = viewport.scrollTop;
-
+        let nextScrollTargetLeft = 0.0;
+        let nextScrollTargetTop = 0.0;
+        let isScheduled = false;
         function mouseDrag(evtDrag: MouseEvent): void {
             const deltaX = evtDrag.clientX - evtDown.clientX;
             const deltaY = evtDrag.clientY - evtDown.clientY;
             // TODO: Move this to another handler to allow parallel zoom
             // and drag
-            viewport.scrollLeft = initialScrollLeft - deltaX;
-            viewport.scrollTop = initialScrollTop - deltaY;
+            nextScrollTargetLeft = initialScrollLeft - deltaX;
+            nextScrollTargetTop = initialScrollTop - deltaY;
+            function mousePanAnimationCallback(start: DOMHighResTimeStamp) {
+                viewport.scrollLeft = nextScrollTargetLeft;
+                viewport.scrollTop = nextScrollTargetTop;
+            }
+            if (isScheduled) {
+                requestAnimationFrame(mousePanAnimationCallback);
+            }
+            isScheduled = true;
         }
         function mouseUp(): void {
             map.removeEventListener("mousemove", mouseDrag);

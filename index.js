@@ -407,11 +407,22 @@ var MapController = (function () {
         var map = this.map;
         var initialScrollLeft = viewport.scrollLeft;
         var initialScrollTop = viewport.scrollTop;
+        var nextScrollTargetLeft = 0.0;
+        var nextScrollTargetTop = 0.0;
+        var isScheduled = false;
         function mouseDrag(evtDrag) {
             var deltaX = evtDrag.clientX - evtDown.clientX;
             var deltaY = evtDrag.clientY - evtDown.clientY;
-            viewport.scrollLeft = initialScrollLeft - deltaX;
-            viewport.scrollTop = initialScrollTop - deltaY;
+            nextScrollTargetLeft = initialScrollLeft - deltaX;
+            nextScrollTargetTop = initialScrollTop - deltaY;
+            function mousePanAnimationCallback(start) {
+                viewport.scrollLeft = nextScrollTargetLeft;
+                viewport.scrollTop = nextScrollTargetTop;
+            }
+            if (isScheduled) {
+                requestAnimationFrame(mousePanAnimationCallback);
+            }
+            isScheduled = true;
         }
         function mouseUp() {
             map.removeEventListener("mousemove", mouseDrag);
