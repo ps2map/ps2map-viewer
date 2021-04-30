@@ -12,6 +12,8 @@ function onDOMLoaded(): void {
     const map = <HTMLDivElement>document.getElementById("map");
     map.addEventListener("mousedown", mapPanStart);
     map.addEventListener("wheel", zoomMap);
+    // Apply default zoom level
+    map.style.transform = `scale(${zoomLevel})`;
 
     // Load map tiles    
     const viewport = <HTMLDivElement>document.getElementById("viewport");

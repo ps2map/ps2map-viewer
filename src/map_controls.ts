@@ -1,7 +1,7 @@
 // This file defines map viewport controls like zoom and pan.
 
 // Current map zoom level
-let zoomLevel = 1.0;
+let zoomLevel = 0.2;
 
 /**
  * Hook to trigger map panning when the user clicks the map.
