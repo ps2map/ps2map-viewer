@@ -1,3 +1,9 @@
+:root {
+    --COLOR-FG-CAPPED-NULL: rgb(255, 255, 255);
+    --COLOR-FG-CAPPED-NC: rgb(29, 70, 152);
+    --COLOR-FG-CAPPED-TR: rgb(150, 17, 0);
+    --COLOR-FG-CAPPED-VS: rgb(97, 37, 151);
+}
 html{
     background-color: #051010;
     color: white;
@@ -78,7 +84,7 @@ aside th {
     z-index: 50;
 }
 #map polygon:hover {
-    fill: #be3b3b;
+    fill-opacity: 50%;
     stroke: #FFFFFF;
     z-index: 5000 !important;
 }

@@ -6,6 +6,12 @@ function toggleMapLayer(checkbox, layer) {
         layer.style.display = checkbox.checked ? "block" : "none";
     };
 }
+var ownershipColorsCSS = [
+    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-NULL').trim(),
+    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-NC').trim(),
+    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-TR').trim(),
+    getComputedStyle(document.documentElement).getPropertyValue('--COLOR-FG-CAPPED-VS').trim()
+];
 window.addEventListener('load', function () {
     var map = document.getElementById('map');
     map.addEventListener('mousedown', mapPanStart);
@@ -17,6 +23,7 @@ window.addEventListener('load', function () {
     var hexesLayer = document.getElementById('mapHexLayer');
     hexesBtn.addEventListener('click', updateMapLayerVisibility(hexesBtn, hexesLayer));
     hexesLayer.innerHTML = svg_strings;
+    document.addEventListener('click', svgClickFilter);
 });
 function updateMapLayerVisibility(checkbox, layer) {
     return function () {
@@ -58,4 +65,26 @@ function zoomMap(event) {
         zoomLevel = 2.0;
     }
     this.style.transform = "scale(" + zoomLevel + ")";
+}
+function svgClickFilter(event) {
+    if (!(event.target instanceof SVGElement)) {
+        return;
+    }
+    cycleFactionColour(event.target, event);
+}
+function cycleFactionColour(base, event) {
+    if (!base.style.fill) {
+        base.style.fill = ownershipColorsCSS[0];
+    }
+    for (var i = 0; i < ownershipColorsCSS.length; i++) {
+        if (base.style.fill == ownershipColorsCSS[i]) {
+            if (i + 1 < ownershipColorsCSS.length) {
+                base.style.fill = ownershipColorsCSS[i + 1];
+            }
+            else {
+                base.style.fill = ownershipColorsCSS[0];
+            }
+            break;
+        }
+    }
 }
