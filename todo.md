@@ -13,6 +13,7 @@ Tracker for missing features, usability improvements and other things that shoul
 
 - [ ] Create event dispatchers for base and continent updates
 - [ ] Add a button to allow polling of API data
+- [ ] Add capture points (& generators?) to map overlay
 
 ## User interaction
 

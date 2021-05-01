@@ -11,7 +11,7 @@ html {
     background-color: #051010;
     color: white;
     font-family: "Segoe UI", sans-serif;
-    font-weight: 500;
+    font-weight: 600;
     touch-action: none;
 }
 
@@ -144,28 +144,50 @@ aside th {
 
 /* Map base names */
 
-#mapBaseNameLayer div {
-    width: 10em;
-    margin-left: -5em;
-    margin-bottom: -3.5em;
+.mapAnchor {
+    height: 0px;
+    width: 0px;
     position: absolute;
     pointer-events: none;
-    text-align: center;
     z-index: 50;
 }
 
-#mapBaseNameLayer div span {
-    text-shadow: 0px 0px 5px #000000;
-    text-align: center;
-    margin-bottom: -2em;
+.iconBox {
+    height: 24px;
+    width: 24px;
+    position: absolute;
+    top: -12px;
+    left: -12px;
 }
 
-#mapBaseNameLayer div object {
-    height: 3em;
-    width: 3em;
-    margin-left: 3.5em;
-    margin-right: 3.5em;
-    margin-bottom: -1em;
+.iconBox > .layeredIcon {
+    display: inline-block;
+    height: 100%;
+    width: 100%;
+}
+
+.iconBox > .layeredIcon::before {
+    background-color: #333333;
+    border-radius: 12px;
+    content: "";
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+    opacity: 0.8;
+}
+
+#mapBaseNameLayer .layeredIcon > img {
+    position: relative;
+    top: -28px;
+}
+
+.baseLabel {
+    width: 6em;
+    position: absolute;
+    margin-left: -3em;
+    line-height: 1.2em;
+    text-align: center;
+    text-shadow: 0px 0px 5px #000000;
 }
 
 /* Map center marker for debug purposes */

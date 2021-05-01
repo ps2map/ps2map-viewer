@@ -125,19 +125,27 @@ var BaseNameLayer = (function (_super) {
         bases.then(function (bases) {
             var elements = [];
             bases.forEach(function (base) {
-                var container = document.createElement("div");
+                var anchor = document.createElement("div");
                 var offsetX = (4096 + base.map_pos[0]) / 81.92;
                 var offsetY = (4096 + base.map_pos[1]) / 81.92;
-                container.style.left = offsetX + "%";
-                container.style.bottom = offsetY + "%";
-                var icon = document.createElement("object");
-                icon.setAttribute("data", "img/icons/warp-gate.svg");
-                icon.setAttribute("type", "image/svg+xml");
-                container.appendChild(icon);
-                var name = document.createElement("span");
+                anchor.setAttribute("class", "mapAnchor");
+                anchor.style.left = offsetX + "%";
+                anchor.style.bottom = offsetY + "%";
+                var iconBox = document.createElement("div");
+                anchor.appendChild(iconBox);
+                iconBox.setAttribute("class", "iconBox");
+                var layerImage = document.createElement("div");
+                iconBox.appendChild(layerImage);
+                layerImage.setAttribute("class", "layeredIcon");
+                var icon = document.createElement("img");
+                layerImage.appendChild(icon);
+                icon.setAttribute("alt", "Amp Station");
+                icon.setAttribute("src", "img/icons/amp-station.svg");
+                var name = document.createElement("p");
+                anchor.appendChild(name);
+                name.setAttribute("class", "baseLabel");
                 name.innerHTML = base.name;
-                container.appendChild(name);
-                elements.push(container);
+                elements.push(anchor);
             });
             _this.clear();
             elements.forEach(function (element) { return _this.layer.appendChild(element); });

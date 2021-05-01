@@ -16,3 +16,22 @@ This mostly serves to allow me to relearn web development, get more comfortable 
 > A number of commits containing large image assets and other bloat have been intentionally excluded from this repository to keep it small.
 >
 > The resulting partial commits have been kept to help with code and file history, but do not always result in usable states for commits prior to May 2021.
+
+### Base icon generation
+
+The base icons are exported as SVGs without background. The corresponding faction-coloured circle is then added via CSS.
+
+Here are the steps for exporting the icons from the Illustrator source:
+
+- Hide the red background from the icon
+- Export as SVG (not "save as", the latter adds more junk)
+- Check "Use Artboards" option so the icons are not cropped
+- Advanced options:
+
+  Styling: inline
+  Object IDs: minimal
+  Decimals: 2
+  "Minify" enabled
+  "Repsonsive" enabled
+
+  Take a look at the resulting SVG in a text editor and optionally clear out any unused styles.
