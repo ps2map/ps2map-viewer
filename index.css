@@ -182,9 +182,10 @@ aside th {
 }
 
 .baseLabel {
-    width: 6em;
+    /* Width is chosen to match the in-game text wrapping behaviour */
+    width: 7.8em;
     position: absolute;
-    margin-left: -3em;
+    margin-left: -3.9em;
     line-height: 1.2em;
     text-align: center;
     text-shadow: 0px 0px 5px #000000;
