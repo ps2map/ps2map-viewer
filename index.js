@@ -466,7 +466,7 @@ var MapController = (function () {
         this.zoomLevel = 1.0;
         map.addEventListener("mousedown", this.mousePan.bind(this));
         map.addEventListener("wheel", this.mouseWheel.bind(this), {
-            passive: true
+            passive: false
         });
         map.addEventListener("touchstart", this.pinchZoom.bind(this), {
             passive: true
