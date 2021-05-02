@@ -33,6 +33,7 @@ function onDOMLoaded(): void {
     const viewport = <HTMLDivElement>document.getElementById("viewport");
     const controller = new MapController(map, viewport, initialContinentId);
     controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
+    controller.onZoom.push(baseNameLayer.onZoom.bind(baseNameLayer));
 
     // Hook up map layer visibility toggles
 

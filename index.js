@@ -115,6 +115,12 @@ var BaseNameLayer = (function (_super) {
     function BaseNameLayer() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
+    BaseNameLayer.prototype.onZoom = function (zoomLevel) {
+        for (var i = 0; i < this.layer.children.length; i++) {
+            var base = this.layer.children.item(i);
+            base.style.transform = "scale(" + 1 / zoomLevel + ")";
+        }
+    };
     BaseNameLayer.prototype.setContinent = function (continentId) {
         var _this = this;
         getBasesFromContinent(continentId).then(function (bases) {
@@ -406,6 +412,7 @@ function onDOMLoaded() {
     var viewport = document.getElementById("viewport");
     var controller = new MapController(map, viewport, initialContinentId);
     controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
+    controller.onZoom.push(baseNameLayer.onZoom.bind(baseNameLayer));
     var showHideHexLayer = (document.getElementById("showHexes"));
     showHideHexLayer.addEventListener("click", function () {
         return hexLayer.setVisibility(showHideHexLayer.checked);
@@ -533,7 +540,7 @@ var MapController = (function () {
     MapController.prototype.zoomDispatch = function () {
         var _this = this;
         this.onZoom.forEach(function (callback) {
-            callback(Math.round(_this.zoomLevel));
+            callback(_this.zoomLevel);
         });
     };
     return MapController;

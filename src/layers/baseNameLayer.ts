@@ -14,6 +14,13 @@
 class BaseNameLayer extends MapLayer {
     // TODO: Hide small bases at small zoom levels
 
+    public onZoom(zoomLevel: number): void {
+        for (let i = 0; i < this.layer.children.length; i++) {
+            const base = <HTMLDivElement>this.layer.children.item(i);
+            base.style.transform = `scale(${1 / zoomLevel})`;
+        }
+    }
+
     /**
      * Switch the currently active continent.
      * @param continentId ID of the new continent to display.

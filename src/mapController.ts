@@ -144,7 +144,7 @@ class MapController {
      */
     private zoomDispatch(): void {
         this.onZoom.forEach((callback) => {
-            callback(Math.round(this.zoomLevel));
+            callback(this.zoomLevel);
         });
     }
 }
