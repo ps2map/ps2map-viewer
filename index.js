@@ -571,6 +571,21 @@ var MapController = (function () {
             callback(_this.zoomLevel);
         });
     };
+    MapController.prototype.getTouchesCenter = function (touches) {
+        var avgX = 0.0;
+        var avgY = 0.0;
+        if (touches.length == 0) {
+            return [NaN, NaN];
+        }
+        for (var i = 0; i < touches.length; i++) {
+            var touch = touches.item(i);
+            avgX += touch.clientX;
+            avgY += touch.clientY;
+        }
+        avgX /= touches.length;
+        avgY /= touches.length;
+        return [avgX, avgY];
+    };
     MapController.prototype.getTouchesDistance = function (touches) {
         if (touches.length != 2) {
             throw "distance only valid between two points";
@@ -591,14 +606,14 @@ var MapController = (function () {
             if (evt.touches.length != 2) {
                 return;
             }
-            evt.preventDefault();
+            var touchCenter = con.getTouchesCenter(evt.touches);
             var touchDist = con.getTouchesDistance(evt.touches);
             var distRel = touchDist / touchStartDist;
             if (scheduled != -1) {
                 cancelAnimationFrame(scheduled);
             }
             scheduled = requestAnimationFrame(function () {
-                con.applyZoomLevel(zoomStart * distRel);
+                con.applyZoomLevel(zoomStart * distRel, touchCenter[0] / con.viewport.clientWidth, touchCenter[1] / con.viewport.clientHeight);
                 scheduled = -1;
             });
         }

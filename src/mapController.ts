@@ -185,6 +185,27 @@ class MapController {
     }
 
     /**
+     * Return the midpoint of a touch gesture.
+     * @param touches The TouchList received from the event
+     * @returns A tuple of the average clientX and clientY location
+     */
+    private getTouchesCenter(touches: TouchList): [number, number] {
+        let avgX = 0.0;
+        let avgY = 0.0;
+        if (touches.length == 0) {
+            return [NaN, NaN];
+        }
+        for (let i = 0; i < touches.length; i++) {
+            const touch = <Touch>touches.item(i);
+            avgX += touch.clientX;
+            avgY += touch.clientY;
+        }
+        avgX /= touches.length;
+        avgY /= touches.length;
+        return [avgX, avgY];
+    }
+
+    /**
      * Return the straight lien distance between two touch points.
      * @param touches The TouchList object received from the event
      * @returns The cartesian distance between the two touch points
@@ -218,7 +239,7 @@ class MapController {
             if (evt.touches.length != 2) {
                 return;
             }
-            evt.preventDefault();
+            const touchCenter = con.getTouchesCenter(evt.touches);
             const touchDist = con.getTouchesDistance(evt.touches);
             const distRel = touchDist / touchStartDist;
 
@@ -226,7 +247,11 @@ class MapController {
                 cancelAnimationFrame(scheduled);
             }
             scheduled = requestAnimationFrame(() => {
-                con.applyZoomLevel(zoomStart * distRel);
+                con.applyZoomLevel(
+                    zoomStart * distRel,
+                    touchCenter[0] / con.viewport.clientWidth,
+                    touchCenter[1] / con.viewport.clientHeight
+                );
                 scheduled = -1;
             });
         }
