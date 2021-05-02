@@ -62,9 +62,7 @@ class MapController {
             // Zoom level is a fixed value, modify by 1
             this.zoomLevel += increase ? 1 : -1;
         }
-        // Limit zoom level
-        this.constrainZoom();
-        this.zoomDispatch();
+        this.applyZoomLevel();
     }
 
     /**
@@ -122,13 +120,30 @@ class MapController {
     }
 
     /**
+     * Apply the new zoom level.
+     * This includes firing any onZoom callbacks, as well as the
+     * scaling of the map itself.
+     */
+    private applyZoomLevel(): void {
+        this.constrainZoom();
+        const offset = (this.zoomLevel - 1.0) * 50.0;
+        this.map.style.transform =
+            `translate3D(${offset}%, ${offset}%, 0) ` +
+            `scale(${this.zoomLevel})`;
+        this.zoomDispatch();
+    }
+
+    /**
      * Event listener callback for mouse scroll.
      */
     private mouseWheel(evt: WheelEvent): void {
         evt.preventDefault(); // Prevent vertical scrolling
-        this.zoomLevel -= 0.005 * evt.deltaY;
-        this.constrainZoom();
-        this.zoomDispatch();
+        let deltaY = evt.deltaY;
+        if (evt.deltaMode == 0) {
+            deltaY /= 80;
+        }
+        this.zoomLevel -= deltaY * 0.25;
+        this.applyZoomLevel();
     }
 
     /**
@@ -136,7 +151,7 @@ class MapController {
      */
     private zoomDispatch(): void {
         this.onZoom.forEach((callback) => {
-            callback(Math.round(this.zoomLevel));
+            callback(this.zoomLevel);
         });
     }
 }
