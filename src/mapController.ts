@@ -84,7 +84,7 @@ class MapController {
         const initialScrollTop = viewport.scrollTop;
         let nextScrollTargetLeft = 0.0;
         let nextScrollTargetTop = 0.0;
-        let isScheduled = false;
+        let isScheduled = -1;
         function mouseDrag(evtDrag: MouseEvent): void {
             const deltaX = evtDrag.clientX - evtDown.clientX;
             const deltaY = evtDrag.clientY - evtDown.clientY;
@@ -95,11 +95,12 @@ class MapController {
             function mousePanAnimationCallback(start: DOMHighResTimeStamp) {
                 viewport.scrollLeft = nextScrollTargetLeft;
                 viewport.scrollTop = nextScrollTargetTop;
+                isScheduled = -1;
             }
             if (isScheduled) {
-                requestAnimationFrame(mousePanAnimationCallback);
+                cancelAnimationFrame(isScheduled);
             }
-            isScheduled = true;
+            isScheduled = requestAnimationFrame(mousePanAnimationCallback);
         }
         function mouseUp(): void {
             map.removeEventListener("mousemove", mouseDrag);

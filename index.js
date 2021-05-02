@@ -500,7 +500,7 @@ var MapController = (function () {
         var initialScrollTop = viewport.scrollTop;
         var nextScrollTargetLeft = 0.0;
         var nextScrollTargetTop = 0.0;
-        var isScheduled = false;
+        var isScheduled = -1;
         function mouseDrag(evtDrag) {
             var deltaX = evtDrag.clientX - evtDown.clientX;
             var deltaY = evtDrag.clientY - evtDown.clientY;
@@ -509,11 +509,12 @@ var MapController = (function () {
             function mousePanAnimationCallback(start) {
                 viewport.scrollLeft = nextScrollTargetLeft;
                 viewport.scrollTop = nextScrollTargetTop;
+                isScheduled = -1;
             }
             if (isScheduled) {
-                requestAnimationFrame(mousePanAnimationCallback);
+                cancelAnimationFrame(isScheduled);
             }
-            isScheduled = true;
+            isScheduled = requestAnimationFrame(mousePanAnimationCallback);
         }
         function mouseUp() {
             map.removeEventListener("mousemove", mouseDrag);
