@@ -27,10 +27,11 @@ Tracker for missing features, usability improvements and other things that shoul
 
 ## Performance
 
-- [ ] Reuse icons for base outlines
+- [x] Reuse icons for base outlines
 - [ ] Mooar introspection, stable 60 fps or bust!
 
 ## Display
 
-- [ ] Figure out how to modify the fill colour of an SVG from JavaScript
-- [ ] Update SVGs to use a single fill and stroke colour, simplify geometries
+- [x] ~~Figure out how to modify the fill colour of an SVG from JavaScript~~ one does not simply update non-inlined SVGs
+- [x] Update SVGs to use a single fill and stroke colour, simplify geometries
+- [ ] Vary base icon size based on type (warpgate > primary facility > large outpost > small outpost)

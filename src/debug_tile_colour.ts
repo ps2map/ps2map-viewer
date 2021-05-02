@@ -4,42 +4,37 @@ const ownershipColorsCSS = [
         .getPropertyValue("--COLOR-FG-CAPPED-NULL")
         .trim(),
     getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-VS")
+        .trim(),
+    getComputedStyle(document.documentElement)
         .getPropertyValue("--COLOR-FG-CAPPED-NC")
         .trim(),
     getComputedStyle(document.documentElement)
         .getPropertyValue("--COLOR-FG-CAPPED-TR")
         .trim(),
-    getComputedStyle(document.documentElement)
-        .getPropertyValue("--COLOR-FG-CAPPED-VS")
-        .trim(),
 ];
 
 /**
  * Cycle the faction colours for a given SVG polygon.
-
- * @param base The SVG element (i.e. base polygon) that was clicked
- * @param event The original mouse click event.
+ * @param base The base element that was clicked.
+ * @returns The faction ID of the new owner.
  */
-function cycleFactionColour(event: MouseEvent): void {
-    if (!(event.target instanceof SVGElement)) {
-        return;
-    }
-    if (event.button != 1) {
-        return;
-    }
+function cycleFactionColour(base: SVGElement): number {
     // Due to the base style being applied via a global CSS, base SVGs don't
     // start out with a specific colour.
-    if (!event.target.style.fill) {
-        event.target.style.fill = ownershipColorsCSS[0];
+    if (!base.style.fill) {
+        base.style.fill = ownershipColorsCSS[0];
     }
     for (let i = 0; i < ownershipColorsCSS.length; i++) {
-        if (event.target.style.fill == ownershipColorsCSS[i]) {
+        if (base.style.fill == ownershipColorsCSS[i]) {
             if (i + 1 < ownershipColorsCSS.length) {
-                event.target.style.fill = ownershipColorsCSS[i + 1];
+                base.style.fill = ownershipColorsCSS[i + 1];
+                return i + 1;
             } else {
-                event.target.style.fill = ownershipColorsCSS[0];
+                base.style.fill = ownershipColorsCSS[0];
+                return 0;
             }
-            break;
         }
     }
+    return 0;
 }

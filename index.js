@@ -4,36 +4,32 @@ var ownershipColorsCSS = [
         .getPropertyValue("--COLOR-FG-CAPPED-NULL")
         .trim(),
     getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-VS")
+        .trim(),
+    getComputedStyle(document.documentElement)
         .getPropertyValue("--COLOR-FG-CAPPED-NC")
         .trim(),
     getComputedStyle(document.documentElement)
         .getPropertyValue("--COLOR-FG-CAPPED-TR")
         .trim(),
-    getComputedStyle(document.documentElement)
-        .getPropertyValue("--COLOR-FG-CAPPED-VS")
-        .trim(),
 ];
-function cycleFactionColour(event) {
-    if (!(event.target instanceof SVGElement)) {
-        return;
-    }
-    if (event.button != 1) {
-        return;
-    }
-    if (!event.target.style.fill) {
-        event.target.style.fill = ownershipColorsCSS[0];
+function cycleFactionColour(base) {
+    if (!base.style.fill) {
+        base.style.fill = ownershipColorsCSS[0];
     }
     for (var i = 0; i < ownershipColorsCSS.length; i++) {
-        if (event.target.style.fill == ownershipColorsCSS[i]) {
+        if (base.style.fill == ownershipColorsCSS[i]) {
             if (i + 1 < ownershipColorsCSS.length) {
-                event.target.style.fill = ownershipColorsCSS[i + 1];
+                base.style.fill = ownershipColorsCSS[i + 1];
+                return i + 1;
             }
             else {
-                event.target.style.fill = ownershipColorsCSS[0];
+                base.style.fill = ownershipColorsCSS[0];
+                return 0;
             }
-            break;
         }
     }
+    return 0;
 }
 var restEndpoint = "http://127.0.0.1:5000/";
 function getBasesFromContinent(continentId) {
@@ -121,16 +117,16 @@ var BaseNameLayer = (function (_super) {
     }
     BaseNameLayer.prototype.setContinent = function (continentId) {
         var _this = this;
-        var bases = getBasesFromContinent(continentId);
-        bases.then(function (bases) {
+        getBasesFromContinent(continentId).then(function (bases) {
             var elements = [];
             bases.forEach(function (base) {
                 var anchor = document.createElement("div");
-                var offsetX = (4096 + base.map_pos[0]) / 81.92;
-                var offsetY = (4096 + base.map_pos[1]) / 81.92;
+                var posX = (4096 + base.map_pos[0]) / 81.92;
+                var posY = (4096 + base.map_pos[1]) / 81.92;
                 anchor.setAttribute("class", "mapAnchor");
-                anchor.style.left = offsetX + "%";
-                anchor.style.bottom = offsetY + "%";
+                anchor.setAttribute("baseId", base.id.toString());
+                anchor.style.left = posX + "%";
+                anchor.style.bottom = posY + "%";
                 var iconBox = document.createElement("div");
                 anchor.appendChild(iconBox);
                 iconBox.setAttribute("class", "iconBox");
@@ -140,7 +136,7 @@ var BaseNameLayer = (function (_super) {
                 var icon = document.createElement("img");
                 layerImage.appendChild(icon);
                 icon.setAttribute("alt", "Amp Station");
-                icon.setAttribute("src", "img/icons/amp-station.svg");
+                icon.setAttribute("src", _this.getBaseIconFromType(base.type_id));
                 var name = document.createElement("p");
                 anchor.appendChild(name);
                 name.setAttribute("class", "baseLabel");
@@ -150,6 +146,69 @@ var BaseNameLayer = (function (_super) {
             _this.clear();
             elements.forEach(function (element) { return _this.layer.appendChild(element); });
         });
+    };
+    BaseNameLayer.prototype.setBaseOwnership = function (baseId, factionId) {
+        var newColour = this.getFactionColour(factionId);
+        for (var i = 0; i < this.layer.children.length; i++) {
+            var base = this.layer.children.item(i);
+            var attrId = base.getAttribute("baseId");
+            if (attrId == null) {
+                continue;
+            }
+            if ((baseId instanceof Array && parseInt(attrId) in baseId) ||
+                parseInt(attrId) == baseId) {
+                this.setBaseIconColour(base, newColour);
+                if (baseId instanceof Number) {
+                    break;
+                }
+            }
+        }
+    };
+    BaseNameLayer.prototype.getBaseIconFromType = function (typeId) {
+        var fileName = "containment-site";
+        switch (typeId) {
+            case 2:
+                fileName = "amp-station";
+                break;
+            case 3:
+                fileName = "bio-lab";
+                break;
+            case 4:
+                fileName = "tech-plant";
+                break;
+            case 5:
+                fileName = "large-outpost";
+                break;
+            case 6:
+                fileName = "small-outpost";
+                break;
+            case 7:
+                fileName = "warpgate";
+                break;
+            case 9:
+                fileName = "construction-outpost";
+                break;
+            default:
+                console.warn("Encountered unknown facility type ID: " + typeId);
+                break;
+        }
+        return "img/icons/" + fileName + ".svg";
+    };
+    BaseNameLayer.prototype.getFactionColour = function (factionId) {
+        switch (factionId) {
+            case 1:
+                return "var(--COLOR-FG-CAPPED-VS)";
+            case 2:
+                return "var(--COLOR-FG-CAPPED-NC)";
+            case 3:
+                return "var(--COLOR-FG-CAPPED-TR)";
+            default:
+                return "#333333";
+        }
+    };
+    BaseNameLayer.prototype.setBaseIconColour = function (base, newColour) {
+        var icon = base.children[0];
+        icon.style.setProperty("--baseIconColour", newColour);
     };
     return BaseNameLayer;
 }(MapLayer));
@@ -194,9 +253,6 @@ var HexLayer = (function (_super) {
     function HexLayer(layer, initialContinentId) {
         var _this = _super.call(this, layer, initialContinentId) || this;
         _this.baseHoverCallback = function () { return null; };
-        _this.layer.addEventListener("auxclick", function (evt) {
-            cycleFactionColour(evt);
-        });
         return _this;
     }
     HexLayer.prototype.setContinent = function (continentId) {
@@ -364,12 +420,25 @@ function onDOMLoaded() {
         });
     };
     var zoomInc = document.getElementById("zoomInc");
-    zoomInc.addEventListener("click", function (evt) {
+    zoomInc.addEventListener("click", function () {
         controller.incDecZoom(true);
     });
     var zoomDec = document.getElementById("zoomDec");
-    zoomDec.addEventListener("click", function (evt) {
+    zoomDec.addEventListener("click", function () {
         controller.incDecZoom(false);
+    });
+    hexLayer.layer.addEventListener("auxclick", function (evt) {
+        if (!(evt.target instanceof SVGElement)) {
+            return;
+        }
+        if (evt.button != 1) {
+            return;
+        }
+        var newColour = cycleFactionColour(evt.target);
+        var svgElement = evt.target.parentElement;
+        if (svgElement != null) {
+            baseNameLayer.setBaseOwnership(parseInt(svgElement.id), newColour);
+        }
     });
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
