@@ -42,6 +42,7 @@ class MapController {
      * reduce it (-).
      */
     public incDecZoom(increase: boolean) {
+        let zoomLevel = this.zoomLevel;
         const index = zoomLevels.indexOf(this.zoomLevel);
         if (index < 0) {
             // Zoom level is an odd value, jump to the next fixed value
@@ -49,20 +50,20 @@ class MapController {
                 const refLevel = zoomLevels[i];
                 if (refLevel > this.zoomLevel) {
                     if (increase) {
-                        this.zoomLevel = refLevel;
+                        zoomLevel = refLevel;
                         break;
                     }
                     // When decrementing, we want to jump to the next
                     // level that is smaller, so we take the one before
-                    this.zoomLevel = zoomLevels[i - 1];
+                    zoomLevel = zoomLevels[i - 1];
                     break;
                 }
             }
         } else {
             // Zoom level is a fixed value, modify by 1
-            this.zoomLevel += increase ? 1 : -1;
+            zoomLevel += increase ? 1 : -1;
         }
-        this.applyZoomLevel();
+        this.applyZoomLevel(zoomLevel);
     }
 
     /**
@@ -109,24 +110,49 @@ class MapController {
     }
 
     /**
-     * Constraint the zoom level within the valid range.
+     * Constrain the given value within the valid zoom level range.
+     * @param value The value to constrain
+     * @returns The given value clamped within the zoom limits
      */
-    private constrainZoom(): void {
-        if (this.zoomLevel < 1.0) {
-            this.zoomLevel = 1.0;
-        } else if (this.zoomLevel > 12.0) {
-            this.zoomLevel = 12.0;
+    private constrainZoom(value: number): number {
+        let zoomLevel = value;
+        if (zoomLevel < 1.0) {
+            zoomLevel = 1.0;
+        } else if (zoomLevel > 12.0) {
+            zoomLevel = 12.0;
         }
+        return zoomLevel;
     }
 
     /**
      * Apply the new zoom level.
      * This includes firing any onZoom callbacks, as well as the
      * scaling of the map itself.
+     * @param zoomLevel The new zoom level to apply
+     * @param relX Relative screen position towards which to zoom
+     * @param relY Relative screen position towards which to zoom
      */
-    private applyZoomLevel(): void {
-        this.constrainZoom();
-        const offset = (this.zoomLevel - 1.0) * 50.0;
+    private applyZoomLevel(
+        zoomLevel: number,
+        relX: number = 0.5,
+        relY: number = 0.5
+    ): void {
+        const vport = this.viewport;
+        // Viewport-relative scroll target
+        const screenX = relX * vport.clientWidth;
+        const screenY = relY * vport.clientHeight;
+        const newZoom = this.constrainZoom(zoomLevel);
+        const zoomDelta = newZoom / this.zoomLevel;
+        // Shift scroll position for new zoom level and target
+        const relScrollX = (screenX + vport.scrollLeft) * zoomDelta;
+        const relScrollY = (screenY + vport.scrollTop) * zoomDelta;
+        const scrollLeft = relScrollX - screenX;
+        const scrollTop = relScrollY - screenY;
+        // Another shift to compensate for the map scaling
+        const offset = (newZoom - 1.0) * 50.0;
+        this.zoomLevel = newZoom;
+        vport.scrollLeft = scrollLeft;
+        vport.scrollTop = scrollTop;
         this.map.style.transform =
             `translate3D(${offset}%, ${offset}%, 0) ` +
             `scale(${this.zoomLevel})`;
@@ -142,8 +168,9 @@ class MapController {
         if (evt.deltaMode == 0) {
             deltaY /= 80;
         }
-        this.zoomLevel -= deltaY * 0.25;
-        this.applyZoomLevel();
+        const relX = evt.clientX / this.viewport.clientWidth;
+        const relY = evt.clientY / this.viewport.clientHeight;
+        this.applyZoomLevel(this.zoomLevel - deltaY * 0.25, relX, relY);
     }
 
     /**
