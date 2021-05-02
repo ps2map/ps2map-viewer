@@ -34,6 +34,7 @@ class MapController {
         map.addEventListener("wheel", this.mouseWheel.bind(this), {
             passive: false,
         });
+        map.addEventListener("touchstart", this.pinchZoom.bind(this));
     }
 
     /**
@@ -84,7 +85,7 @@ class MapController {
         const initialScrollTop = viewport.scrollTop;
         let nextScrollTargetLeft = 0.0;
         let nextScrollTargetTop = 0.0;
-        let isScheduled = false;
+        let isScheduled = -1;
         function mouseDrag(evtDrag: MouseEvent): void {
             const deltaX = evtDrag.clientX - evtDown.clientX;
             const deltaY = evtDrag.clientY - evtDown.clientY;
@@ -95,11 +96,12 @@ class MapController {
             function mousePanAnimationCallback(start: DOMHighResTimeStamp) {
                 viewport.scrollLeft = nextScrollTargetLeft;
                 viewport.scrollTop = nextScrollTargetTop;
+                isScheduled = -1;
             }
             if (isScheduled) {
-                requestAnimationFrame(mousePanAnimationCallback);
+                cancelAnimationFrame(isScheduled);
             }
-            isScheduled = true;
+            isScheduled = requestAnimationFrame(mousePanAnimationCallback);
         }
         function mouseUp(): void {
             map.removeEventListener("mousemove", mouseDrag);
@@ -180,5 +182,90 @@ class MapController {
         this.onZoom.forEach((callback) => {
             callback(this.zoomLevel);
         });
+    }
+
+    /**
+     * Return the midpoint of a touch gesture.
+     * @param touches The TouchList received from the event
+     * @returns A tuple of the average clientX and clientY location
+     */
+    private getTouchesCenter(touches: TouchList): [number, number] {
+        let avgX = 0.0;
+        let avgY = 0.0;
+        if (touches.length == 0) {
+            return [NaN, NaN];
+        }
+        for (let i = 0; i < touches.length; i++) {
+            const touch = <Touch>touches.item(i);
+            avgX += touch.clientX;
+            avgY += touch.clientY;
+        }
+        avgX /= touches.length;
+        avgY /= touches.length;
+        return [avgX, avgY];
+    }
+
+    /**
+     * Return the straight lien distance between two touch points.
+     * @param touches The TouchList object received from the event
+     * @returns The cartesian distance between the two touch points
+     * @throws Error if the TouchList's length is not exactly 2
+     */
+    private getTouchesDistance(touches: TouchList): number {
+        if (touches.length != 2) {
+            throw "distance only valid between two points";
+        }
+        const pt1 = <Touch>touches.item(0);
+        const pt2 = <Touch>touches.item(1);
+        return Math.sqrt(
+            (pt2.clientX - pt1.clientX) ** 2 + (pt2.clientY - pt1.clientY) ** 2
+        );
+    }
+
+    /**
+     * Event handler for pinch zoom controls
+     * @param evt The initial touchdown event received
+     */
+    private pinchZoom(evt: TouchEvent): void {
+        if (evt.touches.length != 2) {
+            return;
+        }
+        const con = this;
+        const touchStartDist = this.getTouchesDistance(evt.touches);
+        const zoomStart = this.zoomLevel;
+        let scheduled = -1;
+
+        function touchMove(evt: TouchEvent): void {
+            if (evt.touches.length != 2) {
+                return;
+            }
+            const touchCenter = con.getTouchesCenter(evt.touches);
+            const touchDist = con.getTouchesDistance(evt.touches);
+            const distRel = touchDist / touchStartDist;
+
+            if (scheduled != -1) {
+                cancelAnimationFrame(scheduled);
+            }
+            scheduled = requestAnimationFrame(() => {
+                con.applyZoomLevel(
+                    zoomStart * distRel,
+                    touchCenter[0] / con.viewport.clientWidth,
+                    touchCenter[1] / con.viewport.clientHeight
+                );
+                scheduled = -1;
+            });
+        }
+
+        function touchEnd(evt: TouchEvent): void {
+            if (evt.touches.length != 2) {
+                con.map.removeEventListener("touchmove", touchMove);
+                con.map.removeEventListener("touchend", touchEnd);
+                con.map.removeEventListener("touchcancel", touchEnd);
+            }
+        }
+
+        con.map.addEventListener("touchmove", touchMove);
+        con.map.addEventListener("touchend", touchEnd);
+        con.map.addEventListener("touchcancel", touchEnd);
     }
 }

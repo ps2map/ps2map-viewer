@@ -468,6 +468,7 @@ var MapController = (function () {
         map.addEventListener("wheel", this.mouseWheel.bind(this), {
             passive: false
         });
+        map.addEventListener("touchstart", this.pinchZoom.bind(this));
     }
     MapController.prototype.incDecZoom = function (increase) {
         var zoomLevel = this.zoomLevel;
@@ -500,7 +501,7 @@ var MapController = (function () {
         var initialScrollTop = viewport.scrollTop;
         var nextScrollTargetLeft = 0.0;
         var nextScrollTargetTop = 0.0;
-        var isScheduled = false;
+        var isScheduled = -1;
         function mouseDrag(evtDrag) {
             var deltaX = evtDrag.clientX - evtDown.clientX;
             var deltaY = evtDrag.clientY - evtDown.clientY;
@@ -509,11 +510,12 @@ var MapController = (function () {
             function mousePanAnimationCallback(start) {
                 viewport.scrollLeft = nextScrollTargetLeft;
                 viewport.scrollTop = nextScrollTargetTop;
+                isScheduled = -1;
             }
             if (isScheduled) {
-                requestAnimationFrame(mousePanAnimationCallback);
+                cancelAnimationFrame(isScheduled);
             }
-            isScheduled = true;
+            isScheduled = requestAnimationFrame(mousePanAnimationCallback);
         }
         function mouseUp() {
             map.removeEventListener("mousemove", mouseDrag);
@@ -568,6 +570,63 @@ var MapController = (function () {
         this.onZoom.forEach(function (callback) {
             callback(_this.zoomLevel);
         });
+    };
+    MapController.prototype.getTouchesCenter = function (touches) {
+        var avgX = 0.0;
+        var avgY = 0.0;
+        if (touches.length == 0) {
+            return [NaN, NaN];
+        }
+        for (var i = 0; i < touches.length; i++) {
+            var touch = touches.item(i);
+            avgX += touch.clientX;
+            avgY += touch.clientY;
+        }
+        avgX /= touches.length;
+        avgY /= touches.length;
+        return [avgX, avgY];
+    };
+    MapController.prototype.getTouchesDistance = function (touches) {
+        if (touches.length != 2) {
+            throw "distance only valid between two points";
+        }
+        var pt1 = touches.item(0);
+        var pt2 = touches.item(1);
+        return Math.sqrt(Math.pow((pt2.clientX - pt1.clientX), 2) + Math.pow((pt2.clientY - pt1.clientY), 2));
+    };
+    MapController.prototype.pinchZoom = function (evt) {
+        if (evt.touches.length != 2) {
+            return;
+        }
+        var con = this;
+        var touchStartDist = this.getTouchesDistance(evt.touches);
+        var zoomStart = this.zoomLevel;
+        var scheduled = -1;
+        function touchMove(evt) {
+            if (evt.touches.length != 2) {
+                return;
+            }
+            var touchCenter = con.getTouchesCenter(evt.touches);
+            var touchDist = con.getTouchesDistance(evt.touches);
+            var distRel = touchDist / touchStartDist;
+            if (scheduled != -1) {
+                cancelAnimationFrame(scheduled);
+            }
+            scheduled = requestAnimationFrame(function () {
+                con.applyZoomLevel(zoomStart * distRel, touchCenter[0] / con.viewport.clientWidth, touchCenter[1] / con.viewport.clientHeight);
+                scheduled = -1;
+            });
+        }
+        function touchEnd(evt) {
+            if (evt.touches.length != 2) {
+                con.map.removeEventListener("touchmove", touchMove);
+                con.map.removeEventListener("touchend", touchEnd);
+                con.map.removeEventListener("touchcancel", touchEnd);
+            }
+        }
+        con.map.addEventListener("touchmove", touchMove);
+        con.map.addEventListener("touchend", touchEnd);
+        con.map.addEventListener("touchcancel", touchEnd);
     };
     return MapController;
 }());
