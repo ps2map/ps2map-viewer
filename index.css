@@ -192,18 +192,6 @@ aside th {
     text-shadow: 0px 0px 5px #000000;
 }
 
-/* Map center marker for debug purposes */
-
-#crossHair {
-    border: 1px solid #ffffff;
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    left: calc((var(--MAP-SIZE) / 2) - 2px);
-    top: calc((var(--MAP-SIZE) / 2) - 2px);
-    z-index: 100;
-}
-
 /* No JS found banner */
 
 #no-js-modal-banner {
