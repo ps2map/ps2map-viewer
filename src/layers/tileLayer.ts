@@ -24,7 +24,7 @@ class TileLayer extends MapLayer {
         tileBaseUrl: string
     ) {
         super(layer, initialContinentId);
-        this.lod = 3;
+        this.lod = this.getLod(1.0);
         this.tileSet = "bogus";
         this.tileBaseUrl = tileBaseUrl;
     }
@@ -47,30 +47,33 @@ class TileLayer extends MapLayer {
      * @param zoomLevel The new zoom level to use
      */
     public onZoom(zoomLevel: number): void {
-        // Update map tile LOD
-        let newLod = 0;
-        if (zoomLevel >= 8) {
-            newLod = 0;
-        } else if (zoomLevel >= 4) {
-            newLod = 1;
-        } else if (zoomLevel >= 2) {
-            newLod = 2;
-        } else {
-            newLod = 3;
-        }
-        // Update tiles for new LOD (if needed)
-        if (newLod == this.lod) {
+        const lod = this.getLod(zoomLevel);
+        if (lod == this.lod) {
             return;
         }
-        this.lod = newLod;
-        // Update CSS grid
-        const numTiles = this.getNumTiles(newLod);
-        this.layer.style.setProperty(
-            "--MAP-TILES-PER-AXIS",
-            numTiles.toString()
-        );
-        // Redraw map tiles
+        this.lod = lod;
         this.updateTiles();
+    }
+
+    /**
+     * Calculate the DPI-aware LOD level for the given zoom level.
+     * @param zoomLevel The zoom level for which to calculate the LOD.
+     * @returns The tile LOD to use.
+     */
+    private getLod(zoomLevel: number): number {
+        // Calculate the minimim LOD level to match the device DPI and zoom
+        const density = window.devicePixelRatio || 1;
+        const minLod = zoomLevel * density;
+        // Pick the closest compatible LOD level
+        let lod = 3;
+        if (minLod >= 8) {
+            lod = 0;
+        } else if (minLod >= 4) {
+            lod = 1;
+        } else if (minLod >= 2) {
+            lod = 2;
+        }
+        return lod;
     }
 
     /**
@@ -93,6 +96,12 @@ class TileLayer extends MapLayer {
      */
     private updateTiles(): void {
         const numTiles = this.getNumTiles(this.lod);
+        // Update CSS grid for new LOD
+        this.layer.style.setProperty(
+            "--MAP-TILES-PER-AXIS",
+            numTiles.toString()
+        );
+        // Recreate map tiles
         const newTiles: Array<HTMLDivElement> = [];
         // Special case for single-tile map LOD
         if (numTiles <= 1) {

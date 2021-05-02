@@ -308,7 +308,7 @@ var TileLayer = (function (_super) {
     __extends(TileLayer, _super);
     function TileLayer(layer, initialContinentId, tileBaseUrl) {
         var _this = _super.call(this, layer, initialContinentId) || this;
-        _this.lod = 3;
+        _this.lod = _this.getLod(1.0);
         _this.tileSet = "bogus";
         _this.tileBaseUrl = tileBaseUrl;
         return _this;
@@ -321,26 +321,27 @@ var TileLayer = (function (_super) {
         this.setTileSet(continentId);
     };
     TileLayer.prototype.onZoom = function (zoomLevel) {
-        var newLod = 0;
-        if (zoomLevel >= 8) {
-            newLod = 0;
-        }
-        else if (zoomLevel >= 4) {
-            newLod = 1;
-        }
-        else if (zoomLevel >= 2) {
-            newLod = 2;
-        }
-        else {
-            newLod = 3;
-        }
-        if (newLod == this.lod) {
+        var lod = this.getLod(zoomLevel);
+        if (lod == this.lod) {
             return;
         }
-        this.lod = newLod;
-        var numTiles = this.getNumTiles(newLod);
-        this.layer.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
+        this.lod = lod;
         this.updateTiles();
+    };
+    TileLayer.prototype.getLod = function (zoomLevel) {
+        var density = window.devicePixelRatio || 1;
+        var minLod = zoomLevel * density;
+        var lod = 3;
+        if (minLod >= 8) {
+            lod = 0;
+        }
+        else if (minLod >= 4) {
+            lod = 1;
+        }
+        else if (minLod >= 2) {
+            lod = 2;
+        }
+        return lod;
     };
     TileLayer.prototype.setTileSet = function (continentId) {
         return __awaiter(this, void 0, void 0, function () {
@@ -359,6 +360,7 @@ var TileLayer = (function (_super) {
     TileLayer.prototype.updateTiles = function () {
         var _this = this;
         var numTiles = this.getNumTiles(this.lod);
+        this.layer.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
         var newTiles = [];
         if (numTiles <= 1) {
             var tile = this.getMapTilePath(this.tileSet.toLowerCase(), this.lod, 0, 0);
