@@ -58,17 +58,16 @@ class TileLayer extends MapLayer {
         } else {
             newLod = 3;
         }
+        // Update tiles for new LOD (if needed)
+        if (newLod == this.lod) {
+            return;
+        }
         this.lod = newLod;
-        // Update CSS grid size
+        // Update CSS grid
         const numTiles = this.getNumTiles(newLod);
-        document.documentElement.style.setProperty(
+        this.layer.style.setProperty(
             "--MAP-TILES-PER-AXIS",
             numTiles.toString()
-        );
-        // Update CSS texture size
-        document.documentElement.style.setProperty(
-            "--MAP-SIZE",
-            `calc(min(100vh, 100vw) * ${zoomLevel})`
         );
         // Redraw map tiles
         this.updateTiles();
@@ -94,6 +93,7 @@ class TileLayer extends MapLayer {
      */
     private updateTiles(): void {
         const numTiles = this.getNumTiles(this.lod);
+        const newTiles: Array<HTMLDivElement> = [];
         // Special case for single-tile map LOD
         if (numTiles <= 1) {
             const tile = this.getMapTilePath(
@@ -102,39 +102,47 @@ class TileLayer extends MapLayer {
                 0,
                 0
             );
-            const str = `<div style="background-image: url(${tile})"></div>`;
-            const element = elementFromString<HTMLDivElement>(str);
-            this.clear();
-            this.layer.appendChild(element);
-            return;
+            newTiles.push(this.createTile(tile));
         }
-        // Iterate rows
-        const newTiles: Array<HTMLDivElement> = [];
-        for (let y = numTiles / 2; y > -numTiles / 2 - 1; y--) {
-            // Skip 0 index as we have an even number of map tiles
-            if (y == 0) {
-                continue;
-            }
-            // Iterate columns
-            for (let x = -numTiles / 2; x < numTiles / 2 + 1; x++) {
+        // Default case for multi-tile LODs
+        else {
+            for (let y = numTiles / 2; y > -numTiles / 2 - 1; y--) {
                 // Skip 0 index as we have an even number of map tiles
-                if (x == 0) {
+                if (y == 0) {
                     continue;
                 }
-                // Create a new div with the given tile as the background image
-                const tile = this.getMapTilePath(
-                    this.tileSet.toLowerCase(),
-                    this.lod,
-                    x,
-                    y
-                );
-                const div = document.createElement("div");
-                div.style.backgroundImage = `url(${tile})`;
-                newTiles.push(div);
+                // Iterate columns
+                for (let x = -numTiles / 2; x < numTiles / 2 + 1; x++) {
+                    // Skip 0 index as we have an even number of map tiles
+                    if (x == 0) {
+                        continue;
+                    }
+                    // Create a new div with the given tile as the background image
+                    const tile = this.getMapTilePath(
+                        this.tileSet.toLowerCase(),
+                        this.lod,
+                        x,
+                        y
+                    );
+                    newTiles.push(this.createTile(tile));
+                }
             }
         }
-        this.clear();
-        newTiles.forEach((tile) => this.layer.appendChild(tile));
+        requestAnimationFrame(() => {
+            this.clear();
+            newTiles.forEach((tile) => this.layer.appendChild(tile));
+        });
+    }
+
+    /**
+     * Factory method for map tiles.
+     * @param url The URL of the tile texture.
+     * @returns The request tile as a <div> element.
+     */
+    private createTile(url: string): HTMLDivElement {
+        const tile = document.createElement("div");
+        tile.style.backgroundImage = `url(${url})`;
+        return tile;
     }
 
     /**

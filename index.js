@@ -328,10 +328,12 @@ var TileLayer = (function (_super) {
         else {
             newLod = 3;
         }
+        if (newLod == this.lod) {
+            return;
+        }
         this.lod = newLod;
         var numTiles = this.getNumTiles(newLod);
-        document.documentElement.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
-        document.documentElement.style.setProperty("--MAP-SIZE", "calc(min(100vh, 100vw) * " + zoomLevel + ")");
+        this.layer.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
         this.updateTiles();
     };
     TileLayer.prototype.setTileSet = function (continentId) {
@@ -351,31 +353,34 @@ var TileLayer = (function (_super) {
     TileLayer.prototype.updateTiles = function () {
         var _this = this;
         var numTiles = this.getNumTiles(this.lod);
+        var newTiles = [];
         if (numTiles <= 1) {
             var tile = this.getMapTilePath(this.tileSet.toLowerCase(), this.lod, 0, 0);
-            var str = "<div style=\"background-image: url(" + tile + ")\"></div>";
-            var element = elementFromString(str);
-            this.clear();
-            this.layer.appendChild(element);
-            return;
+            newTiles.push(this.createTile(tile));
         }
-        var newTiles = [];
-        for (var y = numTiles / 2; y > -numTiles / 2 - 1; y--) {
-            if (y == 0) {
-                continue;
-            }
-            for (var x = -numTiles / 2; x < numTiles / 2 + 1; x++) {
-                if (x == 0) {
+        else {
+            for (var y = numTiles / 2; y > -numTiles / 2 - 1; y--) {
+                if (y == 0) {
                     continue;
                 }
-                var tile = this.getMapTilePath(this.tileSet.toLowerCase(), this.lod, x, y);
-                var div = document.createElement("div");
-                div.style.backgroundImage = "url(" + tile + ")";
-                newTiles.push(div);
+                for (var x = -numTiles / 2; x < numTiles / 2 + 1; x++) {
+                    if (x == 0) {
+                        continue;
+                    }
+                    var tile = this.getMapTilePath(this.tileSet.toLowerCase(), this.lod, x, y);
+                    newTiles.push(this.createTile(tile));
+                }
             }
         }
-        this.clear();
-        newTiles.forEach(function (tile) { return _this.layer.appendChild(tile); });
+        requestAnimationFrame(function () {
+            _this.clear();
+            newTiles.forEach(function (tile) { return _this.layer.appendChild(tile); });
+        });
+    };
+    TileLayer.prototype.createTile = function (url) {
+        var tile = document.createElement("div");
+        tile.style.backgroundImage = "url(" + url + ")";
+        return tile;
     };
     TileLayer.prototype.getNumTiles = function (lod) {
         if (lod < 0) {
@@ -473,8 +478,7 @@ var MapController = (function () {
         else {
             this.zoomLevel += increase ? 1 : -1;
         }
-        this.constrainZoom();
-        this.zoomDispatch();
+        this.applyZoomLevel();
     };
     MapController.prototype.mousePan = function (evtDown) {
         if (evtDown.button != 0) {
@@ -516,11 +520,15 @@ var MapController = (function () {
             this.zoomLevel = 12.0;
         }
     };
+    MapController.prototype.applyZoomLevel = function () {
+        this.constrainZoom();
+        this.map.style.transform = "scale(" + this.zoomLevel + ")";
+        this.zoomDispatch();
+    };
     MapController.prototype.mouseWheel = function (evt) {
         evt.preventDefault();
         this.zoomLevel -= 0.005 * evt.deltaY;
-        this.constrainZoom();
-        this.zoomDispatch();
+        this.applyZoomLevel();
     };
     MapController.prototype.zoomDispatch = function () {
         var _this = this;
