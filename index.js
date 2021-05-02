@@ -121,16 +121,16 @@ var BaseNameLayer = (function (_super) {
     }
     BaseNameLayer.prototype.setContinent = function (continentId) {
         var _this = this;
-        var bases = getBasesFromContinent(continentId);
-        bases.then(function (bases) {
+        getBasesFromContinent(continentId).then(function (bases) {
             var elements = [];
             bases.forEach(function (base) {
                 var anchor = document.createElement("div");
-                var offsetX = (4096 + base.map_pos[0]) / 81.92;
-                var offsetY = (4096 + base.map_pos[1]) / 81.92;
+                var posX = (4096 + base.map_pos[0]) / 81.92;
+                var posY = (4096 + base.map_pos[1]) / 81.92;
                 anchor.setAttribute("class", "mapAnchor");
-                anchor.style.left = offsetX + "%";
-                anchor.style.bottom = offsetY + "%";
+                anchor.setAttribute("baseId", base.id.toString());
+                anchor.style.left = posX + "%";
+                anchor.style.bottom = posY + "%";
                 var iconBox = document.createElement("div");
                 anchor.appendChild(iconBox);
                 iconBox.setAttribute("class", "iconBox");
@@ -140,7 +140,7 @@ var BaseNameLayer = (function (_super) {
                 var icon = document.createElement("img");
                 layerImage.appendChild(icon);
                 icon.setAttribute("alt", "Amp Station");
-                icon.setAttribute("src", "img/icons/amp-station.svg");
+                icon.setAttribute("src", _this.getBaseIconFromType(base.type_id));
                 var name = document.createElement("p");
                 anchor.appendChild(name);
                 name.setAttribute("class", "baseLabel");
@@ -150,6 +150,36 @@ var BaseNameLayer = (function (_super) {
             _this.clear();
             elements.forEach(function (element) { return _this.layer.appendChild(element); });
         });
+    };
+    BaseNameLayer.prototype.getBaseIconFromType = function (typeId) {
+        var fileName = "containment-site";
+        switch (typeId) {
+            case 2:
+                fileName = "amp-station";
+                break;
+            case 3:
+                fileName = "bio-lab";
+                break;
+            case 4:
+                fileName = "tech-plant";
+                break;
+            case 5:
+                fileName = "large-outpost";
+                break;
+            case 6:
+                fileName = "small-outpost";
+                break;
+            case 7:
+                fileName = "warpgate";
+                break;
+            case 9:
+                fileName = "construction-outpost";
+                break;
+            default:
+                console.warn("Encountered unknown facility type ID: " + typeId);
+                break;
+        }
+        return "img/icons/" + fileName + ".svg";
     };
     return BaseNameLayer;
 }(MapLayer));
