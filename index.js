@@ -470,24 +470,25 @@ var MapController = (function () {
         });
     }
     MapController.prototype.incDecZoom = function (increase) {
+        var zoomLevel = this.zoomLevel;
         var index = zoomLevels.indexOf(this.zoomLevel);
         if (index < 0) {
             for (var i = 0; i < zoomLevels.length; i++) {
                 var refLevel = zoomLevels[i];
                 if (refLevel > this.zoomLevel) {
                     if (increase) {
-                        this.zoomLevel = refLevel;
+                        zoomLevel = refLevel;
                         break;
                     }
-                    this.zoomLevel = zoomLevels[i - 1];
+                    zoomLevel = zoomLevels[i - 1];
                     break;
                 }
             }
         }
         else {
-            this.zoomLevel += increase ? 1 : -1;
+            zoomLevel += increase ? 1 : -1;
         }
-        this.applyZoomLevel();
+        this.applyZoomLevel(zoomLevel);
     };
     MapController.prototype.mousePan = function (evtDown) {
         if (evtDown.button != 0) {
@@ -521,17 +522,32 @@ var MapController = (function () {
         map.addEventListener("mousemove", mouseDrag);
         document.addEventListener("mouseup", mouseUp);
     };
-    MapController.prototype.constrainZoom = function () {
-        if (this.zoomLevel < 1.0) {
-            this.zoomLevel = 1.0;
+    MapController.prototype.constrainZoom = function (value) {
+        var zoomLevel = value;
+        if (zoomLevel < 1.0) {
+            zoomLevel = 1.0;
         }
-        else if (this.zoomLevel > 12.0) {
-            this.zoomLevel = 12.0;
+        else if (zoomLevel > 12.0) {
+            zoomLevel = 12.0;
         }
+        return zoomLevel;
     };
-    MapController.prototype.applyZoomLevel = function () {
-        this.constrainZoom();
-        var offset = (this.zoomLevel - 1.0) * 50.0;
+    MapController.prototype.applyZoomLevel = function (zoomLevel, relX, relY) {
+        if (relX === void 0) { relX = 0.5; }
+        if (relY === void 0) { relY = 0.5; }
+        var vport = this.viewport;
+        var screenX = relX * vport.clientWidth;
+        var screenY = relY * vport.clientHeight;
+        var newZoom = this.constrainZoom(zoomLevel);
+        var zoomDelta = newZoom / this.zoomLevel;
+        var relScrollX = (screenX + vport.scrollLeft) * zoomDelta;
+        var relScrollY = (screenY + vport.scrollTop) * zoomDelta;
+        var scrollLeft = relScrollX - screenX;
+        var scrollTop = relScrollY - screenY;
+        var offset = (newZoom - 1.0) * 50.0;
+        this.zoomLevel = newZoom;
+        vport.scrollLeft = scrollLeft;
+        vport.scrollTop = scrollTop;
         this.map.style.transform =
             "translate3D(" + offset + "%, " + offset + "%, 0) " +
                 ("scale(" + this.zoomLevel + ")");
@@ -543,8 +559,9 @@ var MapController = (function () {
         if (evt.deltaMode == 0) {
             deltaY /= 80;
         }
-        this.zoomLevel -= deltaY * 0.25;
-        this.applyZoomLevel();
+        var relX = evt.clientX / this.viewport.clientWidth;
+        var relY = evt.clientY / this.viewport.clientHeight;
+        this.applyZoomLevel(this.zoomLevel - deltaY * 0.25, relX, relY);
     };
     MapController.prototype.zoomDispatch = function () {
         var _this = this;
