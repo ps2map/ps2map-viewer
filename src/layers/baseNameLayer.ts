@@ -19,7 +19,6 @@ class BaseNameLayer extends MapLayer {
      * @param continentId ID of the new continent to display.
      */
     public setContinent(continentId: number): void {
-        // Hard-coded base names for now
         getBasesFromContinent(continentId).then((bases) => {
             const elements: Array<HTMLDivElement> = [];
             bases.forEach((base) => {
@@ -52,6 +51,35 @@ class BaseNameLayer extends MapLayer {
             this.clear();
             elements.forEach((element) => this.layer.appendChild(element));
         });
+    }
+
+    /**
+     * Update the facility ownership for a given base.
+     * @param baseId The base or bases to update ownership for.
+     * @param factionId The faction that has ownership now.
+     */
+    public setBaseOwnership(
+        baseId: number | Array<number>,
+        factionId: number
+    ): void {
+        const newColour = this.getFactionColour(factionId);
+        for (let i = 0; i < this.layer.children.length; i++) {
+            const base = <HTMLDivElement>this.layer.children.item(i);
+            const attrId = base.getAttribute("baseId");
+            if (attrId == null) {
+                continue;
+            }
+            if (
+                (baseId instanceof Array && parseInt(attrId) in baseId) ||
+                parseInt(attrId) == baseId
+            ) {
+                this.setBaseIconColour(base, newColour);
+                // Break if only one base ID was specified
+                if (baseId instanceof Number) {
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -88,5 +116,34 @@ class BaseNameLayer extends MapLayer {
                 break;
         }
         return `img/icons/${fileName}.svg`;
+    }
+
+    /**
+     * Return the icon colour for a given faction.
+     * @param factionId The faction to return the colour for.
+     * @returns A string representing the CSS colour, i.e. either a
+     * var() expression or a hex colour value.
+     */
+    private getFactionColour(factionId: number): string {
+        switch (factionId) {
+            case 1:
+                return "var(--COLOR-FG-CAPPED-VS)";
+            case 2:
+                return "var(--COLOR-FG-CAPPED-NC)";
+            case 3:
+                return "var(--COLOR-FG-CAPPED-TR)";
+            default:
+                return "#333333";
+        }
+    }
+
+    /**
+     * Update the base icon to use the given colour.
+     * @param base The base anchor to apply the new colour to.
+     * @param newColour The new colour to apply as a string.
+     */
+    private setBaseIconColour(base: HTMLDivElement, newColour: string): void {
+        const icon = <HTMLDivElement>base.children[0];
+        icon.style.setProperty("--baseIconColour", newColour);
     }
 }

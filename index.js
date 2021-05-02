@@ -151,6 +151,23 @@ var BaseNameLayer = (function (_super) {
             elements.forEach(function (element) { return _this.layer.appendChild(element); });
         });
     };
+    BaseNameLayer.prototype.setBaseOwnership = function (baseId, factionId) {
+        var newColour = this.getFactionColour(factionId);
+        for (var i = 0; i < this.layer.children.length; i++) {
+            var base = this.layer.children.item(i);
+            var attrId = base.getAttribute("baseId");
+            if (attrId == null) {
+                continue;
+            }
+            if ((baseId instanceof Array && parseInt(attrId) in baseId) ||
+                parseInt(attrId) == baseId) {
+                this.setBaseIconColour(base, newColour);
+                if (baseId instanceof Number) {
+                    break;
+                }
+            }
+        }
+    };
     BaseNameLayer.prototype.getBaseIconFromType = function (typeId) {
         var fileName = "containment-site";
         switch (typeId) {
@@ -180,6 +197,22 @@ var BaseNameLayer = (function (_super) {
                 break;
         }
         return "img/icons/" + fileName + ".svg";
+    };
+    BaseNameLayer.prototype.getFactionColour = function (factionId) {
+        switch (factionId) {
+            case 1:
+                return "var(--COLOR-FG-CAPPED-VS)";
+            case 2:
+                return "var(--COLOR-FG-CAPPED-NC)";
+            case 3:
+                return "var(--COLOR-FG-CAPPED-TR)";
+            default:
+                return "#333333";
+        }
+    };
+    BaseNameLayer.prototype.setBaseIconColour = function (base, newColour) {
+        var icon = base.children[0];
+        icon.style.setProperty("--baseIconColour", newColour);
     };
     return BaseNameLayer;
 }(MapLayer));
