@@ -87,28 +87,29 @@ class MapController {
         const initialScrollTop = viewport.scrollTop;
         let nextScrollTargetLeft = 0.0;
         let nextScrollTargetTop = 0.0;
-        let isScheduled = -1;
+        let animFrameScheduled = false;
+
         function mouseDrag(evtDrag: MouseEvent): void {
             const deltaX = evtDrag.clientX - evtDown.clientX;
             const deltaY = evtDrag.clientY - evtDown.clientY;
-            // TODO: Move this to another handler to allow parallel zoom
-            // and drag
             nextScrollTargetLeft = initialScrollLeft - deltaX;
             nextScrollTargetTop = initialScrollTop - deltaY;
-            function mousePanAnimationCallback(start: DOMHighResTimeStamp) {
+            if (animFrameScheduled) {
+                return;
+            }
+            animFrameScheduled = true;
+            requestAnimationFrame(() => {
                 viewport.scrollLeft = nextScrollTargetLeft;
                 viewport.scrollTop = nextScrollTargetTop;
-                isScheduled = -1;
-            }
-            if (isScheduled) {
-                cancelAnimationFrame(isScheduled);
-            }
-            isScheduled = requestAnimationFrame(mousePanAnimationCallback);
+                animFrameScheduled = false;
+            });
         }
+
         function mouseUp(): void {
             map.removeEventListener("mousemove", mouseDrag);
             document.removeEventListener("mouseup", mouseUp);
         }
+
         map.addEventListener("mousemove", mouseDrag);
         document.addEventListener("mouseup", mouseUp);
     }
@@ -167,7 +168,7 @@ class MapController {
      * Event listener callback for mouse scroll.
      */
     private mouseWheel(evt: WheelEvent): void {
-        evt.preventDefault(); // Prevent vertical scrolling
+        evt.preventDefault();
         let deltaY = evt.deltaY;
         if (evt.deltaMode == 0) {
             deltaY /= 80;
@@ -235,7 +236,7 @@ class MapController {
         const con = this;
         const touchStartDist = this.getTouchesDistance(evt.touches);
         const zoomStart = this.zoomLevel;
-        let scheduled = -1;
+        let animFrameScheduled = false;
 
         function touchMove(evt: TouchEvent): void {
             if (evt.touches.length != 2) {
@@ -245,16 +246,17 @@ class MapController {
             const touchDist = con.getTouchesDistance(evt.touches);
             const distRel = touchDist / touchStartDist;
 
-            if (scheduled != -1) {
-                cancelAnimationFrame(scheduled);
+            if (animFrameScheduled) {
+                return;
             }
-            scheduled = requestAnimationFrame(() => {
+            animFrameScheduled = true;
+            requestAnimationFrame(() => {
                 con.applyZoomLevel(
                     zoomStart * distRel,
                     touchCenter[0] / con.viewport.clientWidth,
                     touchCenter[1] / con.viewport.clientHeight
                 );
-                scheduled = -1;
+                animFrameScheduled = false;
             });
         }
 

@@ -503,21 +503,21 @@ var MapController = (function () {
         var initialScrollTop = viewport.scrollTop;
         var nextScrollTargetLeft = 0.0;
         var nextScrollTargetTop = 0.0;
-        var isScheduled = -1;
+        var animFrameScheduled = false;
         function mouseDrag(evtDrag) {
             var deltaX = evtDrag.clientX - evtDown.clientX;
             var deltaY = evtDrag.clientY - evtDown.clientY;
             nextScrollTargetLeft = initialScrollLeft - deltaX;
             nextScrollTargetTop = initialScrollTop - deltaY;
-            function mousePanAnimationCallback(start) {
+            if (animFrameScheduled) {
+                return;
+            }
+            animFrameScheduled = true;
+            requestAnimationFrame(function () {
                 viewport.scrollLeft = nextScrollTargetLeft;
                 viewport.scrollTop = nextScrollTargetTop;
-                isScheduled = -1;
-            }
-            if (isScheduled) {
-                cancelAnimationFrame(isScheduled);
-            }
-            isScheduled = requestAnimationFrame(mousePanAnimationCallback);
+                animFrameScheduled = false;
+            });
         }
         function mouseUp() {
             map.removeEventListener("mousemove", mouseDrag);
@@ -603,7 +603,7 @@ var MapController = (function () {
         var con = this;
         var touchStartDist = this.getTouchesDistance(evt.touches);
         var zoomStart = this.zoomLevel;
-        var scheduled = -1;
+        var animFrameScheduled = false;
         function touchMove(evt) {
             if (evt.touches.length != 2) {
                 return;
@@ -611,12 +611,13 @@ var MapController = (function () {
             var touchCenter = con.getTouchesCenter(evt.touches);
             var touchDist = con.getTouchesDistance(evt.touches);
             var distRel = touchDist / touchStartDist;
-            if (scheduled != -1) {
-                cancelAnimationFrame(scheduled);
+            if (animFrameScheduled) {
+                return;
             }
-            scheduled = requestAnimationFrame(function () {
+            animFrameScheduled = true;
+            requestAnimationFrame(function () {
                 con.applyZoomLevel(zoomStart * distRel, touchCenter[0] / con.viewport.clientWidth, touchCenter[1] / con.viewport.clientHeight);
-                scheduled = -1;
+                animFrameScheduled = false;
             });
         }
         function touchEnd(evt) {
