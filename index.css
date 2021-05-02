@@ -153,6 +153,7 @@ aside th {
 }
 
 .iconBox {
+    --baseIconColour: #333333;
     height: 24px;
     width: 24px;
     position: absolute;
@@ -167,7 +168,7 @@ aside th {
 }
 
 .iconBox > .layeredIcon::before {
-    background-color: #333333;
+    background-color: var(--baseIconColour);
     border-radius: 12px;
     content: "";
     display: inline-block;
