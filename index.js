@@ -534,7 +534,11 @@ var MapController = (function () {
     };
     MapController.prototype.mouseWheel = function (evt) {
         evt.preventDefault();
-        this.zoomLevel -= 0.005 * evt.deltaY;
+        var deltaY = evt.deltaY;
+        if (evt.deltaMode == 0) {
+            deltaY /= 80;
+        }
+        this.zoomLevel -= deltaY * 0.25;
         this.applyZoomLevel();
     };
     MapController.prototype.zoomDispatch = function () {

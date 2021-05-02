@@ -135,7 +135,11 @@ class MapController {
      */
     private mouseWheel(evt: WheelEvent): void {
         evt.preventDefault(); // Prevent vertical scrolling
-        this.zoomLevel -= 0.005 * evt.deltaY;
+        let deltaY = evt.deltaY;
+        if (evt.deltaMode == 0) {
+            deltaY /= 80;
+        }
+        this.zoomLevel -= deltaY * 0.25;
         this.applyZoomLevel();
     }
 
