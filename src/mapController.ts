@@ -32,9 +32,11 @@ class MapController {
         this.zoomLevel = 1.0;
         map.addEventListener("mousedown", this.mousePan.bind(this));
         map.addEventListener("wheel", this.mouseWheel.bind(this), {
-            passive: false,
+            passive: true,
         });
-        map.addEventListener("touchstart", this.pinchZoom.bind(this));
+        map.addEventListener("touchstart", this.pinchZoom.bind(this), {
+            passive: true,
+        });
     }
 
     /**
@@ -257,14 +259,14 @@ class MapController {
         }
 
         function touchEnd(evt: TouchEvent): void {
-            if (evt.touches.length != 2) {
-                con.map.removeEventListener("touchmove", touchMove);
-                con.map.removeEventListener("touchend", touchEnd);
-                con.map.removeEventListener("touchcancel", touchEnd);
-            }
+            con.map.removeEventListener("touchmove", touchMove);
+            con.map.removeEventListener("touchend", touchEnd);
+            con.map.removeEventListener("touchcancel", touchEnd);
         }
 
-        con.map.addEventListener("touchmove", touchMove);
+        con.map.addEventListener("touchmove", touchMove, {
+            passive: true,
+        });
         con.map.addEventListener("touchend", touchEnd);
         con.map.addEventListener("touchcancel", touchEnd);
     }
