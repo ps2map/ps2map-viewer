@@ -529,7 +529,10 @@ var MapController = (function () {
     };
     MapController.prototype.applyZoomLevel = function () {
         this.constrainZoom();
-        this.map.style.transform = "scale(" + this.zoomLevel + ")";
+        var offset = (this.zoomLevel - 1.0) * 50.0;
+        this.map.style.transform =
+            "translate3D(" + offset + "%, " + offset + "%, 0) " +
+                ("scale(" + this.zoomLevel + ")");
         this.zoomDispatch();
     };
     MapController.prototype.mouseWheel = function (evt) {
