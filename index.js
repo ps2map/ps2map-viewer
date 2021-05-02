@@ -468,6 +468,7 @@ var MapController = (function () {
         map.addEventListener("wheel", this.mouseWheel.bind(this), {
             passive: false
         });
+        map.addEventListener("touchstart", this.pinchZoom.bind(this));
     }
     MapController.prototype.incDecZoom = function (increase) {
         var zoomLevel = this.zoomLevel;
@@ -569,6 +570,48 @@ var MapController = (function () {
         this.onZoom.forEach(function (callback) {
             callback(_this.zoomLevel);
         });
+    };
+    MapController.prototype.getTouchesDistance = function (touches) {
+        if (touches.length != 2) {
+            throw "distance only valid between two points";
+        }
+        var pt1 = touches.item(0);
+        var pt2 = touches.item(1);
+        return Math.sqrt(Math.pow((pt2.clientX - pt1.clientX), 2) + Math.pow((pt2.clientY - pt1.clientY), 2));
+    };
+    MapController.prototype.pinchZoom = function (evt) {
+        if (evt.touches.length != 2) {
+            return;
+        }
+        var con = this;
+        var touchStartDist = this.getTouchesDistance(evt.touches);
+        var zoomStart = this.zoomLevel;
+        var scheduled = -1;
+        function touchMove(evt) {
+            if (evt.touches.length != 2) {
+                return;
+            }
+            evt.preventDefault();
+            var touchDist = con.getTouchesDistance(evt.touches);
+            var distRel = touchDist / touchStartDist;
+            if (scheduled != -1) {
+                cancelAnimationFrame(scheduled);
+            }
+            scheduled = requestAnimationFrame(function () {
+                con.applyZoomLevel(zoomStart * distRel);
+                scheduled = -1;
+            });
+        }
+        function touchEnd(evt) {
+            if (evt.touches.length != 2) {
+                con.map.removeEventListener("touchmove", touchMove);
+                con.map.removeEventListener("touchend", touchEnd);
+                con.map.removeEventListener("touchcancel", touchEnd);
+            }
+        }
+        con.map.addEventListener("touchmove", touchMove);
+        con.map.addEventListener("touchend", touchEnd);
+        con.map.addEventListener("touchcancel", touchEnd);
     };
     return MapController;
 }());
