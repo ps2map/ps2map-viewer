@@ -163,6 +163,6 @@ class TileLayer extends MapLayer {
         tileX: number,
         tileY: number
     ): string {
-        return this.tileBaseUrl + `${tileName}/lod${lod}_${tileX}_${tileY}.png`;
+        return this.tileBaseUrl + `${tileName}/lod${lod}_${tileX}_${tileY}.jpg`;
     }
 }

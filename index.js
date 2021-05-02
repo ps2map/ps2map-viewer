@@ -384,7 +384,7 @@ var TileLayer = (function (_super) {
         return Math.pow(2, (3 - lod));
     };
     TileLayer.prototype.getMapTilePath = function (tileName, lod, tileX, tileY) {
-        return this.tileBaseUrl + (tileName + "/lod" + lod + "_" + tileX + "_" + tileY + ".png");
+        return this.tileBaseUrl + (tileName + "/lod" + lod + "_" + tileX + "_" + tileY + ".jpg");
     };
     return TileLayer;
 }(MapLayer));
