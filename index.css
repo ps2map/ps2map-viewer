@@ -94,6 +94,7 @@ aside th {
     height: var(--MAP-SIZE);
     width: var(--MAP-SIZE);
     position: absolute;
+    user-select: none;
 }
 
 /* Map layers */
