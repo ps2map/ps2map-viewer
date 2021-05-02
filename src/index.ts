@@ -2,6 +2,7 @@
 /// <reference path="./layers/baseNameLayer.ts" />
 /// <reference path="./layers/hexLayer.ts" />
 /// <reference path="./layers/tileLayer.ts" />
+/// <reference path="./debug_tile_colour.ts" />
 
 /**
  * Initialisation hook for code that must access the DOM.
@@ -63,12 +64,30 @@ function onDOMLoaded(): void {
     };
 
     const zoomInc = <HTMLInputElement>document.getElementById("zoomInc");
-    zoomInc.addEventListener("click", (evt) => {
+    zoomInc.addEventListener("click", () => {
         controller.incDecZoom(true);
     });
     const zoomDec = <HTMLInputElement>document.getElementById("zoomDec");
-    zoomDec.addEventListener("click", (evt) => {
+    zoomDec.addEventListener("click", () => {
         controller.incDecZoom(false);
+    });
+
+    // Debug base painter
+    hexLayer.layer.addEventListener("auxclick", (evt: MouseEvent) => {
+        if (!(evt.target instanceof SVGElement)) {
+            return;
+        }
+        // Middle mouse button only
+        if (evt.button != 1) {
+            return;
+        }
+        const newColour = cycleFactionColour(evt.target);
+        // The auxclick event will fire for the SVG contents, e.g. a polygon,
+        // not the source <svg> element we need
+        const svgElement = evt.target.parentElement;
+        if (svgElement != null) {
+            baseNameLayer.setBaseOwnership(parseInt(svgElement.id), newColour);
+        }
     });
 }
 

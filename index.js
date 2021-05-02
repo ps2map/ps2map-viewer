@@ -4,36 +4,32 @@ var ownershipColorsCSS = [
         .getPropertyValue("--COLOR-FG-CAPPED-NULL")
         .trim(),
     getComputedStyle(document.documentElement)
+        .getPropertyValue("--COLOR-FG-CAPPED-VS")
+        .trim(),
+    getComputedStyle(document.documentElement)
         .getPropertyValue("--COLOR-FG-CAPPED-NC")
         .trim(),
     getComputedStyle(document.documentElement)
         .getPropertyValue("--COLOR-FG-CAPPED-TR")
         .trim(),
-    getComputedStyle(document.documentElement)
-        .getPropertyValue("--COLOR-FG-CAPPED-VS")
-        .trim(),
 ];
-function cycleFactionColour(event) {
-    if (!(event.target instanceof SVGElement)) {
-        return;
-    }
-    if (event.button != 1) {
-        return;
-    }
-    if (!event.target.style.fill) {
-        event.target.style.fill = ownershipColorsCSS[0];
+function cycleFactionColour(base) {
+    if (!base.style.fill) {
+        base.style.fill = ownershipColorsCSS[0];
     }
     for (var i = 0; i < ownershipColorsCSS.length; i++) {
-        if (event.target.style.fill == ownershipColorsCSS[i]) {
+        if (base.style.fill == ownershipColorsCSS[i]) {
             if (i + 1 < ownershipColorsCSS.length) {
-                event.target.style.fill = ownershipColorsCSS[i + 1];
+                base.style.fill = ownershipColorsCSS[i + 1];
+                return i + 1;
             }
             else {
-                event.target.style.fill = ownershipColorsCSS[0];
+                base.style.fill = ownershipColorsCSS[0];
+                return 0;
             }
-            break;
         }
     }
+    return 0;
 }
 var restEndpoint = "http://127.0.0.1:5000/";
 function getBasesFromContinent(continentId) {
@@ -257,9 +253,6 @@ var HexLayer = (function (_super) {
     function HexLayer(layer, initialContinentId) {
         var _this = _super.call(this, layer, initialContinentId) || this;
         _this.baseHoverCallback = function () { return null; };
-        _this.layer.addEventListener("auxclick", function (evt) {
-            cycleFactionColour(evt);
-        });
         return _this;
     }
     HexLayer.prototype.setContinent = function (continentId) {
@@ -427,12 +420,25 @@ function onDOMLoaded() {
         });
     };
     var zoomInc = document.getElementById("zoomInc");
-    zoomInc.addEventListener("click", function (evt) {
+    zoomInc.addEventListener("click", function () {
         controller.incDecZoom(true);
     });
     var zoomDec = document.getElementById("zoomDec");
-    zoomDec.addEventListener("click", function (evt) {
+    zoomDec.addEventListener("click", function () {
         controller.incDecZoom(false);
+    });
+    hexLayer.layer.addEventListener("auxclick", function (evt) {
+        if (!(evt.target instanceof SVGElement)) {
+            return;
+        }
+        if (evt.button != 1) {
+            return;
+        }
+        var newColour = cycleFactionColour(evt.target);
+        var svgElement = evt.target.parentElement;
+        if (svgElement != null) {
+            baseNameLayer.setBaseOwnership(parseInt(svgElement.id), newColour);
+        }
     });
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
