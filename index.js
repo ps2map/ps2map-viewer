@@ -403,44 +403,18 @@ var TileLayer = (function (_super) {
 }(MapLayer));
 function onDOMLoaded() {
     var initialContinentId = 6;
-    var hexLayerDiv = document.getElementById("mapHexLayer");
+    var hexLayerDiv = document.getElementById("baseOutlines");
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
-    var tileLayerDiv = (document.getElementById("mapTextureLayer"));
+    var tileLayerDiv = (document.getElementById("terrainTiles"));
     var tileUrl = "http://127.0.0.1:5000/static/map/";
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
-    var baseNameLayerDiv = (document.getElementById("mapBaseNameLayer"));
+    var baseNameLayerDiv = (document.getElementById("baseNames"));
     var baseNameLayer = new BaseNameLayer(baseNameLayerDiv, initialContinentId);
     var map = document.getElementById("map");
     var viewport = document.getElementById("viewport");
     var controller = new MapController(map, viewport, initialContinentId);
     controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
     controller.onZoom.push(baseNameLayer.onZoom.bind(baseNameLayer));
-    var showHideHexLayer = (document.getElementById("showHexes"));
-    showHideHexLayer.addEventListener("click", function () {
-        return hexLayer.setVisibility(showHideHexLayer.checked);
-    });
-    var showHideTexturelayer = (document.getElementById("showMapTexture"));
-    showHideTexturelayer.addEventListener("click", function () {
-        return tileLayer.setVisibility(showHideTexturelayer.checked);
-    });
-    var showHideNameLayer = (document.getElementById("showBaseNames"));
-    showHideNameLayer.addEventListener("click", function () {
-        return baseNameLayer.setVisibility(showHideNameLayer.checked);
-    });
-    var asideBaseName = document.getElementById("baseName");
-    hexLayer.baseHoverCallback = function (baseId) {
-        getBase(baseId).then(function (base) {
-            asideBaseName.textContent = base.name;
-        });
-    };
-    var zoomInc = document.getElementById("zoomInc");
-    zoomInc.addEventListener("click", function () {
-        controller.incDecZoom(true);
-    });
-    var zoomDec = document.getElementById("zoomDec");
-    zoomDec.addEventListener("click", function () {
-        controller.incDecZoom(false);
-    });
     hexLayer.layer.addEventListener("auxclick", function (evt) {
         if (!(evt.target instanceof SVGElement)) {
             return;
