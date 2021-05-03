@@ -460,6 +460,7 @@ var zoomLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 var MapController = (function () {
     function MapController(map, viewport, initialContinentId) {
         this.onZoom = [];
+        this.zoomAnimFrameScheduled = false;
         this.continentId = initialContinentId;
         this.map = map;
         this.viewport = viewport;
@@ -473,6 +474,7 @@ var MapController = (function () {
         });
     }
     MapController.prototype.incDecZoom = function (increase) {
+        var _this = this;
         var zoomLevel = this.zoomLevel;
         var index = zoomLevels.indexOf(this.zoomLevel);
         if (index < 0) {
@@ -491,7 +493,14 @@ var MapController = (function () {
         else {
             zoomLevel += increase ? 1 : -1;
         }
-        this.applyZoomLevel(zoomLevel);
+        if (this.zoomAnimFrameScheduled) {
+            return;
+        }
+        this.zoomAnimFrameScheduled = true;
+        requestAnimationFrame(function () {
+            _this.applyZoomLevel(zoomLevel);
+            _this.zoomAnimFrameScheduled = false;
+        });
     };
     MapController.prototype.mousePan = function (evtDown) {
         if (evtDown.button != 0) {
@@ -558,6 +567,7 @@ var MapController = (function () {
         this.zoomDispatch();
     };
     MapController.prototype.mouseWheel = function (evt) {
+        var _this = this;
         evt.preventDefault();
         var deltaY = evt.deltaY;
         if (evt.deltaMode == 0) {
@@ -565,7 +575,14 @@ var MapController = (function () {
         }
         var relX = evt.clientX / this.viewport.clientWidth;
         var relY = evt.clientY / this.viewport.clientHeight;
-        this.applyZoomLevel(this.zoomLevel - deltaY * 0.25, relX, relY);
+        if (this.zoomAnimFrameScheduled) {
+            return;
+        }
+        this.zoomAnimFrameScheduled = true;
+        requestAnimationFrame(function () {
+            _this.applyZoomLevel(_this.zoomLevel - deltaY * 0.25, relX, relY);
+            _this.zoomAnimFrameScheduled = false;
+        });
     };
     MapController.prototype.zoomDispatch = function () {
         var _this = this;
@@ -603,7 +620,6 @@ var MapController = (function () {
         var con = this;
         var touchStartDist = this.getTouchesDistance(evt.touches);
         var zoomStart = this.zoomLevel;
-        var animFrameScheduled = false;
         function touchMove(evt) {
             if (evt.touches.length != 2) {
                 return;
@@ -611,13 +627,15 @@ var MapController = (function () {
             var touchCenter = con.getTouchesCenter(evt.touches);
             var touchDist = con.getTouchesDistance(evt.touches);
             var distRel = touchDist / touchStartDist;
-            if (animFrameScheduled) {
+            if (con.zoomAnimFrameScheduled) {
                 return;
             }
-            animFrameScheduled = true;
+            var relX = touchCenter[0] / con.viewport.clientWidth;
+            var relY = touchCenter[1] / con.viewport.clientHeight;
+            con.zoomAnimFrameScheduled = true;
             requestAnimationFrame(function () {
-                con.applyZoomLevel(zoomStart * distRel, touchCenter[0] / con.viewport.clientWidth, touchCenter[1] / con.viewport.clientHeight);
-                animFrameScheduled = false;
+                con.applyZoomLevel(zoomStart * distRel, relX, relY);
+                con.zoomAnimFrameScheduled = false;
             });
         }
         function touchEnd(evt) {

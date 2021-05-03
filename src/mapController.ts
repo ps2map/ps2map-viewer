@@ -20,6 +20,7 @@ class MapController {
     readonly map: HTMLDivElement;
     readonly viewport: HTMLDivElement;
     public onZoom: Array<(newZoomLevel: number) => void> = [];
+    private zoomAnimFrameScheduled: boolean = false;
 
     constructor(
         map: HTMLDivElement,
@@ -66,7 +67,14 @@ class MapController {
             // Zoom level is a fixed value, modify by 1
             zoomLevel += increase ? 1 : -1;
         }
-        this.applyZoomLevel(zoomLevel);
+        if (this.zoomAnimFrameScheduled) {
+            return;
+        }
+        this.zoomAnimFrameScheduled = true;
+        requestAnimationFrame(() => {
+            this.applyZoomLevel(zoomLevel);
+            this.zoomAnimFrameScheduled = false;
+        });
     }
 
     /**
@@ -175,7 +183,14 @@ class MapController {
         }
         const relX = evt.clientX / this.viewport.clientWidth;
         const relY = evt.clientY / this.viewport.clientHeight;
-        this.applyZoomLevel(this.zoomLevel - deltaY * 0.25, relX, relY);
+        if (this.zoomAnimFrameScheduled) {
+            return;
+        }
+        this.zoomAnimFrameScheduled = true;
+        requestAnimationFrame(() => {
+            this.applyZoomLevel(this.zoomLevel - deltaY * 0.25, relX, relY);
+            this.zoomAnimFrameScheduled = false;
+        });
     }
 
     /**
@@ -236,7 +251,6 @@ class MapController {
         const con = this;
         const touchStartDist = this.getTouchesDistance(evt.touches);
         const zoomStart = this.zoomLevel;
-        let animFrameScheduled = false;
 
         function touchMove(evt: TouchEvent): void {
             if (evt.touches.length != 2) {
@@ -246,17 +260,15 @@ class MapController {
             const touchDist = con.getTouchesDistance(evt.touches);
             const distRel = touchDist / touchStartDist;
 
-            if (animFrameScheduled) {
+            if (con.zoomAnimFrameScheduled) {
                 return;
             }
-            animFrameScheduled = true;
+            const relX = touchCenter[0] / con.viewport.clientWidth;
+            const relY = touchCenter[1] / con.viewport.clientHeight;
+            con.zoomAnimFrameScheduled = true;
             requestAnimationFrame(() => {
-                con.applyZoomLevel(
-                    zoomStart * distRel,
-                    touchCenter[0] / con.viewport.clientWidth,
-                    touchCenter[1] / con.viewport.clientHeight
-                );
-                animFrameScheduled = false;
+                con.applyZoomLevel(zoomStart * distRel, relX, relY);
+                con.zoomAnimFrameScheduled = false;
             });
         }
 
