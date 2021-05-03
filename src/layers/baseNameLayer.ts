@@ -53,6 +53,10 @@ class BaseNameLayer extends MapLayer {
                 anchor.appendChild(label);
                 label.setAttribute("class", "baseLabel");
                 label.innerHTML = base.name;
+                const labelShadow = document.createElement("p");
+                anchor.appendChild(labelShadow);
+                labelShadow.setAttribute("class", "baseLabelShadow");
+                labelShadow.innerHTML = base.name;
                 elements.push(anchor);
             });
             this.clear();

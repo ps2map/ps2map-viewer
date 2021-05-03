@@ -147,6 +147,10 @@ var BaseNameLayer = (function (_super) {
                 anchor.appendChild(label);
                 label.setAttribute("class", "baseLabel");
                 label.innerHTML = base.name;
+                var labelShadow = document.createElement("p");
+                anchor.appendChild(labelShadow);
+                labelShadow.setAttribute("class", "baseLabelShadow");
+                labelShadow.innerHTML = base.name;
                 elements.push(anchor);
             });
             _this.clear();
