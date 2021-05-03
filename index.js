@@ -387,8 +387,13 @@ var TileLayer = (function (_super) {
     };
     TileLayer.prototype.createTile = function (url) {
         var tile = document.createElement("div");
-        tile.style.backgroundImage = "url(" + url + ")";
         tile.classList.add("terrainTile");
+        var img = new Image();
+        img.onload = function () {
+            tile.style.backgroundImage = "url(" + url + ")";
+            img = null;
+        };
+        img.src = url;
         return tile;
     };
     TileLayer.prototype.getNumTiles = function (lod) {
