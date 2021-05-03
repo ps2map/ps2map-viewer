@@ -143,10 +143,10 @@ var BaseNameLayer = (function (_super) {
                 layerImage.appendChild(icon);
                 icon.setAttribute("alt", "Amp Station");
                 icon.setAttribute("src", _this.getBaseIconFromType(base.type_id));
-                var name = document.createElement("p");
-                anchor.appendChild(name);
-                name.setAttribute("class", "baseLabel");
-                name.innerHTML = base.name;
+                var label = document.createElement("p");
+                anchor.appendChild(label);
+                label.setAttribute("class", "baseLabel");
+                label.innerHTML = base.name;
                 elements.push(anchor);
             });
             _this.clear();

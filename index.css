@@ -51,6 +51,7 @@ body {
     height: 100%;
     width: 100%;
     position: absolute;
+    pointer-events: none;
 }
 
 /* Map tile textures */
@@ -80,7 +81,6 @@ body {
     fill-opacity: 0.3;
     stroke: #000000;
     stroke-width: 4px;
-    pointer-events: none;
 }
 
 .baseOutlineLayer > svg:hover {
@@ -89,6 +89,52 @@ body {
 
 .baseOutlineLayer > svg > polygon {
     pointer-events: visiblePainted;
+}
+
+/* Base names */
+
+.mapAnchor {
+    height: 0;
+    width: 0;
+    position: absolute;
+}
+
+.iconBox {
+    --baseIconColour: #333333;
+    height: 1.5em;
+    width: 1.5em;
+    position: relative;
+    top: -0.75em;
+    left: -0.75em;
+}
+
+.iconBox > .layeredIcon {
+    height: 100%;
+    width: 100%;
+}
+
+.iconBox > .layeredIcon::before {
+    background-color: var(--baseIconColour);
+    border-radius: 0.75em;
+    content: "";
+    display: inline-block;
+    height: 100%;
+    width: 100%;
+    opacity: 0.8;
+}
+
+.iconBox > .layeredIcon > img {
+    position: relative;
+    top: -1.75em;
+}
+
+.baseLabel {
+    width: 7.8em;
+    position: relative;
+    top: -1.5em;
+    left: -3.9em;
+    line-height: 1.2;
+    text-align: center;
 }
 
 /* No JS found banner */
