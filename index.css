@@ -46,7 +46,7 @@ body {
 
 /* Map layers */
 
-.layer {
+.mapLayer {
     height: 100%;
     width: 100%;
     position: absolute;
@@ -54,7 +54,7 @@ body {
 
 /* Map tile textures */
 
-#mapTextureLayer {
+.terrainLayer {
     display: grid;
     grid-template-rows: repeat(
         var(--MAP-TILES-PER-AXIS),
@@ -66,14 +66,14 @@ body {
     );
 }
 
-#mapTextureLayer div {
+.terrainTile {
     /* This keeps the map tile images scaled to their tile div */
     background-size: 100%;
 }
 
 /* Map outlines */
 
-#map svg {
+.baseOutlineLayer > svg {
     position: absolute;
     fill: #ffffff;
     fill-opacity: 0.3;
@@ -82,11 +82,11 @@ body {
     pointer-events: none;
 }
 
-#map svg:hover {
+.baseOutlineLayer > svg:hover {
     fill-opacity: 0.6;
 }
 
-#map svg polygon {
+.baseOutlineLayer > svg > polygon {
     pointer-events: visiblePainted;
 }
 

@@ -151,6 +151,7 @@ class TileLayer extends MapLayer {
     private createTile(url: string): HTMLDivElement {
         const tile = document.createElement("div");
         tile.style.backgroundImage = `url(${url})`;
+        tile.classList.add("terrainTile");
         return tile;
     }
 

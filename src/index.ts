@@ -14,9 +14,7 @@ function onDOMLoaded(): void {
 
     const hexLayerDiv = <HTMLDivElement>document.getElementById("baseOutlines");
     const hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
-    const tileLayerDiv = <HTMLDivElement>(
-        document.getElementById("terrainTiles")
-    );
+    const tileLayerDiv = <HTMLDivElement>document.getElementById("terrain");
     const tileUrl = "http://127.0.0.1:5000/static/map/";
     const tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
     const baseNameLayerDiv = <HTMLDivElement>(

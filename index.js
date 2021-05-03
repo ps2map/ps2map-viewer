@@ -388,6 +388,7 @@ var TileLayer = (function (_super) {
     TileLayer.prototype.createTile = function (url) {
         var tile = document.createElement("div");
         tile.style.backgroundImage = "url(" + url + ")";
+        tile.classList.add("terrainTile");
         return tile;
     };
     TileLayer.prototype.getNumTiles = function (lod) {
@@ -405,7 +406,7 @@ function onDOMLoaded() {
     var initialContinentId = 6;
     var hexLayerDiv = document.getElementById("baseOutlines");
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
-    var tileLayerDiv = (document.getElementById("terrainTiles"));
+    var tileLayerDiv = document.getElementById("terrain");
     var tileUrl = "http://127.0.0.1:5000/static/map/";
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
     var baseNameLayerDiv = (document.getElementById("baseNames"));
