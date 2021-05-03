@@ -29,7 +29,15 @@ function onDOMLoaded(): void {
 
     const map = <HTMLDivElement>document.getElementById("map");
     const viewport = <HTMLDivElement>document.getElementById("viewport");
-    const controller = new MapController(map, viewport, initialContinentId);
+    const mapContainer = <HTMLDivElement>(
+        document.getElementById("mapContainer")
+    );
+    const controller = new MapController(
+        map,
+        mapContainer,
+        viewport,
+        initialContinentId
+    );
     controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
     controller.onZoom.push(baseNameLayer.onZoom.bind(baseNameLayer));
 

@@ -418,7 +418,8 @@ function onDOMLoaded() {
     var baseNameLayer = new BaseNameLayer(baseNameLayerDiv, initialContinentId);
     var map = document.getElementById("map");
     var viewport = document.getElementById("viewport");
-    var controller = new MapController(map, viewport, initialContinentId);
+    var mapContainer = (document.getElementById("mapContainer"));
+    var controller = new MapController(map, mapContainer, viewport, initialContinentId);
     controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
     controller.onZoom.push(baseNameLayer.onZoom.bind(baseNameLayer));
     hexLayer.layer.addEventListener("auxclick", function (evt) {
@@ -438,18 +439,19 @@ function onDOMLoaded() {
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
 var zoomLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 var MapController = (function () {
-    function MapController(map, viewport, initialContinentId) {
+    function MapController(map, mapContainer, viewport, initialContinentId) {
         this.onZoom = [];
         this.zoomAnimFrameScheduled = false;
         this.continentId = initialContinentId;
         this.map = map;
+        this.mapContainer = mapContainer;
         this.viewport = viewport;
         this.zoomLevel = 1.0;
-        map.addEventListener("mousedown", this.mousePan.bind(this));
-        map.addEventListener("wheel", this.mouseWheel.bind(this), {
+        mapContainer.addEventListener("mousedown", this.mousePan.bind(this));
+        mapContainer.addEventListener("wheel", this.mouseWheel.bind(this), {
             passive: false
         });
-        map.addEventListener("touchstart", this.pinchZoom.bind(this), {
+        mapContainer.addEventListener("touchstart", this.pinchZoom.bind(this), {
             passive: true
         });
     }
@@ -487,7 +489,7 @@ var MapController = (function () {
             return;
         }
         var viewport = this.viewport;
-        var map = this.map;
+        var mapContainer = this.mapContainer;
         var initialScrollLeft = viewport.scrollLeft;
         var initialScrollTop = viewport.scrollTop;
         var nextScrollTargetLeft = 0.0;
@@ -509,10 +511,10 @@ var MapController = (function () {
             });
         }
         function mouseUp() {
-            map.removeEventListener("mousemove", mouseDrag);
+            mapContainer.removeEventListener("mousemove", mouseDrag);
             document.removeEventListener("mouseup", mouseUp);
         }
-        map.addEventListener("mousemove", mouseDrag);
+        mapContainer.addEventListener("mousemove", mouseDrag);
         document.addEventListener("mouseup", mouseUp);
     };
     MapController.prototype.constrainZoom = function (value) {
@@ -619,15 +621,15 @@ var MapController = (function () {
             });
         }
         function touchEnd(evt) {
-            con.map.removeEventListener("touchmove", touchMove);
-            con.map.removeEventListener("touchend", touchEnd);
-            con.map.removeEventListener("touchcancel", touchEnd);
+            con.mapContainer.removeEventListener("touchmove", touchMove);
+            document.removeEventListener("touchend", touchEnd);
+            document.removeEventListener("touchcancel", touchEnd);
         }
-        con.map.addEventListener("touchmove", touchMove, {
+        con.mapContainer.addEventListener("touchmove", touchMove, {
             passive: true
         });
-        con.map.addEventListener("touchend", touchEnd);
-        con.map.addEventListener("touchcancel", touchEnd);
+        document.addEventListener("touchend", touchEnd);
+        document.addEventListener("touchcancel", touchEnd);
     };
     return MapController;
 }());
