@@ -66,6 +66,7 @@ body {
         var(--MAP-TILES-PER-AXIS),
         calc(min(100vh, 100vw) / var(--MAP-TILES-PER-AXIS))
     );
+    z-index: 50;
 }
 
 .terrainTile {
@@ -74,6 +75,10 @@ body {
 }
 
 /* Map outlines */
+
+.baseOutlineLayer {
+    z-index: 60;
+}
 
 .baseOutlineLayer > svg {
     position: absolute;
@@ -84,7 +89,8 @@ body {
 }
 
 .baseOutlineLayer > svg:hover {
-    fill-opacity: 0.6;
+    stroke: #ffffff;
+    z-index: 70;
 }
 
 .baseOutlineLayer > svg > polygon {
@@ -92,6 +98,10 @@ body {
 }
 
 /* Base names */
+
+.baseNameLayer {
+    z-index: 80;
+}
 
 .mapAnchor {
     height: 0;
