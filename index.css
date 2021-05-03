@@ -22,60 +22,6 @@ body {
 
 /* Side widgets */
 
-aside {
-    background-color: #cccccc;
-    border: 2px solid #ffffff;
-    box-shadow: 0px 0px 100px #666666 inset;
-    color: black;
-    padding: 10px 20px 20px 20px;
-    position: fixed;
-    width: 200px;
-    z-index: 100;
-}
-
-aside span {
-    font-size: 16pt;
-    font-weight: bold;
-}
-
-aside th {
-    text-align: left;
-}
-
-#zoomControls {
-    background: none;
-    box-shadow: none;
-    border: none;
-    position: fixed;
-    right: 10px;
-    top: 30px;
-    width: 20px;
-}
-
-#zoomControls input {
-    font-size: 16pt;
-    height: 30px;
-    width: 30px;
-}
-
-#baseInfo {
-    bottom: 10px;
-    right: 10px;
-}
-
-#mapLayerSelector {
-    bottom: 340px;
-    right: 10px;
-}
-
-.selector {
-    margin: 10px;
-    position: absolute;
-    z-index: 100;
-}
-
-/* Map renderer */
-
 #viewport {
     height: 100%;
     width: 100%;
@@ -141,56 +87,6 @@ aside th {
 
 #map svg polygon {
     pointer-events: visiblePainted;
-}
-
-/* Map base names */
-
-.mapAnchor {
-    height: 0px;
-    width: 0px;
-    position: absolute;
-    pointer-events: none;
-    z-index: 50;
-}
-
-.iconBox {
-    --baseIconColour: #333333;
-    height: 24px;
-    width: 24px;
-    position: absolute;
-    top: -12px;
-    left: -12px;
-}
-
-.iconBox > .layeredIcon {
-    display: inline-block;
-    height: 100%;
-    width: 100%;
-}
-
-.iconBox > .layeredIcon::before {
-    background-color: var(--baseIconColour);
-    border-radius: 12px;
-    content: "";
-    display: inline-block;
-    height: 24px;
-    width: 24px;
-    opacity: 0.8;
-}
-
-#mapBaseNameLayer .layeredIcon > img {
-    position: relative;
-    top: -28px;
-}
-
-.baseLabel {
-    /* Width is chosen to match the in-game text wrapping behaviour */
-    width: 7.8em;
-    position: absolute;
-    margin-left: -3.9em;
-    line-height: 1.2em;
-    text-align: center;
-    text-shadow: 0px 0px 5px #000000;
 }
 
 /* No JS found banner */
