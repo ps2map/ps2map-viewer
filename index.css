@@ -12,6 +12,7 @@ html {
     font-family: "Segoe UI", sans-serif;
     font-weight: 600;
     overflow: hidden;
+    touch-action: none;
 }
 
 body {
@@ -23,6 +24,7 @@ body {
 #viewport {
     height: 100vh;
     width: 100vw;
+    touch-action: pan-x pan-y;
     overflow: scroll;
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -52,6 +54,7 @@ body {
     width: 100%;
     position: absolute;
     pointer-events: none;
+    user-select: none;
 }
 
 /* Map tile textures */
