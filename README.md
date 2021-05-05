@@ -4,6 +4,25 @@ A standalone alternative to the main [APL website](https://github.com/auto-pl/ap
 
 This mostly serves to allow me to relearn web development, get more comfortable with TypeScript, all without frameworks or other bloat.
 
+## Getting started
+
+This front-end requires server-side data for which there currently is no public host available. You must host it locally for now, see the steps below for details.
+
+### API setup
+
+- Make sure you have Python 3.8 or later installed
+- Clone the latest version of [auto-pl/apl-api](https://github.com/auto-pl/apl-api)
+- Navigate into the repository (its README.md should be in your CWD)
+- Run `python -m pip install -r requirements.txt` to install dependencies
+- Run `python -m apl_api` to run the local API server
+
+### Accessing the front end
+
+- Clone this repository
+- Make sure the API host is running (see previous section)
+- Open `index.html` in your web browser of choice
+- Profit?
+
 ## Development notes
 
 - Configure your TypeScript compiler to run in watch mode, i.e. have it automatically compile everything and distribute these JS files with every commit.
