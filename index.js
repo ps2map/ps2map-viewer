@@ -364,7 +364,6 @@ var TileLayer = (function (_super) {
     TileLayer.prototype.updateTiles = function () {
         var _this = this;
         var numTiles = this.getNumTiles(this.lod);
-        this.layer.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
         var newTiles = [];
         if (numTiles <= 1) {
             var tile = this.getMapTilePath(this.tileSet.toLowerCase(), this.lod, 0, 0);
@@ -385,6 +384,7 @@ var TileLayer = (function (_super) {
             }
         }
         requestAnimationFrame(function () {
+            _this.layer.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
             _this.clear();
             newTiles.forEach(function (tile) { return _this.layer.appendChild(tile); });
         });

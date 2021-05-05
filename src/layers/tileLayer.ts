@@ -96,12 +96,6 @@ class TileLayer extends MapLayer {
      */
     private updateTiles(): void {
         const numTiles = this.getNumTiles(this.lod);
-        // Update CSS grid for new LOD
-        this.layer.style.setProperty(
-            "--MAP-TILES-PER-AXIS",
-            numTiles.toString()
-        );
-        // Recreate map tiles
         const newTiles: Array<HTMLDivElement> = [];
         // Special case for single-tile map LOD
         if (numTiles <= 1) {
@@ -138,6 +132,11 @@ class TileLayer extends MapLayer {
             }
         }
         requestAnimationFrame(() => {
+            // Update CSS grid for new LOD
+            this.layer.style.setProperty(
+                "--MAP-TILES-PER-AXIS",
+                numTiles.toString()
+            );
             this.clear();
             newTiles.forEach((tile) => this.layer.appendChild(tile));
         });
