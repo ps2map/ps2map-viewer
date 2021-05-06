@@ -11,11 +11,6 @@
 type ZoomCallback = (zoomLevel: number) => void;
 
 /**
- * @TODO These hard-coded values are horrible and should leave.
- */
-const zoomLevels: Array<number> = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
-/**
  * Brains for a zoomable container.
  *
  * The container is the object within which the scrolling is performed,
@@ -25,17 +20,23 @@ class Zoomable {
     readonly target: HTMLElement;
     private container: HTMLElement;
     private zoom: number;
+    private minZoom: number;
+    private maxZoom: number;
     private onZoom: Array<ZoomCallback> = [];
     private animFrameScheduled: boolean = false;
 
     constructor(
         content: HTMLElement,
         container: HTMLElement,
-        initialZoom: number = 1.0
+        initialZoom: number = 1.0,
+        minZoom: number = 1.0,
+        maxZoom: number = 10.0
     ) {
         this.target = content;
         this.container = container;
         this.zoom = initialZoom;
+        this.minZoom = minZoom;
+        this.maxZoom = maxZoom;
 
         content.addEventListener("mousedown", this.mousePan.bind(this));
         content.addEventListener("wheel", this.mouseWheel.bind(this), {
@@ -84,6 +85,10 @@ class Zoomable {
      */
     public bumpZoomLevel(increase: boolean) {
         let zoomLevel = this.zoom;
+        const zoomLevels: Array<number> = Array();
+        for (let i = this.minZoom; i < this.maxZoom; i++) {
+            zoomLevels.push(i);
+        }
         const index = zoomLevels.indexOf(this.zoom);
         if (index < 0) {
             // Zoom level is an odd value, jump to the next fixed value
@@ -166,10 +171,10 @@ class Zoomable {
      */
     private constrainZoom(value: number): number {
         let zoomLevel = value;
-        if (zoomLevel < 1.0) {
-            zoomLevel = 1.0;
-        } else if (zoomLevel > 12.0) {
-            zoomLevel = 12.0;
+        if (zoomLevel < this.minZoom) {
+            zoomLevel = this.minZoom;
+        } else if (zoomLevel > this.maxZoom) {
+            zoomLevel = this.maxZoom;
         }
         return zoomLevel;
     }

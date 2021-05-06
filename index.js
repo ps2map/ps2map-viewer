@@ -441,15 +441,18 @@ function onDOMLoaded() {
     });
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
-var zoomLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 var Zoomable = (function () {
-    function Zoomable(content, container, initialZoom) {
+    function Zoomable(content, container, initialZoom, minZoom, maxZoom) {
         if (initialZoom === void 0) { initialZoom = 1.0; }
+        if (minZoom === void 0) { minZoom = 1.0; }
+        if (maxZoom === void 0) { maxZoom = 10.0; }
         this.onZoom = [];
         this.animFrameScheduled = false;
         this.target = content;
         this.container = container;
         this.zoom = initialZoom;
+        this.minZoom = minZoom;
+        this.maxZoom = maxZoom;
         content.addEventListener("mousedown", this.mousePan.bind(this));
         content.addEventListener("wheel", this.mouseWheel.bind(this), {
             passive: false
@@ -472,6 +475,10 @@ var Zoomable = (function () {
     Zoomable.prototype.bumpZoomLevel = function (increase) {
         var _this = this;
         var zoomLevel = this.zoom;
+        var zoomLevels = Array();
+        for (var i = this.minZoom; i < this.maxZoom; i++) {
+            zoomLevels.push(i);
+        }
         var index = zoomLevels.indexOf(this.zoom);
         if (index < 0) {
             for (var i = 0; i < zoomLevels.length; i++) {
@@ -533,11 +540,11 @@ var Zoomable = (function () {
     };
     Zoomable.prototype.constrainZoom = function (value) {
         var zoomLevel = value;
-        if (zoomLevel < 1.0) {
-            zoomLevel = 1.0;
+        if (zoomLevel < this.minZoom) {
+            zoomLevel = this.minZoom;
         }
-        else if (zoomLevel > 12.0) {
-            zoomLevel = 12.0;
+        else if (zoomLevel > this.maxZoom) {
+            zoomLevel = this.maxZoom;
         }
         return zoomLevel;
     };
