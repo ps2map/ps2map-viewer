@@ -442,31 +442,30 @@ function onDOMLoaded() {
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
 var zoomLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-var MapController = (function () {
-    function MapController(map, mapContainer, viewport, initialContinentId) {
+var Zoomable = (function () {
+    function Zoomable(content, container, initialZoom) {
+        if (initialZoom === void 0) { initialZoom = 1.0; }
         this.onZoom = [];
-        this.zoomAnimFrameScheduled = false;
-        this.continentId = initialContinentId;
-        this.map = map;
-        this.mapContainer = mapContainer;
-        this.viewport = viewport;
-        this.zoomLevel = 1.0;
-        mapContainer.addEventListener("mousedown", this.mousePan.bind(this));
-        mapContainer.addEventListener("wheel", this.mouseWheel.bind(this), {
+        this.animFrameScheduled = false;
+        this.target = content;
+        this.container = container;
+        this.zoom = initialZoom;
+        content.addEventListener("mousedown", this.mousePan.bind(this));
+        content.addEventListener("wheel", this.mouseWheel.bind(this), {
             passive: false
         });
-        mapContainer.addEventListener("touchstart", this.pinchZoom.bind(this), {
+        content.addEventListener("touchstart", this.pinchZoom.bind(this), {
             passive: true
         });
     }
-    MapController.prototype.incDecZoom = function (increase) {
+    Zoomable.prototype.incDecZoom = function (increase) {
         var _this = this;
-        var zoomLevel = this.zoomLevel;
-        var index = zoomLevels.indexOf(this.zoomLevel);
+        var zoomLevel = this.zoom;
+        var index = zoomLevels.indexOf(this.zoom);
         if (index < 0) {
             for (var i = 0; i < zoomLevels.length; i++) {
                 var refLevel = zoomLevels[i];
-                if (refLevel > this.zoomLevel) {
+                if (refLevel > this.zoom) {
                     if (increase) {
                         zoomLevel = refLevel;
                         break;
@@ -479,23 +478,23 @@ var MapController = (function () {
         else {
             zoomLevel += increase ? 1 : -1;
         }
-        if (this.zoomAnimFrameScheduled) {
+        if (this.animFrameScheduled) {
             return;
         }
-        this.zoomAnimFrameScheduled = true;
+        this.animFrameScheduled = true;
         requestAnimationFrame(function () {
             _this.applyZoomLevel(zoomLevel);
-            _this.zoomAnimFrameScheduled = false;
+            _this.animFrameScheduled = false;
         });
     };
-    MapController.prototype.mousePan = function (evtDown) {
+    Zoomable.prototype.mousePan = function (evtDown) {
         if (evtDown.button != 0) {
             return;
         }
-        var viewport = this.viewport;
-        var mapContainer = this.mapContainer;
-        var initialScrollLeft = viewport.scrollLeft;
-        var initialScrollTop = viewport.scrollTop;
+        var container = this.container;
+        var element = this.target;
+        var initialScrollLeft = container.scrollLeft;
+        var initialScrollTop = container.scrollTop;
         var nextScrollTargetLeft = 0.0;
         var nextScrollTargetTop = 0.0;
         var animFrameScheduled = false;
@@ -509,19 +508,19 @@ var MapController = (function () {
             }
             animFrameScheduled = true;
             requestAnimationFrame(function () {
-                viewport.scrollLeft = nextScrollTargetLeft;
-                viewport.scrollTop = nextScrollTargetTop;
+                container.scrollLeft = nextScrollTargetLeft;
+                container.scrollTop = nextScrollTargetTop;
                 animFrameScheduled = false;
             });
         }
         function mouseUp() {
-            mapContainer.removeEventListener("mousemove", mouseDrag);
+            element.removeEventListener("mousemove", mouseDrag);
             document.removeEventListener("mouseup", mouseUp);
         }
-        mapContainer.addEventListener("mousemove", mouseDrag);
+        element.addEventListener("mousemove", mouseDrag);
         document.addEventListener("mouseup", mouseUp);
     };
-    MapController.prototype.constrainZoom = function (value) {
+    Zoomable.prototype.constrainZoom = function (value) {
         var zoomLevel = value;
         if (zoomLevel < 1.0) {
             zoomLevel = 1.0;
@@ -531,23 +530,22 @@ var MapController = (function () {
         }
         return zoomLevel;
     };
-    MapController.prototype.applyZoomLevel = function (zoomLevel, relX, relY) {
+    Zoomable.prototype.applyZoomLevel = function (zoomLevel, relX, relY) {
         if (relX === void 0) { relX = 0.5; }
         if (relY === void 0) { relY = 0.5; }
-        var vport = this.viewport;
+        var vport = this.container;
         var screenX = relX * vport.clientWidth;
         var screenY = relY * vport.clientHeight;
         var newZoom = this.constrainZoom(zoomLevel);
-        var zoomDelta = newZoom / this.zoomLevel;
+        var zoomDelta = newZoom / this.zoom;
         var relScrollX = (screenX + vport.scrollLeft) * zoomDelta;
         var relScrollY = (screenY + vport.scrollTop) * zoomDelta;
         var scrollLeft = relScrollX - screenX;
         var scrollTop = relScrollY - screenY;
         var offset = (newZoom - 1.0) * 50.0;
-        this.zoomLevel = newZoom;
-        this.mapContainer.style.transform =
-            "translate3D(" + offset + "%, " + offset + "%, 0) " +
-                ("scale(" + this.zoomLevel + ")");
+        this.zoom = newZoom;
+        this.target.style.transform =
+            "translate3D(" + offset + "%, " + offset + "%, 0) " + ("scale(" + this.zoom + ")");
         vport.scrollTo({
             top: scrollTop,
             left: scrollLeft,
@@ -555,31 +553,31 @@ var MapController = (function () {
         });
         this.zoomDispatch();
     };
-    MapController.prototype.mouseWheel = function (evt) {
+    Zoomable.prototype.mouseWheel = function (evt) {
         var _this = this;
         evt.preventDefault();
         var deltaY = evt.deltaY;
         if (evt.deltaMode == 0) {
             deltaY /= 80;
         }
-        var relX = evt.clientX / this.viewport.clientWidth;
-        var relY = evt.clientY / this.viewport.clientHeight;
-        if (this.zoomAnimFrameScheduled) {
+        var relX = evt.clientX / this.container.clientWidth;
+        var relY = evt.clientY / this.container.clientHeight;
+        if (this.animFrameScheduled) {
             return;
         }
-        this.zoomAnimFrameScheduled = true;
+        this.animFrameScheduled = true;
         requestAnimationFrame(function () {
-            _this.applyZoomLevel(_this.zoomLevel - deltaY * 0.25, relX, relY);
-            _this.zoomAnimFrameScheduled = false;
+            _this.applyZoomLevel(_this.zoom - deltaY * 0.25, relX, relY);
+            _this.animFrameScheduled = false;
         });
     };
-    MapController.prototype.zoomDispatch = function () {
+    Zoomable.prototype.zoomDispatch = function () {
         var _this = this;
         this.onZoom.forEach(function (callback) {
-            callback(_this.zoomLevel);
+            callback(_this.zoom);
         });
     };
-    MapController.prototype.getTouchesCenter = function (touches) {
+    Zoomable.prototype.getTouchesCenter = function (touches) {
         var avgX = 0.0;
         var avgY = 0.0;
         if (touches.length == 0) {
@@ -594,7 +592,7 @@ var MapController = (function () {
         avgY /= touches.length;
         return [avgX, avgY];
     };
-    MapController.prototype.getTouchesDistance = function (touches) {
+    Zoomable.prototype.getTouchesDistance = function (touches) {
         if (touches.length != 2) {
             throw "distance only valid between two points";
         }
@@ -602,13 +600,13 @@ var MapController = (function () {
         var pt2 = touches.item(1);
         return Math.sqrt(Math.pow((pt2.clientX - pt1.clientX), 2) + Math.pow((pt2.clientY - pt1.clientY), 2));
     };
-    MapController.prototype.pinchZoom = function (evt) {
+    Zoomable.prototype.pinchZoom = function (evt) {
         if (evt.touches.length != 2) {
             return;
         }
         var con = this;
         var touchStartDist = this.getTouchesDistance(evt.touches);
-        var zoomStart = this.zoomLevel;
+        var zoomStart = this.zoom;
         function touchMove(evt) {
             if (evt.touches.length != 2) {
                 return;
@@ -616,27 +614,37 @@ var MapController = (function () {
             var touchCenter = con.getTouchesCenter(evt.touches);
             var touchDist = con.getTouchesDistance(evt.touches);
             var distRel = touchDist / touchStartDist;
-            if (con.zoomAnimFrameScheduled) {
+            if (con.animFrameScheduled) {
                 return;
             }
-            var relX = touchCenter[0] / con.viewport.clientWidth;
-            var relY = touchCenter[1] / con.viewport.clientHeight;
-            con.zoomAnimFrameScheduled = true;
+            var relX = touchCenter[0] / con.container.clientWidth;
+            var relY = touchCenter[1] / con.container.clientHeight;
+            con.animFrameScheduled = true;
             requestAnimationFrame(function () {
                 con.applyZoomLevel(zoomStart * distRel, relX, relY);
-                con.zoomAnimFrameScheduled = false;
+                con.animFrameScheduled = false;
             });
         }
         function touchEnd(evt) {
-            con.mapContainer.removeEventListener("touchmove", touchMove);
+            con.target.removeEventListener("touchmove", touchMove);
             document.removeEventListener("touchend", touchEnd);
             document.removeEventListener("touchcancel", touchEnd);
         }
-        con.mapContainer.addEventListener("touchmove", touchMove, {
+        con.target.addEventListener("touchmove", touchMove, {
             passive: true
         });
         document.addEventListener("touchend", touchEnd);
         document.addEventListener("touchcancel", touchEnd);
     };
-    return MapController;
+    return Zoomable;
 }());
+var MapController = (function (_super) {
+    __extends(MapController, _super);
+    function MapController(map, mapContainer, viewport, initialContinentId) {
+        var _this = _super.call(this, mapContainer, viewport, 1.0) || this;
+        _this.map = map;
+        _this.continentId = initialContinentId;
+        return _this;
+    }
+    return MapController;
+}(Zoomable));
