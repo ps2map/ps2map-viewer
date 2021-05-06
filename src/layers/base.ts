@@ -57,10 +57,6 @@ class MapLayer {
      * Remove all child elements from the container.
      */
     protected clear(): void {
-        const numChildren = this.layer.children.length;
-        for (let i = numChildren - 1; i >= 0; i--) {
-            const child = this.layer.children[i];
-            this.layer.removeChild(child);
-        }
+        this.layer.innerHTML = "";
     }
 }

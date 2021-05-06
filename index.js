@@ -79,11 +79,7 @@ var MapLayer = (function () {
     };
     MapLayer.prototype.onZoom = function (zoomLevel) { };
     MapLayer.prototype.clear = function () {
-        var numChildren = this.layer.children.length;
-        for (var i = numChildren - 1; i >= 0; i--) {
-            var child = this.layer.children[i];
-            this.layer.removeChild(child);
-        }
+        this.layer.innerHTML = "";
     };
     return MapLayer;
 }());
