@@ -1,10 +1,7 @@
 /// <reference path="./zoom.ts" />
 
 /**
- * This module handles map rendering and interaction.
- *
- * This covers continent switches, toggling layer visbility, as well as
- * zoom and pan controls for touch and mouse.
+ * This file handles the map object and its interactions.
  */
 
 /**

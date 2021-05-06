@@ -1,6 +1,26 @@
+/**
+ * This file handles zoom and pan controls for the map.
+ *
+ * It defines the Zoomable class, which allows zooming and panning
+ * a target object within a given container. This includes keyboard
+ * controls like mouse or keyboard, touch events, and hooks for
+ * attaching custom compatibility hooks.
+ */
+
+/* Type aliases */
 type ZoomCallback = (zoomLevel: number) => void;
+
+/**
+ * @TODO These hard-coded values are horrible and should leave.
+ */
 const zoomLevels: Array<number> = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
+/**
+ * Brains for a zoomable container.
+ *
+ * The container is the object within which the scrolling is performed,
+ * target is the object that is scrolled.
+ */
 class Zoomable {
     readonly target: HTMLElement;
     private container: HTMLElement;
@@ -56,11 +76,13 @@ class Zoomable {
     }
 
     /**
-     * Bump the zoom level by one.
+     * Change the current zoom level by one increment. Call this as
+     * part of a button event listener to implement manual zoom control
+     * buttons.
      * @param increase If true, increase zoom level (+), otherwise
      * reduce it (-).
      */
-    public incDecZoom(increase: boolean) {
+    public bumpZoomLevel(increase: boolean) {
         let zoomLevel = this.zoom;
         const index = zoomLevels.indexOf(this.zoom);
         if (index < 0) {
@@ -186,7 +208,7 @@ class Zoomable {
             left: scrollLeft,
             behavior: "auto",
         });
-        this.zoomDispatch();
+        this.invokeZoomCallbacks();
     }
 
     /**
@@ -211,9 +233,10 @@ class Zoomable {
     }
 
     /**
-     * Dispatch the current zoom level to all registered callbacks.
+     * Run any registered zoom level callbacks. The callables expect
+     * this call to occur during an animation frame.
      */
-    private zoomDispatch(): void {
+    private invokeZoomCallbacks(): void {
         this.onZoom.forEach((callback) => {
             callback(this.zoom);
         });

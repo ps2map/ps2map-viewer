@@ -469,7 +469,7 @@ var Zoomable = (function () {
             }
         }
     };
-    Zoomable.prototype.incDecZoom = function (increase) {
+    Zoomable.prototype.bumpZoomLevel = function (increase) {
         var _this = this;
         var zoomLevel = this.zoom;
         var index = zoomLevels.indexOf(this.zoom);
@@ -562,7 +562,7 @@ var Zoomable = (function () {
             left: scrollLeft,
             behavior: "auto"
         });
-        this.zoomDispatch();
+        this.invokeZoomCallbacks();
     };
     Zoomable.prototype.mouseWheel = function (evt) {
         var _this = this;
@@ -582,7 +582,7 @@ var Zoomable = (function () {
             _this.animFrameScheduled = false;
         });
     };
-    Zoomable.prototype.zoomDispatch = function () {
+    Zoomable.prototype.invokeZoomCallbacks = function () {
         var _this = this;
         this.onZoom.forEach(function (callback) {
             callback(_this.zoom);
