@@ -84,20 +84,32 @@ body {
     z-index: 60;
 }
 
-.baseOutlineLayer > svg {
+.baseHex {
+    --baseColour: rgb(255, 255, 255);
+}
+
+.baseHex > * {
     position: absolute;
-    fill: #ffffff;
-    fill-opacity: 0.3;
-    stroke: #000000;
     stroke-width: 4px;
 }
 
-.baseOutlineLayer > svg:hover {
-    stroke: #ffffff;
-    z-index: 70;
+.baseHexBg {
+    fill: var(--baseColour);
+    fill-opacity: 0.3;
+    stroke: #000000;
 }
 
-.baseOutlineLayer > svg > polygon {
+.baseHexFg {
+    fill: transparent;
+    stroke: transparent;
+    z-index: 50;
+}
+
+.baseHexFg:hover {
+    stroke: #ffffff;
+}
+
+.baseHex > * > polygon {
     pointer-events: visiblePainted;
 }
 

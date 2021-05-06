@@ -14,22 +14,14 @@ var ownershipColorsCSS = [
         .trim(),
 ];
 function cycleFactionColour(base) {
-    if (!base.style.fill) {
-        base.style.fill = ownershipColorsCSS[0];
+    var _a, _b;
+    var style = (_b = (_a = base.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.style;
+    if (style == null) {
+        return 0;
     }
-    for (var i = 0; i < ownershipColorsCSS.length; i++) {
-        if (base.style.fill == ownershipColorsCSS[i]) {
-            if (i + 1 < ownershipColorsCSS.length) {
-                base.style.fill = ownershipColorsCSS[i + 1];
-                return i + 1;
-            }
-            else {
-                base.style.fill = ownershipColorsCSS[0];
-                return 0;
-            }
-        }
-    }
-    return 0;
+    var num = Math.round(Math.random() * 3);
+    style.setProperty("--baseColour", ownershipColorsCSS[num]);
+    return num;
 }
 var restEndpoint = "http://127.0.0.1:5000/";
 function getBasesFromContinent(continentId) {
@@ -286,9 +278,16 @@ var HexLayer = (function (_super) {
                 elements = cont.then(function (contInfo) {
                     var svgs = [];
                     for (var key in contInfo.map_base_svgs) {
-                        var element = elementFromString(contInfo.map_base_svgs[key]);
-                        _this.registerHoverCallback(element);
-                        svgs.push(element);
+                        var hex = document.createElement("div");
+                        hex.classList.add("baseHex");
+                        var hexBg = elementFromString(contInfo.map_base_svgs[key]);
+                        hexBg.classList.add("baseHexBg");
+                        hex.appendChild(hexBg);
+                        var hexFg = elementFromString(contInfo.map_base_svgs[key]);
+                        hexFg.classList.add("baseHexFg");
+                        _this.registerHoverCallback(hexBg);
+                        hex.appendChild(hexFg);
+                        svgs.push(hex);
                     }
                     return svgs;
                 });
