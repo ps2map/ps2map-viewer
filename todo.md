@@ -28,10 +28,18 @@ Tracker for missing features, usability improvements and other things that shoul
 ## Performance
 
 - [x] Reuse icons for base outlines
+- [ ] Move all map zoom behaviour into a JS state register; no reading DOM as part of animation frames (heavy slowdowns!)
+- [ ] Add resize event handler for state updates
 - [ ] Mooar introspection, stable 60 fps or bust!
+
+## Bonus points
+
+- [ ] Enable/disable scroll events when mouse is within the map (nice for embedding, if that ever happens)  
+  DOMMouseScroll, onmousewheel, onwheel, ontouchmove, onkeydown, ...
 
 ## Display
 
 - [x] ~~Figure out how to modify the fill colour of an SVG from JavaScript~~ one does not simply update non-inlined SVGs
 - [x] Update SVGs to use a single fill and stroke colour, simplify geometries
 - [ ] Vary base icon size based on type (warpgate > primary facility > large outpost > small outpost)
+- [ ] Hide small bases at small zoom levels
