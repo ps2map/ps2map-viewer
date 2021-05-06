@@ -4,10 +4,11 @@
     --COLOR-FG-CAPPED-TR: rgb(150, 17, 0);
     --COLOR-FG-CAPPED-VS: rgb(97, 37, 151);
     --MAP-TILES-PER-AXIS: 1;
+    --baseMapSize: min(100vh, 100vw);
 }
 
 html {
-    background-color: #051010;
+    background-color: #333333;
     color: white;
     font-family: "Segoe UI", sans-serif;
     font-weight: 600;
@@ -22,6 +23,7 @@ body {
 /* Map rendering viewport */
 
 #viewport {
+    background-color: #051010;
     height: 100vh;
     width: 100vw;
     touch-action: pan-x pan-y;
@@ -35,16 +37,15 @@ body {
 }
 
 #mapContainer {
-    height: calc(min(100vh, 100vw) + 2 * (100vh - min(100vh, 100vw)));
-    width: calc(min(100vh, 100vw) + 2 * (100vw - min(100vh, 100vw)));
+    height: 100%;
+    width: 100%;
 }
 
 #map {
-    height: min(100vh, 100vw);
-    width: min(100vh, 100vw);
+    height: var(--baseMapSize);
+    width: var(--baseMapSize);
     position: relative;
-    margin-left: auto;
-    margin-right: auto;
+    margin: auto;
 }
 
 /* Map layers */
@@ -63,11 +64,11 @@ body {
     display: grid;
     grid-template-rows: repeat(
         var(--MAP-TILES-PER-AXIS),
-        calc(min(100vh, 100vw) / var(--MAP-TILES-PER-AXIS))
+        calc(var(--baseMapSize) / var(--MAP-TILES-PER-AXIS))
     );
     grid-template-columns: repeat(
         var(--MAP-TILES-PER-AXIS),
-        calc(min(100vh, 100vw) / var(--MAP-TILES-PER-AXIS))
+        calc(var(--baseMapSize) / var(--MAP-TILES-PER-AXIS))
     );
     z-index: 50;
 }

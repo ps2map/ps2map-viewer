@@ -545,11 +545,14 @@ var MapController = (function () {
         var scrollTop = relScrollY - screenY;
         var offset = (newZoom - 1.0) * 50.0;
         this.zoomLevel = newZoom;
-        vport.scrollLeft = scrollLeft;
-        vport.scrollTop = scrollTop;
-        this.map.style.transform =
+        this.mapContainer.style.transform =
             "translate3D(" + offset + "%, " + offset + "%, 0) " +
                 ("scale(" + this.zoomLevel + ")");
+        vport.scrollTo({
+            top: scrollTop,
+            left: scrollLeft,
+            behavior: "auto"
+        });
         this.zoomDispatch();
     };
     MapController.prototype.mouseWheel = function (evt) {
