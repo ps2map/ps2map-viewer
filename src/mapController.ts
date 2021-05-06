@@ -18,24 +18,27 @@ class MapController {
     private zoomLevel: number;
     private continentId: number;
     readonly map: HTMLDivElement;
+    readonly mapContainer: HTMLDivElement;
     readonly viewport: HTMLDivElement;
     public onZoom: Array<(newZoomLevel: number) => void> = [];
     private zoomAnimFrameScheduled: boolean = false;
 
     constructor(
         map: HTMLDivElement,
+        mapContainer: HTMLDivElement,
         viewport: HTMLDivElement,
         initialContinentId: number
     ) {
         this.continentId = initialContinentId;
         this.map = map;
+        this.mapContainer = mapContainer;
         this.viewport = viewport;
         this.zoomLevel = 1.0;
-        map.addEventListener("mousedown", this.mousePan.bind(this));
-        map.addEventListener("wheel", this.mouseWheel.bind(this), {
+        mapContainer.addEventListener("mousedown", this.mousePan.bind(this));
+        mapContainer.addEventListener("wheel", this.mouseWheel.bind(this), {
             passive: false,
         });
-        map.addEventListener("touchstart", this.pinchZoom.bind(this), {
+        mapContainer.addEventListener("touchstart", this.pinchZoom.bind(this), {
             passive: true,
         });
     }
@@ -90,7 +93,7 @@ class MapController {
             return;
         }
         const viewport = this.viewport;
-        const map = this.map;
+        const mapContainer = this.mapContainer;
         const initialScrollLeft = viewport.scrollLeft;
         const initialScrollTop = viewport.scrollTop;
         let nextScrollTargetLeft = 0.0;
@@ -114,11 +117,11 @@ class MapController {
         }
 
         function mouseUp(): void {
-            map.removeEventListener("mousemove", mouseDrag);
+            mapContainer.removeEventListener("mousemove", mouseDrag);
             document.removeEventListener("mouseup", mouseUp);
         }
 
-        map.addEventListener("mousemove", mouseDrag);
+        mapContainer.addEventListener("mousemove", mouseDrag);
         document.addEventListener("mouseup", mouseUp);
     }
 
@@ -164,11 +167,14 @@ class MapController {
         // Another shift to compensate for the map scaling
         const offset = (newZoom - 1.0) * 50.0;
         this.zoomLevel = newZoom;
-        vport.scrollLeft = scrollLeft;
-        vport.scrollTop = scrollTop;
-        this.map.style.transform =
+        this.mapContainer.style.transform =
             `translate3D(${offset}%, ${offset}%, 0) ` +
             `scale(${this.zoomLevel})`;
+        vport.scrollTo({
+            top: scrollTop,
+            left: scrollLeft,
+            behavior: "auto",
+        });
         this.zoomDispatch();
     }
 
@@ -273,15 +279,15 @@ class MapController {
         }
 
         function touchEnd(evt: TouchEvent): void {
-            con.map.removeEventListener("touchmove", touchMove);
-            con.map.removeEventListener("touchend", touchEnd);
-            con.map.removeEventListener("touchcancel", touchEnd);
+            con.mapContainer.removeEventListener("touchmove", touchMove);
+            document.removeEventListener("touchend", touchEnd);
+            document.removeEventListener("touchcancel", touchEnd);
         }
 
-        con.map.addEventListener("touchmove", touchMove, {
+        con.mapContainer.addEventListener("touchmove", touchMove, {
             passive: true,
         });
-        con.map.addEventListener("touchend", touchEnd);
-        con.map.addEventListener("touchcancel", touchEnd);
+        document.addEventListener("touchend", touchEnd);
+        document.addEventListener("touchcancel", touchEnd);
     }
 }

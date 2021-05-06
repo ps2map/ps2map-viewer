@@ -49,10 +49,14 @@ class BaseNameLayer extends MapLayer {
                     "src",
                     this.getBaseIconFromType(base.type_id)
                 );
-                const name = document.createElement("p");
-                anchor.appendChild(name);
-                name.setAttribute("class", "baseLabel");
-                name.innerHTML = base.name;
+                const label = document.createElement("p");
+                anchor.appendChild(label);
+                label.setAttribute("class", "baseLabel");
+                label.innerHTML = base.name;
+                const labelShadow = document.createElement("p");
+                anchor.appendChild(labelShadow);
+                labelShadow.setAttribute("class", "baseLabelShadow");
+                labelShadow.innerHTML = base.name;
                 elements.push(anchor);
             });
             this.clear();

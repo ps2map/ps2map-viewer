@@ -17,8 +17,8 @@ Tracker for missing features, usability improvements and other things that shoul
 
 ## User interaction
 
-- [ ] Fix zoom-to-cursor behaviour
-- [ ] Add support for pinch zoom gestures
+- [x] Fix zoom-to-cursor behaviour
+- [x] Add support for pinch zoom gestures
 
 ## Network
 

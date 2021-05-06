@@ -3,18 +3,14 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="description" content="Interactive online world map and population tracker for PlanetSide 2." />
     <meta name="viewport" content="width=device-width" />
-
-    <title>APL (Dev)</title>
-
+    <title>Amerish - APL</title>
     <link rel="stylesheet" href="index.css" />
     <script src="index.js"></script>
-
 </head>
 
 <body>
-
-    <!-- No JS found banner -->
     <noscript>
         <div id="no-js-modal-banner">
             <h1>No JavaScript found</h1>
@@ -28,116 +24,15 @@
         </div>
     </noscript>
 
-    <!-- Map selector -->
-    <div class="selector">
-        <label for="server">Server:</label>
-        <select id="server">
-            <option value="1">Connery [US West]</option>
-            <option value="13" selected>Cobalt [EU]</option>
-            <option value="10">Miller [EU]</option>
-            <option value="17">Emerald [US East]</option>
-            <option value="40">SolTech [Asia]</option>
-        </select>
-        <label for="continent">Continent:</label>
-        <select id="continent">
-            <option value="2">Indar</option>
-            <option value="4">Hossin</option>
-            <option value="8">Esamir</option>
-            <option value="6" selected>Amerish</option>
-        </select>
-        <input type="submit" />
-    </div>
-    <!-- Zoom level controls -->
-    <aside id="zoomControls">
-        <input type="button" id="zoomInc" value="+"></input>
-        <input type="button" id="zoomDec" value="-"></input>
-    </aside>
-    <!-- Base info widget -->
-    <aside id="baseInfo">
-        <span id="baseName">TI Alloys Inc.</span>
-        <hr />
-        <!-- Population table -->
-        <table>
-            <thead>
-                <tr>
-                    <th colspan="2">Population</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>TR</td>
-                    <td id="BaseInfo_PopTR">32%</td>
-                </tr>
-                <tr>
-                    <td>NC</td>
-                    <td id="BaseInfo_PopVC">34%</td>
-                </tr>
-                <tr>
-                    <td>VS</td>
-                    <td id="BaseInfo_PopVS">33%</td>
-                </tr>
-            </tbody>
-        </table>
-        <!-- Capture info table -->
-        <table>
-            <thead>
-                <tr>
-                    <th colspan="2">Last captured</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Timestamp</td>
-                    <td id="BaseInfo_CaptureTime">12:35</td>
-                </tr>
-                <tr>
-                    <td>Faction</td>
-                    <td id="BaseInfo_CaptureFaction">TR</td>
-                </tr>
-                <tr>
-                    <td>Outfit</td>
-                    <td id="BaseInfo_CaptureOutfit"></td>
-                </tr>
-            </tbody>
-        </table>
-    </aside>
-    <!-- Map layer widget -->
-    <aside id="mapLayerSelector">
-        <table>
-            <thead>
-                <tr>
-                    <th colspan="2">Map Layers</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="checkbox" id="showBaseNames" checked /></td>
-                    <td><label for="showBaseNames">Bases</label></td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" id="showMapTexture" checked /></td>
-                    <td><label for="showMapTexture">Terrain</label></td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" id="showHexes" checked /></td>
-                    <td><label for="showHexes">Hexes</label></td>
-                </tr>
-            </tbody>
-        </table>
-    </aside>
-    <!-- Map container -->
     <div id="viewport">
-        <div id="map">
-            <div id="mapTextureLayer" class="layer">
-                <!-- This layer is populated on load -->
-            </div>
-            <div id="mapBaseNameLayer" class="layer">
-                <!-- This layer is populated on load -->
-            </div>
-            <div id="mapHexLayer" class="layer">
-                <!-- This layer is populated on load -->
+        <div id="mapContainer">
+            <div id="map">
+                <div id="terrain" class="mapLayer terrainLayer"></div>
+                <div id="baseOutlines" class="mapLayer baseOutlineLayer"></div>
+                <div id="baseNames" class="mapLayer baseNameLayer"></div>
             </div>
         </div>
+
     </div>
 </body>
 

@@ -96,12 +96,6 @@ class TileLayer extends MapLayer {
      */
     private updateTiles(): void {
         const numTiles = this.getNumTiles(this.lod);
-        // Update CSS grid for new LOD
-        this.layer.style.setProperty(
-            "--MAP-TILES-PER-AXIS",
-            numTiles.toString()
-        );
-        // Recreate map tiles
         const newTiles: Array<HTMLDivElement> = [];
         // Special case for single-tile map LOD
         if (numTiles <= 1) {
@@ -138,6 +132,11 @@ class TileLayer extends MapLayer {
             }
         }
         requestAnimationFrame(() => {
+            // Update CSS grid for new LOD
+            this.layer.style.setProperty(
+                "--MAP-TILES-PER-AXIS",
+                numTiles.toString()
+            );
             this.clear();
             newTiles.forEach((tile) => this.layer.appendChild(tile));
         });
@@ -145,12 +144,21 @@ class TileLayer extends MapLayer {
 
     /**
      * Factory method for map tiles.
+     * The associated background image will be lazy loaded in the
+     * background.
      * @param url The URL of the tile texture.
      * @returns The request tile as a <div> element.
      */
     private createTile(url: string): HTMLDivElement {
         const tile = document.createElement("div");
-        tile.style.backgroundImage = `url(${url})`;
+        tile.classList.add("terrainTile");
+        let img: HTMLImageElement | null = new Image();
+        img.onload = () => {
+            tile.style.backgroundImage = `url(${url})`;
+            // Not sure if unsetting this is necessary - but it won't hurt.
+            img = null;
+        };
+        img.src = url;
         return tile;
     }
 

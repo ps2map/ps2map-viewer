@@ -143,10 +143,14 @@ var BaseNameLayer = (function (_super) {
                 layerImage.appendChild(icon);
                 icon.setAttribute("alt", "Amp Station");
                 icon.setAttribute("src", _this.getBaseIconFromType(base.type_id));
-                var name = document.createElement("p");
-                anchor.appendChild(name);
-                name.setAttribute("class", "baseLabel");
-                name.innerHTML = base.name;
+                var label = document.createElement("p");
+                anchor.appendChild(label);
+                label.setAttribute("class", "baseLabel");
+                label.innerHTML = base.name;
+                var labelShadow = document.createElement("p");
+                anchor.appendChild(labelShadow);
+                labelShadow.setAttribute("class", "baseLabelShadow");
+                labelShadow.innerHTML = base.name;
                 elements.push(anchor);
             });
             _this.clear();
@@ -360,7 +364,6 @@ var TileLayer = (function (_super) {
     TileLayer.prototype.updateTiles = function () {
         var _this = this;
         var numTiles = this.getNumTiles(this.lod);
-        this.layer.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
         var newTiles = [];
         if (numTiles <= 1) {
             var tile = this.getMapTilePath(this.tileSet.toLowerCase(), this.lod, 0, 0);
@@ -381,13 +384,20 @@ var TileLayer = (function (_super) {
             }
         }
         requestAnimationFrame(function () {
+            _this.layer.style.setProperty("--MAP-TILES-PER-AXIS", numTiles.toString());
             _this.clear();
             newTiles.forEach(function (tile) { return _this.layer.appendChild(tile); });
         });
     };
     TileLayer.prototype.createTile = function (url) {
         var tile = document.createElement("div");
-        tile.style.backgroundImage = "url(" + url + ")";
+        tile.classList.add("terrainTile");
+        var img = new Image();
+        img.onload = function () {
+            tile.style.backgroundImage = "url(" + url + ")";
+            img = null;
+        };
+        img.src = url;
         return tile;
     };
     TileLayer.prototype.getNumTiles = function (lod) {
@@ -403,44 +413,19 @@ var TileLayer = (function (_super) {
 }(MapLayer));
 function onDOMLoaded() {
     var initialContinentId = 6;
-    var hexLayerDiv = document.getElementById("mapHexLayer");
+    var hexLayerDiv = document.getElementById("baseOutlines");
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
-    var tileLayerDiv = (document.getElementById("mapTextureLayer"));
+    var tileLayerDiv = document.getElementById("terrain");
     var tileUrl = "http://127.0.0.1:5000/static/map/";
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
-    var baseNameLayerDiv = (document.getElementById("mapBaseNameLayer"));
+    var baseNameLayerDiv = (document.getElementById("baseNames"));
     var baseNameLayer = new BaseNameLayer(baseNameLayerDiv, initialContinentId);
     var map = document.getElementById("map");
     var viewport = document.getElementById("viewport");
-    var controller = new MapController(map, viewport, initialContinentId);
+    var mapContainer = (document.getElementById("mapContainer"));
+    var controller = new MapController(map, mapContainer, viewport, initialContinentId);
     controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
     controller.onZoom.push(baseNameLayer.onZoom.bind(baseNameLayer));
-    var showHideHexLayer = (document.getElementById("showHexes"));
-    showHideHexLayer.addEventListener("click", function () {
-        return hexLayer.setVisibility(showHideHexLayer.checked);
-    });
-    var showHideTexturelayer = (document.getElementById("showMapTexture"));
-    showHideTexturelayer.addEventListener("click", function () {
-        return tileLayer.setVisibility(showHideTexturelayer.checked);
-    });
-    var showHideNameLayer = (document.getElementById("showBaseNames"));
-    showHideNameLayer.addEventListener("click", function () {
-        return baseNameLayer.setVisibility(showHideNameLayer.checked);
-    });
-    var asideBaseName = document.getElementById("baseName");
-    hexLayer.baseHoverCallback = function (baseId) {
-        getBase(baseId).then(function (base) {
-            asideBaseName.textContent = base.name;
-        });
-    };
-    var zoomInc = document.getElementById("zoomInc");
-    zoomInc.addEventListener("click", function () {
-        controller.incDecZoom(true);
-    });
-    var zoomDec = document.getElementById("zoomDec");
-    zoomDec.addEventListener("click", function () {
-        controller.incDecZoom(false);
-    });
     hexLayer.layer.addEventListener("auxclick", function (evt) {
         if (!(evt.target instanceof SVGElement)) {
             return;
@@ -458,18 +443,19 @@ function onDOMLoaded() {
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
 var zoomLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 var MapController = (function () {
-    function MapController(map, viewport, initialContinentId) {
+    function MapController(map, mapContainer, viewport, initialContinentId) {
         this.onZoom = [];
         this.zoomAnimFrameScheduled = false;
         this.continentId = initialContinentId;
         this.map = map;
+        this.mapContainer = mapContainer;
         this.viewport = viewport;
         this.zoomLevel = 1.0;
-        map.addEventListener("mousedown", this.mousePan.bind(this));
-        map.addEventListener("wheel", this.mouseWheel.bind(this), {
+        mapContainer.addEventListener("mousedown", this.mousePan.bind(this));
+        mapContainer.addEventListener("wheel", this.mouseWheel.bind(this), {
             passive: false
         });
-        map.addEventListener("touchstart", this.pinchZoom.bind(this), {
+        mapContainer.addEventListener("touchstart", this.pinchZoom.bind(this), {
             passive: true
         });
     }
@@ -507,7 +493,7 @@ var MapController = (function () {
             return;
         }
         var viewport = this.viewport;
-        var map = this.map;
+        var mapContainer = this.mapContainer;
         var initialScrollLeft = viewport.scrollLeft;
         var initialScrollTop = viewport.scrollTop;
         var nextScrollTargetLeft = 0.0;
@@ -529,10 +515,10 @@ var MapController = (function () {
             });
         }
         function mouseUp() {
-            map.removeEventListener("mousemove", mouseDrag);
+            mapContainer.removeEventListener("mousemove", mouseDrag);
             document.removeEventListener("mouseup", mouseUp);
         }
-        map.addEventListener("mousemove", mouseDrag);
+        mapContainer.addEventListener("mousemove", mouseDrag);
         document.addEventListener("mouseup", mouseUp);
     };
     MapController.prototype.constrainZoom = function (value) {
@@ -559,11 +545,14 @@ var MapController = (function () {
         var scrollTop = relScrollY - screenY;
         var offset = (newZoom - 1.0) * 50.0;
         this.zoomLevel = newZoom;
-        vport.scrollLeft = scrollLeft;
-        vport.scrollTop = scrollTop;
-        this.map.style.transform =
+        this.mapContainer.style.transform =
             "translate3D(" + offset + "%, " + offset + "%, 0) " +
                 ("scale(" + this.zoomLevel + ")");
+        vport.scrollTo({
+            top: scrollTop,
+            left: scrollLeft,
+            behavior: "auto"
+        });
         this.zoomDispatch();
     };
     MapController.prototype.mouseWheel = function (evt) {
@@ -639,15 +628,15 @@ var MapController = (function () {
             });
         }
         function touchEnd(evt) {
-            con.map.removeEventListener("touchmove", touchMove);
-            con.map.removeEventListener("touchend", touchEnd);
-            con.map.removeEventListener("touchcancel", touchEnd);
+            con.mapContainer.removeEventListener("touchmove", touchMove);
+            document.removeEventListener("touchend", touchEnd);
+            document.removeEventListener("touchcancel", touchEnd);
         }
-        con.map.addEventListener("touchmove", touchMove, {
+        con.mapContainer.addEventListener("touchmove", touchMove, {
             passive: true
         });
-        con.map.addEventListener("touchend", touchEnd);
-        con.map.addEventListener("touchcancel", touchEnd);
+        document.addEventListener("touchend", touchEnd);
+        document.addEventListener("touchcancel", touchEnd);
     };
     return MapController;
 }());
