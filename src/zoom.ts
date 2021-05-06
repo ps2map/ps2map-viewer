@@ -127,7 +127,6 @@ class Zoomable {
      * @param evtDown The mousedown event received
      */
     private mousePan(evtDown: MouseEvent): void {
-        // LMB only
         if (evtDown.button != 0) {
             return;
         }
@@ -135,24 +134,20 @@ class Zoomable {
         const element = this.target;
         const initialScrollLeft = container.scrollLeft;
         const initialScrollTop = container.scrollTop;
-        let nextScrollTargetLeft = 0.0;
-        let nextScrollTargetTop = 0.0;
         let animFrameScheduled = false;
 
         function mouseDrag(evtDrag: MouseEvent): void {
-            const deltaX = evtDrag.clientX - evtDown.clientX;
-            const deltaY = evtDrag.clientY - evtDown.clientY;
-            nextScrollTargetLeft = initialScrollLeft - deltaX;
-            nextScrollTargetTop = initialScrollTop - deltaY;
             if (animFrameScheduled) {
                 return;
             }
-            animFrameScheduled = true;
             requestAnimationFrame(() => {
-                container.scrollLeft = nextScrollTargetLeft;
-                container.scrollTop = nextScrollTargetTop;
+                const deltaX = evtDrag.clientX - evtDown.clientX;
+                const deltaY = evtDrag.clientY - evtDown.clientY;
+                container.scrollLeft = initialScrollLeft - deltaX;
+                container.scrollTop = initialScrollTop - deltaY;
                 animFrameScheduled = false;
             });
+            animFrameScheduled = true;
         }
 
         function mouseUp(): void {

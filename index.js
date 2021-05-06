@@ -513,23 +513,19 @@ var Zoomable = (function () {
         var element = this.target;
         var initialScrollLeft = container.scrollLeft;
         var initialScrollTop = container.scrollTop;
-        var nextScrollTargetLeft = 0.0;
-        var nextScrollTargetTop = 0.0;
         var animFrameScheduled = false;
         function mouseDrag(evtDrag) {
-            var deltaX = evtDrag.clientX - evtDown.clientX;
-            var deltaY = evtDrag.clientY - evtDown.clientY;
-            nextScrollTargetLeft = initialScrollLeft - deltaX;
-            nextScrollTargetTop = initialScrollTop - deltaY;
             if (animFrameScheduled) {
                 return;
             }
-            animFrameScheduled = true;
             requestAnimationFrame(function () {
-                container.scrollLeft = nextScrollTargetLeft;
-                container.scrollTop = nextScrollTargetTop;
+                var deltaX = evtDrag.clientX - evtDown.clientX;
+                var deltaY = evtDrag.clientY - evtDown.clientY;
+                container.scrollLeft = initialScrollLeft - deltaX;
+                container.scrollTop = initialScrollTop - deltaY;
                 animFrameScheduled = false;
             });
+            animFrameScheduled = true;
         }
         function mouseUp() {
             element.removeEventListener("mousemove", mouseDrag);
