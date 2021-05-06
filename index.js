@@ -569,20 +569,20 @@ var Zoomable = (function () {
     Zoomable.prototype.mouseWheel = function (evt) {
         var _this = this;
         evt.preventDefault();
-        var deltaY = evt.deltaY;
-        if (evt.deltaMode == 0) {
-            deltaY /= 80;
-        }
-        var relX = evt.clientX / this.container.clientWidth;
-        var relY = evt.clientY / this.container.clientHeight;
         if (this.animFrameScheduled) {
             return;
         }
-        this.animFrameScheduled = true;
         requestAnimationFrame(function () {
+            var deltaY = evt.deltaY;
+            if (evt.deltaMode == 0) {
+                deltaY /= 80;
+            }
+            var relX = evt.clientX / _this.container.clientWidth;
+            var relY = evt.clientY / _this.container.clientHeight;
             _this.applyZoomLevel(_this.zoom - deltaY * 0.25, relX, relY);
             _this.animFrameScheduled = false;
         });
+        this.animFrameScheduled = true;
     };
     Zoomable.prototype.invokeZoomCallbacks = function () {
         var _this = this;
@@ -621,22 +621,22 @@ var Zoomable = (function () {
         var touchStartDist = this.getTouchesDistance(evt.touches);
         var zoomStart = this.zoom;
         function touchMove(evt) {
-            if (evt.touches.length != 2) {
-                return;
-            }
-            var touchCenter = con.getTouchesCenter(evt.touches);
-            var touchDist = con.getTouchesDistance(evt.touches);
-            var distRel = touchDist / touchStartDist;
             if (con.animFrameScheduled) {
                 return;
             }
-            var relX = touchCenter[0] / con.container.clientWidth;
-            var relY = touchCenter[1] / con.container.clientHeight;
-            con.animFrameScheduled = true;
+            if (evt.touches.length != 2) {
+                return;
+            }
             requestAnimationFrame(function () {
+                var touchCenter = con.getTouchesCenter(evt.touches);
+                var touchDist = con.getTouchesDistance(evt.touches);
+                var distRel = touchDist / touchStartDist;
+                var relX = touchCenter[0] / con.container.clientWidth;
+                var relY = touchCenter[1] / con.container.clientHeight;
                 con.applyZoomLevel(zoomStart * distRel, relX, relY);
                 con.animFrameScheduled = false;
             });
+            con.animFrameScheduled = true;
         }
         function touchEnd(evt) {
             con.target.removeEventListener("touchmove", touchMove);
