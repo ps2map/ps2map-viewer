@@ -38,8 +38,8 @@ function onDOMLoaded(): void {
         viewport,
         initialContinentId
     );
-    controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
-    controller.onZoom.push(baseNameLayer.onZoom.bind(baseNameLayer));
+    controller.registerZoomCallback(tileLayer.onZoom.bind(tileLayer));
+    controller.registerZoomCallback(baseNameLayer.onZoom.bind(baseNameLayer));
 
     // Debug base painter
     hexLayer.layer.addEventListener("auxclick", (evt: MouseEvent) => {
