@@ -28,8 +28,10 @@ Tracker for missing features, usability improvements and other things that shoul
 ## Performance
 
 - [x] Reuse icons for base outlines
-- [ ] Move all map zoom behaviour into a JS state register; no reading DOM as part of animation frames (heavy slowdowns!)
+- [x] Move all map zoom behaviour into a JS state register; no reading DOM as part of animation frames (heavy slowdowns!)
 - [ ] Add resize event handler for state updates
+- [ ] Simplify DOM tree, particularly hexes and base names
+- [ ] Create a zoom-level-aware windowing system that lazy-updates the map and unloads data (destroying base names, etc.)
 - [ ] Mooar introspection, stable 60 fps or bust!
 
 ## Bonus points
