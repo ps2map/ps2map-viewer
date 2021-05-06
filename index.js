@@ -424,8 +424,8 @@ function onDOMLoaded() {
     var viewport = document.getElementById("viewport");
     var mapContainer = (document.getElementById("mapContainer"));
     var controller = new MapController(map, mapContainer, viewport, initialContinentId);
-    controller.onZoom.push(tileLayer.onZoom.bind(tileLayer));
-    controller.onZoom.push(baseNameLayer.onZoom.bind(baseNameLayer));
+    controller.registerZoomCallback(tileLayer.onZoom.bind(tileLayer));
+    controller.registerZoomCallback(baseNameLayer.onZoom.bind(baseNameLayer));
     hexLayer.layer.addEventListener("auxclick", function (evt) {
         if (!(evt.target instanceof SVGElement)) {
             return;
@@ -458,6 +458,17 @@ var Zoomable = (function () {
             passive: true
         });
     }
+    Zoomable.prototype.registerZoomCallback = function (callback) {
+        this.onZoom.push(callback);
+    };
+    Zoomable.prototype.unregisterZoomCallback = function (callback) {
+        for (var i = 0; i < this.onZoom.length; i++) {
+            if (this.onZoom[i] == callback) {
+                this.onZoom.splice(i);
+                return;
+            }
+        }
+    };
     Zoomable.prototype.incDecZoom = function (increase) {
         var _this = this;
         var zoomLevel = this.zoom;

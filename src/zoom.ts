@@ -1,10 +1,11 @@
+type ZoomCallback = (zoomLevel: number) => void;
 const zoomLevels: Array<number> = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 class Zoomable {
     readonly target: HTMLElement;
     private container: HTMLElement;
     private zoom: number;
-    public onZoom: Array<(zoomLevel: number) => void> = [];
+    private onZoom: Array<ZoomCallback> = [];
     private animFrameScheduled: boolean = false;
 
     constructor(
@@ -23,6 +24,35 @@ class Zoomable {
         content.addEventListener("touchstart", this.pinchZoom.bind(this), {
             passive: true,
         });
+    }
+
+    /**
+     * The given function will be called as part of the animation frame
+     * requested as part of the zoom update. Be wary of performance, a
+     * slow zoom callback will slow down the touch navigation.
+     *
+     * Due to the animation frame, this is already debounced to only
+     * one call per frame.
+     * @param callback A function to call when the zoom level changes.
+     */
+    public registerZoomCallback(callback: ZoomCallback): void {
+        this.onZoom.push(callback);
+    }
+
+    /**
+     * Remove an existing zoom callback. See the registerZoomCallback
+     * method for details; this simply removes the callback if it was
+     * previously added. If the callback does not exist, it will be
+     * silently ignored.
+     * @param callback An existing callback to remove.
+     */
+    public unregisterZoomCallback(callback: ZoomCallback): void {
+        for (let i = 0; i < this.onZoom.length; i++) {
+            if (this.onZoom[i] == callback) {
+                this.onZoom.splice(i);
+                return;
+            }
+        }
     }
 
     /**
