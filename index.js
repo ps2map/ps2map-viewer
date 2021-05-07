@@ -357,7 +357,7 @@ var TileLayer = (function (_super) {
             return __generator(this, function (_a) {
                 cont = getContinent(continentId);
                 cont.then(function (contInfo) {
-                    _this.tileSet = contInfo.map_tileset;
+                    _this.tileSet = contInfo.code;
                     _this.updateTiles();
                 });
                 return [2];

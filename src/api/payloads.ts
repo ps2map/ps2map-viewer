@@ -31,10 +31,9 @@ interface BaseStatus {
 interface ContinentInfo {
     readonly id: number;
     readonly name: string;
+    readonly code: string;
     readonly description: string;
     readonly lattice_links: Array<[number, number]>; // Numbers are base IDs
-    readonly map_base_svgs: BaseSvgMapping;
-    readonly map_tileset: string;
 }
 
 /**
