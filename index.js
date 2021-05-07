@@ -408,16 +408,16 @@ var TileLayer = (function (_super) {
 }(MapLayer));
 function onDOMLoaded() {
     var initialContinentId = 6;
-    var hexLayerDiv = document.getElementById("baseOutlines");
+    var hexLayerDiv = document.getElementById("layer-hexes");
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
-    var tileLayerDiv = document.getElementById("terrain");
+    var tileLayerDiv = (document.getElementById("layer-terrain"));
     var tileUrl = "http://127.0.0.1:5000/static/map/";
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
-    var baseNameLayerDiv = (document.getElementById("baseNames"));
+    var baseNameLayerDiv = (document.getElementById("layer-names"));
     var baseNameLayer = new BaseNameLayer(baseNameLayerDiv, initialContinentId);
     var map = document.getElementById("map");
-    var viewport = document.getElementById("viewport");
-    var mapContainer = (document.getElementById("mapContainer"));
+    var viewport = document.getElementById("map-container");
+    var mapContainer = (document.getElementById("map-background"));
     var controller = new MapController(map, mapContainer, viewport, initialContinentId);
     controller.registerZoomCallback(tileLayer.onZoom.bind(tileLayer));
     controller.registerZoomCallback(baseNameLayer.onZoom.bind(baseNameLayer));

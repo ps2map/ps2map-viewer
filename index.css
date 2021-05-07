@@ -22,7 +22,7 @@ body {
 
 /* Map rendering viewport */
 
-#viewport {
+#map-container {
     background-color: #051010;
     height: 100vh;
     width: 100vw;
@@ -32,11 +32,11 @@ body {
     scrollbar-width: none;
 }
 
-#viewport::-webkit-scrollbar {
+#map-container::-webkit-scrollbar {
     display: none;
 }
 
-#mapContainer {
+#map-background {
     height: 100%;
     width: 100%;
 }
