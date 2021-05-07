@@ -508,6 +508,7 @@ var TileLayer = (function (_super) {
     __extends(TileLayer, _super);
     function TileLayer(layer, initialContinentId, tileBaseUrl) {
         var _this = _super.call(this, layer, initialContinentId) || this;
+        _this.isThrottled = false;
         _this.lod = _this.getLod(1.0);
         _this.tileSet = "bogus";
         _this.tileBaseUrl = tileBaseUrl;
@@ -521,7 +522,15 @@ var TileLayer = (function (_super) {
         this.setTileSet(continentId);
     };
     TileLayer.prototype.onZoom = function (zoomLevel) {
+        var _this = this;
+        if (this.isThrottled) {
+            return;
+        }
+        this.isThrottled = true;
         var lod = this.getLod(zoomLevel);
+        setTimeout(function () {
+            _this.isThrottled = false;
+        }, 100);
         if (lod == this.lod) {
             return;
         }

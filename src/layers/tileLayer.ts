@@ -17,6 +17,7 @@ class TileLayer extends MapLayer {
     readonly tileBaseUrl: string;
     private lod: number;
     private tileSet: string;
+    private isThrottled = false;
 
     constructor(
         layer: HTMLDivElement,
@@ -47,7 +48,14 @@ class TileLayer extends MapLayer {
      * @param zoomLevel The new zoom level to use
      */
     public onZoom(zoomLevel: number): void {
+        if (this.isThrottled) {
+            return;
+        }
+        this.isThrottled = true;
         const lod = this.getLod(zoomLevel);
+        setTimeout(() => {
+            this.isThrottled = false;
+        }, 100);
         if (lod == this.lod) {
             return;
         }
