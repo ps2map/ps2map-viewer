@@ -210,6 +210,59 @@ var BaseNameLayer = (function (_super) {
     };
     return BaseNameLayer;
 }(MapLayer));
+var HexLayer = (function (_super) {
+    __extends(HexLayer, _super);
+    function HexLayer(layer, initialContinentId) {
+        var _this = _super.call(this, layer, initialContinentId) || this;
+        _this.baseHoverCallback = function () { return null; };
+        return _this;
+    }
+    HexLayer.prototype.setContinent = function (continentId) {
+        var _this = this;
+        if (this.continentId == continentId) {
+            return;
+        }
+        this.continentId = continentId;
+        getContinent(continentId)
+            .then(function (continent) {
+            return fetch("http://127.0.0.1:5000/static/hex/" + continent.code + ".svg");
+        })
+            .then(function (data) {
+            _this.clear();
+            data.text().then(function (payload) {
+                var factory = document.createElement("template");
+                factory.innerHTML = payload.trim();
+                var svg = factory.content.firstElementChild;
+                if (svg == null) {
+                    return;
+                }
+                svg.classList.add("layer-hexes__hex");
+                svg.querySelectorAll("polygon").forEach(function (poly) {
+                    var promoteElement = function () {
+                        svg.appendChild(poly);
+                    };
+                    poly.addEventListener("mouseenter", promoteElement, {
+                        passive: true
+                    });
+                    poly.addEventListener("touchstart", promoteElement, {
+                        passive: true
+                    });
+                });
+                _this.layer.appendChild(svg);
+            });
+        });
+    };
+    HexLayer.prototype.registerHoverCallback = function (element) {
+        var _this = this;
+        element.addEventListener("mouseover", function (evt) {
+            if (evt.buttons % 4 > 0) {
+                return;
+            }
+            _this.baseHoverCallback(parseInt(element.id));
+        });
+    };
+    return HexLayer;
+}(MapLayer));
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -246,62 +299,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var HexLayer = (function (_super) {
-    __extends(HexLayer, _super);
-    function HexLayer(layer, initialContinentId) {
-        var _this = _super.call(this, layer, initialContinentId) || this;
-        _this.baseHoverCallback = function () { return null; };
-        return _this;
-    }
-    HexLayer.prototype.setContinent = function (continentId) {
-        var _this = this;
-        if (this.continentId == continentId) {
-            return;
-        }
-        this.continentId = continentId;
-        var outlines = this.getBaseHexes(continentId);
-        outlines.then(function (elements) {
-            _this.clear();
-            elements.forEach(function (child) { return _this.layer.appendChild(child); });
-        });
-    };
-    HexLayer.prototype.getBaseHexes = function (continentId) {
-        return __awaiter(this, void 0, void 0, function () {
-            var cont, elements;
-            var _this = this;
-            return __generator(this, function (_a) {
-                cont = getContinent(continentId);
-                elements = cont.then(function (contInfo) {
-                    var svgs = [];
-                    for (var key in contInfo.map_base_svgs) {
-                        var hex = document.createElement("div");
-                        hex.classList.add("layer-hexes__hex");
-                        var hexFg = elementFromString(contInfo.map_base_svgs[key]);
-                        hexFg.classList.add("layer-hexes__hex-fill");
-                        hex.appendChild(hexFg);
-                        var hexBg = elementFromString(contInfo.map_base_svgs[key]);
-                        hexBg.classList.add("layer-hexes__hex-highlight");
-                        hex.appendChild(hexBg);
-                        _this.registerHoverCallback(hexBg);
-                        svgs.push(hex);
-                    }
-                    return svgs;
-                });
-                return [2, elements];
-            });
-        });
-    };
-    HexLayer.prototype.registerHoverCallback = function (element) {
-        var _this = this;
-        element.addEventListener("mouseover", function (evt) {
-            if (evt.buttons % 4 > 0) {
-                return;
-            }
-            _this.baseHoverCallback(parseInt(element.id));
-        });
-    };
-    return HexLayer;
-}(MapLayer));
 var mapBaseRes = 8192;
 var TileLayer = (function (_super) {
     __extends(TileLayer, _super);
@@ -349,7 +346,7 @@ var TileLayer = (function (_super) {
             return __generator(this, function (_a) {
                 cont = getContinent(continentId);
                 cont.then(function (contInfo) {
-                    _this.tileSet = contInfo.map_tileset;
+                    _this.tileSet = contInfo.code;
                     _this.updateTiles();
                 });
                 return [2];
@@ -411,7 +408,7 @@ function onDOMLoaded() {
     var hexLayerDiv = document.getElementById("layer-hexes");
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
     var tileLayerDiv = (document.getElementById("layer-terrain"));
-    var tileUrl = "http://127.0.0.1:5000/static/map/";
+    var tileUrl = "http://127.0.0.1:5000/static/tile/";
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
     var baseNameLayerDiv = (document.getElementById("layer-names"));
     var baseNameLayer = new BaseNameLayer(baseNameLayerDiv, initialContinentId);

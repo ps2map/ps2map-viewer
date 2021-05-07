@@ -86,7 +86,7 @@ class TileLayer extends MapLayer {
     private async setTileSet(continentId: number): Promise<void> {
         const cont = getContinent(continentId);
         cont.then((contInfo) => {
-            this.tileSet = contInfo.map_tileset;
+            this.tileSet = contInfo.code;
             this.updateTiles();
         });
     }

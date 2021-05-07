@@ -17,7 +17,7 @@ function onDOMLoaded(): void {
     const tileLayerDiv = <HTMLDivElement>(
         document.getElementById("layer-terrain")
     );
-    const tileUrl = "http://127.0.0.1:5000/static/map/";
+    const tileUrl = "http://127.0.0.1:5000/static/tile/";
     const tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
     const baseNameLayerDiv = <HTMLDivElement>(
         document.getElementById("layer-names")
