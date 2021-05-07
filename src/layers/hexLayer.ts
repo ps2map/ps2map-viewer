@@ -27,54 +27,36 @@ class HexLayer extends MapLayer {
         }
         this.continentId = continentId;
         // Get the base outline SVGs for this continent
-        fetch(this.getBaseHexes(continentId)).then((data) => {
-            this.clear();
-            data.text().then((payload) => {
-                const factory = document.createElement("template");
-                factory.innerHTML = payload.trim();
-                const svg = factory.content.firstElementChild;
-                if (svg == null) {
-                    return;
-                }
-                svg.classList.add("layer-hexes__hex");
-                svg.querySelectorAll("polygon").forEach((poly) => {
-                    const promoteElement = () => {
-                        svg.appendChild(poly);
-                    };
-                    poly.addEventListener("mouseenter", promoteElement, {
-                        passive: true,
+        getContinent(continentId)
+            .then((continent) => {
+                return fetch(
+                    `http://127.0.0.1:5000/static/hex/${continent.code}.svg`
+                );
+            })
+            .then((data) => {
+                this.clear();
+                data.text().then((payload) => {
+                    const factory = document.createElement("template");
+                    factory.innerHTML = payload.trim();
+                    const svg = factory.content.firstElementChild;
+                    if (svg == null) {
+                        return;
+                    }
+                    svg.classList.add("layer-hexes__hex");
+                    svg.querySelectorAll("polygon").forEach((poly) => {
+                        const promoteElement = () => {
+                            svg.appendChild(poly);
+                        };
+                        poly.addEventListener("mouseenter", promoteElement, {
+                            passive: true,
+                        });
+                        poly.addEventListener("touchstart", promoteElement, {
+                            passive: true,
+                        });
                     });
-                    poly.addEventListener("touchstart", promoteElement, {
-                        passive: true,
-                    });
+                    this.layer.appendChild(svg);
                 });
-                this.layer.appendChild(svg);
             });
-        });
-    }
-
-    /**
-     * Retrieve the base outline SVG for the given continent.
-     *
-     * Note that the returned SVG element will have a view box size of
-     * 8192 x 8192 px.
-     * @param continentId The ID of the continent.
-     * @returns Image path to the base outline SVG.
-     */
-    private getBaseHexes(continentId: number): string {
-        let fileName = "indar";
-        switch (continentId) {
-            case 4:
-                fileName = "hossin";
-                break;
-            case 6:
-                fileName = "amerish";
-                break;
-            case 8:
-                fileName = "esamir";
-                break;
-        }
-        return `http://127.0.0.1:5000/static/hex/${fileName}.svg`;
     }
 
     /**

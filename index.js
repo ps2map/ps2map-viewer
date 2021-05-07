@@ -223,7 +223,11 @@ var HexLayer = (function (_super) {
             return;
         }
         this.continentId = continentId;
-        fetch(this.getBaseHexes(continentId)).then(function (data) {
+        getContinent(continentId)
+            .then(function (continent) {
+            return fetch("http://127.0.0.1:5000/static/hex/" + continent.code + ".svg");
+        })
+            .then(function (data) {
             _this.clear();
             data.text().then(function (payload) {
                 var factory = document.createElement("template");
@@ -247,21 +251,6 @@ var HexLayer = (function (_super) {
                 _this.layer.appendChild(svg);
             });
         });
-    };
-    HexLayer.prototype.getBaseHexes = function (continentId) {
-        var fileName = "indar";
-        switch (continentId) {
-            case 4:
-                fileName = "hossin";
-                break;
-            case 6:
-                fileName = "amerish";
-                break;
-            case 8:
-                fileName = "esamir";
-                break;
-        }
-        return "http://127.0.0.1:5000/static/hex/" + fileName + ".svg";
     };
     HexLayer.prototype.registerHoverCallback = function (element) {
         var _this = this;
