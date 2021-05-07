@@ -52,18 +52,18 @@ class HexLayer extends MapLayer {
             const svgs: Array<HTMLElement> = [];
             for (const key in contInfo.map_base_svgs) {
                 const hex = document.createElement("div");
-                hex.classList.add("baseHex");
-                const hexBg = elementFromString<SVGElement>(
-                    contInfo.map_base_svgs[key]
-                );
-                hexBg.classList.add("baseHexBg");
-                hex.appendChild(hexBg);
+                hex.classList.add("layer-hexes__hex");
                 const hexFg = elementFromString<SVGElement>(
                     contInfo.map_base_svgs[key]
                 );
-                hexFg.classList.add("baseHexFg");
-                this.registerHoverCallback(hexBg);
+                hexFg.classList.add("layer-hexes__hex-fill");
                 hex.appendChild(hexFg);
+                const hexBg = elementFromString<SVGElement>(
+                    contInfo.map_base_svgs[key]
+                );
+                hexBg.classList.add("layer-hexes__hex-highlight");
+                hex.appendChild(hexBg);
+                this.registerHoverCallback(hexBg);
                 svgs.push(hex);
             }
             return svgs;
