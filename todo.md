@@ -19,6 +19,7 @@ Tracker for missing features, usability improvements and other things that shoul
 
 - [x] Fix zoom-to-cursor behaviour
 - [x] Add support for pinch zoom gestures
+- [ ] Switch to (vaguely) logarithmic zoom levels. The linear ones feel wrong due to the relative map size change decreasing; just an unnecessary feeling of lagginess.
 
 ## Network
 
