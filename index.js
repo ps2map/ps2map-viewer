@@ -24,7 +24,9 @@ var Zoomable = (function () {
         if (minZoom === void 0) { minZoom = 1.0; }
         if (maxZoom === void 0) { maxZoom = 10.0; }
         this.onZoom = [];
-        this.animFrameScheduled = false;
+        this.scrollDistY = 0.0;
+        this.lastScrollCursor = [0.0, 0.0];
+        this.rafPending = false;
         this.target = content;
         this.container = container;
         this.zoom = initialZoom;
@@ -73,26 +75,26 @@ var Zoomable = (function () {
         else {
             zoomLevel += increase ? 1 : -1;
         }
-        if (this.animFrameScheduled) {
+        if (this.rafPending) {
             return;
         }
-        this.animFrameScheduled = true;
+        this.rafPending = true;
         requestAnimationFrame(function () {
             _this.applyZoomLevel(zoomLevel);
-            _this.animFrameScheduled = false;
+            _this.rafPending = false;
         });
     };
     Zoomable.prototype.mousePan = function (evtDown) {
         if (evtDown.button != 0) {
             return;
         }
+        var self = this;
         var container = this.container;
         var element = this.target;
         var initialScrollLeft = container.scrollLeft;
         var initialScrollTop = container.scrollTop;
-        var animFrameScheduled = false;
         function mouseDrag(evtDrag) {
-            if (animFrameScheduled) {
+            if (self.rafPending) {
                 return;
             }
             requestAnimationFrame(function () {
@@ -100,9 +102,9 @@ var Zoomable = (function () {
                 var deltaY = evtDrag.clientY - evtDown.clientY;
                 container.scrollLeft = initialScrollLeft - deltaX;
                 container.scrollTop = initialScrollTop - deltaY;
-                animFrameScheduled = false;
+                self.rafPending = false;
             });
-            animFrameScheduled = true;
+            self.rafPending = true;
         }
         function mouseUp() {
             element.removeEventListener("mousemove", mouseDrag);
@@ -147,20 +149,23 @@ var Zoomable = (function () {
     Zoomable.prototype.mouseWheel = function (evt) {
         var _this = this;
         evt.preventDefault();
-        if (this.animFrameScheduled) {
+        this.lastScrollCursor = [evt.clientX, evt.clientY];
+        var deltaY = evt.deltaY;
+        if (evt.deltaMode == 0) {
+            deltaY *= 0.0125;
+        }
+        this.scrollDistY = deltaY * 0.25;
+        if (this.rafPending) {
             return;
         }
         requestAnimationFrame(function () {
-            var deltaY = evt.deltaY;
-            if (evt.deltaMode == 0) {
-                deltaY /= 80;
-            }
-            var relX = evt.clientX / _this.container.clientWidth;
-            var relY = evt.clientY / _this.container.clientHeight;
-            _this.applyZoomLevel(_this.zoom - deltaY * 0.25, relX, relY);
-            _this.animFrameScheduled = false;
+            var relX = _this.lastScrollCursor[0] / _this.container.clientWidth;
+            var relY = _this.lastScrollCursor[1] / _this.container.clientHeight;
+            _this.applyZoomLevel(_this.zoom - _this.scrollDistY, relX, relY);
+            _this.scrollDistY = 0.0;
+            _this.rafPending = false;
         });
-        this.animFrameScheduled = true;
+        this.rafPending = true;
     };
     Zoomable.prototype.invokeZoomCallbacks = function () {
         var _this = this;
@@ -199,7 +204,7 @@ var Zoomable = (function () {
         var touchStartDist = this.getTouchesDistance(evt.touches);
         var zoomStart = this.zoom;
         function touchMove(evt) {
-            if (con.animFrameScheduled) {
+            if (con.rafPending) {
                 return;
             }
             if (evt.touches.length != 2) {
@@ -212,9 +217,9 @@ var Zoomable = (function () {
                 var relX = touchCenter[0] / con.container.clientWidth;
                 var relY = touchCenter[1] / con.container.clientHeight;
                 con.applyZoomLevel(zoomStart * distRel, relX, relY);
-                con.animFrameScheduled = false;
+                con.rafPending = false;
             });
-            con.animFrameScheduled = true;
+            con.rafPending = true;
         }
         function touchEnd(evt) {
             con.target.removeEventListener("touchmove", touchMove);

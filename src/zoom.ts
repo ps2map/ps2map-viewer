@@ -23,6 +23,8 @@ class Zoomable {
     private minZoom: number;
     private maxZoom: number;
     private onZoom: Array<ZoomCallback> = [];
+    private scrollDistY: number = 0.0;
+    private lastScrollCursor: [number, number] = [0.0, 0.0];
     private rafPending: boolean = false;
 
     constructor(
@@ -216,17 +218,20 @@ class Zoomable {
      */
     private mouseWheel(evt: WheelEvent): void {
         evt.preventDefault();
+        this.lastScrollCursor = [evt.clientX, evt.clientY];
+        let deltaY = evt.deltaY;
+        if (evt.deltaMode == 0) {
+            deltaY *= 0.0125; // Trial-and-error scaling factor
+        }
+        this.scrollDistY = deltaY * 0.25;
         if (this.rafPending) {
             return;
         }
         requestAnimationFrame(() => {
-            let deltaY = evt.deltaY;
-            if (evt.deltaMode == 0) {
-                deltaY /= 80;
-            }
-            const relX = evt.clientX / this.container.clientWidth;
-            const relY = evt.clientY / this.container.clientHeight;
-            this.applyZoomLevel(this.zoom - deltaY * 0.25, relX, relY);
+            const relX = this.lastScrollCursor[0] / this.container.clientWidth;
+            const relY = this.lastScrollCursor[1] / this.container.clientHeight;
+            this.applyZoomLevel(this.zoom - this.scrollDistY, relX, relY);
+            this.scrollDistY = 0.0;
             this.rafPending = false;
         });
         this.rafPending = true;
