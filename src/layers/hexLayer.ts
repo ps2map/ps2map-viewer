@@ -27,48 +27,54 @@ class HexLayer extends MapLayer {
         }
         this.continentId = continentId;
         // Get the base outline SVGs for this continent
-        const outlines = this.getBaseHexes(continentId);
-        outlines.then((elements) => {
+        fetch(this.getBaseHexes(continentId)).then((data) => {
             this.clear();
-            elements.forEach((child) => this.layer.appendChild(child));
+            data.text().then((payload) => {
+                const factory = document.createElement("template");
+                factory.innerHTML = payload.trim();
+                const svg = factory.content.firstElementChild;
+                if (svg == null) {
+                    return;
+                }
+                svg.classList.add("layer-hexes__hex");
+                svg.querySelectorAll("polygon").forEach((poly) => {
+                    const promoteElement = () => {
+                        svg.appendChild(poly);
+                    };
+                    poly.addEventListener("mouseenter", promoteElement, {
+                        passive: true,
+                    });
+                    poly.addEventListener("touchstart", promoteElement, {
+                        passive: true,
+                    });
+                });
+                this.layer.appendChild(svg);
+            });
         });
     }
 
     /**
-     * Retrieve the base outline SVGs for the given continent.
+     * Retrieve the base outline SVG for the given continent.
      *
-     * Note that all returned SVG elements will have a view box size of
-     * 8192 x 8192 px. When using absolute positioning, this ensures
-     * that all outlines are correctly positioned relative to each
-     * other.
+     * Note that the returned SVG element will have a view box size of
+     * 8192 x 8192 px.
      * @param continentId The ID of the continent.
-     * @returns An array of SVG elements.
+     * @returns Image path to the base outline SVG.
      */
-    private async getBaseHexes(
-        continentId: number
-    ): Promise<Array<HTMLElement>> {
-        const cont = getContinent(continentId);
-        const elements = cont.then((contInfo) => {
-            const svgs: Array<HTMLElement> = [];
-            for (const key in contInfo.map_base_svgs) {
-                const hex = document.createElement("div");
-                hex.classList.add("layer-hexes__hex");
-                const hexFg = elementFromString<SVGElement>(
-                    contInfo.map_base_svgs[key]
-                );
-                hexFg.classList.add("layer-hexes__hex-fill");
-                hex.appendChild(hexFg);
-                const hexBg = elementFromString<SVGElement>(
-                    contInfo.map_base_svgs[key]
-                );
-                hexBg.classList.add("layer-hexes__hex-highlight");
-                hex.appendChild(hexBg);
-                this.registerHoverCallback(hexBg);
-                svgs.push(hex);
-            }
-            return svgs;
-        });
-        return elements;
+    private getBaseHexes(continentId: number): string {
+        let fileName = "indar";
+        switch (continentId) {
+            case 4:
+                fileName = "hossin";
+                break;
+            case 6:
+                fileName = "amerish";
+                break;
+            case 8:
+                fileName = "esamir";
+                break;
+        }
+        return `http://127.0.0.1:5000/static/hex/${fileName}.svg`;
     }
 
     /**
