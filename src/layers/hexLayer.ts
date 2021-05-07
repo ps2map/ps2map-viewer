@@ -46,16 +46,25 @@ class HexLayer extends MapLayer {
      */
     private async getBaseHexes(
         continentId: number
-    ): Promise<Array<SVGElement>> {
+    ): Promise<Array<HTMLElement>> {
         const cont = getContinent(continentId);
         const elements = cont.then((contInfo) => {
-            const svgs: Array<SVGElement> = [];
+            const svgs: Array<HTMLElement> = [];
             for (const key in contInfo.map_base_svgs) {
-                const element = elementFromString<SVGElement>(
+                const hex = document.createElement("div");
+                hex.classList.add("baseHex");
+                const hexBg = elementFromString<SVGElement>(
                     contInfo.map_base_svgs[key]
                 );
-                this.registerHoverCallback(element);
-                svgs.push(element);
+                hexBg.classList.add("baseHexBg");
+                hex.appendChild(hexBg);
+                const hexFg = elementFromString<SVGElement>(
+                    contInfo.map_base_svgs[key]
+                );
+                hexFg.classList.add("baseHexFg");
+                this.registerHoverCallback(hexBg);
+                hex.appendChild(hexFg);
+                svgs.push(hex);
             }
             return svgs;
         });

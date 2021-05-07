@@ -127,7 +127,6 @@ class Zoomable {
      * @param evtDown The mousedown event received
      */
     private mousePan(evtDown: MouseEvent): void {
-        // LMB only
         if (evtDown.button != 0) {
             return;
         }
@@ -135,24 +134,20 @@ class Zoomable {
         const element = this.target;
         const initialScrollLeft = container.scrollLeft;
         const initialScrollTop = container.scrollTop;
-        let nextScrollTargetLeft = 0.0;
-        let nextScrollTargetTop = 0.0;
         let animFrameScheduled = false;
 
         function mouseDrag(evtDrag: MouseEvent): void {
-            const deltaX = evtDrag.clientX - evtDown.clientX;
-            const deltaY = evtDrag.clientY - evtDown.clientY;
-            nextScrollTargetLeft = initialScrollLeft - deltaX;
-            nextScrollTargetTop = initialScrollTop - deltaY;
             if (animFrameScheduled) {
                 return;
             }
-            animFrameScheduled = true;
             requestAnimationFrame(() => {
-                container.scrollLeft = nextScrollTargetLeft;
-                container.scrollTop = nextScrollTargetTop;
+                const deltaX = evtDrag.clientX - evtDown.clientX;
+                const deltaY = evtDrag.clientY - evtDown.clientY;
+                container.scrollLeft = initialScrollLeft - deltaX;
+                container.scrollTop = initialScrollTop - deltaY;
                 animFrameScheduled = false;
             });
+            animFrameScheduled = true;
         }
 
         function mouseUp(): void {
@@ -221,20 +216,20 @@ class Zoomable {
      */
     private mouseWheel(evt: WheelEvent): void {
         evt.preventDefault();
-        let deltaY = evt.deltaY;
-        if (evt.deltaMode == 0) {
-            deltaY /= 80;
-        }
-        const relX = evt.clientX / this.container.clientWidth;
-        const relY = evt.clientY / this.container.clientHeight;
         if (this.animFrameScheduled) {
             return;
         }
-        this.animFrameScheduled = true;
         requestAnimationFrame(() => {
+            let deltaY = evt.deltaY;
+            if (evt.deltaMode == 0) {
+                deltaY /= 80;
+            }
+            const relX = evt.clientX / this.container.clientWidth;
+            const relY = evt.clientY / this.container.clientHeight;
             this.applyZoomLevel(this.zoom - deltaY * 0.25, relX, relY);
             this.animFrameScheduled = false;
         });
+        this.animFrameScheduled = true;
     }
 
     /**
@@ -298,23 +293,22 @@ class Zoomable {
         const zoomStart = this.zoom;
 
         function touchMove(evt: TouchEvent): void {
-            if (evt.touches.length != 2) {
-                return;
-            }
-            const touchCenter = con.getTouchesCenter(evt.touches);
-            const touchDist = con.getTouchesDistance(evt.touches);
-            const distRel = touchDist / touchStartDist;
-
             if (con.animFrameScheduled) {
                 return;
             }
-            const relX = touchCenter[0] / con.container.clientWidth;
-            const relY = touchCenter[1] / con.container.clientHeight;
-            con.animFrameScheduled = true;
+            if (evt.touches.length != 2) {
+                return;
+            }
             requestAnimationFrame(() => {
+                const touchCenter = con.getTouchesCenter(evt.touches);
+                const touchDist = con.getTouchesDistance(evt.touches);
+                const distRel = touchDist / touchStartDist;
+                const relX = touchCenter[0] / con.container.clientWidth;
+                const relY = touchCenter[1] / con.container.clientHeight;
                 con.applyZoomLevel(zoomStart * distRel, relX, relY);
                 con.animFrameScheduled = false;
             });
+            con.animFrameScheduled = true;
         }
 
         function touchEnd(evt: TouchEvent): void {

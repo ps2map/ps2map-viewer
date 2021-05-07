@@ -14,22 +14,14 @@ var ownershipColorsCSS = [
         .trim(),
 ];
 function cycleFactionColour(base) {
-    if (!base.style.fill) {
-        base.style.fill = ownershipColorsCSS[0];
+    var _a, _b;
+    var style = (_b = (_a = base.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.style;
+    if (style == null) {
+        return 0;
     }
-    for (var i = 0; i < ownershipColorsCSS.length; i++) {
-        if (base.style.fill == ownershipColorsCSS[i]) {
-            if (i + 1 < ownershipColorsCSS.length) {
-                base.style.fill = ownershipColorsCSS[i + 1];
-                return i + 1;
-            }
-            else {
-                base.style.fill = ownershipColorsCSS[0];
-                return 0;
-            }
-        }
-    }
-    return 0;
+    var num = Math.round(Math.random() * 3);
+    style.setProperty("--baseColour", ownershipColorsCSS[num]);
+    return num;
 }
 var restEndpoint = "http://127.0.0.1:5000/";
 function getBasesFromContinent(continentId) {
@@ -87,11 +79,7 @@ var MapLayer = (function () {
     };
     MapLayer.prototype.onZoom = function (zoomLevel) { };
     MapLayer.prototype.clear = function () {
-        var numChildren = this.layer.children.length;
-        for (var i = numChildren - 1; i >= 0; i--) {
-            var child = this.layer.children[i];
-            this.layer.removeChild(child);
-        }
+        this.layer.innerHTML = "";
     };
     return MapLayer;
 }());
@@ -286,9 +274,16 @@ var HexLayer = (function (_super) {
                 elements = cont.then(function (contInfo) {
                     var svgs = [];
                     for (var key in contInfo.map_base_svgs) {
-                        var element = elementFromString(contInfo.map_base_svgs[key]);
-                        _this.registerHoverCallback(element);
-                        svgs.push(element);
+                        var hex = document.createElement("div");
+                        hex.classList.add("baseHex");
+                        var hexBg = elementFromString(contInfo.map_base_svgs[key]);
+                        hexBg.classList.add("baseHexBg");
+                        hex.appendChild(hexBg);
+                        var hexFg = elementFromString(contInfo.map_base_svgs[key]);
+                        hexFg.classList.add("baseHexFg");
+                        _this.registerHoverCallback(hexBg);
+                        hex.appendChild(hexFg);
+                        svgs.push(hex);
                     }
                     return svgs;
                 });
@@ -513,23 +508,19 @@ var Zoomable = (function () {
         var element = this.target;
         var initialScrollLeft = container.scrollLeft;
         var initialScrollTop = container.scrollTop;
-        var nextScrollTargetLeft = 0.0;
-        var nextScrollTargetTop = 0.0;
         var animFrameScheduled = false;
         function mouseDrag(evtDrag) {
-            var deltaX = evtDrag.clientX - evtDown.clientX;
-            var deltaY = evtDrag.clientY - evtDown.clientY;
-            nextScrollTargetLeft = initialScrollLeft - deltaX;
-            nextScrollTargetTop = initialScrollTop - deltaY;
             if (animFrameScheduled) {
                 return;
             }
-            animFrameScheduled = true;
             requestAnimationFrame(function () {
-                container.scrollLeft = nextScrollTargetLeft;
-                container.scrollTop = nextScrollTargetTop;
+                var deltaX = evtDrag.clientX - evtDown.clientX;
+                var deltaY = evtDrag.clientY - evtDown.clientY;
+                container.scrollLeft = initialScrollLeft - deltaX;
+                container.scrollTop = initialScrollTop - deltaY;
                 animFrameScheduled = false;
             });
+            animFrameScheduled = true;
         }
         function mouseUp() {
             element.removeEventListener("mousemove", mouseDrag);
@@ -574,20 +565,20 @@ var Zoomable = (function () {
     Zoomable.prototype.mouseWheel = function (evt) {
         var _this = this;
         evt.preventDefault();
-        var deltaY = evt.deltaY;
-        if (evt.deltaMode == 0) {
-            deltaY /= 80;
-        }
-        var relX = evt.clientX / this.container.clientWidth;
-        var relY = evt.clientY / this.container.clientHeight;
         if (this.animFrameScheduled) {
             return;
         }
-        this.animFrameScheduled = true;
         requestAnimationFrame(function () {
+            var deltaY = evt.deltaY;
+            if (evt.deltaMode == 0) {
+                deltaY /= 80;
+            }
+            var relX = evt.clientX / _this.container.clientWidth;
+            var relY = evt.clientY / _this.container.clientHeight;
             _this.applyZoomLevel(_this.zoom - deltaY * 0.25, relX, relY);
             _this.animFrameScheduled = false;
         });
+        this.animFrameScheduled = true;
     };
     Zoomable.prototype.invokeZoomCallbacks = function () {
         var _this = this;
@@ -626,22 +617,22 @@ var Zoomable = (function () {
         var touchStartDist = this.getTouchesDistance(evt.touches);
         var zoomStart = this.zoom;
         function touchMove(evt) {
-            if (evt.touches.length != 2) {
-                return;
-            }
-            var touchCenter = con.getTouchesCenter(evt.touches);
-            var touchDist = con.getTouchesDistance(evt.touches);
-            var distRel = touchDist / touchStartDist;
             if (con.animFrameScheduled) {
                 return;
             }
-            var relX = touchCenter[0] / con.container.clientWidth;
-            var relY = touchCenter[1] / con.container.clientHeight;
-            con.animFrameScheduled = true;
+            if (evt.touches.length != 2) {
+                return;
+            }
             requestAnimationFrame(function () {
+                var touchCenter = con.getTouchesCenter(evt.touches);
+                var touchDist = con.getTouchesDistance(evt.touches);
+                var distRel = touchDist / touchStartDist;
+                var relX = touchCenter[0] / con.container.clientWidth;
+                var relY = touchCenter[1] / con.container.clientHeight;
                 con.applyZoomLevel(zoomStart * distRel, relX, relY);
                 con.animFrameScheduled = false;
             });
+            con.animFrameScheduled = true;
         }
         function touchEnd(evt) {
             con.target.removeEventListener("touchmove", touchMove);
