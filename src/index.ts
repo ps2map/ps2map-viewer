@@ -45,20 +45,13 @@ function onDOMLoaded(): void {
 
     // Debug base painter
     hexLayer.layer.addEventListener("auxclick", (evt: MouseEvent) => {
-        if (!(evt.target instanceof SVGElement)) {
+        if (!(evt.target instanceof SVGPolygonElement) || evt.button != 1) {
             return;
         }
-        // Middle mouse button only
-        if (evt.button != 1) {
-            return;
-        }
-        const newColour = cycleFactionColour(evt.target);
-        // The auxclick event will fire for the SVG contents, e.g. a polygon,
-        // not the source <svg> element we need
-        const svgElement = evt.target.parentElement;
-        if (svgElement != null) {
-            baseNameLayer.setBaseOwnership(parseInt(svgElement.id), newColour);
-        }
+        baseNameLayer.setBaseOwnership(
+            parseInt(evt.target.id),
+            cycleFactionColour(evt.target)
+        );
     });
 }
 

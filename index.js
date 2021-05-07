@@ -14,13 +14,8 @@ var ownershipColorsCSS = [
         .trim(),
 ];
 function cycleFactionColour(base) {
-    var _a, _b;
-    var style = (_b = (_a = base.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.style;
-    if (style == null) {
-        return 0;
-    }
     var num = Math.round(Math.random() * 3);
-    style.setProperty("--baseColour", ownershipColorsCSS[num]);
+    base.style.fill = ownershipColorsCSS[num];
     return num;
 }
 var restEndpoint = "http://127.0.0.1:5000/";
@@ -410,17 +405,10 @@ function onDOMLoaded() {
     controller.registerZoomCallback(tileLayer.onZoom.bind(tileLayer));
     controller.registerZoomCallback(baseNameLayer.onZoom.bind(baseNameLayer));
     hexLayer.layer.addEventListener("auxclick", function (evt) {
-        if (!(evt.target instanceof SVGElement)) {
+        if (!(evt.target instanceof SVGPolygonElement) || evt.button != 1) {
             return;
         }
-        if (evt.button != 1) {
-            return;
-        }
-        var newColour = cycleFactionColour(evt.target);
-        var svgElement = evt.target.parentElement;
-        if (svgElement != null) {
-            baseNameLayer.setBaseOwnership(parseInt(svgElement.id), newColour);
-        }
+        baseNameLayer.setBaseOwnership(parseInt(evt.target.id), cycleFactionColour(evt.target));
     });
 }
 window.addEventListener("DOMContentLoaded", onDOMLoaded);
