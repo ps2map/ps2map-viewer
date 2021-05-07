@@ -20,15 +20,17 @@ class MapLayer {
     constructor(layer: HTMLDivElement, initialContinentId: number) {
         this.continentId = 0;
         this.layer = layer;
-        this.setContinent(initialContinentId);
+        this.switchContinent(initialContinentId);
     }
 
     /**
-     * Switch the currently active continent.
-     * @param continentId ID of the new continent to display.
+     * Switch the map to a different continent.
+     * @param continentId ID of the continent to switch to.
+     * @param force If true, the layer will be reloaded even if the
+     * given continent is already active.
      */
-    public setContinent(continentId: number): void {
-        if (this.continentId != continentId) {
+    public switchContinent(continentId: number, force: boolean = false): void {
+        if (this.continentId != continentId && !force) {
             return;
         }
         this.continentId = continentId;

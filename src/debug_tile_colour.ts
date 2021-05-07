@@ -20,13 +20,7 @@ const ownershipColorsCSS = [
  * @returns The faction ID of the new owner.
  */
 function cycleFactionColour(base: SVGElement): number {
-    // Due to the base style being applied via a global CSS, base SVGs don't
-    // start out with a specific colour.
-    const style = base.parentElement?.parentElement?.style;
-    if (style == null) {
-        return 0;
-    }
     const num = Math.round(Math.random() * 3);
-    style.setProperty("--baseColour", ownershipColorsCSS[num]);
+    base.style.fill = ownershipColorsCSS[num];
     return num;
 }
