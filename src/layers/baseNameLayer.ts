@@ -43,7 +43,7 @@ class BaseNameLayer extends MapLayer {
                 iconBox.appendChild(layerImage);
                 const icon = document.createElement("img");
                 layerImage.appendChild(icon);
-                icon.setAttribute("alt", "Amp Station");
+                icon.setAttribute("alt", base.type_name);
                 icon.setAttribute(
                     "src",
                     this.getBaseIconFromType(base.type_id)
