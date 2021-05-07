@@ -11,8 +11,18 @@
  * MapLayer subclass used to draw base names and icons on the map.
  */
 class BaseNameLayer extends MapLayer {
-    // TODO: Hide small bases at small zoom levels
+    private domObjectMap: Map<number, HTMLElement>;
 
+    constructor(layer: HTMLDivElement, initialContinentId: number) {
+        super(layer, initialContinentId);
+        this.domObjectMap = new Map();
+    }
+
+    /**
+     * Zoom level callback. When called, all bases in the layer will be
+     * resized according to the given zoom leve.
+     * @param zoomLevel
+     */
     public onZoom(zoomLevel: number): void {
         for (let i = 0; i < this.layer.children.length; i++) {
             const base = <HTMLDivElement>this.layer.children.item(i);
@@ -28,13 +38,18 @@ class BaseNameLayer extends MapLayer {
         getBasesFromContinent(continentId).then((bases) => {
             const elements: Array<HTMLDivElement> = [];
             bases.forEach((base) => {
+                // Create anchor
                 const anchor = document.createElement("div");
+                anchor.setAttribute("class", "layer-names__anchor");
+                anchor.setAttribute("data-base-id", base.id.toString());
+                this.domObjectMap.set(base.id, anchor);
+                elements.push(anchor);
+                // Position anchor on map
                 const posX = (4096 + base.map_pos[0]) / 81.92;
                 const posY = (4096 + base.map_pos[1]) / 81.92;
-                anchor.setAttribute("class", "layer-names__anchor");
-                anchor.setAttribute("baseId", base.id.toString());
                 anchor.style.left = `${posX}%`;
                 anchor.style.bottom = `${posY}%`;
+                // Create base icon
                 const iconBox = document.createElement("div");
                 anchor.appendChild(iconBox);
                 iconBox.setAttribute("class", "layer-names__icon");
@@ -47,16 +62,18 @@ class BaseNameLayer extends MapLayer {
                     "src",
                     this.getBaseIconFromType(base.type_id)
                 );
+                // Create base name
                 const label = document.createElement("p");
                 anchor.appendChild(label);
-                label.setAttribute("class", "layer-names__label");
+                label.classList.add("layer-names__label");
                 label.innerHTML = base.name;
                 const labelShadow = document.createElement("p");
                 anchor.appendChild(labelShadow);
-                labelShadow.setAttribute("class", "layer-names__label");
-                labelShadow.classList.add("layer-names__label--shadow");
+                labelShadow.classList.add(
+                    "layer-names__label",
+                    "layer-names__label--shadow"
+                );
                 labelShadow.innerHTML = base.name;
-                elements.push(anchor);
             });
             this.clear();
             elements.forEach((element) => this.layer.appendChild(element));
@@ -73,23 +90,15 @@ class BaseNameLayer extends MapLayer {
         factionId: number
     ): void {
         const newColour = this.getFactionColour(factionId);
-        for (let i = 0; i < this.layer.children.length; i++) {
-            const base = <HTMLDivElement>this.layer.children.item(i);
-            const attrId = base.getAttribute("baseId");
-            if (attrId == null) {
-                continue;
+        const idList = baseId instanceof Array ? baseId : [baseId];
+        idList.forEach((id) => {
+            const anchor = this.domObjectMap.get(id);
+            if (anchor == null) {
+                console.warn(`Ignoring unknown base ID ${id}`);
+                return;
             }
-            if (
-                (baseId instanceof Array && parseInt(attrId) in baseId) ||
-                parseInt(attrId) == baseId
-            ) {
-                this.setBaseIconColour(base, newColour);
-                // Break if only one base ID was specified
-                if (baseId instanceof Number) {
-                    break;
-                }
-            }
-        }
+            this.setBaseIconColour(anchor, newColour);
+        });
     }
 
     /**
@@ -152,8 +161,11 @@ class BaseNameLayer extends MapLayer {
      * @param base The base anchor to apply the new colour to.
      * @param newColour The new colour to apply as a string.
      */
-    private setBaseIconColour(base: HTMLDivElement, newColour: string): void {
-        const icon = <HTMLDivElement>base.children[0];
-        icon.style.setProperty("--baseIconColour", newColour);
+    private setBaseIconColour(base: HTMLElement, newColour: string): void {
+        const elem = base.firstElementChild;
+        if (!(elem instanceof HTMLElement)) {
+            return;
+        }
+        elem.style.setProperty("--baseIconColour", newColour);
     }
 }

@@ -86,8 +86,10 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var BaseNameLayer = (function (_super) {
     __extends(BaseNameLayer, _super);
-    function BaseNameLayer() {
-        return _super !== null && _super.apply(this, arguments) || this;
+    function BaseNameLayer(layer, initialContinentId) {
+        var _this = _super.call(this, layer, initialContinentId) || this;
+        _this.domObjectMap = new Map();
+        return _this;
     }
     BaseNameLayer.prototype.onZoom = function (zoomLevel) {
         for (var i = 0; i < this.layer.children.length; i++) {
@@ -101,10 +103,12 @@ var BaseNameLayer = (function (_super) {
             var elements = [];
             bases.forEach(function (base) {
                 var anchor = document.createElement("div");
+                anchor.setAttribute("class", "layer-names__anchor");
+                anchor.setAttribute("data-base-id", base.id.toString());
+                _this.domObjectMap.set(base.id, anchor);
+                elements.push(anchor);
                 var posX = (4096 + base.map_pos[0]) / 81.92;
                 var posY = (4096 + base.map_pos[1]) / 81.92;
-                anchor.setAttribute("class", "layer-names__anchor");
-                anchor.setAttribute("baseId", base.id.toString());
                 anchor.style.left = posX + "%";
                 anchor.style.bottom = posY + "%";
                 var iconBox = document.createElement("div");
@@ -118,35 +122,29 @@ var BaseNameLayer = (function (_super) {
                 icon.setAttribute("src", _this.getBaseIconFromType(base.type_id));
                 var label = document.createElement("p");
                 anchor.appendChild(label);
-                label.setAttribute("class", "layer-names__label");
+                label.classList.add("layer-names__label");
                 label.innerHTML = base.name;
                 var labelShadow = document.createElement("p");
                 anchor.appendChild(labelShadow);
-                labelShadow.setAttribute("class", "layer-names__label");
-                labelShadow.classList.add("layer-names__label--shadow");
+                labelShadow.classList.add("layer-names__label", "layer-names__label--shadow");
                 labelShadow.innerHTML = base.name;
-                elements.push(anchor);
             });
             _this.clear();
             elements.forEach(function (element) { return _this.layer.appendChild(element); });
         });
     };
     BaseNameLayer.prototype.setBaseOwnership = function (baseId, factionId) {
+        var _this = this;
         var newColour = this.getFactionColour(factionId);
-        for (var i = 0; i < this.layer.children.length; i++) {
-            var base = this.layer.children.item(i);
-            var attrId = base.getAttribute("baseId");
-            if (attrId == null) {
-                continue;
+        var idList = baseId instanceof Array ? baseId : [baseId];
+        idList.forEach(function (id) {
+            var anchor = _this.domObjectMap.get(id);
+            if (anchor == null) {
+                console.warn("Ignoring unknown base ID " + id);
+                return;
             }
-            if ((baseId instanceof Array && parseInt(attrId) in baseId) ||
-                parseInt(attrId) == baseId) {
-                this.setBaseIconColour(base, newColour);
-                if (baseId instanceof Number) {
-                    break;
-                }
-            }
-        }
+            _this.setBaseIconColour(anchor, newColour);
+        });
     };
     BaseNameLayer.prototype.getBaseIconFromType = function (typeId) {
         var fileName = "containment-site";
@@ -191,8 +189,11 @@ var BaseNameLayer = (function (_super) {
         }
     };
     BaseNameLayer.prototype.setBaseIconColour = function (base, newColour) {
-        var icon = base.children[0];
-        icon.style.setProperty("--baseIconColour", newColour);
+        var elem = base.firstElementChild;
+        if (!(elem instanceof HTMLElement)) {
+            return;
+        }
+        elem.style.setProperty("--baseIconColour", newColour);
     };
     return BaseNameLayer;
 }(MapLayer));
