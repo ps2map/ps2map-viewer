@@ -53,15 +53,6 @@ function getContinent(continentId) {
         return contInfoList[0];
     });
 }
-function elementFromString(html) {
-    var factory = document.createElement("template");
-    factory.innerHTML = html.trim();
-    var child = factory.content.firstChild;
-    if (child == null) {
-        throw "given string did not result in a valid DOM object";
-    }
-    return child;
-}
 var MapLayer = (function () {
     function MapLayer(layer, initialContinentId) {
         this.continentId = 0;

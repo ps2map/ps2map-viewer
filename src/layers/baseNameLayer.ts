@@ -5,7 +5,6 @@
  * minimal customisation for zoom levels.
  */
 
-/// <reference path="../utils.ts" />
 /// <reference path="./base.ts" />
 
 /**
