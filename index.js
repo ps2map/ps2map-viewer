@@ -411,7 +411,7 @@ function onDOMLoaded() {
     var hexLayerDiv = document.getElementById("layer-hexes");
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
     var tileLayerDiv = (document.getElementById("layer-terrain"));
-    var tileUrl = "http://127.0.0.1:5000/static/map/";
+    var tileUrl = "http://127.0.0.1:5000/static/tile/";
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
     var baseNameLayerDiv = (document.getElementById("layer-names"));
     var baseNameLayer = new BaseNameLayer(baseNameLayerDiv, initialContinentId);
