@@ -12,13 +12,15 @@ function onDOMLoaded(): void {
 
     // Add map layers
 
-    const hexLayerDiv = <HTMLDivElement>document.getElementById("baseOutlines");
+    const hexLayerDiv = <HTMLDivElement>document.getElementById("layer-hexes");
     const hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
-    const tileLayerDiv = <HTMLDivElement>document.getElementById("terrain");
+    const tileLayerDiv = <HTMLDivElement>(
+        document.getElementById("layer-terrain")
+    );
     const tileUrl = "http://127.0.0.1:5000/static/map/";
     const tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
     const baseNameLayerDiv = <HTMLDivElement>(
-        document.getElementById("baseNames")
+        document.getElementById("layer-names")
     );
     const baseNameLayer = new BaseNameLayer(
         baseNameLayerDiv,
@@ -28,9 +30,9 @@ function onDOMLoaded(): void {
     // Create map controller
 
     const map = <HTMLDivElement>document.getElementById("map");
-    const viewport = <HTMLDivElement>document.getElementById("viewport");
+    const viewport = <HTMLDivElement>document.getElementById("map-container");
     const mapContainer = <HTMLDivElement>(
-        document.getElementById("mapContainer")
+        document.getElementById("map-background")
     );
     const controller = new MapController(
         map,

@@ -25,6 +25,10 @@ Tracker for missing features, usability improvements and other things that shoul
 - [ ] Add caching for static API data
 - [ ] Look into how browser-side cache control works
 
+## Maintainability
+
+- [ ] Use container-relative coordinates for map pan controls (this currently only works properly if the map is fullscreen)
+
 ## Performance
 
 - [x] Reuse icons for base outlines

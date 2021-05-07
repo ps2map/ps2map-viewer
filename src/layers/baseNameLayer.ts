@@ -32,30 +32,30 @@ class BaseNameLayer extends MapLayer {
                 const anchor = document.createElement("div");
                 const posX = (4096 + base.map_pos[0]) / 81.92;
                 const posY = (4096 + base.map_pos[1]) / 81.92;
-                anchor.setAttribute("class", "mapAnchor");
+                anchor.setAttribute("class", "layer-names__anchor");
                 anchor.setAttribute("baseId", base.id.toString());
                 anchor.style.left = `${posX}%`;
                 anchor.style.bottom = `${posY}%`;
                 const iconBox = document.createElement("div");
                 anchor.appendChild(iconBox);
-                iconBox.setAttribute("class", "iconBox");
+                iconBox.setAttribute("class", "layer-names__icon");
                 const layerImage = document.createElement("div");
                 iconBox.appendChild(layerImage);
-                layerImage.setAttribute("class", "layeredIcon");
                 const icon = document.createElement("img");
                 layerImage.appendChild(icon);
-                icon.setAttribute("alt", "Amp Station");
+                icon.setAttribute("alt", base.type_name);
                 icon.setAttribute(
                     "src",
                     this.getBaseIconFromType(base.type_id)
                 );
                 const label = document.createElement("p");
                 anchor.appendChild(label);
-                label.setAttribute("class", "baseLabel");
+                label.setAttribute("class", "layer-names__label");
                 label.innerHTML = base.name;
                 const labelShadow = document.createElement("p");
                 anchor.appendChild(labelShadow);
-                labelShadow.setAttribute("class", "baseLabelShadow");
+                labelShadow.setAttribute("class", "layer-names__label");
+                labelShadow.classList.add("layer-names__label--shadow");
                 labelShadow.innerHTML = base.name;
                 elements.push(anchor);
             });

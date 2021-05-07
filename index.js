@@ -117,27 +117,27 @@ var BaseNameLayer = (function (_super) {
                 var anchor = document.createElement("div");
                 var posX = (4096 + base.map_pos[0]) / 81.92;
                 var posY = (4096 + base.map_pos[1]) / 81.92;
-                anchor.setAttribute("class", "mapAnchor");
+                anchor.setAttribute("class", "layer-names__anchor");
                 anchor.setAttribute("baseId", base.id.toString());
                 anchor.style.left = posX + "%";
                 anchor.style.bottom = posY + "%";
                 var iconBox = document.createElement("div");
                 anchor.appendChild(iconBox);
-                iconBox.setAttribute("class", "iconBox");
+                iconBox.setAttribute("class", "layer-names__icon");
                 var layerImage = document.createElement("div");
                 iconBox.appendChild(layerImage);
-                layerImage.setAttribute("class", "layeredIcon");
                 var icon = document.createElement("img");
                 layerImage.appendChild(icon);
-                icon.setAttribute("alt", "Amp Station");
+                icon.setAttribute("alt", base.type_name);
                 icon.setAttribute("src", _this.getBaseIconFromType(base.type_id));
                 var label = document.createElement("p");
                 anchor.appendChild(label);
-                label.setAttribute("class", "baseLabel");
+                label.setAttribute("class", "layer-names__label");
                 label.innerHTML = base.name;
                 var labelShadow = document.createElement("p");
                 anchor.appendChild(labelShadow);
-                labelShadow.setAttribute("class", "baseLabelShadow");
+                labelShadow.setAttribute("class", "layer-names__label");
+                labelShadow.classList.add("layer-names__label--shadow");
                 labelShadow.innerHTML = base.name;
                 elements.push(anchor);
             });
@@ -275,14 +275,14 @@ var HexLayer = (function (_super) {
                     var svgs = [];
                     for (var key in contInfo.map_base_svgs) {
                         var hex = document.createElement("div");
-                        hex.classList.add("baseHex");
-                        var hexBg = elementFromString(contInfo.map_base_svgs[key]);
-                        hexBg.classList.add("baseHexBg");
-                        hex.appendChild(hexBg);
+                        hex.classList.add("layer-hexes__hex");
                         var hexFg = elementFromString(contInfo.map_base_svgs[key]);
-                        hexFg.classList.add("baseHexFg");
-                        _this.registerHoverCallback(hexBg);
+                        hexFg.classList.add("layer-hexes__hex-fill");
                         hex.appendChild(hexFg);
+                        var hexBg = elementFromString(contInfo.map_base_svgs[key]);
+                        hexBg.classList.add("layer-hexes__hex-highlight");
+                        hex.appendChild(hexBg);
+                        _this.registerHoverCallback(hexBg);
                         svgs.push(hex);
                     }
                     return svgs;
@@ -386,7 +386,7 @@ var TileLayer = (function (_super) {
     };
     TileLayer.prototype.createTile = function (url) {
         var tile = document.createElement("div");
-        tile.classList.add("terrainTile");
+        tile.classList.add("layer-terrain__tile");
         var img = new Image();
         img.onload = function () {
             tile.style.backgroundImage = "url(" + url + ")";
@@ -408,16 +408,16 @@ var TileLayer = (function (_super) {
 }(MapLayer));
 function onDOMLoaded() {
     var initialContinentId = 6;
-    var hexLayerDiv = document.getElementById("baseOutlines");
+    var hexLayerDiv = document.getElementById("layer-hexes");
     var hexLayer = new HexLayer(hexLayerDiv, initialContinentId);
-    var tileLayerDiv = document.getElementById("terrain");
+    var tileLayerDiv = (document.getElementById("layer-terrain"));
     var tileUrl = "http://127.0.0.1:5000/static/map/";
     var tileLayer = new TileLayer(tileLayerDiv, initialContinentId, tileUrl);
-    var baseNameLayerDiv = (document.getElementById("baseNames"));
+    var baseNameLayerDiv = (document.getElementById("layer-names"));
     var baseNameLayer = new BaseNameLayer(baseNameLayerDiv, initialContinentId);
     var map = document.getElementById("map");
-    var viewport = document.getElementById("viewport");
-    var mapContainer = (document.getElementById("mapContainer"));
+    var viewport = document.getElementById("map-container");
+    var mapContainer = (document.getElementById("map-background"));
     var controller = new MapController(map, mapContainer, viewport, initialContinentId);
     controller.registerZoomCallback(tileLayer.onZoom.bind(tileLayer));
     controller.registerZoomCallback(baseNameLayer.onZoom.bind(baseNameLayer));
