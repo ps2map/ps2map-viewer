@@ -33,7 +33,7 @@ class TileLayer extends MapLayer {
      * Switch the currently active continent.
      * @param continentId ID of the new continent to display.
      */
-    public setContinent(continentId: number): void {
+    public switchContinent(continentId: number): void {
         if (this.continentId == continentId) {
             return;
         }

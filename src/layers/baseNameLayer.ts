@@ -34,7 +34,7 @@ class BaseNameLayer extends MapLayer {
      * Switch the currently active continent.
      * @param continentId ID of the new continent to display.
      */
-    public setContinent(continentId: number): void {
+    public switchContinent(continentId: number): void {
         getBasesFromContinent(continentId).then((bases) => {
             const elements: Array<HTMLDivElement> = [];
             bases.forEach((base) => {

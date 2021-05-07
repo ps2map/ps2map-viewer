@@ -52,10 +52,11 @@ var MapLayer = (function () {
     function MapLayer(layer, initialContinentId) {
         this.continentId = 0;
         this.layer = layer;
-        this.setContinent(initialContinentId);
+        this.switchContinent(initialContinentId);
     }
-    MapLayer.prototype.setContinent = function (continentId) {
-        if (this.continentId != continentId) {
+    MapLayer.prototype.switchContinent = function (continentId, force) {
+        if (force === void 0) { force = false; }
+        if (this.continentId != continentId && !force) {
             return;
         }
         this.continentId = continentId;
@@ -97,7 +98,7 @@ var BaseNameLayer = (function (_super) {
             base.style.transform = "scale(" + 1 / zoomLevel + ")";
         }
     };
-    BaseNameLayer.prototype.setContinent = function (continentId) {
+    BaseNameLayer.prototype.switchContinent = function (continentId) {
         var _this = this;
         getBasesFromContinent(continentId).then(function (bases) {
             var elements = [];
@@ -204,7 +205,7 @@ var HexLayer = (function (_super) {
         _this.baseHoverCallback = function () { return null; };
         return _this;
     }
-    HexLayer.prototype.setContinent = function (continentId) {
+    HexLayer.prototype.switchContinent = function (continentId) {
         var _this = this;
         if (this.continentId == continentId) {
             return;
@@ -296,7 +297,7 @@ var TileLayer = (function (_super) {
         _this.tileBaseUrl = tileBaseUrl;
         return _this;
     }
-    TileLayer.prototype.setContinent = function (continentId) {
+    TileLayer.prototype.switchContinent = function (continentId) {
         if (this.continentId == continentId) {
             return;
         }
