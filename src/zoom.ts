@@ -23,7 +23,7 @@ class Zoomable {
     private minZoom: number;
     private maxZoom: number;
     private onZoom: Array<ZoomCallback> = [];
-    private animFrameScheduled: boolean = false;
+    private rafPending: boolean = false;
 
     constructor(
         content: HTMLElement,
@@ -109,13 +109,13 @@ class Zoomable {
             // Zoom level is a fixed value, modify by 1
             zoomLevel += increase ? 1 : -1;
         }
-        if (this.animFrameScheduled) {
+        if (this.rafPending) {
             return;
         }
-        this.animFrameScheduled = true;
+        this.rafPending = true;
         requestAnimationFrame(() => {
             this.applyZoomLevel(zoomLevel);
-            this.animFrameScheduled = false;
+            this.rafPending = false;
         });
     }
 
@@ -130,14 +130,14 @@ class Zoomable {
         if (evtDown.button != 0) {
             return;
         }
+        const self = this;
         const container = this.container;
         const element = this.target;
         const initialScrollLeft = container.scrollLeft;
         const initialScrollTop = container.scrollTop;
-        let animFrameScheduled = false;
 
         function mouseDrag(evtDrag: MouseEvent): void {
-            if (animFrameScheduled) {
+            if (self.rafPending) {
                 return;
             }
             requestAnimationFrame(() => {
@@ -145,9 +145,9 @@ class Zoomable {
                 const deltaY = evtDrag.clientY - evtDown.clientY;
                 container.scrollLeft = initialScrollLeft - deltaX;
                 container.scrollTop = initialScrollTop - deltaY;
-                animFrameScheduled = false;
+                self.rafPending = false;
             });
-            animFrameScheduled = true;
+            self.rafPending = true;
         }
 
         function mouseUp(): void {
@@ -216,7 +216,7 @@ class Zoomable {
      */
     private mouseWheel(evt: WheelEvent): void {
         evt.preventDefault();
-        if (this.animFrameScheduled) {
+        if (this.rafPending) {
             return;
         }
         requestAnimationFrame(() => {
@@ -227,9 +227,9 @@ class Zoomable {
             const relX = evt.clientX / this.container.clientWidth;
             const relY = evt.clientY / this.container.clientHeight;
             this.applyZoomLevel(this.zoom - deltaY * 0.25, relX, relY);
-            this.animFrameScheduled = false;
+            this.rafPending = false;
         });
-        this.animFrameScheduled = true;
+        this.rafPending = true;
     }
 
     /**
@@ -293,7 +293,7 @@ class Zoomable {
         const zoomStart = this.zoom;
 
         function touchMove(evt: TouchEvent): void {
-            if (con.animFrameScheduled) {
+            if (con.rafPending) {
                 return;
             }
             if (evt.touches.length != 2) {
@@ -306,9 +306,9 @@ class Zoomable {
                 const relX = touchCenter[0] / con.container.clientWidth;
                 const relY = touchCenter[1] / con.container.clientHeight;
                 con.applyZoomLevel(zoomStart * distRel, relX, relY);
-                con.animFrameScheduled = false;
+                con.rafPending = false;
             });
-            con.animFrameScheduled = true;
+            con.rafPending = true;
         }
 
         function touchEnd(evt: TouchEvent): void {
