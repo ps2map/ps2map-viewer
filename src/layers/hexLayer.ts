@@ -46,6 +46,33 @@ class HexLayer extends MapLayer {
                     svg.querySelectorAll("polygon").forEach((poly) => {
                         const promoteElement = () => {
                             svg.appendChild(poly);
+                            /**
+                             * @HACK Firefox-specific workaround for weird
+                             * broken :hover pseudoclass. See issue #1 for
+                             * details.
+                             */
+                            if (
+                                navigator.userAgent
+                                    .toLowerCase()
+                                    .indexOf("firefox") == -1
+                            ) {
+                                // Non-firefox browsers exit here
+                                return;
+                            }
+                            // Add custom style-altering event listeners
+                            const removeHover = () => {
+                                poly.removeAttribute("style");
+                            };
+                            poly.addEventListener("mouseleave", removeHover, {
+                                passive: true,
+                            });
+                            poly.addEventListener("touchend", removeHover, {
+                                passive: true,
+                            });
+                            poly.addEventListener("touchcancel", removeHover, {
+                                passive: true,
+                            });
+                            poly.style.stroke = "#ffffff";
                         };
                         poly.addEventListener("mouseenter", promoteElement, {
                             passive: true,

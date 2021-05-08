@@ -421,6 +421,24 @@ var HexLayer = (function (_super) {
                 svg.querySelectorAll("polygon").forEach(function (poly) {
                     var promoteElement = function () {
                         svg.appendChild(poly);
+                        if (navigator.userAgent
+                            .toLowerCase()
+                            .indexOf("firefox") == -1) {
+                            return;
+                        }
+                        var removeHover = function () {
+                            poly.removeAttribute("style");
+                        };
+                        poly.addEventListener("mouseleave", removeHover, {
+                            passive: true
+                        });
+                        poly.addEventListener("touchend", removeHover, {
+                            passive: true
+                        });
+                        poly.addEventListener("touchcancel", removeHover, {
+                            passive: true
+                        });
+                        poly.style.stroke = "#ffffff";
                     };
                     poly.addEventListener("mouseenter", promoteElement, {
                         passive: true
