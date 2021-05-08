@@ -154,14 +154,21 @@ var Zoomable = (function () {
         if (evt.deltaMode == 0) {
             deltaY *= 0.0125;
         }
-        this.scrollDistY = deltaY * 0.25;
+        this.scrollDistY = deltaY * 0.4;
         if (this.rafPending) {
             return;
         }
         requestAnimationFrame(function () {
             var relX = _this.lastScrollCursor[0] / _this.container.clientWidth;
             var relY = _this.lastScrollCursor[1] / _this.container.clientHeight;
-            _this.applyZoomLevel(_this.zoom - _this.scrollDistY, relX, relY);
+            var zoomRel = 1 + _this.scrollDistY * 0.2;
+            if (zoomRel < 1) {
+                zoomRel = 1 / zoomRel;
+            }
+            else {
+                zoomRel = 2 - zoomRel;
+            }
+            _this.applyZoomLevel(_this.zoom * zoomRel, relX, relY);
             _this.scrollDistY = 0.0;
             _this.rafPending = false;
         });

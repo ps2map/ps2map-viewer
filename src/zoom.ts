@@ -223,14 +223,27 @@ class Zoomable {
         if (evt.deltaMode == 0) {
             deltaY *= 0.0125; // Trial-and-error scaling factor
         }
-        this.scrollDistY = deltaY * 0.25;
+        this.scrollDistY = deltaY * 0.4;
         if (this.rafPending) {
             return;
         }
         requestAnimationFrame(() => {
             const relX = this.lastScrollCursor[0] / this.container.clientWidth;
             const relY = this.lastScrollCursor[1] / this.container.clientHeight;
-            this.applyZoomLevel(this.zoom - this.scrollDistY, relX, relY);
+            /** @HACK This is pretty jank but it adjusts the zoom level to be
+             * properly spaced both ways:
+             * 0.9 * 1.1 != 1.0, but 0.909090... * 1.1 = 1.0
+             *
+             * It's not elegant or all that fast, but it's good enough for
+             * testing.
+             */
+            let zoomRel = 1 + this.scrollDistY * 0.2;
+            if (zoomRel < 1) {
+                zoomRel = 1 / zoomRel;
+            } else {
+                zoomRel = 2 - zoomRel;
+            }
+            this.applyZoomLevel(this.zoom * zoomRel, relX, relY);
             this.scrollDistY = 0.0;
             this.rafPending = false;
         });
