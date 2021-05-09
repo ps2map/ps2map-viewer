@@ -470,26 +470,20 @@ function getBasesFromContinent(continentId) {
         return value.json();
     });
 }
-function getBase(baseId) {
-    var rounded = Math.round(baseId);
-    var url = restEndpoint + "bases/info?base_id=" + rounded;
-    return fetch(url)
-        .then(function (value) {
-        return value.json();
-    })
-        .then(function (contInfoList) {
-        return contInfoList[0];
-    });
-}
 function getContinent(continentId) {
-    var rounded = Math.round(continentId);
-    var url = restEndpoint + "continents/info?continent_id=" + rounded;
+    var url = restEndpoint + "continents/info";
     return fetch(url)
         .then(function (value) {
         return value.json();
     })
-        .then(function (contInfoList) {
-        return contInfoList[0];
+        .then(function (contList) {
+        for (var i = 0; i < contList.length; i++) {
+            var cont = contList[i];
+            if (cont.id == continentId) {
+                return cont;
+            }
+        }
+        throw "unknown continent ID: " + continentId;
     });
 }
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
