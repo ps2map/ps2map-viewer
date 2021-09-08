@@ -10,3 +10,12 @@ html {
 body {
     margin: 0;
 }
+
+#hero-map {
+    border: 1px solid red;
+    position: relative;
+    left: 20vh;
+    top: 10vh;
+    height: 80vh;
+    width: 60vw;
+}
