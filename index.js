@@ -2,11 +2,11 @@
 var MapLayer = (function () {
     function MapLayer(name, mapSize) {
         this.isVisible = true;
-        this.layer = document.createElement("div");
-        this.layer.classList.add("ps2map__layer");
+        this.element = document.createElement("div");
+        this.element.classList.add("ps2map__layer");
         this.name = name;
         this.mapSize = mapSize;
-        this.layer.style.width = this.layer.style.height = mapSize + " px";
+        this.element.style.width = this.element.style.height = mapSize + "px";
     }
     MapLayer.prototype.getMapSize = function () {
         return this.mapSize;
@@ -39,21 +39,21 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var StaticLayer = (function (_super) {
     __extends(StaticLayer, _super);
-    function StaticLayer() {
-        return _super !== null && _super.apply(this, arguments) || this;
+    function StaticLayer(name, mapSize) {
+        return _super.call(this, name, mapSize) || this;
     }
     StaticLayer.prototype.addChild = function (element) {
-        this.layer.appendChild(element);
+        this.element.appendChild(element);
     };
     StaticLayer.prototype.removeChild = function (element) {
-        this.layer.removeChild(element);
+        this.element.removeChild(element);
     };
     StaticLayer.prototype.clearChildren = function () {
-        this.layer.innerHTML = "";
+        this.element.innerHTML = "";
     };
     StaticLayer.prototype.redraw = function (viewbox, scale) {
         var factor = 1 / scale;
-        this.layer.style.transform = "scale3D(" + factor + ", " + factor + ", 0.0)";
+        this.element.style.transform = "scale3D(" + factor + ", " + factor + ", 0.0)";
     };
     return StaticLayer;
 }(MapLayer));
@@ -67,10 +67,10 @@ var MapController = (function () {
         var viewportSize = viewport.clientWidth / 10;
         this.scale = mapSize / viewportSize;
     }
-    MapController.prototype.addLayer = function (element) {
-        element.setMapSize(this.mapSize);
-        this.layers.set(element.name, element);
-        this.content.appendChild(element.layer);
+    MapController.prototype.addLayer = function (layer) {
+        layer.setMapSize(this.mapSize);
+        this.layers.set(layer.name, layer);
+        this.content.appendChild(layer.element);
     };
     MapController.prototype.getMapSize = function () {
         return this.mapSize;
@@ -124,7 +124,7 @@ var HeroMap = (function () {
         var mapSize = 8192;
         this.controller = new MapController(viewport, mapSize);
         var hexLayer = new StaticLayer("hexes", mapSize);
-        hexLayer.layer.classList.add("ps2map__base-hexes");
+        hexLayer.element.classList.add("ps2map__base-hexes");
         Api.getContinent(this.continentId).then(function (continent) {
             return fetch(endpoint + "/static/hex/" + continent.code + ".svg");
         }).then(function (data) {

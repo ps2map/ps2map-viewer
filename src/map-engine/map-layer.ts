@@ -15,7 +15,7 @@ abstract class MapLayer {
      * This layer has no size and is only used as a logical container
      * within the DOM.
      */
-    readonly layer: HTMLDivElement;
+    readonly element: HTMLDivElement;
 
     protected mapSize: number;
 
@@ -23,11 +23,11 @@ abstract class MapLayer {
     protected isVisible: boolean = true;
 
     constructor(name: string, mapSize: number) {
-        this.layer = document.createElement("div");
-        this.layer.classList.add("ps2map__layer");
+        this.element = document.createElement("div");
+        this.element.classList.add("ps2map__layer");
         this.name = name;
         this.mapSize = mapSize;
-        this.layer.style.width = this.layer.style.height = `${mapSize} px`;
+        this.element.style.width = this.element.style.height = `${mapSize}px`;
     }
 
     getMapSize(): number {

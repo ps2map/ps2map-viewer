@@ -5,10 +5,10 @@
 class MapController {
     readonly viewport: HTMLDivElement;
 
-    protected readonly content: HTMLDivElement;
-    protected layers: Map<string, MapLayer> = new Map();
-    protected scale: number;
-    protected mapSize: number;
+    private readonly content: HTMLDivElement;
+    private layers: Map<string, MapLayer> = new Map();
+    private scale: number;
+    private mapSize: number;
 
     constructor(viewport: HTMLDivElement, mapSize: number) {
         this.viewport = viewport;
@@ -23,10 +23,10 @@ class MapController {
         this.scale = mapSize / viewportSize;
     }
 
-    addLayer(element: MapLayer): void {
-        element.setMapSize(this.mapSize);
-        this.layers.set(element.name, element);
-        this.content.appendChild(element.layer);
+    addLayer(layer: MapLayer): void {
+        layer.setMapSize(this.mapSize);
+        this.layers.set(layer.name, layer);
+        this.content.appendChild(layer.element);
     }
 
     getMapSize(): number {

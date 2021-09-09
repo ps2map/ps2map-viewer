@@ -18,7 +18,7 @@ class HeroMap {
 
         // Hex layer
         const hexLayer = new StaticLayer("hexes", mapSize);
-        hexLayer.layer.classList.add("ps2map__base-hexes");
+        hexLayer.element.classList.add("ps2map__base-hexes");
         Api.getContinent(this.continentId).then((continent) => {
             return fetch(`${endpoint}/static/hex/${continent.code}.svg`);
         }).then((data) => {

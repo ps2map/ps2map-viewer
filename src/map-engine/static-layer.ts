@@ -8,12 +8,17 @@
  * checks or optimisations are used whatsoever - avoid them when possible.
  */
 class StaticLayer extends MapLayer {
+
+    constructor(name: string, mapSize: number) {
+        super(name, mapSize);
+    }
+
     /**
      * Add a new child to the layer.
      * @param element Element to add
      */
     addChild(element: Node): void {
-        this.layer.appendChild(element);
+        this.element.appendChild(element);
     }
 
     /**
@@ -21,19 +26,18 @@ class StaticLayer extends MapLayer {
      * @param element Element to remove
      */
     removeChild(element: HTMLElement): void {
-        this.layer.removeChild(element);
+        this.element.removeChild(element);
     }
 
     /** Remove all children from the layer. */
     clearChildren(): void {
-        this.layer.innerHTML = "";
+        this.element.innerHTML = "";
     }
 
     redraw(viewbox: Box, scale: number): void {
         // TODO: The "scale" parameter has no real meaning yet, this will
         // require tweaking once it does.
         let factor = 1 / scale;
-        this.layer.style.transform = `scale3D(${factor}, ${factor}, 0.0)`;
+        this.element.style.transform = `scale3D(${factor}, ${factor}, 0.0)`;
     }
 }
-
