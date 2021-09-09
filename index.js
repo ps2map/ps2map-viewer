@@ -58,8 +58,8 @@ var StaticLayer = (function (_super) {
     };
     return StaticLayer;
 }(MapLayer));
-var MapController = (function () {
-    function MapController(viewport, mapSize) {
+var MapRenderer = (function () {
+    function MapRenderer(viewport, mapSize) {
         this.layers = new Map();
         this.numZoomLevels = 12;
         this.viewport = viewport;
@@ -72,17 +72,17 @@ var MapController = (function () {
         this.zoom = this.zoomLevels[this.zoomLevels.length - 1];
         this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: true });
     }
-    MapController.prototype.addLayer = function (layer) {
+    MapRenderer.prototype.addLayer = function (layer) {
         layer.setMapSize(this.mapSize);
         this.layers.set(layer.name, layer);
         this.content.appendChild(layer.element);
         layer.element.style.left = this.viewport.clientWidth * 0.5 + "px";
         layer.element.style.top = this.viewport.clientHeight * 0.5 + "px";
     };
-    MapController.prototype.setScale = function (value) {
+    MapRenderer.prototype.setScale = function (value) {
         this.scale = value;
     };
-    MapController.prototype.onZoom = function (evt) {
+    MapRenderer.prototype.onZoom = function (evt) {
         var newZoom = this.bumpZoomLevel(evt.deltaY);
         var newScale = this.zoomLevels[newZoom];
         var boundingRec = this.viewport.getBoundingClientRect();
@@ -102,7 +102,7 @@ var MapController = (function () {
             layer.redraw(newViewbox, newScale);
         });
     };
-    MapController.prototype.calculateZoomLevels = function () {
+    MapRenderer.prototype.calculateZoomLevels = function () {
         var vportMetres = this.viewportSizeInMetres();
         var min_scale = this.mapSize / vportMetres;
         var max_scale = 100 / vportMetres;
@@ -116,15 +116,15 @@ var MapController = (function () {
         }
         return zoomLevels;
     };
-    MapController.prototype.viewportMinorAxis = function () {
+    MapRenderer.prototype.viewportMinorAxis = function () {
         var height = this.viewport.clientHeight;
         var width = this.viewport.clientWidth;
         return height < width ? height : width;
     };
-    MapController.prototype.viewportSizeInMetres = function () {
+    MapRenderer.prototype.viewportSizeInMetres = function () {
         return this.viewportMinorAxis() / 4000;
     };
-    MapController.prototype.bumpZoomLevel = function (direction) {
+    MapRenderer.prototype.bumpZoomLevel = function (direction) {
         var newZoom = this.zoom;
         if (direction == 0)
             return newZoom;
@@ -139,10 +139,10 @@ var MapController = (function () {
         this.zoom = newZoom;
         return newZoom;
     };
-    MapController.prototype.cssPxToMetres = function (length, scale) {
+    MapRenderer.prototype.cssPxToMetres = function (length, scale) {
         return length / 4000 * scale;
     };
-    MapController.prototype.viewboxFromCameraTarget = function (target, scale) {
+    MapRenderer.prototype.viewboxFromCameraTarget = function (target, scale) {
         var viewportWidth = this.viewport.clientWidth;
         var viewportHeight = this.viewport.clientHeight;
         var viewboxWidth = this.cssPxToMetres(viewportWidth, scale);
@@ -154,7 +154,7 @@ var MapController = (function () {
             left: target.x - viewboxWidth * 0.5
         };
     };
-    MapController.prototype.updateMinimap = function (viewbox) {
+    MapRenderer.prototype.updateMinimap = function (viewbox) {
         var minimap = document.getElementById("debug-minimap");
         var box = document.getElementById("debug-minimap__viewbox");
         if (minimap == null || box == null)
@@ -175,7 +175,7 @@ var MapController = (function () {
         box.style.left = minimapSize * relLeft + "px";
         box.style.bottom = minimapSize * relTop + "px";
     };
-    return MapController;
+    return MapRenderer;
 }());
 var Api;
 (function (Api) {
@@ -210,7 +210,7 @@ var HeroMap = (function () {
     function HeroMap(viewport, initialContinentId, endpoint) {
         this.continentId = initialContinentId;
         var mapSize = 8192;
-        this.controller = new MapController(viewport, mapSize);
+        this.controller = new MapRenderer(viewport, mapSize);
         var hexLayer = new StaticLayer("hexes", mapSize);
         hexLayer.element.classList.add("ps2map__base-hexes");
         Api.getContinent(this.continentId).then(function (continent) {

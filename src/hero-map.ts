@@ -1,10 +1,10 @@
-/// <reference path="./map-engine/index.ts" />
+/// <reference path="./map-engine/map-renderer.ts" />
 /// <reference path="./api/getters.ts" />
 
 
 class HeroMap {
     private continentId: number;
-    private controller: MapController;
+    private controller: MapRenderer;
 
     constructor(viewport: HTMLDivElement, initialContinentId: number, endpoint: string) {
         this.continentId = initialContinentId;
@@ -14,7 +14,7 @@ class HeroMap {
         const mapSize = 8192;
 
         // Initialise map controller
-        this.controller = new MapController(viewport, mapSize);
+        this.controller = new MapRenderer(viewport, mapSize);
 
         // Hex layer
         const hexLayer = new StaticLayer("hexes", mapSize);

@@ -2,7 +2,7 @@
 /// <reference path="./static-layer.ts" />
 
 
-class MapController {
+class MapRenderer {
     readonly viewport: HTMLDivElement;
 
     private readonly content: HTMLDivElement;
