@@ -9,6 +9,8 @@
 
 .ps2map__base-hexes {
   z-index: 20;
+  background-image: url(../apl-api/map_assets/Indar_LOD2.png);
+  background-size: 100%;
   border: 1px solid green;
 }
 

@@ -14,6 +14,8 @@ class MapController {
     private zoomLevels: number[];
     private zoom: number;
 
+    private cameraTarget: Point;
+
     constructor(viewport: HTMLDivElement, mapSize: number) {
         this.viewport = viewport;
         // Create dummy content object to facilitate hardware scrolling
@@ -23,6 +25,7 @@ class MapController {
         // Initialise the map size
         this.mapSize = mapSize;
         this.scale = mapSize / this.viewportSizeInMetres();
+        this.cameraTarget = { x: mapSize * 0.5, y: mapSize * 0.5 };
 
         // Initialise to minimum zoom
         this.zoomLevels = this.calculateZoomLevels();
@@ -36,14 +39,13 @@ class MapController {
         layer.setMapSize(this.mapSize);
         this.layers.set(layer.name, layer);
         this.content.appendChild(layer.element);
+        // Centre element origin in viewport
+        layer.element.style.left = `${this.viewport.clientWidth * 0.5}px`;
+        layer.element.style.top = `${this.viewport.clientHeight * 0.5}px`;
     }
 
     setScale(value: number): void {
         this.scale = value;
-        this.layers.forEach((layer) => {
-            // TODO: Determine proper viewbox
-            layer.redraw({ top: 0, left: 0, right: 0, bottom: 0 }, value);
-        });
     }
 
     /**
@@ -52,7 +54,33 @@ class MapController {
      */
     private onZoom(evt: WheelEvent) {
         const newZoom = this.bumpZoomLevel(evt.deltaY);
-        this.setScale(this.zoomLevels[newZoom]);
+        const newScale = this.zoomLevels[newZoom];
+
+        // TODO: These DOM references should be cached somewhere        
+        const boundingRec = this.viewport.getBoundingClientRect();
+        const vportHeight = this.viewport.clientHeight;
+        const vportWidth = this.viewport.clientWidth;
+
+        // Get viewport-relative cursor position
+        const posRelY = (vportHeight + boundingRec.top - evt.clientY) / vportHeight;
+        const posRelX = 1 - (vportWidth + boundingRec.left - evt.clientX) / vportWidth;
+
+        // Calculate new camera target
+        // TODO: The viewbox could also be cached in-between operations
+        const currentViewbox = this.viewboxFromCameraTarget(this.cameraTarget, this.scale);
+        const newTarget: Point = {
+            x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * posRelX,
+            y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * posRelY,
+        };
+
+        // Calculate the viewbox for the new camera target
+        const newViewbox = this.viewboxFromCameraTarget(newTarget, newScale);
+
+        // Apply scale and schedule map layer updates
+        this.setScale(newScale);
+        this.layers.forEach((layer) => {
+            layer.redraw(newViewbox, newScale);
+        });
     }
 
     /**
@@ -116,5 +144,38 @@ class MapController {
         // Update zoom level
         this.zoom = newZoom;
         return newZoom;
+    }
+
+    /**
+     * Convert from CSS pixels to map metres
+     * @param length Length in CSS pixels
+     * @param scale Current map scale
+     * @returns The same length in map metres
+     */
+    private cssPxToMetres(length: number, scale: number): number {
+        return length / 4000 * scale;
+    }
+
+    /**
+     * Estimate the visible map are for a given map target.
+     * @param target The camera target (i.e. centre of the client viewport)
+     * @param scale Map scale to use for calculation
+     * @returns A new viewbox denoting the visible map area
+     */
+    private viewboxFromCameraTarget(target: Point, scale: number): Box {
+        // TODO: Use cached viewport DOM values
+        const viewportWidth = this.viewport.clientWidth;
+        const viewportHeight = this.viewport.clientHeight;
+
+        // Calculate the are covered by the viewport in map units
+        const viewboxWidth = this.cssPxToMetres(viewportWidth, scale);
+        const viewboxHeight = this.cssPxToMetres(viewportHeight, scale);
+        // Generate viewbox
+        return {
+            top: target.y + viewboxHeight * 0.5,
+            right: target.x + viewboxWidth * 0.5,
+            bottom: target.y - viewboxHeight * 0.5,
+            left: target.x - viewboxWidth * 0.5,
+        };
     }
 }
