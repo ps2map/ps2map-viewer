@@ -76,6 +76,9 @@ class MapController {
         // Calculate the viewbox for the new camera target
         const newViewbox = this.viewboxFromCameraTarget(newTarget, newScale);
 
+        // Update debug minimap
+        this.updateMinimap(newViewbox);
+
         // Apply scale and schedule map layer updates
         this.setScale(newScale);
         this.layers.forEach((layer) => {
@@ -177,5 +180,29 @@ class MapController {
             bottom: target.y - viewboxHeight * 0.5,
             left: target.x - viewboxWidth * 0.5,
         };
+    }
+
+    private updateMinimap(viewbox: Box): void {
+        const minimap = document.getElementById("debug-minimap");
+        const box = document.getElementById("debug-minimap__viewbox");
+        if (minimap == null || box == null) return;
+        const minimapSize = minimap.clientHeight;
+        // Calculate the map-relative coordinates of the viewbox
+        const relViewbox: Box = {
+            top: (viewbox.top + this.mapSize * 0.5) / this.mapSize,
+            left: (viewbox.left + this.mapSize * 0.5) / this.mapSize,
+            bottom: (viewbox.bottom + this.mapSize * 0.5) / this.mapSize,
+            right: (viewbox.right + this.mapSize * 0.5) / this.mapSize
+        };
+        const relHeight = relViewbox.top - relViewbox.bottom;
+        const relWidth = relViewbox.right - relViewbox.left;
+        const relLeft = relViewbox.left - 0.5;
+        const relTop = relViewbox.bottom - 0.5;
+
+        box.style.height = `${minimapSize * relHeight}px`;
+        box.style.width = `${minimapSize * relWidth}px`;
+        box.style.left = `${minimapSize * relLeft}px`;
+        box.style.bottom = `${minimapSize * relTop}px`;
+
     }
 }

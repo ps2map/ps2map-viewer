@@ -53,10 +53,8 @@ var StaticLayer = (function (_super) {
     };
     StaticLayer.prototype.redraw = function (viewbox, scale) {
         var cssScale = 4000 / scale;
-        var viewboxWidth = 8192;
-        var viewboxHeight = 8192;
         this.element.style.transform =
-            "matrix(" + cssScale + ", 0.0, 0.0, " + cssScale + ", " + -0.5 * viewboxWidth + ", " + -0.5 * viewboxHeight + ")";
+            "matrix(" + cssScale + ", 0.0, 0.0, " + cssScale + ", " + -0.5 * this.mapSize + ", " + -0.5 * this.mapSize + ")";
     };
     return StaticLayer;
 }(MapLayer));
@@ -98,6 +96,7 @@ var MapController = (function () {
             y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * posRelY
         };
         var newViewbox = this.viewboxFromCameraTarget(newTarget, newScale);
+        this.updateMinimap(newViewbox);
         this.setScale(newScale);
         this.layers.forEach(function (layer) {
             layer.redraw(newViewbox, newScale);
@@ -154,6 +153,27 @@ var MapController = (function () {
             bottom: target.y - viewboxHeight * 0.5,
             left: target.x - viewboxWidth * 0.5
         };
+    };
+    MapController.prototype.updateMinimap = function (viewbox) {
+        var minimap = document.getElementById("debug-minimap");
+        var box = document.getElementById("debug-minimap__viewbox");
+        if (minimap == null || box == null)
+            return;
+        var minimapSize = minimap.clientHeight;
+        var relViewbox = {
+            top: (viewbox.top + this.mapSize * 0.5) / this.mapSize,
+            left: (viewbox.left + this.mapSize * 0.5) / this.mapSize,
+            bottom: (viewbox.bottom + this.mapSize * 0.5) / this.mapSize,
+            right: (viewbox.right + this.mapSize * 0.5) / this.mapSize
+        };
+        var relHeight = relViewbox.top - relViewbox.bottom;
+        var relWidth = relViewbox.right - relViewbox.left;
+        var relLeft = relViewbox.left - 0.5;
+        var relTop = relViewbox.bottom - 0.5;
+        box.style.height = minimapSize * relHeight + "px";
+        box.style.width = minimapSize * relWidth + "px";
+        box.style.left = minimapSize * relLeft + "px";
+        box.style.bottom = minimapSize * relTop + "px";
     };
     return MapController;
 }());

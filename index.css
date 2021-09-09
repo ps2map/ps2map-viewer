@@ -20,3 +20,23 @@ body {
     height: 600px;
     width: 800px;
 }
+
+#debug-minimap {
+    border: 2px solid grey;
+    background-image: url(../apl-api/map_assets/Indar_LOD3.png);
+    background-size: 100%;   
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    height: 256px;
+    width: 256px;
+    z-index: 999;
+    overflow: hidden;
+}
+
+#debug-minimap > div {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    transition: all 200ms ease-out;
+}
