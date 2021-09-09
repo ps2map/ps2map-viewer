@@ -52,40 +52,77 @@ var StaticLayer = (function (_super) {
         this.element.innerHTML = "";
     };
     StaticLayer.prototype.redraw = function (viewbox, scale) {
-        var factor = 1 / scale;
-        this.element.style.transform = "scale3D(" + factor + ", " + factor + ", 0.0)";
+        var cssScale = 4000 / scale;
+        var offset = -this.mapSize * 0.5 + 400;
+        this.element.style.transform =
+            "matrix(" + cssScale + ", 0.0, 0.0, " + cssScale + ", " + offset + ", " + offset + ")";
     };
     return StaticLayer;
 }(MapLayer));
 var MapController = (function () {
     function MapController(viewport, mapSize) {
         this.layers = new Map();
+        this.numZoomLevels = 12;
         this.viewport = viewport;
         this.content = document.createElement("div");
         this.viewport.appendChild(this.content);
         this.mapSize = mapSize;
-        var viewportSize = viewport.clientWidth / 10;
-        this.scale = mapSize / viewportSize;
+        this.scale = mapSize / this.viewportSizeInMetres();
+        this.zoomLevels = this.calculateZoomLevels();
+        this.zoom = this.zoomLevels[this.zoomLevels.length - 1];
+        this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: true });
     }
     MapController.prototype.addLayer = function (layer) {
         layer.setMapSize(this.mapSize);
         this.layers.set(layer.name, layer);
         this.content.appendChild(layer.element);
     };
-    MapController.prototype.getMapSize = function () {
-        return this.mapSize;
-    };
-    MapController.prototype.setMapSize = function (value) {
-        this.mapSize = value;
-        this.layers.forEach(function (mapLayer) {
-            mapLayer.setMapSize(value);
-        });
-    };
-    MapController.prototype.getScale = function () {
-        return this.scale;
-    };
     MapController.prototype.setScale = function (value) {
         this.scale = value;
+        this.layers.forEach(function (layer) {
+            layer.redraw({ top: 0, left: 0, right: 0, bottom: 0 }, value);
+        });
+    };
+    MapController.prototype.onZoom = function (evt) {
+        var newZoom = this.bumpZoomLevel(evt.deltaY);
+        this.setScale(this.zoomLevels[newZoom]);
+    };
+    MapController.prototype.calculateZoomLevels = function () {
+        var vportMetres = this.viewportSizeInMetres();
+        var min_scale = this.mapSize / vportMetres;
+        var max_scale = 100 / vportMetres;
+        var map_scale_step = Math.pow(Math.round(min_scale / max_scale / 50)
+            * 50, 1 / (this.numZoomLevels - 1));
+        var scale = Math.floor(max_scale / 100) * 100;
+        var zoomLevels = [scale];
+        for (var i = 1; i < this.numZoomLevels; i++) {
+            scale *= map_scale_step;
+            zoomLevels.push(Math.round(scale / 200) * 200);
+        }
+        return zoomLevels;
+    };
+    MapController.prototype.viewportMinorAxis = function () {
+        var height = this.viewport.clientHeight;
+        var width = this.viewport.clientWidth;
+        return height < width ? height : width;
+    };
+    MapController.prototype.viewportSizeInMetres = function () {
+        return this.viewportMinorAxis() / 4000;
+    };
+    MapController.prototype.bumpZoomLevel = function (direction) {
+        var newZoom = this.zoom;
+        if (direction == 0)
+            return newZoom;
+        if (direction < 0)
+            newZoom--;
+        else if (direction > 0)
+            newZoom++;
+        if (newZoom < 0)
+            newZoom = 0;
+        else if (newZoom >= this.numZoomLevels)
+            newZoom = this.numZoomLevels - 1;
+        this.zoom = newZoom;
+        return newZoom;
     };
     return MapController;
 }());

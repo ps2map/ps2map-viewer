@@ -14,8 +14,9 @@ body {
 #hero-map {
     border: 1px solid red;
     position: relative;
-    left: 20vh;
-    top: 10vh;
-    height: 80vh;
-    width: 60vw;
+    margin-top: 50px;
+    margin-left: auto;
+    margin-right: auto;
+    height: 600px;
+    width: 800px;
 }

@@ -35,9 +35,10 @@ class StaticLayer extends MapLayer {
     }
 
     redraw(viewbox: Box, scale: number): void {
-        // TODO: The "scale" parameter has no real meaning yet, this will
-        // require tweaking once it does.
-        let factor = 1 / scale;
-        this.element.style.transform = `scale3D(${factor}, ${factor}, 0.0)`;
+        // Arbitrary assumption: 1 metre = 4000 pixels
+        let cssScale = 4000 / scale;
+        let offset = -this.mapSize * 0.5 + 400;
+        this.element.style.transform =
+            `matrix(${cssScale}, 0.0, 0.0, ${cssScale}, ${offset}, ${offset})`;
     }
 }
