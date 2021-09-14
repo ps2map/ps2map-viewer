@@ -61,15 +61,15 @@ class MapRenderer {
         const vportWidth = this.viewport.clientWidth;
 
         // Get viewport-relative cursor position
-        const posRelY = (vportHeight + boundingRec.top - evt.clientY) / vportHeight;
-        const posRelX = 1 - (vportWidth + boundingRec.left - evt.clientX) / vportWidth;
+        const [relX, relY] = this.clientSpaceToViewportSpace(evt.clientX, evt.clientY);
+
 
         // Calculate new camera target
         // TODO: The viewbox could also be cached in-between operations
         const currentViewbox = this.viewboxFromCameraTarget(this.cameraTarget, this.scale);
         const newTarget: Point = {
-            x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * posRelX,
-            y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * posRelY,
+            x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * relX,
+            y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * relY,
         };
 
         // Calculate the viewbox for the new camera target
@@ -203,5 +203,23 @@ class MapRenderer {
         box.style.left = `${minimapSize * relLeft}px`;
         box.style.bottom = `${minimapSize * relTop}px`;
 
+    }
+
+    /**
+     * Convert screen space coordinates to viewport-relative coordinates.
+     * 
+     * Screen coordinates have their origin at the top left, the returned
+     * viewport-relative coordintes use a Cartesian system with the origin at
+     * the bottom left.
+     * @param clientX X screen position
+     * @param clientY Y screen position
+     * @returns Tuple of X and Y in viewport coordinates
+     */
+    private clientSpaceToViewportSpace(clientX: number, clientY: number): [number, number] {
+        // TODO: These DOM references should be cached somewhere        
+        const bbox = this.viewport.getBoundingClientRect();
+        let relX = 1 - (bbox.width + bbox.left - clientX) / bbox.width;
+        let relY = (bbox.height + bbox.top - clientY) / bbox.height;
+        return [relX, relY];
     }
 }

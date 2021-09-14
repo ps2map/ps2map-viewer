@@ -90,12 +90,11 @@ var MapRenderer = (function () {
         var boundingRec = this.viewport.getBoundingClientRect();
         var vportHeight = this.viewport.clientHeight;
         var vportWidth = this.viewport.clientWidth;
-        var posRelY = (vportHeight + boundingRec.top - evt.clientY) / vportHeight;
-        var posRelX = 1 - (vportWidth + boundingRec.left - evt.clientX) / vportWidth;
+        var _a = this.clientSpaceToViewportSpace(evt.clientX, evt.clientY), relX = _a[0], relY = _a[1];
         var currentViewbox = this.viewboxFromCameraTarget(this.cameraTarget, this.scale);
         var newTarget = {
-            x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * posRelX,
-            y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * posRelY
+            x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * relX,
+            y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * relY
         };
         var newViewbox = this.viewboxFromCameraTarget(newTarget, newScale);
         this.updateMinimap(newViewbox);
@@ -176,6 +175,12 @@ var MapRenderer = (function () {
         box.style.width = minimapSize * relWidth + "px";
         box.style.left = minimapSize * relLeft + "px";
         box.style.bottom = minimapSize * relTop + "px";
+    };
+    MapRenderer.prototype.clientSpaceToViewportSpace = function (clientX, clientY) {
+        var bbox = this.viewport.getBoundingClientRect();
+        var relX = 1 - (bbox.width + bbox.left - clientX) / bbox.width;
+        var relY = (bbox.height + bbox.top - clientY) / bbox.height;
+        return [relX, relY];
     };
     return MapRenderer;
 }());
