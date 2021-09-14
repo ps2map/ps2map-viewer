@@ -14,11 +14,10 @@ body {
 #hero-map {
     border: 1px solid red;
     position: relative;
-    margin-top: 50px;
-    margin-left: auto;
-    margin-right: auto;
-    height: 600px;
-    width: 800px;
+    margin-top: 5vh;
+    margin-left: 5vw;
+    height: 90vh;
+    width: 90vw;
 }
 
 #debug-minimap {
