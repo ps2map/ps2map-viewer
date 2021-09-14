@@ -232,9 +232,6 @@ var HeroMap = (function () {
             svg.querySelectorAll("polygon").forEach(function (polygon) {
                 var promoteElement = function () {
                     svg.appendChild(polygon);
-                    if (navigator.userAgent.toLowerCase().indexOf("firefox") == -1) {
-                        return;
-                    }
                     var removeHover = function () {
                         polygon.removeAttribute("style");
                     };

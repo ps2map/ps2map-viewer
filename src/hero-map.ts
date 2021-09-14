@@ -37,10 +37,6 @@ class HeroMap {
                         svg.appendChild(polygon);
                         // Firefox-specific workaround for weird broken :hover
                         // pseudoclass. See repo issue #1 for details.
-                        if (navigator.userAgent.toLowerCase().indexOf("firefox") == -1) {
-                            return; // Non-Firefox browsers exit here
-                        }
-                        // Firefox-specific hacks
                         const removeHover = () => {
                             polygon.removeAttribute("style");
                         };
