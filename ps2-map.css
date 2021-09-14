@@ -1,4 +1,14 @@
+.ps2map__viewport {
+  overflow: hidden;
+}
+
+.ps2map__anchor {
+  position: absolute;
+}
+
 .ps2map__layer {
+  height: 100%;
+  width: 100%;
   pointer-events: none;
   position: absolute;
   -ms-user-select: none;
@@ -9,7 +19,7 @@
 
 .ps2map__base-hexes {
   z-index: 20;
-  background-image: url(../apl-api/map_assets/Indar_LOD2.png);
+  background-image: url(../apl-api/map_assets/Indar_LOD1.png);
   background-size: 100%;
   border: 1px solid green;
 }

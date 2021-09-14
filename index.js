@@ -63,8 +63,10 @@ var MapRenderer = (function () {
         this.layers = new Map();
         this.numZoomLevels = 12;
         this.viewport = viewport;
-        this.content = document.createElement("div");
-        this.viewport.appendChild(this.content);
+        this.viewport.classList.add("ps2map__viewport");
+        this.anchor = document.createElement("div");
+        this.anchor.classList.add("ps2map__anchor");
+        this.viewport.appendChild(this.anchor);
         this.mapSize = mapSize;
         this.scale = mapSize / this.viewportSizeInMetres();
         this.cameraTarget = { x: mapSize * 0.5, y: mapSize * 0.5 };
@@ -75,7 +77,7 @@ var MapRenderer = (function () {
     MapRenderer.prototype.addLayer = function (layer) {
         layer.setMapSize(this.mapSize);
         this.layers.set(layer.name, layer);
-        this.content.appendChild(layer.element);
+        this.anchor.appendChild(layer.element);
         layer.element.style.left = this.viewport.clientWidth * 0.5 + "px";
         layer.element.style.top = this.viewport.clientHeight * 0.5 + "px";
     };

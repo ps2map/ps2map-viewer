@@ -5,7 +5,7 @@
 class MapRenderer {
     readonly viewport: HTMLDivElement;
 
-    private readonly content: HTMLDivElement;
+    private readonly anchor: HTMLDivElement;
     private layers: Map<string, MapLayer> = new Map();
     private scale: number;
     private mapSize: number;
@@ -18,9 +18,10 @@ class MapRenderer {
 
     constructor(viewport: HTMLDivElement, mapSize: number) {
         this.viewport = viewport;
-        // Create dummy content object to facilitate hardware scrolling
-        this.content = document.createElement("div");
-        this.viewport.appendChild(this.content);
+        this.viewport.classList.add("ps2map__viewport");
+        this.anchor = document.createElement("div");
+        this.anchor.classList.add("ps2map__anchor")
+        this.viewport.appendChild(this.anchor);
 
         // Initialise the map size
         this.mapSize = mapSize;
@@ -38,7 +39,7 @@ class MapRenderer {
     addLayer(layer: MapLayer): void {
         layer.setMapSize(this.mapSize);
         this.layers.set(layer.name, layer);
-        this.content.appendChild(layer.element);
+        this.anchor.appendChild(layer.element);
         // Centre element origin in viewport
         layer.element.style.left = `${this.viewport.clientWidth * 0.5}px`;
         layer.element.style.top = `${this.viewport.clientHeight * 0.5}px`;
