@@ -40,9 +40,6 @@ class MapRenderer {
         layer.setMapSize(this.mapSize);
         this.layers.set(layer.name, layer);
         this.anchor.appendChild(layer.element);
-        // Centre element origin in viewport
-        layer.element.style.left = `${this.viewport.clientWidth * 0.5}px`;
-        layer.element.style.top = `${this.viewport.clientHeight * 0.5}px`;
     }
 
     setScale(value: number): void {

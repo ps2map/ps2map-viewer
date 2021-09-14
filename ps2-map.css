@@ -4,6 +4,8 @@
 
 .ps2map__anchor {
   position: absolute;
+  left: 50%;
+  top: 50%;
 }
 
 .ps2map__layer {
