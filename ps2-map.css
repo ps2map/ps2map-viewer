@@ -7,8 +7,6 @@
 }
 
 .ps2map__layer {
-  height: 100%;
-  width: 100%;
   pointer-events: none;
   position: absolute;
   -ms-user-select: none;

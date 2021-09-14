@@ -11,6 +11,7 @@ class StaticLayer extends MapLayer {
 
     constructor(name: string, mapSize: number) {
         super(name, mapSize);
+        this.element.style.height = this.element.style.width = `${mapSize}px`;
     }
 
     /**

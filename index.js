@@ -6,7 +6,6 @@ var MapLayer = (function () {
         this.element.classList.add("ps2map__layer");
         this.name = name;
         this.mapSize = mapSize;
-        this.element.style.width = this.element.style.height = mapSize + "px";
     }
     MapLayer.prototype.getMapSize = function () {
         return this.mapSize;
@@ -40,7 +39,9 @@ var __extends = (this && this.__extends) || (function () {
 var StaticLayer = (function (_super) {
     __extends(StaticLayer, _super);
     function StaticLayer(name, mapSize) {
-        return _super.call(this, name, mapSize) || this;
+        var _this = _super.call(this, name, mapSize) || this;
+        _this.element.style.height = _this.element.style.width = mapSize + "px";
+        return _this;
     }
     StaticLayer.prototype.addChild = function (element) {
         this.element.appendChild(element);
