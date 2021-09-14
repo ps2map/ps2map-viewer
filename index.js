@@ -72,7 +72,7 @@ var MapRenderer = (function () {
         this.cameraTarget = { x: mapSize * 0.5, y: mapSize * 0.5 };
         this.zoomLevels = this.calculateZoomLevels();
         this.zoom = this.zoomLevels[this.zoomLevels.length - 1];
-        this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: true });
+        this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: false });
     }
     MapRenderer.prototype.addLayer = function (layer) {
         layer.setMapSize(this.mapSize);
@@ -85,6 +85,7 @@ var MapRenderer = (function () {
         this.scale = value;
     };
     MapRenderer.prototype.onZoom = function (evt) {
+        evt.preventDefault();
         var newZoom = this.bumpZoomLevel(evt.deltaY);
         var newScale = this.zoomLevels[newZoom];
         var boundingRec = this.viewport.getBoundingClientRect();

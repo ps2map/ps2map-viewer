@@ -33,7 +33,7 @@ class MapRenderer {
         this.zoom = this.zoomLevels[this.zoomLevels.length - 1];
 
         // Attach event listeners
-        this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: true });
+        this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: false });
     }
 
     addLayer(layer: MapLayer): void {
@@ -54,6 +54,7 @@ class MapRenderer {
      * @param evt Wheel event to process
      */
     private onZoom(evt: WheelEvent) {
+        evt.preventDefault();
         const newZoom = this.bumpZoomLevel(evt.deltaY);
         const newScale = this.zoomLevels[newZoom];
 
