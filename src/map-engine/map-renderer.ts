@@ -55,14 +55,8 @@ class MapRenderer {
         const newZoom = this.bumpZoomLevel(evt.deltaY);
         const newScale = this.zoomLevels[newZoom];
 
-        // TODO: These DOM references should be cached somewhere        
-        const boundingRec = this.viewport.getBoundingClientRect();
-        const vportHeight = this.viewport.clientHeight;
-        const vportWidth = this.viewport.clientWidth;
-
         // Get viewport-relative cursor position
         const [relX, relY] = this.clientSpaceToViewportSpace(evt.clientX, evt.clientY);
-
 
         // Calculate new camera target
         // TODO: The viewbox could also be cached in-between operations

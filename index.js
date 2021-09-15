@@ -87,9 +87,6 @@ var MapRenderer = (function () {
         evt.preventDefault();
         var newZoom = this.bumpZoomLevel(evt.deltaY);
         var newScale = this.zoomLevels[newZoom];
-        var boundingRec = this.viewport.getBoundingClientRect();
-        var vportHeight = this.viewport.clientHeight;
-        var vportWidth = this.viewport.clientWidth;
         var _a = this.clientSpaceToViewportSpace(evt.clientX, evt.clientY), relX = _a[0], relY = _a[1];
         var currentViewbox = this.viewboxFromCameraTarget(this.cameraTarget, this.scale);
         var newTarget = {
