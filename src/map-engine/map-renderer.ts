@@ -14,6 +14,9 @@ class MapRenderer {
     private zoomLevels: number[];
     private zoom: number;
 
+    private panOffsetX: number;
+    private panOffsetY: number;
+
     private cameraTarget: Point;
 
     constructor(viewport: HTMLDivElement, mapSize: number) {
@@ -26,20 +29,27 @@ class MapRenderer {
         // Initialise the map size
         this.mapSize = mapSize;
         this.scale = mapSize / this.viewportSizeInMetres();
+        this.bumpZoomLevel(1);
         this.cameraTarget = { x: mapSize * 0.5, y: mapSize * 0.5 };
 
         // Initialise to minimum zoom
         this.zoomLevels = this.calculateZoomLevels();
         this.zoom = this.zoomLevels[this.zoomLevels.length - 1];
 
+        // Initialise panning offset
+        this.panOffsetX = this.viewport.clientWidth * 0.5;
+        this.panOffsetY = this.viewport.clientHeight * 0.5;
+
         // Attach event listeners
         this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: false });
+        this.viewport.addEventListener("mousedown", this.mousePan.bind(this), { passive: true });
     }
 
     addLayer(layer: MapLayer): void {
         layer.setMapSize(this.mapSize);
         this.layers.set(layer.name, layer);
         this.anchor.appendChild(layer.element);
+        layer.redraw(this.viewboxFromCameraTarget(this.cameraTarget, this.scale), this.scale);
     }
 
     setScale(value: number): void {
@@ -50,7 +60,7 @@ class MapRenderer {
      * Event listener callback for mouse wheel zoom.
      * @param evt Wheel event to process
      */
-    private onZoom(evt: WheelEvent) {
+    private onZoom(evt: WheelEvent): void {
         evt.preventDefault();
         const newZoom = this.bumpZoomLevel(evt.deltaY);
         const newScale = this.zoomLevels[newZoom];
@@ -77,6 +87,31 @@ class MapRenderer {
         this.layers.forEach((layer) => {
             layer.redraw(newViewbox, newScale);
         });
+    }
+
+    private mousePan(evtDown: MouseEvent): void {
+        const refX = this.panOffsetX;
+        const refY = this.panOffsetY;
+
+        const startX = evtDown.clientX;
+        const startY = evtDown.clientY;
+
+        const drag = (evtDrag: MouseEvent) => {
+            const deltaX = evtDrag.clientX - startX;
+            const deltaY = evtDrag.clientY - startY;
+
+            this.panOffsetX = refX + deltaX;
+            this.panOffsetY = refY + deltaY;
+
+            this.anchor.style.left = `${this.panOffsetX}px`;
+            this.anchor.style.top = `${this.panOffsetY}px`;
+        };
+
+        document.addEventListener("mouseup", () => {
+            this.viewport.removeEventListener("mousemove", drag);
+        });
+
+        this.viewport.addEventListener("mousemove", drag);
     }
 
     /**

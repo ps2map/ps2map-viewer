@@ -70,15 +70,20 @@ var MapRenderer = (function () {
         this.viewport.appendChild(this.anchor);
         this.mapSize = mapSize;
         this.scale = mapSize / this.viewportSizeInMetres();
+        this.bumpZoomLevel(1);
         this.cameraTarget = { x: mapSize * 0.5, y: mapSize * 0.5 };
         this.zoomLevels = this.calculateZoomLevels();
         this.zoom = this.zoomLevels[this.zoomLevels.length - 1];
+        this.panOffsetX = this.viewport.clientWidth * 0.5;
+        this.panOffsetY = this.viewport.clientHeight * 0.5;
         this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: false });
+        this.viewport.addEventListener("mousedown", this.mousePan.bind(this), { passive: true });
     }
     MapRenderer.prototype.addLayer = function (layer) {
         layer.setMapSize(this.mapSize);
         this.layers.set(layer.name, layer);
         this.anchor.appendChild(layer.element);
+        layer.redraw(this.viewboxFromCameraTarget(this.cameraTarget, this.scale), this.scale);
     };
     MapRenderer.prototype.setScale = function (value) {
         this.scale = value;
@@ -99,6 +104,25 @@ var MapRenderer = (function () {
         this.layers.forEach(function (layer) {
             layer.redraw(newViewbox, newScale);
         });
+    };
+    MapRenderer.prototype.mousePan = function (evtDown) {
+        var _this = this;
+        var refX = this.panOffsetX;
+        var refY = this.panOffsetY;
+        var startX = evtDown.clientX;
+        var startY = evtDown.clientY;
+        var drag = function (evtDrag) {
+            var deltaX = evtDrag.clientX - startX;
+            var deltaY = evtDrag.clientY - startY;
+            _this.panOffsetX = refX + deltaX;
+            _this.panOffsetY = refY + deltaY;
+            _this.anchor.style.left = _this.panOffsetX + "px";
+            _this.anchor.style.top = _this.panOffsetY + "px";
+        };
+        document.addEventListener("mouseup", function () {
+            _this.viewport.removeEventListener("mousemove", drag);
+        });
+        this.viewport.addEventListener("mousemove", drag);
     };
     MapRenderer.prototype.calculateZoomLevels = function () {
         var vportMetres = this.viewportSizeInMetres();
