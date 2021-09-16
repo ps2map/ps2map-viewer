@@ -1,5 +1,4 @@
 namespace Api {
-
     /**
      * Static base information to load and cache.
      */
@@ -11,8 +10,8 @@ namespace Api {
         readonly type_id: number;
         readonly type_name: string;
         readonly resource_amount: number;
-        readonly resource_id?: number;
-        readonly resource_name?: string;
+        readonly resource_id ? : number;
+        readonly resource_name ? : string;
     }
 
     /**
@@ -22,8 +21,8 @@ namespace Api {
         readonly id: number;
         readonly server_id: number;
         readonly population: Population;
-        readonly owning_faction?: number;
-        readonly owning_outfit?: number;
+        readonly owning_faction ? : number;
+        readonly owning_outfit ? : number;
         readonly held_since: number; // UTC timestamp of the last cap or reset
     }
 
@@ -35,7 +34,7 @@ namespace Api {
         readonly name: string;
         readonly code: string;
         readonly description: string;
-        readonly lattice_links: Array<[number, number]>; // Numbers are base IDs
+        readonly lattice_links: Array < [number, number] > ; // Numbers are base IDs
     }
 
     /**
@@ -46,10 +45,10 @@ namespace Api {
         readonly server_id: number;
         readonly population: Population;
         readonly status: "open" | "locked";
-        readonly locked_by?: number;
+        readonly locked_by ? : number;
         readonly alert_active: boolean;
-        readonly alert_started?: number;
-        readonly alert_ends?: number;
+        readonly alert_started ? : number;
+        readonly alert_ends ? : number;
     }
 
     /**
@@ -70,7 +69,7 @@ namespace Api {
         readonly faction_id: number;
         readonly server_id: number;
         readonly name: string;
-        readonly tag?: string;
+        readonly tag ? : string;
     }
 
     /**
@@ -89,7 +88,7 @@ namespace Api {
         readonly id: number;
         readonly status: "online" | "locked";
         readonly population: Population;
-        readonly open_continents: Array<number>;
+        readonly open_continents: Array < number > ;
     }
 
     /**
@@ -98,5 +97,4 @@ namespace Api {
     export interface BaseSvgMapping {
         [key: string]: string;
     }
-
 }

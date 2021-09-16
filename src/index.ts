@@ -2,7 +2,6 @@
 
 /** Initialisation hook for components that need to be run on DOM load. */
 document.addEventListener("DOMContentLoaded", () => {
-
     // API endpoint to use for API requests
     const apiEndpoint = "http://127.0.0.1:5000";
 

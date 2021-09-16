@@ -1,12 +1,15 @@
 /// <reference path="./map-engine/map-renderer.ts" />
 /// <reference path="./api/getters.ts" />
 
-
 class HeroMap {
     private continentId: number;
     private controller: MapRenderer;
 
-    constructor(viewport: HTMLDivElement, initialContinentId: number, endpoint: string) {
+    constructor(
+        viewport: HTMLDivElement,
+        initialContinentId: number,
+        endpoint: string
+    ) {
         this.continentId = initialContinentId;
 
         // TODO: Query the API to determine the appropriate map size for the
@@ -19,12 +22,14 @@ class HeroMap {
         // Hex layer
         const hexLayer = new StaticLayer("hexes", mapSize);
         hexLayer.element.classList.add("ps2map__base-hexes");
-        Api.getContinent(this.continentId).then((continent) => {
-            return fetch(`${endpoint}/static/hex/${continent.code}.svg`);
-        }).then((data) => {
-            return data.text();
-        }).then(
-            (payload) => {
+        Api.getContinent(this.continentId)
+            .then((continent) => {
+                return fetch(`${endpoint}/static/hex/${continent.code}.svg`);
+            })
+            .then((data) => {
+                return data.text();
+            })
+            .then((payload) => {
                 const factory = document.createElement("template");
                 factory.innerHTML = payload.trim();
                 const svg = factory.content.firstElementChild;
@@ -41,26 +46,25 @@ class HeroMap {
                             polygon.removeAttribute("style");
                         };
                         polygon.addEventListener("mouseleave", removeHover, {
-                            passive: true
+                            passive: true,
                         });
                         polygon.addEventListener("touchend", removeHover, {
-                            passive: true
+                            passive: true,
                         });
                         polygon.addEventListener("touchcancel", removeHover, {
-                            passive: true
+                            passive: true,
                         });
-                        polygon.style.stroke = '#ffffff';
+                        polygon.style.stroke = "#ffffff";
                     };
                     polygon.addEventListener("mouseenter", promoteElement, {
-                        passive: true
+                        passive: true,
                     });
                     polygon.addEventListener("touchstart", promoteElement, {
-                        passive: true
+                        passive: true,
                     });
                 });
                 hexLayer.addChild(svg);
-            }
-        )
+            });
         this.controller.addLayer(hexLayer);
     }
 }

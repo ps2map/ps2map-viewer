@@ -23,7 +23,7 @@ body {
 #debug-minimap {
     border: 2px solid grey;
     background-image: url(../apl-api/map_assets/Indar_LOD3.png);
-    background-size: 100%;   
+    background-size: 100%;
     position: absolute;
     top: 20px;
     left: 20px;
@@ -33,7 +33,7 @@ body {
     overflow: hidden;
 }
 
-#debug-minimap > div {
+#debug-minimap>div {
     position: absolute;
     background-color: rgba(255, 255, 255, 0.2);
     border: 1px solid white;

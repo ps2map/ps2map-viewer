@@ -220,17 +220,17 @@ var Api;
         var url = restEndpoint + "continents/info";
         return fetch(url)
             .then(function (value) {
-            return value.json();
-        })
+                return value.json();
+            })
             .then(function (contList) {
-            for (var i = 0; i < contList.length; i++) {
-                var cont = contList[i];
-                if (cont.id == continentId) {
-                    return cont;
+                for (var i = 0; i < contList.length; i++) {
+                    var cont = contList[i];
+                    if (cont.id == continentId) {
+                        return cont;
+                    }
                 }
-            }
-            throw "unknown continent ID: " + continentId;
-        });
+                throw "unknown continent ID: " + continentId;
+            });
     }
     Api.getContinent = getContinent;
 })(Api || (Api = {}));

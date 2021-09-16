@@ -6,7 +6,7 @@ class MapRenderer {
     readonly viewport: HTMLDivElement;
 
     private readonly anchor: HTMLDivElement;
-    private layers: Map<string, MapLayer> = new Map();
+    private layers: Map < string, MapLayer > = new Map();
     private scale: number;
     private mapSize: number;
 
@@ -30,7 +30,10 @@ class MapRenderer {
         this.mapSize = mapSize;
         this.scale = mapSize / this.viewportSizeInMetres();
         this.bumpZoomLevel(1);
-        this.cameraTarget = { x: mapSize * 0.5, y: mapSize * 0.5 };
+        this.cameraTarget = {
+            x: mapSize * 0.5,
+            y: mapSize * 0.5
+        };
 
         // Initialise to minimum zoom
         this.zoomLevels = this.calculateZoomLevels();
@@ -41,8 +44,12 @@ class MapRenderer {
         this.panOffsetY = this.viewport.clientHeight * 0.5;
 
         // Attach event listeners
-        this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: false });
-        this.viewport.addEventListener("mousedown", this.mousePan.bind(this), { passive: true });
+        this.viewport.addEventListener("wheel", this.onZoom.bind(this), {
+            passive: false
+        });
+        this.viewport.addEventListener("mousedown", this.mousePan.bind(this), {
+            passive: true
+        });
     }
 
     addLayer(layer: MapLayer): void {
@@ -116,7 +123,7 @@ class MapRenderer {
 
     /**
      * Calculate map scales for all zoom levels.
-     * 
+     *
      * This is specific to the current map and viewport size and must be
      * regenerated after either is altered.
      * @returns Array of map scales for all zoom levels.
@@ -128,8 +135,8 @@ class MapRenderer {
         // Upper scale limit: 10 mm on the screen for every metre on the map
         const max_scale = 100 / vportMetres;
         // Calculate logarithmic step for N zoom levels
-        const map_scale_step = Math.pow(Math.round(min_scale / max_scale / 50)
-            * 50, 1 / (this.numZoomLevels - 1))
+        const map_scale_step = Math.pow(Math.round(min_scale / max_scale / 50) *
+            50, 1 / (this.numZoomLevels - 1))
         // Create a custom list of zoom levels based on these limits
         let scale = Math.floor(max_scale / 100) * 100;
         const zoomLevels: number[] = [scale];
@@ -149,7 +156,7 @@ class MapRenderer {
 
     /**
      * Estimate the size of the map viewport in metres.
-     * 
+     *
      * This assumes that a millimetre contains ~4 CSS pixels.
      * @returns Size of the viewport in real-world metres.
      */
@@ -236,7 +243,7 @@ class MapRenderer {
 
     /**
      * Convert screen space coordinates to viewport-relative coordinates.
-     * 
+     *
      * Screen coordinates have their origin at the top left, the returned
      * viewport-relative coordintes use a Cartesian system with the origin at
      * the bottom left.
@@ -245,7 +252,7 @@ class MapRenderer {
      * @returns Tuple of X and Y in viewport coordinates
      */
     private clientSpaceToViewportSpace(clientX: number, clientY: number): [number, number] {
-        // TODO: These DOM references should be cached somewhere        
+        // TODO: These DOM references should be cached somewhere
         const bbox = this.viewport.getBoundingClientRect();
         let relX = 1 - (bbox.width + bbox.left - clientX) / bbox.width;
         let relY = (bbox.height + bbox.top - clientY) / bbox.height;

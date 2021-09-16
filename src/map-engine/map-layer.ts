@@ -45,12 +45,13 @@ abstract class MapLayer {
     show(): void {
         this.isVisible = true;
     }
+
     /**
      * Callback used to trigger updates in the map layer.
-     * 
+     *
      * Implement this hook to control visibility and zoom level updates
      * efficiently.
-     * 
+     *
      * Do not call requestAnimationFrame() as part of this method as timing is
      * the responsibility of the caller. Debouncing and other throttling
      * strategies are permitted.
