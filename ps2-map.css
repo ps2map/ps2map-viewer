@@ -4,8 +4,6 @@
 
 .ps2map__anchor {
     position: absolute;
-  left: 50%;
-  top: 50%;
 }
 
 .ps2map__layer {
@@ -29,8 +27,4 @@
     pointer-events: visiblePainted;
     stroke: #000000;
     stroke-width: 4px;
-}
-
-.ps2map__base-hexes__hex > polygon:hover {
-    stroke: #ffffff;
 }

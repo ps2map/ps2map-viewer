@@ -53,8 +53,7 @@ class MapRenderer {
     }
 
     addLayer(layer: MapLayer): void {
-        layer.setMapSize(this.mapSize);
-        this.layers.set(layer.name, layer);
+        this.layers.set(layer.id, layer);
         this.anchor.appendChild(layer.element);
         layer.redraw(this.viewboxFromCameraTarget(this.cameraTarget, this.scale), this.scale);
     }

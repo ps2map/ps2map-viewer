@@ -1,49 +1,52 @@
 /// <reference path="./types.ts" />
 
 /**
- * Abstract base class for map layers.
- * 
+ * Base class for map layers.
+ *
  * Map layers are generally anything that is tied to the map canvas and
  * moves when the map is panned by the user.
  */
 abstract class MapLayer {
-    /** Unique name of the map layer. */
-    readonly name: string;
-    /**
-     * Container for the layer's elements.
-     * 
-     * This layer has no size and is only used as a logical container
-     * within the DOM.
-     */
-    readonly element: HTMLDivElement;
+    /** Unique identifier for this layer and the DOM element it represents. */
+    readonly id: string;
 
-    protected mapSize: number;
+    /**
+     * Base size of the map layer in CSS pixels.
+     *
+     * This is primarily used as a coordinate reference system when positioning
+     * layer features.
+     */
+    readonly mapSize: number;
+
+    /** DOM element containing the layer's features. */
+    readonly element: HTMLDivElement;
 
     /** Whether the layer is currently visible. */
     protected isVisible: boolean = true;
 
-    constructor(name: string, mapSize: number) {
-        this.element = document.createElement("div");
-        this.element.classList.add("ps2map__layer");
-        this.name = name;
+    constructor(id: string, mapSize: number) {
+        this.id = id;
         this.mapSize = mapSize;
+        // Create content element
+        this.element = document.createElement("div");
+        this.element.id = `id`;
+        this.element.classList.add("ps2map__layer");
+        this.element.style.height = this.element.style.width = `${mapSize}px`;
     }
 
-    getMapSize(): number {
-        return this.mapSize;
-    }
-
-    setMapSize(value: number): void {
-        this.mapSize = value;
-    }
-
-    /** Hide the map layer. */
-    hide(): void {
-        this.isVisible = false;
-    }
-    /** Show the map layer. */
-    show(): void {
-        this.isVisible = true;
+    /**
+     * Update the visibility of the map layer.
+     * @param visible New visibility state to apply
+     */
+    setVisibility(visible: boolean): void {
+        if (this.isVisible != visible) {
+            if (visible) {
+                this.element.style.removeProperty("display");
+            } else {
+                this.element.style.display = "none";
+            }
+            this.isVisible = visible;
+        }
     }
 
     /**

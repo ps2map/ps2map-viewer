@@ -3,8 +3,6 @@ html {
     color: white;
     font-family: "Segoe UI", sans-serif;
     font-weight: 600;
-    overflow: hidden;
-    touch-action: none;
 }
 
 body {

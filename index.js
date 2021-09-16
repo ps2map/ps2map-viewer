@@ -1,23 +1,24 @@
 "use strict";
 var MapLayer = (function () {
-    function MapLayer(name, mapSize) {
+    function MapLayer(id, mapSize) {
         this.isVisible = true;
-        this.element = document.createElement("div");
-        this.element.classList.add("ps2map__layer");
-        this.name = name;
+        this.id = id;
         this.mapSize = mapSize;
+        this.element = document.createElement("div");
+        this.element.id = "id";
+        this.element.classList.add("ps2map__layer");
+        this.element.style.height = this.element.style.width = mapSize + "px";
     }
-    MapLayer.prototype.getMapSize = function () {
-        return this.mapSize;
-    };
-    MapLayer.prototype.setMapSize = function (value) {
-        this.mapSize = value;
-    };
-    MapLayer.prototype.hide = function () {
-        this.isVisible = false;
-    };
-    MapLayer.prototype.show = function () {
-        this.isVisible = true;
+    MapLayer.prototype.setVisibility = function (visible) {
+        if (this.isVisible != visible) {
+            if (visible) {
+                this.element.style.removeProperty("display");
+            }
+            else {
+                this.element.style.display = "none";
+            }
+            this.isVisible = visible;
+        }
     };
     return MapLayer;
 }());
@@ -39,9 +40,7 @@ var __extends = (this && this.__extends) || (function () {
 var StaticLayer = (function (_super) {
     __extends(StaticLayer, _super);
     function StaticLayer(name, mapSize) {
-        var _this = _super.call(this, name, mapSize) || this;
-        _this.element.style.height = _this.element.style.width = mapSize + "px";
-        return _this;
+        return _super.call(this, name, mapSize) || this;
     }
     StaticLayer.prototype.addChild = function (element) {
         this.element.appendChild(element);
@@ -54,8 +53,7 @@ var StaticLayer = (function (_super) {
     };
     StaticLayer.prototype.redraw = function (viewbox, scale) {
         var cssScale = 4000 / scale;
-        this.element.style.transform =
-            "matrix(" + cssScale + ", 0.0, 0.0, " + cssScale + ", " + -0.5 * this.mapSize + ", " + -0.5 * this.mapSize + ")";
+        this.element.style.transform = "matrix(" + cssScale + ", 0.0, 0.0, " + cssScale + ", " + -0.5 * this.mapSize + ", " + -0.5 * this.mapSize + ")";
     };
     return StaticLayer;
 }(MapLayer));
@@ -71,17 +69,23 @@ var MapRenderer = (function () {
         this.mapSize = mapSize;
         this.scale = mapSize / this.viewportSizeInMetres();
         this.bumpZoomLevel(1);
-        this.cameraTarget = { x: mapSize * 0.5, y: mapSize * 0.5 };
+        this.cameraTarget = {
+            x: mapSize * 0.5,
+            y: mapSize * 0.5
+        };
         this.zoomLevels = this.calculateZoomLevels();
         this.zoom = this.zoomLevels[this.zoomLevels.length - 1];
         this.panOffsetX = this.viewport.clientWidth * 0.5;
         this.panOffsetY = this.viewport.clientHeight * 0.5;
-        this.viewport.addEventListener("wheel", this.onZoom.bind(this), { passive: false });
-        this.viewport.addEventListener("mousedown", this.mousePan.bind(this), { passive: true });
+        this.viewport.addEventListener("wheel", this.onZoom.bind(this), {
+            passive: false
+        });
+        this.viewport.addEventListener("mousedown", this.mousePan.bind(this), {
+            passive: true
+        });
     }
     MapRenderer.prototype.addLayer = function (layer) {
-        layer.setMapSize(this.mapSize);
-        this.layers.set(layer.name, layer);
+        this.layers.set(layer.id, layer);
         this.anchor.appendChild(layer.element);
         layer.redraw(this.viewboxFromCameraTarget(this.cameraTarget, this.scale), this.scale);
     };
@@ -128,8 +132,8 @@ var MapRenderer = (function () {
         var vportMetres = this.viewportSizeInMetres();
         var min_scale = this.mapSize / vportMetres;
         var max_scale = 100 / vportMetres;
-        var map_scale_step = Math.pow(Math.round(min_scale / max_scale / 50)
-            * 50, 1 / (this.numZoomLevels - 1));
+        var map_scale_step = Math.pow(Math.round(min_scale / max_scale / 50) *
+            50, 1 / (this.numZoomLevels - 1));
         var scale = Math.floor(max_scale / 100) * 100;
         var zoomLevels = [scale];
         for (var i = 1; i < this.numZoomLevels; i++) {
@@ -220,17 +224,16 @@ var Api;
         var url = restEndpoint + "continents/info";
         return fetch(url)
             .then(function (value) {
-                return value.json();
-            })
+            return value.json();
+        })
             .then(function (contList) {
-                for (var i = 0; i < contList.length; i++) {
-                    var cont = contList[i];
-                    if (cont.id == continentId) {
-                        return cont;
-                    }
-                }
-                throw "unknown continent ID: " + continentId;
-            });
+            for (var i = 0; i < contList.length; i++) {
+                var cont = contList[i];
+                if (cont.id == continentId)
+                    return cont;
+            }
+            throw "unknown continent ID: " + continentId;
+        });
     }
     Api.getContinent = getContinent;
 })(Api || (Api = {}));
@@ -241,11 +244,14 @@ var HeroMap = (function () {
         this.controller = new MapRenderer(viewport, mapSize);
         var hexLayer = new StaticLayer("hexes", mapSize);
         hexLayer.element.classList.add("ps2map__base-hexes");
-        Api.getContinent(this.continentId).then(function (continent) {
+        Api.getContinent(this.continentId)
+            .then(function (continent) {
             return fetch(endpoint + "/static/hex/" + continent.code + ".svg");
-        }).then(function (data) {
+        })
+            .then(function (data) {
             return data.text();
-        }).then(function (payload) {
+        })
+            .then(function (payload) {
             var factory = document.createElement("template");
             factory.innerHTML = payload.trim();
             var svg = factory.content.firstElementChild;
@@ -268,7 +274,7 @@ var HeroMap = (function () {
                     polygon.addEventListener("touchcancel", removeHover, {
                         passive: true
                     });
-                    polygon.style.stroke = '#ffffff';
+                    polygon.style.stroke = "#ffffff";
                 };
                 polygon.addEventListener("mouseenter", promoteElement, {
                     passive: true
