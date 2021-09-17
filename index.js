@@ -65,6 +65,7 @@ var MapRenderer = (function () {
         this.numZoomLevels = 12;
         this.zoomLevels = [];
         this.zoom = 0.0;
+        this.viewboxCallbacks = [];
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this.anchor = document.createElement("div");
@@ -118,7 +119,9 @@ var MapRenderer = (function () {
         this.layers.forEach(function (layer) {
             layer.redraw(newViewbox, newScale);
         });
-        this.updateMinimap(newViewbox);
+        var i = this.viewboxCallbacks.length;
+        while (i-- > 0)
+            this.viewboxCallbacks[i](newViewbox);
     };
     MapRenderer.prototype.mousePan = function (evtDown) {
         var _this = this;
@@ -198,26 +201,6 @@ var MapRenderer = (function () {
         var relY = (bbox.height + bbox.top - clientY) / bbox.height;
         return [relX, relY];
     };
-    MapRenderer.prototype.updateMinimap = function (viewbox) {
-        var mapSize = this.getMapSize();
-        var minimap = document.getElementById("debug-minimap");
-        var minimapSize = minimap.clientWidth;
-        var minimapBox = document.getElementById("debug-minimap__viewbox");
-        var relViewbox = {
-            top: (viewbox.top + mapSize * 0.5) / mapSize,
-            left: (viewbox.left + mapSize * 0.5) / mapSize,
-            bottom: (viewbox.bottom + mapSize * 0.5) / mapSize,
-            right: (viewbox.right + mapSize * 0.5) / mapSize
-        };
-        var relHeight = relViewbox.top - relViewbox.bottom;
-        var relWidth = relViewbox.right - relViewbox.left;
-        var relLeft = relViewbox.left - 0.5;
-        var relTop = relViewbox.bottom - 0.5;
-        minimapBox.style.height = minimapSize * relHeight + "px";
-        minimapBox.style.width = minimapSize * relWidth + "px";
-        minimapBox.style.left = minimapSize * relLeft + "px";
-        minimapBox.style.bottom = minimapSize * relTop + "px";
-    };
     return MapRenderer;
 }());
 var Api;
@@ -248,11 +231,52 @@ var Api;
     }
     Api.getContinent = getContinent;
 })(Api || (Api = {}));
+var Minimap = (function () {
+    function Minimap(element, mapSize, background) {
+        this.mapSize = mapSize;
+        this.element = element;
+        this.cssSize = this.element.clientWidth;
+        this.element.style.height = this.cssSize + "px";
+        this.viewboxElement = document.createElement("div");
+        this.element.appendChild(this.viewboxElement);
+        this.element.style.backgroundImage = "url(" + background + ")";
+        this.element.style.backgroundSize = "100%";
+    }
+    Minimap.prototype.configureMinimap = function (mapSize, background) {
+        this.mapSize = mapSize;
+        this.element.style.backgroundImage = "url(" + background + ")";
+    };
+    Minimap.prototype.setViewbox = function (viewbox) {
+        var mapSize = this.mapSize;
+        var relViewbox = {
+            top: (viewbox.top + mapSize * 0.5) / mapSize,
+            left: (viewbox.left + mapSize * 0.5) / mapSize,
+            bottom: (viewbox.bottom + mapSize * 0.5) / mapSize,
+            right: (viewbox.right + mapSize * 0.5) / mapSize
+        };
+        var relHeight = relViewbox.top - relViewbox.bottom;
+        var relWidth = relViewbox.right - relViewbox.left;
+        var relLeft = relViewbox.left - 0.5;
+        var relTop = relViewbox.bottom - 0.5;
+        this.viewboxElement.style.height = this.cssSize * relHeight + "px";
+        this.viewboxElement.style.width = this.cssSize * relWidth + "px";
+        this.viewboxElement.style.left = this.cssSize * relLeft + "px";
+        this.viewboxElement.style.bottom = this.cssSize * relTop + "px";
+    };
+    return Minimap;
+}());
 var HeroMap = (function () {
     function HeroMap(viewport, initialContinentId, endpoint) {
         this.continentId = initialContinentId;
         var mapSize = 8192;
         this.controller = new MapRenderer(viewport, mapSize);
+        var minimapElement = document.getElementById("minimap");
+        if (minimapElement == null)
+            throw "Unable to locate minimap element.";
+        if (minimapElement.tagName != "DIV")
+            throw "Minimap element must be a DIV";
+        this.minimap = new Minimap(minimapElement, mapSize, "../apl-api/map_assets/Indar_LOD3.png");
+        this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         var hexLayer = new StaticLayer("hexes", mapSize);
         hexLayer.element.classList.add("ps2map__base-hexes");
         Api.getContinent(this.continentId)

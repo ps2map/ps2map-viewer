@@ -1,5 +1,6 @@
 /// <reference path="./map-engine/map-renderer.ts" />
 /// <reference path="./api/getters.ts" />
+/// <reference path="./minimap.ts" />
 
 /**
  * Custom map controller for primary PlanetSide 2 continent map.
@@ -11,6 +12,9 @@ class HeroMap {
     private continentId: number;
     /** Internal map renderer wrapped by this class. */
     private controller: MapRenderer;
+
+    /** Minimap DOM container. */
+    private readonly minimap: Minimap;
 
     constructor(
         viewport: HTMLDivElement,
@@ -25,6 +29,16 @@ class HeroMap {
 
         // Initialise map controller
         this.controller = new MapRenderer(viewport, mapSize);
+        // Set up minimap
+        const minimapElement = document.getElementById("minimap");
+        if (minimapElement == null)
+            throw "Unable to locate minimap element.";
+        if (minimapElement.tagName != "DIV")
+            throw "Minimap element must be a DIV";
+        this.minimap = new Minimap(minimapElement as HTMLDivElement,
+            mapSize, "../apl-api/map_assets/Indar_LOD3.png")
+        this.controller.viewboxCallbacks.push(
+            this.minimap.setViewbox.bind(this.minimap));
 
         // Add map layer for base hexes
         const hexLayer = new StaticLayer("hexes", mapSize);

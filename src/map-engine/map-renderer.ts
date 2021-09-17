@@ -43,6 +43,9 @@ class MapRenderer {
     /** Current camera target of the viewport. */
     private cameraTarget: Point;
 
+    /** Additional callbacks to invoke when the map viewbox changes. */
+    viewboxCallbacks: ((arg0: Box) => any)[] = [];
+
     constructor(viewport: HTMLDivElement, mapSize: number) {
         // Set up DOM containers
         this.viewport = viewport;
@@ -141,8 +144,10 @@ class MapRenderer {
             layer.redraw(newViewbox, newScale);
         });
 
-        // Update minimap
-        this.updateMinimap(newViewbox);
+        // Invoke viewbox callbacks
+        let i = this.viewboxCallbacks.length;
+        while (i-- > 0)
+            this.viewboxCallbacks[i](newViewbox);
     }
 
     /** Event callback for mouse map panning.
@@ -288,33 +293,5 @@ class MapRenderer {
         let relX = 1 - (bbox.width + bbox.left - clientX) / bbox.width;
         let relY = (bbox.height + bbox.top - clientY) / bbox.height;
         return [relX, relY];
-    }
-
-    /**
-     * Update the minimap whenever the map viewbox changes.
-     * @param viewbox New viewbox to display
-     */
-    private updateMinimap(viewbox: Box): void {
-        const mapSize = this.getMapSize();
-        const minimap = document.getElementById("debug-minimap") as HTMLDivElement;
-        const minimapSize = minimap.clientWidth;
-        const minimapBox = document.getElementById("debug-minimap__viewbox") as HTMLDivElement;
-
-        // Convert map-coordinate viewbox to percentages
-        const relViewbox: Box = {
-            top: (viewbox.top + mapSize * 0.5) / mapSize,
-            left: (viewbox.left + mapSize * 0.5) / mapSize,
-            bottom: (viewbox.bottom + mapSize * 0.5) / mapSize,
-            right: (viewbox.right + mapSize * 0.5) / mapSize
-        };
-        const relHeight = relViewbox.top - relViewbox.bottom;
-        const relWidth = relViewbox.right - relViewbox.left;
-        const relLeft = relViewbox.left - 0.5;
-        const relTop = relViewbox.bottom - 0.5;
-        // Project the relative percentages onto the minimap
-        minimapBox.style.height = `${minimapSize * relHeight}px`;
-        minimapBox.style.width = `${minimapSize * relWidth}px`;
-        minimapBox.style.left = `${minimapSize * relLeft}px`;
-        minimapBox.style.bottom = `${minimapSize * relTop}px`;
     }
 }
