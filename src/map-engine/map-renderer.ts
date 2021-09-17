@@ -1,47 +1,68 @@
 /// <reference path="./map-layer.ts" />
 /// <reference path="./static-layer.ts" />
 
-
+/**
+ * Core map rendering controller.
+ *
+ * This class is the primary controller object for a given map instance. Add
+ * map layers to a map renderer to display them.
+ *
+ * The map renderer is responsible for handling camera interactions and
+ * dispatching redraw and occlusion requests to any layers added to it. The
+ * user may not directly interact with added map layers (aside from aestetical
+ * style options that do not cause layout shifts or geometry changes).
+ */
 class MapRenderer {
+    /** User-provided viewport element. Everything happens within this. */
     readonly viewport: HTMLDivElement;
-
+    /** Helper element used to centre map layers in the viewport. */
     private readonly anchor: HTMLDivElement;
+    /**
+     * The base map size for the current map.
+     *
+     * This is used to calculate panning limits and offsets for the map layers.
+     */
+    private mapSize: number = 1024;
+    /** Collection of map layers added to the map renderer. */
     private layers: Map < string, MapLayer > = new Map();
-    private scale: number;
-    private mapSize: number;
 
-    private numZoomLevels = 12;
-    private zoomLevels: number[];
-    private zoom: number;
+    /** Current map scale. */
+    private scale: number = 0.0;
 
+    /** Constant defining the number of zoom levels available. */
+    private readonly numZoomLevels = 12;
+    /** List of zoom levels calculated for the given viewport and map size. */
+    private zoomLevels: number[] = [];
+    /** Current zoom level. */
+    private zoom: number = 0.0;
+
+    // Current map panning offset - TBD
     private panOffsetX: number;
     private panOffsetY: number;
 
+    /** Current camera target of the viewport. */
     private cameraTarget: Point;
 
     constructor(viewport: HTMLDivElement, mapSize: number) {
+        // Set up DOM containers
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this.anchor = document.createElement("div");
         this.anchor.classList.add("ps2map__anchor")
         this.viewport.appendChild(this.anchor);
 
-        // Initialise the map size
-        this.mapSize = mapSize;
-        this.scale = mapSize / this.viewportSizeInMetres();
-        this.bumpZoomLevel(1);
+        // Set initial zoom level
+        this.setMapSize(mapSize);
+
+        // Centre map by default
         this.cameraTarget = {
             x: mapSize * 0.5,
             y: mapSize * 0.5
         };
-
-        // Initialise to minimum zoom
-        this.zoomLevels = this.calculateZoomLevels();
-        this.zoom = this.zoomLevels[this.zoomLevels.length - 1];
-
-        // Initialise panning offset
         this.panOffsetX = this.viewport.clientWidth * 0.5;
         this.panOffsetY = this.viewport.clientHeight * 0.5;
+        this.anchor.style.left = `${this.panOffsetX}px`;
+        this.anchor.style.top = `${this.panOffsetY}px`;
 
         // Attach event listeners
         this.viewport.addEventListener("wheel", this.onZoom.bind(this), {
@@ -52,24 +73,52 @@ class MapRenderer {
         });
     }
 
+    /**
+     * Add a new map layer to the.
+     *
+     * The map size of the layer must match the map renderer's.
+     * @param layer Map layer to add.
+     */
     addLayer(layer: MapLayer): void {
+        if (layer.mapSize != this.mapSize)
+            throw "Map layer size must match the map renderer's.";
         this.layers.set(layer.id, layer);
         this.anchor.appendChild(layer.element);
         layer.redraw(this.viewboxFromCameraTarget(this.cameraTarget, this.scale), this.scale);
     }
 
-    setScale(value: number): void {
-        this.scale = value;
+    /** Get the current map size of the map renderer.
+     * @returns Current size of the map
+     */
+    getMapSize(): number {
+        return this.mapSize;
     }
 
     /**
-     * Event listener callback for mouse wheel zoom.
+     * Update the map size of the map renderer.
+     *
+     * This is only available after all map layers have been removed from the
+     * map renderer.
+     * @param value New map size to apply.
+     */
+    setMapSize(value: number): void {
+        if (this.layers.size > 0)
+            throw "Remove all map layers before changing map size.";
+        this.mapSize = value;
+        // Recalculate zoom levels as they are map-size relative
+        this.zoomLevels = this.calculateZoomLevels();
+        this.zoom = this.numZoomLevels - 1;
+        this.scale = this.zoomLevels[this.zoom];
+    }
+
+    /**
+     * Event callback for mouse-wheel zoom
      * @param evt Wheel event to process
      */
     private onZoom(evt: WheelEvent): void {
-        evt.preventDefault();
-        const newZoom = this.bumpZoomLevel(evt.deltaY);
-        const newScale = this.zoomLevels[newZoom];
+        evt.preventDefault(); // Prevent mouse scroll
+        // Update map scale
+        const newScale = this.zoomLevels[this.bumpZoomLevel(evt.deltaY)];
 
         // Get viewport-relative cursor position
         const [relX, relY] = this.clientSpaceToViewportSpace(evt.clientX, evt.clientY);
@@ -85,39 +134,48 @@ class MapRenderer {
         // Calculate the viewbox for the new camera target
         const newViewbox = this.viewboxFromCameraTarget(newTarget, newScale);
 
-        // Update debug minimap
-        this.updateMinimap(newViewbox);
-
         // Apply scale and schedule map layer updates
-        this.setScale(newScale);
+        this.scale = newScale;
+        // TODO: requestAnimationFrame debounce
         this.layers.forEach((layer) => {
             layer.redraw(newViewbox, newScale);
         });
+
+        // Update minimap
+        this.updateMinimap(newViewbox);
     }
 
+    /** Event callback for mouse map panning.
+     * @param evtDown "mousedown" event starting the panning operation
+     */
     private mousePan(evtDown: MouseEvent): void {
+        // Cache the initial anchor offset relative to which the pan will occur
         const refX = this.panOffsetX;
         const refY = this.panOffsetY;
-
+        // Initial cursor position
         const startX = evtDown.clientX;
         const startY = evtDown.clientY;
-
+        // Continuous "mousemove" callback
+        // TODO: requestAnimationFrame debounce
         const drag = (evtDrag: MouseEvent) => {
             const deltaX = evtDrag.clientX - startX;
             const deltaY = evtDrag.clientY - startY;
-
+            // Calculate and apply new layer anchor offset
             this.panOffsetX = refX + deltaX;
             this.panOffsetY = refY + deltaY;
-
             this.anchor.style.left = `${this.panOffsetX}px`;
             this.anchor.style.top = `${this.panOffsetY}px`;
         };
-
-        document.addEventListener("mouseup", () => {
+        // Global "mouseup" callback
+        const up = () => {
             this.viewport.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", up);
+        };
+        // Add listeners
+        document.addEventListener("mouseup", up);
+        this.viewport.addEventListener("mousemove", drag, {
+            passive: true
         });
-
-        this.viewport.addEventListener("mousemove", drag);
     }
 
     /**
@@ -146,13 +204,6 @@ class MapRenderer {
         return zoomLevels;
     }
 
-    /** Return the shorter axis of the viewport. */
-    private viewportMinorAxis(): number {
-        const height = this.viewport.clientHeight;
-        const width = this.viewport.clientWidth;
-        return height < width ? height : width;
-    }
-
     /**
      * Estimate the size of the map viewport in metres.
      *
@@ -160,11 +211,16 @@ class MapRenderer {
      * @returns Size of the viewport in real-world metres.
      */
     private viewportSizeInMetres(): number {
-        return this.viewportMinorAxis() / 4000;
+        // Calculation performed user shorter viewport edge
+        // TODO: Use cached viewport size references
+        const height = this.viewport.clientHeight;
+        const width = this.viewport.clientWidth;
+        return (height < width ? height : width) / 4000;
     }
 
     /**
      * Increment or decrement the zoom level.
+     *
      * If `direction` is zero, do nothing.
      * @param direction Direction to bump the zoom level in
      * @returns New zoom level
@@ -204,40 +260,16 @@ class MapRenderer {
         const viewportWidth = this.viewport.clientWidth;
         const viewportHeight = this.viewport.clientHeight;
 
-        // Calculate the are covered by the viewport in map units
+        // Calculate the lengths covered by the viewport in map units
         const viewboxWidth = this.cssPxToMetres(viewportWidth, scale);
         const viewboxHeight = this.cssPxToMetres(viewportHeight, scale);
-        // Generate viewbox
+        // Get viewbox coordinates
         return {
             top: target.y + viewboxHeight * 0.5,
             right: target.x + viewboxWidth * 0.5,
             bottom: target.y - viewboxHeight * 0.5,
             left: target.x - viewboxWidth * 0.5,
         };
-    }
-
-    private updateMinimap(viewbox: Box): void {
-        const minimap = document.getElementById("debug-minimap");
-        const box = document.getElementById("debug-minimap__viewbox");
-        if (minimap == null || box == null) return;
-        const minimapSize = minimap.clientHeight;
-        // Calculate the map-relative coordinates of the viewbox
-        const relViewbox: Box = {
-            top: (viewbox.top + this.mapSize * 0.5) / this.mapSize,
-            left: (viewbox.left + this.mapSize * 0.5) / this.mapSize,
-            bottom: (viewbox.bottom + this.mapSize * 0.5) / this.mapSize,
-            right: (viewbox.right + this.mapSize * 0.5) / this.mapSize
-        };
-        const relHeight = relViewbox.top - relViewbox.bottom;
-        const relWidth = relViewbox.right - relViewbox.left;
-        const relLeft = relViewbox.left - 0.5;
-        const relTop = relViewbox.bottom - 0.5;
-
-        box.style.height = `${minimapSize * relHeight}px`;
-        box.style.width = `${minimapSize * relWidth}px`;
-        box.style.left = `${minimapSize * relLeft}px`;
-        box.style.bottom = `${minimapSize * relTop}px`;
-
     }
 
     /**
@@ -256,5 +288,33 @@ class MapRenderer {
         let relX = 1 - (bbox.width + bbox.left - clientX) / bbox.width;
         let relY = (bbox.height + bbox.top - clientY) / bbox.height;
         return [relX, relY];
+    }
+
+    /**
+     * Update the minimap whenever the map viewbox changes.
+     * @param viewbox New viewbox to display
+     */
+    private updateMinimap(viewbox: Box): void {
+        const mapSize = this.getMapSize();
+        const minimap = document.getElementById("debug-minimap") as HTMLDivElement;
+        const minimapSize = minimap.clientWidth;
+        const minimapBox = document.getElementById("debug-minimap__viewbox") as HTMLDivElement;
+
+        // Convert map-coordinate viewbox to percentages
+        const relViewbox: Box = {
+            top: (viewbox.top + mapSize * 0.5) / mapSize,
+            left: (viewbox.left + mapSize * 0.5) / mapSize,
+            bottom: (viewbox.bottom + mapSize * 0.5) / mapSize,
+            right: (viewbox.right + mapSize * 0.5) / mapSize
+        };
+        const relHeight = relViewbox.top - relViewbox.bottom;
+        const relWidth = relViewbox.right - relViewbox.left;
+        const relLeft = relViewbox.left - 0.5;
+        const relTop = relViewbox.bottom - 0.5;
+        // Project the relative percentages onto the minimap
+        minimapBox.style.height = `${minimapSize * relHeight}px`;
+        minimapBox.style.width = `${minimapSize * relWidth}px`;
+        minimapBox.style.left = `${minimapSize * relLeft}px`;
+        minimapBox.style.bottom = `${minimapSize * relTop}px`;
     }
 }
