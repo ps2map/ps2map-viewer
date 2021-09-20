@@ -18,24 +18,20 @@ class MapRenderer {
     readonly viewport: HTMLDivElement;
     /** Helper element used to centre map layers in the viewport. */
     private readonly anchor: HTMLDivElement;
-    /**
-     * The base map size for the current map.
-     *
-     * This is used to calculate panning limits and offsets for the map layers.
-     */
+
+    /** The base map size for the current map. */
     private mapSize: number = 1024;
     /** Collection of map layers added to the map renderer. */
     private layers: Map < string, MapLayer > = new Map();
 
-    /** Current map scale. */
-    private scale: number = 0.0;
-
-    /** Constant defining the number of zoom levels available. */
-    private readonly numZoomLevels = 12;
-    /** List of zoom levels calculated for the given viewport and map size. */
-    private zoomLevels: number[] = [];
-    /** Current zoom level. */
-    private zoom: number = 0.0;
+    /** Maximum zoom level (configuration) */
+    private readonly maxZoom: number = 10.0;
+    /** Zoom level step size (configuration) */
+    private readonly zoomStep: number = 1.5;
+    /** A list of zoom values to apply for a given `zoomLevel`. */
+    private zoomFactors: number[] = [];
+    /** Current position within the `zoomFactors` array. */
+    private zoomLevel: number = 0;
 
     // Current map panning offset - TBD
     private panOffsetX: number;
@@ -54,10 +50,8 @@ class MapRenderer {
         this.anchor = document.createElement("div");
         this.anchor.classList.add("ps2map__anchor")
         this.viewport.appendChild(this.anchor);
-
         // Set initial zoom level
         this.setMapSize(mapSize);
-
         // Centre map by default
         this.cameraTarget = {
             x: mapSize * 0.5,
@@ -88,7 +82,8 @@ class MapRenderer {
             throw "Map layer size must match the map renderer's.";
         this.layers.set(layer.id, layer);
         this.anchor.appendChild(layer.element);
-        layer.redraw(this.viewboxFromCameraTarget(this.cameraTarget, this.scale), this.scale);
+        const zoom = this.zoomFactors[this.zoomLevel];
+        layer.redraw(this.viewboxFromCameraTarget(this.cameraTarget), zoom);
     }
 
     /** Get the current map size of the map renderer.
@@ -110,38 +105,36 @@ class MapRenderer {
             throw "Remove all map layers before changing map size.";
         this.mapSize = value;
         // Recalculate zoom levels as they are map-size relative
-        this.zoomLevels = this.calculateZoomLevels();
-        this.zoom = this.numZoomLevels - 1;
-        this.scale = this.zoomLevels[this.zoom];
+        this.zoomFactors = this.calculateZoomLevels();
+        this.zoomLevel = this.zoomFactors.length - 1;
     }
 
     /**
      * Event callback for mouse-wheel zoom
      * @param evt Wheel event to process
      */
-    private onZoom = rafDebounce((evt: WheelEvent) => {
+    private onZoom = Utils.rafDebounce((evt: WheelEvent) => {
         evt.preventDefault(); // Prevent mouse scroll
-        // Update map scale
-        const newScale = this.zoomLevels[this.bumpZoomLevel(evt.deltaY)];
+        // Get new zoom level
+        const newZoom = this.bumpZoomLevel(evt.deltaY);
 
         // Get viewport-relative cursor position
         const [relX, relY] = this.clientSpaceToViewportSpace(evt.clientX, evt.clientY);
 
         // Calculate new camera target
         // TODO: The viewbox could also be cached in-between operations
-        const currentViewbox = this.viewboxFromCameraTarget(this.cameraTarget, this.scale);
+        const currentViewbox = this.viewboxFromCameraTarget(this.cameraTarget);
         const newTarget: Point = {
             x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * relX,
             y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * relY,
         };
 
         // Calculate the viewbox for the new camera target
-        const newViewbox = this.viewboxFromCameraTarget(newTarget, newScale);
+        const newViewbox = this.viewboxFromCameraTarget(newTarget);
 
-        // Apply scale and schedule map layer updates
-        this.scale = newScale;
+        // Apply new zoom level and schedule map layer updates
         this.layers.forEach((layer) => {
-            layer.redraw(newViewbox, newScale);
+            layer.redraw(newViewbox, newZoom);
         });
 
         // Invoke viewbox callbacks
@@ -161,7 +154,7 @@ class MapRenderer {
         const startX = evtDown.clientX;
         const startY = evtDown.clientY;
         // Continuous "mousemove" callback
-        const drag = rafDebounce((evtDrag: MouseEvent) => {
+        const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
             const deltaX = evtDrag.clientX - startX;
             const deltaY = evtDrag.clientY - startY;
             // Calculate and apply new layer anchor offset
@@ -183,43 +176,29 @@ class MapRenderer {
     }
 
     /**
-     * Calculate map scales for all zoom levels.
+     * Calculate map zoom factors for all zoom level indices.
      *
      * This is specific to the current map and viewport size and must be
      * regenerated after either is altered.
-     * @returns Array of map scales for all zoom levels.
+     * @returns Array of map zoom factors for all zoom levels.
      */
     private calculateZoomLevels(): number[] {
-        const vportMetres = this.viewportSizeInMetres();
-        // Lower scale limit: map barely fills the viewport
-        const min_scale = this.mapSize / vportMetres;
-        // Upper scale limit: 10 mm on the screen for every metre on the map
-        const max_scale = 100 / vportMetres;
-        // Calculate logarithmic step for N zoom levels
-        const map_scale_step = Math.pow(Math.round(min_scale / max_scale / 50) *
-            50, 1 / (this.numZoomLevels - 1))
-        // Create a custom list of zoom levels based on these limits
-        let scale = Math.floor(max_scale / 100) * 100;
-        const zoomLevels: number[] = [scale];
-        for (let i = 1; i < this.numZoomLevels; i++) {
-            scale *= map_scale_step;
-            zoomLevels.push(Math.round(scale / 200) * 200);
+        let zoom = this.maxZoom;
+        const zoomLevels: number[] = [zoom];
+        const stepInverse = 1 / this.zoomStep;
+        while (this.mapSize * zoom > this.viewportMinorAxis()) {
+            zoom *= stepInverse;
+            zoomLevels.push(Utils.roundTo(zoom, 2));
         }
         return zoomLevels;
     }
 
-    /**
-     * Estimate the size of the map viewport in metres.
-     *
-     * This assumes that a millimetre contains ~4 CSS pixels.
-     * @returns Size of the viewport in real-world metres.
-     */
-    private viewportSizeInMetres(): number {
-        // Calculation performed user shorter viewport edge
+    private viewportMinorAxis(): number {
         // TODO: Use cached viewport size references
         const height = this.viewport.clientHeight;
         const width = this.viewport.clientWidth;
-        return (height < width ? height : width) / 4000;
+        // Get the minor axis (i.e. shorter edge) of the viewport
+        return height < width ? height : width;
     }
 
     /**
@@ -230,43 +209,41 @@ class MapRenderer {
      * @returns New zoom level
      */
     private bumpZoomLevel(direction: number): number {
-        let newZoom = this.zoom;
+        let index = this.zoomLevel;
         // Bump zoom level
-        if (direction == 0) return newZoom;
-        if (direction < 0) newZoom--;
-        else if (direction > 0) newZoom++;
+        if (direction == 0)
+            return index;
+        if (direction < 0)
+            index--;
+        else if (direction > 0)
+            index++;
         // Limit zoom range
-        if (newZoom < 0) newZoom = 0;
-        else if (newZoom >= this.numZoomLevels) newZoom = this.numZoomLevels - 1;
+        if (index < 0)
+            index = 0;
+        else if (index >= this.zoomFactors.length)
+            index = this.zoomFactors.length - 1;
         // Update zoom level
-        this.zoom = newZoom;
-        return newZoom;
+        this.zoomLevel = index;
+        return this.zoomFactors[index];
     }
 
-    /**
-     * Convert from CSS pixels to map metres
-     * @param length Length in CSS pixels
-     * @param scale Current map scale
-     * @returns The same length in map metres
-     */
-    private cssPxToMetres(length: number, scale: number): number {
-        return length / 4000 * scale;
+    private viewportToMap(length: number): number {
+        return length / this.zoomFactors[this.zoomLevel];
     }
 
     /**
      * Estimate the visible map are for a given map target.
      * @param target The camera target (i.e. centre of the client viewport)
-     * @param scale Map scale to use for calculation
      * @returns A new viewbox denoting the visible map area
      */
-    private viewboxFromCameraTarget(target: Point, scale: number): Box {
+    private viewboxFromCameraTarget(target: Point): Box {
         // TODO: Use cached viewport DOM values
         const viewportWidth = this.viewport.clientWidth;
         const viewportHeight = this.viewport.clientHeight;
 
         // Calculate the lengths covered by the viewport in map units
-        const viewboxWidth = this.cssPxToMetres(viewportWidth, scale);
-        const viewboxHeight = this.cssPxToMetres(viewportHeight, scale);
+        const viewboxWidth = this.viewportToMap(viewportWidth);
+        const viewboxHeight = this.viewportToMap(viewportHeight);
         // Get viewbox coordinates
         return {
             top: target.y + viewboxHeight * 0.5,

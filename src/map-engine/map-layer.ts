@@ -3,24 +3,16 @@
 /**
  * Base class for map layers.
  *
- * Map layers are generally anything that is tied to the map canvas and
- * moves when the map is panned by the user.
+ * Map layers are layered map conents that are tied to the map canvas and move
+ * as the map is panned by the user.
  */
 abstract class MapLayer {
     /** Unique identifier for this layer and the DOM element it represents. */
     readonly id: string;
-
-    /**
-     * Base size of the map layer in CSS pixels.
-     *
-     * This is primarily used as a coordinate reference system when positioning
-     * layer features.
-     */
+    /** Base size of the map layer in CSS pixels. */
     readonly mapSize: number;
-
     /** DOM element containing the layer's features. */
     readonly element: HTMLDivElement;
-
     /** Whether the layer is currently visible. */
     protected isVisible: boolean = true;
 
@@ -39,14 +31,13 @@ abstract class MapLayer {
      * @param visible New visibility state to apply
      */
     setVisibility(visible: boolean): void {
-        if (this.isVisible != visible) {
-            if (visible) {
-                this.element.style.removeProperty("display");
-            } else {
-                this.element.style.display = "none";
-            }
-            this.isVisible = visible;
-        }
+        if (this.isVisible == visible)
+            return;
+        if (visible)
+            this.element.style.removeProperty("display");
+        else
+            this.element.style.display = "none";
+        this.isVisible = visible;
     }
 
     /**
@@ -59,7 +50,7 @@ abstract class MapLayer {
      * the responsibility of the caller. Debouncing and other throttling
      * strategies are permitted.
      * @param viewbox New viewbox of the client
-     * @param scale New map scale
+     * @param zoom New zoom level
      */
-    abstract redraw(viewbox: Box, scale: number): void;
+    abstract redraw(viewbox: Box, zoom: number): void;
 }

@@ -33,10 +33,9 @@ class StaticLayer extends MapLayer {
         this.element.innerHTML = "";
     }
 
-    redraw(viewbox: Box, scale: number): void {
-        const cssScale = 4000 / scale;
+    redraw(viewbox: Box, zoom: number): void {
         this.element.style.transform = `matrix(${
-            cssScale}, 0.0, 0.0, ${cssScale}, ${
+            zoom}, 0.0, 0.0, ${zoom}, ${
             -0.5 * this.mapSize}, ${-0.5 * this.mapSize})`;
     }
 }
