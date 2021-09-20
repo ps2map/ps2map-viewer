@@ -1,5 +1,6 @@
 /// <reference path="./map-layer.ts" />
 /// <reference path="./static-layer.ts" />
+/// <reference path="./support.ts" />
 
 /**
  * Core map rendering controller.
@@ -118,7 +119,7 @@ class MapRenderer {
      * Event callback for mouse-wheel zoom
      * @param evt Wheel event to process
      */
-    private onZoom(evt: WheelEvent): void {
+    private onZoom = rafDebounce((evt: WheelEvent) => {
         evt.preventDefault(); // Prevent mouse scroll
         // Update map scale
         const newScale = this.zoomLevels[this.bumpZoomLevel(evt.deltaY)];
@@ -139,7 +140,6 @@ class MapRenderer {
 
         // Apply scale and schedule map layer updates
         this.scale = newScale;
-        // TODO: requestAnimationFrame debounce
         this.layers.forEach((layer) => {
             layer.redraw(newViewbox, newScale);
         });
@@ -148,7 +148,7 @@ class MapRenderer {
         let i = this.viewboxCallbacks.length;
         while (i-- > 0)
             this.viewboxCallbacks[i](newViewbox);
-    }
+    });
 
     /** Event callback for mouse map panning.
      * @param evtDown "mousedown" event starting the panning operation
@@ -161,8 +161,7 @@ class MapRenderer {
         const startX = evtDown.clientX;
         const startY = evtDown.clientY;
         // Continuous "mousemove" callback
-        // TODO: requestAnimationFrame debounce
-        const drag = (evtDrag: MouseEvent) => {
+        const drag = rafDebounce((evtDrag: MouseEvent) => {
             const deltaX = evtDrag.clientX - startX;
             const deltaY = evtDrag.clientY - startY;
             // Calculate and apply new layer anchor offset
@@ -170,7 +169,7 @@ class MapRenderer {
             this.panOffsetY = refY + deltaY;
             this.anchor.style.left = `${this.panOffsetX}px`;
             this.anchor.style.top = `${this.panOffsetY}px`;
-        };
+        });
         // Global "mouseup" callback
         const up = () => {
             this.viewport.removeEventListener("mousemove", drag);

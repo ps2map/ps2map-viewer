@@ -57,8 +57,24 @@ var StaticLayer = (function (_super) {
     };
     return StaticLayer;
 }(MapLayer));
+function rafDebounce(target) {
+    var isScheduled = false;
+    var handle = 0;
+    function wrapper() {
+        if (isScheduled)
+            cancelAnimationFrame(handle);
+        var args = arguments;
+        handle = requestAnimationFrame(function () {
+            target.apply(wrapper, args);
+            isScheduled = false;
+        });
+        isScheduled = true;
+    }
+    return wrapper;
+}
 var MapRenderer = (function () {
     function MapRenderer(viewport, mapSize) {
+        var _this = this;
         this.mapSize = 1024;
         this.layers = new Map();
         this.scale = 0.0;
@@ -66,6 +82,24 @@ var MapRenderer = (function () {
         this.zoomLevels = [];
         this.zoom = 0.0;
         this.viewboxCallbacks = [];
+        this.onZoom = rafDebounce(function (evt) {
+            evt.preventDefault();
+            var newScale = _this.zoomLevels[_this.bumpZoomLevel(evt.deltaY)];
+            var _a = _this.clientSpaceToViewportSpace(evt.clientX, evt.clientY), relX = _a[0], relY = _a[1];
+            var currentViewbox = _this.viewboxFromCameraTarget(_this.cameraTarget, _this.scale);
+            var newTarget = {
+                x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * relX,
+                y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * relY
+            };
+            var newViewbox = _this.viewboxFromCameraTarget(newTarget, newScale);
+            _this.scale = newScale;
+            _this.layers.forEach(function (layer) {
+                layer.redraw(newViewbox, newScale);
+            });
+            var i = _this.viewboxCallbacks.length;
+            while (i-- > 0)
+                _this.viewboxCallbacks[i](newViewbox);
+        });
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this.anchor = document.createElement("div");
@@ -105,38 +139,20 @@ var MapRenderer = (function () {
         this.zoom = this.numZoomLevels - 1;
         this.scale = this.zoomLevels[this.zoom];
     };
-    MapRenderer.prototype.onZoom = function (evt) {
-        evt.preventDefault();
-        var newScale = this.zoomLevels[this.bumpZoomLevel(evt.deltaY)];
-        var _a = this.clientSpaceToViewportSpace(evt.clientX, evt.clientY), relX = _a[0], relY = _a[1];
-        var currentViewbox = this.viewboxFromCameraTarget(this.cameraTarget, this.scale);
-        var newTarget = {
-            x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * relX,
-            y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * relY
-        };
-        var newViewbox = this.viewboxFromCameraTarget(newTarget, newScale);
-        this.scale = newScale;
-        this.layers.forEach(function (layer) {
-            layer.redraw(newViewbox, newScale);
-        });
-        var i = this.viewboxCallbacks.length;
-        while (i-- > 0)
-            this.viewboxCallbacks[i](newViewbox);
-    };
     MapRenderer.prototype.mousePan = function (evtDown) {
         var _this = this;
         var refX = this.panOffsetX;
         var refY = this.panOffsetY;
         var startX = evtDown.clientX;
         var startY = evtDown.clientY;
-        var drag = function (evtDrag) {
+        var drag = rafDebounce(function (evtDrag) {
             var deltaX = evtDrag.clientX - startX;
             var deltaY = evtDrag.clientY - startY;
             _this.panOffsetX = refX + deltaX;
             _this.panOffsetY = refY + deltaY;
             _this.anchor.style.left = _this.panOffsetX + "px";
             _this.anchor.style.top = _this.panOffsetY + "px";
-        };
+        });
         var up = function () {
             _this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
