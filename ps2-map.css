@@ -17,7 +17,7 @@
 
 .ps2map__base-hexes {
     /* Temporary terrain texture to aid with alignment */
-    background-image: url(../apl-api/map_assets/Indar_LOD1.png);
+    background-image: url(../ps2-map-api/map_assets/Indar_LOD1.png);
     background-size: 100%;
 }
 

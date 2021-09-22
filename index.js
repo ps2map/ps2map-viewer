@@ -292,7 +292,7 @@ var HeroMap = (function () {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, "../apl-api/map_assets/Indar_LOD3.png");
+        this.minimap = new Minimap(minimapElement, mapSize, "../ps2-map-api/map_assets/Indar_LOD3.png");
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         var hexLayer = new StaticLayer("hexes", mapSize);
         hexLayer.element.classList.add("ps2map__base-hexes");

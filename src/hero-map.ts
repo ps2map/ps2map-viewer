@@ -36,7 +36,7 @@ class HeroMap {
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
         this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, "../apl-api/map_assets/Indar_LOD3.png")
+            mapSize, "../ps2-map-api/map_assets/Indar_LOD3.png")
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
 
