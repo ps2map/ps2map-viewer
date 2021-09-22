@@ -1,27 +1,18 @@
-# APL (Potato Mode)
+# PlanetSide 2 Map Viewer
 
-A standalone alternative to the main [APL website](https://github.com/auto-pl/apl-website) for me to play around in.
+A lean, high performance HTML5 web app for viewing and annotating (soon:tm:) [PlanetSide 2](https://www.planetside2.com/) maps.
 
-This mostly serves to allow me to relearn web development, get more comfortable with TypeScript, all without frameworks or other bloat.
+## Development Version
 
-## Getting started
+This application is not yet live and requires a local API server to function. Refer to se the [PS2 Map API repository](https://github.com/leonhard-s/ps2-map-api) for details.
 
-This front-end requires server-side data for which there currently is no public host available. You must host it locally for now, see the steps below for details.
+## Features
 
-### API setup
-
-- Make sure you have Python 3.8 or later installed
-- Clone the latest version of [auto-pl/apl-api](https://github.com/auto-pl/apl-api)
-- Navigate into the repository (its README.md should be in your CWD)
-- Run `python -m pip install -r requirements.txt` to install dependencies
-- Run `python -m apl_api` to run the local API server
-
-### Accessing the front end
-
-- Clone this repository
-- Make sure the API host is running (see previous section)
-- Open `index.html` in your web browser of choice
-- Profit?
+- Client-side rendering
+- Smooth 60 FPS map interactions
+- Touch support
+- Annotation and drawing canvas (deferred)
+- Shared rooms (deferred)
 
 ## Development notes
 
@@ -29,12 +20,6 @@ This front-end requires server-side data for which there currently is no public 
 - TypeScript files live in `src/`
 - No modules for now. Use triple-slash references instead.
 - ES3 target for no particular reason. This is not targeting any specific browser, but JS should be as potato-compatible as possible until I make up my mind.
-
-> **Note:** This repository has been mixed-and-matched from a number of early branches in the [auto-pl/apl-website](https://github.com/auto-pl/apl-website) repository as it strayed too far from the main architecture on that branch.
->
-> A number of commits containing large image assets and other bloat have been intentionally excluded from this repository to keep it small.
->
-> The resulting partial commits have been kept to help with code and file history, but do not always result in usable states for commits prior to May 2021.
 
 ### Base icon generation
 

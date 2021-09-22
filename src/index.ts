@@ -1,16 +1,21 @@
-/// <reference path="mapController.ts" />
+/// <reference path="./hero-map.ts" />
 
-/**
- * Initialisation hook for code that must access the DOM.
- */
-function onDOMLoaded(): void {
-    const initialContinentId = 6;
-    const map = <HTMLDivElement>document.getElementById("map");
-    const viewport = <HTMLDivElement>document.getElementById("map-container");
-    const mapContainer = <HTMLDivElement>(
-        document.getElementById("map-background")
-    );
-    new MapController(map, mapContainer, viewport, initialContinentId);
-}
+/** Initialisation hook for components that need to be run on DOM load. */
+document.addEventListener("DOMContentLoaded", () => {
+    // API endpoint to use for API requests
+    const apiEndpoint = "http://127.0.0.1:5000";
 
-window.addEventListener("DOMContentLoaded", onDOMLoaded);
+    // Decide the continent to load
+    // TODO: Restore the continent from cookies or depending on status
+    const continentId = 2;
+
+    // Initialise the map controller for the primary map
+    const viewport = document.getElementById("hero-map");
+    if (viewport == null) {
+        throw "Unable to locate viewport element";
+    }
+    if (viewport.tagName != "DIV") {
+        throw `Expected viewport of type "DIV" (got ${viewport.tagName})`;
+    }
+    new HeroMap(viewport as HTMLDivElement, continentId, apiEndpoint);
+});
