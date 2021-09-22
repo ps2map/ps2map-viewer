@@ -78,26 +78,80 @@ var Utils;
     }
     Utils.roundTo = roundTo;
 })(Utils || (Utils = {}));
+var MapCamera = (function () {
+    function MapCamera(mapSize, viewportHeight, viewportWidth) {
+        this.maxZoom = 10.0;
+        this.zoomStep = 1.5;
+        this.zoomIndex = -1;
+        this.viewportHeight = viewportHeight;
+        this.viewportWidth = viewportWidth;
+        var zoom = this.maxZoom;
+        this.zoom = [this.maxZoom];
+        var stepInverse = 1 / this.zoomStep;
+        while (mapSize * zoom > Math.min(viewportHeight, viewportWidth)) {
+            zoom *= stepInverse;
+            this.zoom.push(Utils.roundTo(zoom, 2));
+        }
+        this.zoomIndex = this.zoom.length - 1;
+        this.target = {
+            x: mapSize * 0.5,
+            y: mapSize * 0.5
+        };
+    }
+    MapCamera.prototype.bumpZoomLevel = function (direction) {
+        var index = this.zoomIndex;
+        if (direction == 0)
+            return index;
+        if (direction < 0)
+            index--;
+        else if (direction > 0)
+            index++;
+        if (index < 0)
+            index = 0;
+        else if (index >= this.zoom.length)
+            index = this.zoom.length - 1;
+        this.zoomIndex = index;
+        return this.zoom[index];
+    };
+    MapCamera.prototype.getZoom = function () {
+        return this.zoom[this.zoomIndex];
+    };
+    MapCamera.prototype.screenSpaceToMapSpace = function (screenX, screenY) {
+        var offsetX = (screenX - this.viewportWidth * 0.5) / this.viewportWidth;
+        var offsetY = (screenY - this.viewportHeight * 0.5) / this.viewportHeight;
+        console.log(offsetX, offsetY);
+        return {
+            x: this.target.x + this.viewportWidth * offsetX * this.zoom[this.zoomIndex],
+            y: this.target.y + this.viewportHeight * offsetY * this.zoom[this.zoomIndex]
+        };
+    };
+    MapCamera.prototype.viewboxFromTarget = function (target) {
+        var viewboxWidth = this.viewportWidth / this.getZoom();
+        var viewboxHeight = this.viewportHeight / this.getZoom();
+        return {
+            top: target.y + viewboxHeight * 0.5,
+            right: target.x + viewboxWidth * 0.5,
+            bottom: target.y - viewboxHeight * 0.5,
+            left: target.x - viewboxWidth * 0.5
+        };
+    };
+    return MapCamera;
+}());
 var MapRenderer = (function () {
     function MapRenderer(viewport, mapSize) {
         var _this = this;
         this.mapSize = 1024;
         this.layers = new Map();
-        this.maxZoom = 10.0;
-        this.zoomStep = 1.5;
-        this.zoomFactors = [];
-        this.zoomLevel = 0;
         this.viewboxCallbacks = [];
         this.onZoom = Utils.rafDebounce(function (evt) {
             evt.preventDefault();
-            var newZoom = _this.bumpZoomLevel(evt.deltaY);
-            var _a = _this.clientSpaceToViewportSpace(evt.clientX, evt.clientY), relX = _a[0], relY = _a[1];
-            var currentViewbox = _this.viewboxFromCameraTarget(_this.cameraTarget);
+            var newZoom = _this.camera.bumpZoomLevel(evt.deltaY);
+            var currentViewbox = _this.camera.viewboxFromTarget(_this.camera.target);
             var newTarget = {
-                x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * relX,
-                y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * relY
+                x: currentViewbox.left + (currentViewbox.right - currentViewbox.left) * 0.5,
+                y: currentViewbox.bottom + (currentViewbox.top - currentViewbox.bottom) * 0.5
             };
-            var newViewbox = _this.viewboxFromCameraTarget(newTarget);
+            var newViewbox = _this.camera.viewboxFromTarget(newTarget);
             _this.layers.forEach(function (layer) {
                 layer.redraw(newViewbox, newZoom);
             });
@@ -111,10 +165,7 @@ var MapRenderer = (function () {
         this.anchor.classList.add("ps2map__anchor");
         this.viewport.appendChild(this.anchor);
         this.setMapSize(mapSize);
-        this.cameraTarget = {
-            x: mapSize * 0.5,
-            y: mapSize * 0.5
-        };
+        this.camera = new MapCamera(mapSize, this.viewport.clientHeight, this.viewport.clientWidth);
         this.panOffsetX = this.viewport.clientWidth * 0.5;
         this.panOffsetY = this.viewport.clientHeight * 0.5;
         this.anchor.style.left = this.panOffsetX + "px";
@@ -131,8 +182,7 @@ var MapRenderer = (function () {
             throw "Map layer size must match the map renderer's.";
         this.layers.set(layer.id, layer);
         this.anchor.appendChild(layer.element);
-        var zoom = this.zoomFactors[this.zoomLevel];
-        layer.redraw(this.viewboxFromCameraTarget(this.cameraTarget), zoom);
+        layer.redraw(this.camera.viewboxFromTarget(this.camera.target), this.camera.getZoom());
     };
     MapRenderer.prototype.getMapSize = function () {
         return this.mapSize;
@@ -141,8 +191,7 @@ var MapRenderer = (function () {
         if (this.layers.size > 0)
             throw "Remove all map layers before changing map size.";
         this.mapSize = value;
-        this.zoomFactors = this.calculateZoomLevels();
-        this.zoomLevel = this.zoomFactors.length - 1;
+        this.camera = new MapCamera(value, this.viewport.clientHeight, this.viewport.clientWidth);
     };
     MapRenderer.prototype.mousePan = function (evtDown) {
         var _this = this;
@@ -166,57 +215,6 @@ var MapRenderer = (function () {
         this.viewport.addEventListener("mousemove", drag, {
             passive: true
         });
-    };
-    MapRenderer.prototype.calculateZoomLevels = function () {
-        var zoom = this.maxZoom;
-        var zoomLevels = [zoom];
-        var stepInverse = 1 / this.zoomStep;
-        while (this.mapSize * zoom > this.viewportMinorAxis()) {
-            zoom *= stepInverse;
-            zoomLevels.push(Utils.roundTo(zoom, 2));
-        }
-        return zoomLevels;
-    };
-    MapRenderer.prototype.viewportMinorAxis = function () {
-        var height = this.viewport.clientHeight;
-        var width = this.viewport.clientWidth;
-        return height < width ? height : width;
-    };
-    MapRenderer.prototype.bumpZoomLevel = function (direction) {
-        var index = this.zoomLevel;
-        if (direction == 0)
-            return index;
-        if (direction < 0)
-            index--;
-        else if (direction > 0)
-            index++;
-        if (index < 0)
-            index = 0;
-        else if (index >= this.zoomFactors.length)
-            index = this.zoomFactors.length - 1;
-        this.zoomLevel = index;
-        return this.zoomFactors[index];
-    };
-    MapRenderer.prototype.viewportToMap = function (length) {
-        return length / this.zoomFactors[this.zoomLevel];
-    };
-    MapRenderer.prototype.viewboxFromCameraTarget = function (target) {
-        var viewportWidth = this.viewport.clientWidth;
-        var viewportHeight = this.viewport.clientHeight;
-        var viewboxWidth = this.viewportToMap(viewportWidth);
-        var viewboxHeight = this.viewportToMap(viewportHeight);
-        return {
-            top: target.y + viewboxHeight * 0.5,
-            right: target.x + viewboxWidth * 0.5,
-            bottom: target.y - viewboxHeight * 0.5,
-            left: target.x - viewboxWidth * 0.5
-        };
-    };
-    MapRenderer.prototype.clientSpaceToViewportSpace = function (clientX, clientY) {
-        var bbox = this.viewport.getBoundingClientRect();
-        var relX = 1 - (bbox.width + bbox.left - clientX) / bbox.width;
-        var relY = (bbox.height + bbox.top - clientY) / bbox.height;
-        return [relX, relY];
     };
     return MapRenderer;
 }());

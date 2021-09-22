@@ -1,4 +1,4 @@
-/// <reference path="./map-engine/map-renderer.ts" />
+/// <reference path="./map-engine/renderer.ts" />
 /// <reference path="./api/getters.ts" />
 /// <reference path="./minimap.ts" />
 
