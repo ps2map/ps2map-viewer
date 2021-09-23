@@ -23,7 +23,7 @@ body {
     position: absolute;
     top: 20px;
     left: 20px;
-    width: 256px;
+    width: 262px;
     z-index: 999;
     overflow: hidden;
 }
