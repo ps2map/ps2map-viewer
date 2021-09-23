@@ -177,12 +177,7 @@ var MapRenderer = (function () {
             var relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
             var newTarget = _this.camera.zoomTo(evt.deltaY, relX, relY);
             var newViewbox = _this.camera.viewboxFromTarget(newTarget);
-            _this.layers.forEach(function (layer) {
-                layer.redraw(newViewbox, _this.camera.getZoom());
-            });
-            var i = _this.viewboxCallbacks.length;
-            while (i-- > 0)
-                _this.viewboxCallbacks[i](newViewbox);
+            _this.redraw(newViewbox, _this.camera.getZoom());
         });
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
@@ -207,7 +202,7 @@ var MapRenderer = (function () {
             throw "Map layer size must match the map renderer's.";
         this.layers.set(layer.id, layer);
         this.anchor.appendChild(layer.element);
-        layer.redraw(this.camera.viewboxFromTarget(this.camera.target), this.camera.getZoom());
+        this.redraw(this.camera.viewboxFromTarget(this.camera.target), this.camera.getZoom());
     };
     MapRenderer.prototype.getMapSize = function () {
         return this.mapSize;
@@ -240,6 +235,14 @@ var MapRenderer = (function () {
         this.viewport.addEventListener("mousemove", drag, {
             passive: true
         });
+    };
+    MapRenderer.prototype.redraw = function (viewbox, zoom) {
+        this.layers.forEach(function (layer) {
+            layer.redraw(viewbox, zoom);
+        });
+        var i = this.viewboxCallbacks.length;
+        while (i-- > 0)
+            this.viewboxCallbacks[i](viewbox);
     };
     return MapRenderer;
 }());

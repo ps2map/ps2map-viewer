@@ -74,7 +74,7 @@ class MapRenderer {
             throw "Map layer size must match the map renderer's.";
         this.layers.set(layer.id, layer);
         this.anchor.appendChild(layer.element);
-        layer.redraw(this.camera.viewboxFromTarget(
+        this.redraw(this.camera.viewboxFromTarget(
             this.camera.target), this.camera.getZoom());
     }
 
@@ -114,15 +114,7 @@ class MapRenderer {
         // Update the camera target and viewbox
         const newTarget = this.camera.zoomTo(evt.deltaY, relX, relY);
         const newViewbox = this.camera.viewboxFromTarget(newTarget);
-
-        // Apply new zoom level and schedule map layer updates
-        this.layers.forEach((layer) => {
-            layer.redraw(newViewbox, this.camera.getZoom());
-        });
-        // Invoke viewbox callbacks
-        let i = this.viewboxCallbacks.length;
-        while (i-- > 0)
-            this.viewboxCallbacks[i](newViewbox);
+        this.redraw(newViewbox, this.camera.getZoom());
     });
 
     /** Event callback for mouse map panning.
@@ -155,5 +147,21 @@ class MapRenderer {
         this.viewport.addEventListener("mousemove", drag, {
             passive: true
         });
+    }
+
+    /**
+     * Repaint the map layers and any auxiliary callbacks.
+     * @param viewbox Viewbox to dispatch
+     * @param zoom Zoom level to use
+     */
+    private redraw(viewbox: Box, zoom: number): void {
+        // Apply new zoom level and schedule map layer updates
+        this.layers.forEach((layer) => {
+            layer.redraw(viewbox, zoom);
+        });
+        // Invoke viewbox callbacks
+        let i = this.viewboxCallbacks.length;
+        while (i-- > 0)
+            this.viewboxCallbacks[i](viewbox);
     }
 }
