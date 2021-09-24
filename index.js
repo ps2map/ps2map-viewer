@@ -176,9 +176,12 @@ var MapRenderer = (function () {
         var _this = this;
         this.mapSize = 1024;
         this.layers = new Map();
+        this.isPanning = false;
         this.viewboxCallbacks = [];
         this.onZoom = Utils.rafDebounce(function (evt) {
             evt.preventDefault();
+            if (_this.isPanning)
+                return;
             var view = _this.viewport.getBoundingClientRect();
             var relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
             var relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
@@ -222,19 +225,23 @@ var MapRenderer = (function () {
     };
     MapRenderer.prototype.mousePan = function (evtDown) {
         var _this = this;
-        var refX = this.panOffsetX;
-        var refY = this.panOffsetY;
+        this.isPanning = true;
+        var refX = this.camera.target.x;
+        var refY = this.camera.target.y;
+        var zoom = this.camera.getZoom();
         var startX = evtDown.clientX;
         var startY = evtDown.clientY;
         var drag = Utils.rafDebounce(function (evtDrag) {
             var deltaX = evtDrag.clientX - startX;
             var deltaY = evtDrag.clientY - startY;
-            _this.panOffsetX = refX + deltaX;
-            _this.panOffsetY = refY + deltaY;
-            _this.anchor.style.left = _this.panOffsetX + "px";
-            _this.anchor.style.top = _this.panOffsetY + "px";
+            _this.camera.target = {
+                x: refX - deltaX / zoom,
+                y: refY + deltaY / zoom
+            };
+            _this.redraw(_this.camera.getViewbox(), zoom);
         });
         var up = function () {
+            _this.isPanning = false;
             _this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
         };

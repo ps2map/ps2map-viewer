@@ -30,6 +30,8 @@ class MapRenderer {
     private panOffsetX: number;
     private panOffsetY: number;
 
+    private isPanning: boolean = false;
+
     private camera: MapCamera;
 
     /** Additional callbacks to invoke when the map viewbox changes. */
@@ -107,6 +109,9 @@ class MapRenderer {
      */
     private onZoom = Utils.rafDebounce((evt: WheelEvent) => {
         evt.preventDefault();
+        // Only allow zoom interactions when pan is not active - this avoids
+        // camera target sync issues
+        if (this.isPanning) return;
         // Get the viewport-relative cursor position
         const view = this.viewport.getBoundingClientRect()
         const relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
@@ -121,9 +126,11 @@ class MapRenderer {
      * @param evtDown "mousedown" event starting the panning operation
      */
     private mousePan(evtDown: MouseEvent): void {
+        this.isPanning = true;
         // Cache the initial anchor offset relative to which the pan will occur
-        const refX = this.panOffsetX;
-        const refY = this.panOffsetY;
+        const refX = this.camera.target.x;
+        const refY = this.camera.target.y;
+        const zoom = this.camera.getZoom();
         // Initial cursor position
         const startX = evtDown.clientX;
         const startY = evtDown.clientY;
@@ -132,13 +139,15 @@ class MapRenderer {
             const deltaX = evtDrag.clientX - startX;
             const deltaY = evtDrag.clientY - startY;
             // Calculate and apply new layer anchor offset
-            this.panOffsetX = refX + deltaX;
-            this.panOffsetY = refY + deltaY;
-            this.anchor.style.left = `${this.panOffsetX}px`;
-            this.anchor.style.top = `${this.panOffsetY}px`;
+            this.camera.target = {
+                x: refX - deltaX / zoom,
+                y: refY + deltaY / zoom
+            };
+            this.redraw(this.camera.getViewbox(), zoom);
         });
         // Global "mouseup" callback
         const up = () => {
+            this.isPanning = false;
             this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
         };
