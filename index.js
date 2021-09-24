@@ -160,7 +160,14 @@ var StaticLayer = (function (_super) {
         this.element.innerHTML = "";
     };
     StaticLayer.prototype.redraw = function (viewbox, zoom) {
-        this.element.style.transform = "matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + -0.5 * this.mapSize + ", " + -0.5 * this.mapSize + ")";
+        var targetX = (viewbox.right + viewbox.left) * 0.5;
+        var targetY = (viewbox.top + viewbox.bottom) * 0.5;
+        var halfMapSize = this.mapSize * 0.5;
+        var offsetX = -halfMapSize;
+        var offsetY = -halfMapSize;
+        offsetX += (halfMapSize - targetX) * zoom;
+        offsetY -= (halfMapSize - targetY) * zoom;
+        this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
     };
     return StaticLayer;
 }(MapLayer));
