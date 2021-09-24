@@ -81,6 +81,23 @@ class MapCamera {
     }
 
     /**
+     * Returns teh current viewbox of the camera.
+     * @returns Current viewbox object.
+     */
+    getViewbox(): Box {
+        // Calculate the lengths covered by the viewport in map units
+        const viewboxWidth = this.viewWidth / this.getZoom();
+        const viewboxHeight = this.viewHeight / this.getZoom();
+        // Get viewbox coordinates
+        return {
+            top: this.target.y + viewboxHeight * 0.5,
+            right: this.target.x + viewboxWidth * 0.5,
+            bottom: this.target.y - viewboxHeight * 0.5,
+            left: this.target.x - viewboxWidth * 0.5,
+        };
+    }
+
+    /**
      * Return the current zoom level of the camera.
      * @returns Current map scaling factor.
      */
@@ -124,23 +141,5 @@ class MapCamera {
             y: targetY
         };
         return this.target;
-    }
-
-    /**
-     * Estimate the visible map are for a given map target.
-     * @param target The camera target (i.e. centre of the client viewport)
-     * @returns A new viewbox denoting the visible map area
-     */
-    viewboxFromTarget(target: Point): Box {
-        // Calculate the lengths covered by the viewport in map units
-        const viewboxWidth = this.viewWidth / this.getZoom();
-        const viewboxHeight = this.viewHeight / this.getZoom();
-        // Get viewbox coordinates
-        return {
-            top: target.y + viewboxHeight * 0.5,
-            right: target.x + viewboxWidth * 0.5,
-            bottom: target.y - viewboxHeight * 0.5,
-            left: target.x - viewboxWidth * 0.5,
-        };
     }
 }

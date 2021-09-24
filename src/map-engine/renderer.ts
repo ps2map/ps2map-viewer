@@ -76,8 +76,7 @@ class MapRenderer {
             throw "Map layer size must match the map renderer's.";
         this.layers.set(layer.id, layer);
         this.anchor.appendChild(layer.element);
-        this.redraw(this.camera.viewboxFromTarget(
-            this.camera.target), this.camera.getZoom());
+        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
     }
 
     /** Get the current map size of the map renderer.
@@ -117,9 +116,9 @@ class MapRenderer {
         const relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
         const relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
         // Update the camera target and viewbox
-        const newTarget = this.camera.zoomTo(evt.deltaY, relX, relY);
-        const newViewbox = this.camera.viewboxFromTarget(newTarget);
-        this.redraw(newViewbox, this.camera.getZoom());
+        this.camera.zoomTo(evt.deltaY, relX, relY);
+        this.constrainMapTarget();
+        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
     });
 
     /** Event callback for mouse map panning.
@@ -143,6 +142,7 @@ class MapRenderer {
                 x: refX - deltaX / zoom,
                 y: refY + deltaY / zoom
             };
+            this.constrainMapTarget();
             this.redraw(this.camera.getViewbox(), zoom);
         });
         // Global "mouseup" callback
@@ -172,5 +172,25 @@ class MapRenderer {
         let i = this.viewboxCallbacks.length;
         while (i-- > 0)
             this.viewboxCallbacks[i](viewbox);
+    }
+
+    /**
+     * Constrain the camera target to lie within the map area.
+     *
+     * This avoids users moving the map out of frame, never to be seen again.
+     */
+    private constrainMapTarget(): void {
+        let targetX = this.camera.target.x;
+        let targetY = this.camera.target.y;
+        // Constrain pan limits
+        if (targetX < 0) targetX = 0;
+        if (targetX > this.mapSize) targetX = this.mapSize;
+        if (targetY < 0) targetY = 0;
+        if (targetY > this.mapSize) targetY = this.mapSize;
+        // Update camera
+        this.camera.target = {
+            x: targetX,
+            y: targetY
+        };
     }
 }
