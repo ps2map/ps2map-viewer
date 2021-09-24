@@ -32,5 +32,5 @@ body {
     position: absolute;
     background-color: rgba(255, 255, 255, 0.2);
     border: 1px solid white;
-    transition: all 200ms ease-out;
+    transition: all 100ms ease-out;
 }

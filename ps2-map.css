@@ -11,7 +11,7 @@
     position: absolute;
     -ms-user-select: none;
     -webkit-user-select: none;
-    transition: transform 200ms ease-out;
+    transition: transform 100ms ease-out;
     user-select: none;
 }
 
