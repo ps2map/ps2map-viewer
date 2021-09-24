@@ -87,6 +87,16 @@ class MapRenderer {
     }
 
     /**
+     * Jump to the closest valid camera position near the target.
+     * @param target Map position to jump to
+     */
+    jumpTo(target: Point): void {
+        this.camera.target = target;
+        this.constrainMapTarget();
+        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
+    }
+
+    /**
      * Update the map size of the map renderer.
      *
      * This is only available after all map layers have been removed from the

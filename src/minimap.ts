@@ -18,6 +18,9 @@ class Minimap {
     /** CSS size of the minimap. */
     private readonly cssSize: number;
 
+    /** Callbacks invoked when the the user clicks on the minimap. */
+    jumpToCallbacks: ((arg0: Point) => void)[] = []
+
     constructor(element: HTMLDivElement, mapSize: number, background: string) {
         this.mapSize = mapSize;
         // Set up DOM containers
@@ -30,6 +33,11 @@ class Minimap {
         // Set background image
         this.element.style.backgroundImage = `url(${background})`;
         this.element.style.backgroundSize = `100%`;
+
+        // Attach event listeners
+        this.element.addEventListener("click", this.jumpToPosition.bind(this), {
+            passive: true
+        });
     }
 
     /**
@@ -40,6 +48,26 @@ class Minimap {
     configureMinimap(mapSize: number, background: string): void {
         this.mapSize = mapSize;
         this.element.style.backgroundImage = `url(${background})`;
+    }
+
+    /**
+     * Event callback for clicking on the minimap.
+     * @param evt Position the mouse was clicked at
+     */
+    private jumpToPosition(evt: MouseEvent): void {
+        // Get relative cursor position
+        const rect = this.element.getBoundingClientRect();
+        const relX = (evt.clientX - rect.left) / (rect.width);
+        const relY = (evt.clientY - rect.top) / (rect.height);
+        // Calculate target cursor position
+        const target: Point = {
+            x: Math.round(relX * this.mapSize),
+            y: Math.round((1 - relY) * this.mapSize)
+        };
+        // Invoke jumpTo callbacks
+        let i = this.jumpToCallbacks.length;
+        while (i-- > 0)
+            this.jumpToCallbacks[i](target);
     }
 
     /** Update the viewbox displayed on the minimap. */

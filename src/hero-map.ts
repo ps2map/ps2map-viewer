@@ -39,6 +39,8 @@ class HeroMap {
             mapSize, "../ps2-map-api/map_assets/Indar_LOD3.png")
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
+        this.minimap.jumpToCallbacks.push(
+            this.controller.jumpTo.bind(this.controller));
 
         // Add map layer for base hexes
         const hexLayer = new StaticLayer("hexes", mapSize);

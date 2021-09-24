@@ -217,6 +217,11 @@ var MapRenderer = (function () {
     MapRenderer.prototype.getMapSize = function () {
         return this.mapSize;
     };
+    MapRenderer.prototype.jumpTo = function (target) {
+        this.camera.target = target;
+        this.constrainMapTarget();
+        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
+    };
     MapRenderer.prototype.setMapSize = function (value) {
         if (this.layers.size > 0)
             throw "Remove all map layers before changing map size.";
@@ -307,6 +312,7 @@ var Api;
 })(Api || (Api = {}));
 var Minimap = (function () {
     function Minimap(element, mapSize, background) {
+        this.jumpToCallbacks = [];
         this.mapSize = mapSize;
         this.element = element;
         this.cssSize = this.element.clientWidth;
@@ -315,10 +321,25 @@ var Minimap = (function () {
         this.element.appendChild(this.viewboxElement);
         this.element.style.backgroundImage = "url(" + background + ")";
         this.element.style.backgroundSize = "100%";
+        this.element.addEventListener("click", this.jumpToPosition.bind(this), {
+            passive: true
+        });
     }
     Minimap.prototype.configureMinimap = function (mapSize, background) {
         this.mapSize = mapSize;
         this.element.style.backgroundImage = "url(" + background + ")";
+    };
+    Minimap.prototype.jumpToPosition = function (evt) {
+        var rect = this.element.getBoundingClientRect();
+        var relX = (evt.clientX - rect.left) / (rect.width);
+        var relY = (evt.clientY - rect.top) / (rect.height);
+        var target = {
+            x: Math.round(relX * this.mapSize),
+            y: Math.round((1 - relY) * this.mapSize)
+        };
+        var i = this.jumpToCallbacks.length;
+        while (i-- > 0)
+            this.jumpToCallbacks[i](target);
     };
     Minimap.prototype.setViewbox = function (viewbox) {
         var mapSize = this.mapSize;
@@ -351,6 +372,7 @@ var HeroMap = (function () {
             throw "Minimap element must be a DIV";
         this.minimap = new Minimap(minimapElement, mapSize, "../ps2-map-api/map_assets/Indar_LOD3.png");
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
+        this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var hexLayer = new StaticLayer("hexes", mapSize);
         hexLayer.element.classList.add("ps2map__base-hexes");
         Api.getContinent(this.continentId)
