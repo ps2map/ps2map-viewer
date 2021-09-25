@@ -325,6 +325,7 @@ var HexLayer = (function (_super) {
     __extends(HexLayer, _super);
     function HexLayer(id, mapSize) {
         var _this = _super.call(this, id, mapSize) || this;
+        _this.polygonHoverCallbacks = [];
         _this.element.classList.add("ps2map__base-hexes");
         return _this;
     }
@@ -339,6 +340,7 @@ var HexLayer = (function (_super) {
         return svg;
     };
     HexLayer.prototype.applyPolygonHoverFix = function (svg) {
+        var _this = this;
         svg.querySelectorAll("polygon").forEach(function (polygon) {
             var addHoverFx = function () {
                 svg.appendChild(polygon);
@@ -352,6 +354,9 @@ var HexLayer = (function (_super) {
                 polygon.addEventListener("touchcancel", removeHoverFx, {
                     passive: true
                 });
+                var i = _this.polygonHoverCallbacks.length;
+                while (i-- > 0)
+                    _this.polygonHoverCallbacks[i](parseInt(polygon.id), polygon);
                 polygon.style.stroke = "#ffffff";
             };
             polygon.addEventListener("mouseenter", addHoverFx, {

@@ -6,6 +6,9 @@
  * This is a static layer used to interact with base hexes.
  */
 class HexLayer extends StaticLayer {
+    /** A list of callbacks to invoke when a base polygon is hovered. */
+    polygonHoverCallbacks: ((arg0: number, arg1: SVGPolygonElement) => void)[] = [];
+
     constructor(id: string, mapSize: number) {
         super(id, mapSize);
         this.element.classList.add("ps2map__base-hexes");
@@ -44,6 +47,10 @@ class HexLayer extends StaticLayer {
                 polygon.addEventListener("touchcancel", removeHoverFx, {
                     passive: true
                 });
+                // Dispatch polygon hover callbacks
+                let i = this.polygonHoverCallbacks.length;
+                while (i-- > 0)
+                    this.polygonHoverCallbacks[i](parseInt(polygon.id), polygon);
                 // Apply hover
                 polygon.style.stroke = "#ffffff";
             };
