@@ -24,7 +24,7 @@ class MapRenderer {
     /** The base map size for the current map. */
     private mapSize: number = 1024;
     /** Collection of map layers added to the map renderer. */
-    private layers: Map < string, MapLayer > = new Map();
+    private layers: MapLayer[] = [];
 
     // Current map panning offset - TBD anbd merged into camera target
     private panOffsetX: number;
@@ -74,7 +74,7 @@ class MapRenderer {
     addLayer(layer: MapLayer): void {
         if (layer.mapSize != this.mapSize)
             throw "Map layer size must match the map renderer's.";
-        this.layers.set(layer.id, layer);
+        this.layers.push(layer);
         this.anchor.appendChild(layer.element);
         this.redraw(this.camera.getViewbox(), this.camera.getZoom());
     }
@@ -104,7 +104,7 @@ class MapRenderer {
      * @param value New map size to apply.
      */
     setMapSize(value: number): void {
-        if (this.layers.size > 0)
+        if (this.layers.length > 0)
             throw "Remove all map layers before changing map size.";
         this.mapSize = value;
         // Create a new camera as zoom levels depend on map size

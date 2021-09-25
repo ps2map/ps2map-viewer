@@ -175,7 +175,7 @@ var MapRenderer = (function () {
     function MapRenderer(viewport, mapSize) {
         var _this = this;
         this.mapSize = 1024;
-        this.layers = new Map();
+        this.layers = [];
         this.isPanning = false;
         this.viewboxCallbacks = [];
         this.onZoom = Utils.rafDebounce(function (evt) {
@@ -210,7 +210,7 @@ var MapRenderer = (function () {
     MapRenderer.prototype.addLayer = function (layer) {
         if (layer.mapSize != this.mapSize)
             throw "Map layer size must match the map renderer's.";
-        this.layers.set(layer.id, layer);
+        this.layers.push(layer);
         this.anchor.appendChild(layer.element);
         this.redraw(this.camera.getViewbox(), this.camera.getZoom());
     };
@@ -223,7 +223,7 @@ var MapRenderer = (function () {
         this.redraw(this.camera.getViewbox(), this.camera.getZoom());
     };
     MapRenderer.prototype.setMapSize = function (value) {
-        if (this.layers.size > 0)
+        if (this.layers.length > 0)
             throw "Remove all map layers before changing map size.";
         this.mapSize = value;
         this.camera = new MapCamera(value, this.viewport.clientHeight, this.viewport.clientWidth);
