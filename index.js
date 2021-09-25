@@ -147,8 +147,8 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var StaticLayer = (function (_super) {
     __extends(StaticLayer, _super);
-    function StaticLayer(name, mapSize) {
-        return _super.call(this, name, mapSize) || this;
+    function StaticLayer(id, mapSize) {
+        return _super.call(this, id, mapSize) || this;
     }
     StaticLayer.prototype.addChild = function (element) {
         this.element.appendChild(element);
@@ -321,6 +321,49 @@ var Api;
     }
     Api.getContinent = getContinent;
 })(Api || (Api = {}));
+var HexLayer = (function (_super) {
+    __extends(HexLayer, _super);
+    function HexLayer(id, mapSize) {
+        var _this = _super.call(this, id, mapSize) || this;
+        _this.element.classList.add("ps2map__base-hexes");
+        return _this;
+    }
+    HexLayer.prototype.svgFactory = function (data) {
+        var factory = document.createElement("template");
+        factory.innerHTML = data;
+        var svg = factory.content.firstElementChild;
+        if (!(svg instanceof SVGElement))
+            throw "Unable to load contents from map hex SVG";
+        svg.classList.add("ps2map__base-hexes__svg");
+        this.applyPolygonHoverFix(svg);
+        return svg;
+    };
+    HexLayer.prototype.applyPolygonHoverFix = function (svg) {
+        svg.querySelectorAll("polygon").forEach(function (polygon) {
+            var addHoverFx = function () {
+                svg.appendChild(polygon);
+                var removeHoverFx = function () { return polygon.removeAttribute("style"); };
+                polygon.addEventListener("mouseleave", removeHoverFx, {
+                    passive: true
+                });
+                polygon.addEventListener("touchend", removeHoverFx, {
+                    passive: true
+                });
+                polygon.addEventListener("touchcancel", removeHoverFx, {
+                    passive: true
+                });
+                polygon.style.stroke = "#ffffff";
+            };
+            polygon.addEventListener("mouseenter", addHoverFx, {
+                passive: true
+            });
+            polygon.addEventListener("touchstart", addHoverFx, {
+                passive: true
+            });
+        });
+    };
+    return HexLayer;
+}(StaticLayer));
 var Minimap = (function () {
     function Minimap(element, mapSize, background) {
         this.jumpToCallbacks = [];
@@ -384,8 +427,7 @@ var HeroMap = (function () {
         this.minimap = new Minimap(minimapElement, mapSize, "../ps2-map-api/map_assets/Indar_LOD3.png");
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
-        var hexLayer = new StaticLayer("hexes", mapSize);
-        hexLayer.element.classList.add("ps2map__base-hexes");
+        var hexLayer = new HexLayer("hexes", mapSize);
         Api.getContinent(this.continentId)
             .then(function (continent) {
             return fetch(endpoint + "/static/hex/" + continent.code + ".svg");
@@ -394,38 +436,7 @@ var HeroMap = (function () {
             return data.text();
         })
             .then(function (payload) {
-            var factory = document.createElement("template");
-            factory.innerHTML = payload.trim();
-            var svg = factory.content.firstElementChild;
-            if (svg == null) {
-                throw "Unable to load map hexes";
-            }
-            svg.classList.add("ps2map__base-hexes__hex");
-            svg.querySelectorAll("polygon").forEach(function (polygon) {
-                var promoteElement = function () {
-                    svg.appendChild(polygon);
-                    var removeHover = function () {
-                        polygon.removeAttribute("style");
-                    };
-                    polygon.addEventListener("mouseleave", removeHover, {
-                        passive: true
-                    });
-                    polygon.addEventListener("touchend", removeHover, {
-                        passive: true
-                    });
-                    polygon.addEventListener("touchcancel", removeHover, {
-                        passive: true
-                    });
-                    polygon.style.stroke = "#ffffff";
-                };
-                polygon.addEventListener("mouseenter", promoteElement, {
-                    passive: true
-                });
-                polygon.addEventListener("touchstart", promoteElement, {
-                    passive: true
-                });
-            });
-            hexLayer.addChild(svg);
+            hexLayer.element.appendChild(hexLayer.svgFactory(payload));
         });
         this.controller.addLayer(hexLayer);
     }

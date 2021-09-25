@@ -8,8 +8,8 @@
  * checks or optimisations are used whatsoever - avoid them when possible.
  */
 class StaticLayer extends MapLayer {
-    constructor(name: string, mapSize: number) {
-        super(name, mapSize);
+    constructor(id: string, mapSize: number) {
+        super(id, mapSize);
     }
 
     /**
