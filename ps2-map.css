@@ -11,7 +11,7 @@
     position: absolute;
     -ms-user-select: none;
     -webkit-user-select: none;
-    transition: transform 100ms ease-out;
+    transition: transform 200ms ease-out;
     user-select: none;
 }
 
@@ -27,4 +27,6 @@
     pointer-events: visiblePainted;
     stroke: #000000;
     stroke-width: 4px;
+    /* Note: polygon hover is applied in code as we need to reorder the SVG
+       elements, which breaks regular CSS hover. */
 }

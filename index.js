@@ -230,7 +230,7 @@ var MapRenderer = (function () {
     };
     MapRenderer.prototype.mousePan = function (evtDown) {
         var _this = this;
-        this.isPanning = true;
+        this.setPanLock(true);
         var refX = this.camera.target.x;
         var refY = this.camera.target.y;
         var zoom = this.camera.getZoom();
@@ -247,7 +247,7 @@ var MapRenderer = (function () {
             _this.redraw(_this.camera.getViewbox(), zoom);
         });
         var up = function () {
-            _this.isPanning = false;
+            _this.setPanLock(false);
             _this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
         };
@@ -255,6 +255,17 @@ var MapRenderer = (function () {
         this.viewport.addEventListener("mousemove", drag, {
             passive: true
         });
+    };
+    MapRenderer.prototype.setPanLock = function (locked) {
+        this.isPanning = locked;
+        var i = this.layers.length;
+        while (i-- > 0) {
+            var element = this.layers[i].element;
+            if (locked)
+                element.style.transition = "transform 0ms ease-out";
+            else
+                element.style.removeProperty("transition");
+        }
     };
     MapRenderer.prototype.redraw = function (viewbox, zoom) {
         this.layers.forEach(function (layer) {

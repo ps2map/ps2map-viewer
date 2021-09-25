@@ -135,7 +135,7 @@ class MapRenderer {
      * @param evtDown "mousedown" event starting the panning operation
      */
     private mousePan(evtDown: MouseEvent): void {
-        this.isPanning = true;
+        this.setPanLock(true);
         // Cache the initial anchor offset relative to which the pan will occur
         const refX = this.camera.target.x;
         const refY = this.camera.target.y;
@@ -157,7 +157,7 @@ class MapRenderer {
         });
         // Global "mouseup" callback
         const up = () => {
-            this.isPanning = false;
+            this.setPanLock(false);
             this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
         };
@@ -166,6 +166,25 @@ class MapRenderer {
         this.viewport.addEventListener("mousemove", drag, {
             passive: true
         });
+    }
+
+    /**
+     * Enable or disable the pan lock flag.
+     * 
+     * Pan lock prevents the map from being zoomed while panning.
+     * @param locked Whether the pan lock is active (i.e. zoom is disabled)
+     */
+    private setPanLock(locked: boolean): void {
+        this.isPanning = locked;
+        // Disable CSS transitions while panning
+        let i = this.layers.length;
+        while (i-- > 0) {
+            const element = this.layers[i].element;
+            if (locked)
+                element.style.transition = "transform 0ms ease-out";
+            else
+                element.style.removeProperty("transition");
+        }
     }
 
     /**
