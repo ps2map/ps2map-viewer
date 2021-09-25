@@ -344,7 +344,7 @@ var HexLayer = (function (_super) {
         svg.querySelectorAll("polygon").forEach(function (polygon) {
             var addHoverFx = function () {
                 svg.appendChild(polygon);
-                var removeHoverFx = function () { return polygon.removeAttribute("style"); };
+                var removeHoverFx = function () { return polygon.style.removeProperty("stroke"); };
                 polygon.addEventListener("mouseleave", removeHoverFx, {
                     passive: true
                 });

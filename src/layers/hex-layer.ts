@@ -37,7 +37,7 @@ class HexLayer extends StaticLayer {
                 // neighbouring polygons.
                 svg.appendChild(polygon);
                 // Event handler for removing hover effects
-                const removeHoverFx = () => polygon.removeAttribute("style");
+                const removeHoverFx = () => polygon.style.removeProperty("stroke");
                 polygon.addEventListener("mouseleave", removeHoverFx, {
                     passive: true
                 });
