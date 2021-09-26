@@ -36,8 +36,7 @@
 .ps2map__base-names__icon {
     --ps2map__base-color: #333333;
     --ps2map__base-icon-size: 1.5em;
-    letter-spacing: 0.05em;
-    line-height: 0.9em;
+    line-height: 0.95em;
     font-weight: 500;
     position: absolute;
     text-align: center;
@@ -49,9 +48,7 @@
        more layers get implemented and start loading the renderer. */
     text-shadow:
         var(--ps2map__base-color) 0.1em 0.1em 0.2em,
-        var(--ps2map__base-color) 0.1em -0.1em 0.2em,
-        var(--ps2map__base-color) -0.1em -0.1em 0.2em,
-        var(--ps2map__base-color) -0.1em 0.1em 0.2em;
+        var(--ps2map__base-color) -0.1em -0.1em 0.2em;
 }
 
 .ps2map__base-names__icon::before {
