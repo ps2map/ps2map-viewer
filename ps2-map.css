@@ -36,12 +36,14 @@
 .ps2map__base-names__icon {
     --ps2map__base-color: #333333;
     --ps2map__base-icon-size: 1.5em;
-    font-size: 1.5em;
+    letter-spacing: 0.05em;
+    line-height: 0.9em;
+    font-weight: 500;
     position: absolute;
     text-align: center;
     height: 2em;
     width: 8em;
-    transform: translate(-50%, calc(var(--ps2map__base-icon-size) * 1.5));
+    transform: translate(-50%, calc(var(--ps2map__base-icon-size) * 2));
     /* Slightly janky workaround for getting more pronounced text shadows. The
        performance hit is not so bad, but we'll need to keep an eye on this as
        more layers get implemented and start loading the renderer. */

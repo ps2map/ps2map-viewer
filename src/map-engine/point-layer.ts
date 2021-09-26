@@ -59,7 +59,7 @@ class PointLayer extends MapLayer {
             const feat = this.features[i];
             // FIXME: Temporary solution; the layer is still scaled by a CSS
             // transformation matrix, which is not the point of point layers.
-            feat.element.style.fontSize = `calc(24px * ${unzoom})`;
+            feat.element.style.fontSize = `calc(20px * ${unzoom})`;
             feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
         }
     });
