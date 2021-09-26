@@ -1,5 +1,6 @@
 /// <reference path="./map-engine/renderer.ts" />
 /// <reference path="./api/getters.ts" />
+/// <reference path="./layers/hex-layer.ts" />
 /// <reference path="./minimap.ts" />
 
 /**
@@ -39,60 +40,32 @@ class HeroMap {
             mapSize, "../ps2-map-api/map_assets/Indar_LOD3.png")
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
+        this.minimap.jumpToCallbacks.push(
+            this.controller.jumpTo.bind(this.controller));
 
         // Add map layer for base hexes
-        const hexLayer = new StaticLayer("hexes", mapSize);
-        hexLayer.element.classList.add("ps2map__base-hexes");
+        const hexLayer = new HexLayer("hexes", mapSize);
         // Load continent data
         Api.getContinent(this.continentId)
-            // Fetch map outlines
+            // Fetch base outlines
             .then((continent) => {
                 return fetch(`${endpoint}/static/hex/${continent.code}.svg`);
             })
+            // Get raw text response (i.e. the SVG literal)
             .then((data) => {
                 return data.text();
             })
-            // Create a template DOM element to throw the SVG into
+            // Load the SVG literal into the layer
             .then((payload) => {
-                const factory = document.createElement("template");
-                factory.innerHTML = payload.trim();
-                // Extract the inner SVG from the template
-                const svg = factory.content.firstElementChild;
-                if (svg == null) {
-                    throw "Unable to load map hexes";
-                }
-                // Setup SVG element
-                svg.classList.add("ps2map__base-hexes__hex");
-                // Update polygon order to ensure active hexes are drawn in
-                // front of inactive ones
-                svg.querySelectorAll("polygon").forEach((polygon) => {
-                    const promoteElement = () => {
-                        svg.appendChild(polygon);
-                        // Workaround for broken :hover pseudoclass redraw.
-                        // See repo issue #1 for details.
-                        const removeHover = () => {
-                            polygon.removeAttribute("style");
-                        };
-                        polygon.addEventListener("mouseleave", removeHover, {
-                            passive: true,
-                        });
-                        polygon.addEventListener("touchend", removeHover, {
-                            passive: true,
-                        });
-                        polygon.addEventListener("touchcancel", removeHover, {
-                            passive: true,
-                        });
-                        polygon.style.stroke = "#ffffff";
-                    };
-                    polygon.addEventListener("mouseenter", promoteElement, {
-                        passive: true,
-                    });
-                    polygon.addEventListener("touchstart", promoteElement, {
-                        passive: true,
-                    });
-                });
-                hexLayer.addChild(svg);
+                hexLayer.element.appendChild(hexLayer.svgFactory(payload));
             });
         this.controller.addLayer(hexLayer);
+
+        // Add map layer for base names
+        const namesLayer = new BaseNamesLayer("names", mapSize);
+        // Load continent data
+        Api.getBasesFromContinent(this.continentId)
+            .then((bases) => namesLayer.loadBaseInfo(bases));
+        this.controller.addLayer(namesLayer);
     }
 }

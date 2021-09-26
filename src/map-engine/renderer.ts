@@ -24,11 +24,13 @@ class MapRenderer {
     /** The base map size for the current map. */
     private mapSize: number = 1024;
     /** Collection of map layers added to the map renderer. */
-    private layers: Map < string, MapLayer > = new Map();
+    private layers: MapLayer[] = [];
 
     // Current map panning offset - TBD anbd merged into camera target
     private panOffsetX: number;
     private panOffsetY: number;
+
+    private isPanning: boolean = false;
 
     private camera: MapCamera;
 
@@ -72,10 +74,9 @@ class MapRenderer {
     addLayer(layer: MapLayer): void {
         if (layer.mapSize != this.mapSize)
             throw "Map layer size must match the map renderer's.";
-        this.layers.set(layer.id, layer);
+        this.layers.push(layer);
         this.anchor.appendChild(layer.element);
-        layer.redraw(this.camera.viewboxFromTarget(
-            this.camera.target), this.camera.getZoom());
+        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
     }
 
     /** Get the current map size of the map renderer.
@@ -86,6 +87,16 @@ class MapRenderer {
     }
 
     /**
+     * Jump to the closest valid camera position near the target.
+     * @param target Map position to jump to
+     */
+    jumpTo(target: Point): void {
+        this.camera.target = target;
+        this.constrainMapTarget();
+        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
+    }
+
+    /**
      * Update the map size of the map renderer.
      *
      * This is only available after all map layers have been removed from the
@@ -93,7 +104,7 @@ class MapRenderer {
      * @param value New map size to apply.
      */
     setMapSize(value: number): void {
-        if (this.layers.size > 0)
+        if (this.layers.length > 0)
             throw "Remove all map layers before changing map size.";
         this.mapSize = value;
         // Create a new camera as zoom levels depend on map size
@@ -107,31 +118,28 @@ class MapRenderer {
      */
     private onZoom = Utils.rafDebounce((evt: WheelEvent) => {
         evt.preventDefault();
+        // Only allow zoom interactions when pan is not active - this avoids
+        // camera target sync issues
+        if (this.isPanning) return;
         // Get the viewport-relative cursor position
         const view = this.viewport.getBoundingClientRect()
         const relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
         const relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
         // Update the camera target and viewbox
-        const newTarget = this.camera.zoomTo(evt.deltaY, relX, relY);
-        const newViewbox = this.camera.viewboxFromTarget(newTarget);
-
-        // Apply new zoom level and schedule map layer updates
-        this.layers.forEach((layer) => {
-            layer.redraw(newViewbox, this.camera.getZoom());
-        });
-        // Invoke viewbox callbacks
-        let i = this.viewboxCallbacks.length;
-        while (i-- > 0)
-            this.viewboxCallbacks[i](newViewbox);
+        this.camera.zoomTo(evt.deltaY, relX, relY);
+        this.constrainMapTarget();
+        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
     });
 
     /** Event callback for mouse map panning.
      * @param evtDown "mousedown" event starting the panning operation
      */
     private mousePan(evtDown: MouseEvent): void {
+        this.setPanLock(true);
         // Cache the initial anchor offset relative to which the pan will occur
-        const refX = this.panOffsetX;
-        const refY = this.panOffsetY;
+        const refX = this.camera.target.x;
+        const refY = this.camera.target.y;
+        const zoom = this.camera.getZoom();
         // Initial cursor position
         const startX = evtDown.clientX;
         const startY = evtDown.clientY;
@@ -140,13 +148,16 @@ class MapRenderer {
             const deltaX = evtDrag.clientX - startX;
             const deltaY = evtDrag.clientY - startY;
             // Calculate and apply new layer anchor offset
-            this.panOffsetX = refX + deltaX;
-            this.panOffsetY = refY + deltaY;
-            this.anchor.style.left = `${this.panOffsetX}px`;
-            this.anchor.style.top = `${this.panOffsetY}px`;
+            this.camera.target = {
+                x: refX - deltaX / zoom,
+                y: refY + deltaY / zoom
+            };
+            this.constrainMapTarget();
+            this.redraw(this.camera.getViewbox(), zoom);
         });
         // Global "mouseup" callback
         const up = () => {
+            this.setPanLock(false);
             this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
         };
@@ -155,5 +166,60 @@ class MapRenderer {
         this.viewport.addEventListener("mousemove", drag, {
             passive: true
         });
+    }
+
+    /**
+     * Enable or disable the pan lock flag.
+     * 
+     * Pan lock prevents the map from being zoomed while panning.
+     * @param locked Whether the pan lock is active (i.e. zoom is disabled)
+     */
+    private setPanLock(locked: boolean): void {
+        this.isPanning = locked;
+        // Disable CSS transitions while panning
+        let i = this.layers.length;
+        while (i-- > 0) {
+            const element = this.layers[i].element;
+            if (locked)
+                element.style.transition = "transform 0ms ease-out";
+            else
+                element.style.removeProperty("transition");
+        }
+    }
+
+    /**
+     * Repaint the map layers and any auxiliary callbacks.
+     * @param viewbox Viewbox to dispatch
+     * @param zoom Zoom level to use
+     */
+    private redraw(viewbox: Box, zoom: number): void {
+        // Apply new zoom level and schedule map layer updates
+        this.layers.forEach((layer) => {
+            layer.redraw(viewbox, zoom);
+        });
+        // Invoke viewbox callbacks
+        let i = this.viewboxCallbacks.length;
+        while (i-- > 0)
+            this.viewboxCallbacks[i](viewbox);
+    }
+
+    /**
+     * Constrain the camera target to lie within the map area.
+     *
+     * This avoids users moving the map out of frame, never to be seen again.
+     */
+    private constrainMapTarget(): void {
+        let targetX = this.camera.target.x;
+        let targetY = this.camera.target.y;
+        // Constrain pan limits
+        if (targetX < 0) targetX = 0;
+        if (targetX > this.mapSize) targetX = this.mapSize;
+        if (targetY < 0) targetY = 0;
+        if (targetY > this.mapSize) targetY = this.mapSize;
+        // Update camera
+        this.camera.target = {
+            x: targetX,
+            y: targetY
+        };
     }
 }

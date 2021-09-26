@@ -15,9 +15,12 @@ var Utils;
         var isScheduled = false;
         var handle = 0;
         function wrapper() {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
             if (isScheduled)
                 cancelAnimationFrame(handle);
-            var args = arguments;
             handle = requestAnimationFrame(function () {
                 target.apply(wrapper, args);
                 isScheduled = false;
@@ -77,6 +80,16 @@ var MapCamera = (function () {
         this.zoomIndex = index;
         return this.zoom[index];
     };
+    MapCamera.prototype.getViewbox = function () {
+        var viewboxWidth = this.viewWidth / this.getZoom();
+        var viewboxHeight = this.viewHeight / this.getZoom();
+        return {
+            top: this.target.y + viewboxHeight * 0.5,
+            right: this.target.x + viewboxWidth * 0.5,
+            bottom: this.target.y - viewboxHeight * 0.5,
+            left: this.target.x - viewboxWidth * 0.5
+        };
+    };
     MapCamera.prototype.getZoom = function () {
         return this.zoom[this.zoomIndex];
     };
@@ -97,16 +110,6 @@ var MapCamera = (function () {
         };
         return this.target;
     };
-    MapCamera.prototype.viewboxFromTarget = function (target) {
-        var viewboxWidth = this.viewWidth / this.getZoom();
-        var viewboxHeight = this.viewHeight / this.getZoom();
-        return {
-            top: target.y + viewboxHeight * 0.5,
-            right: target.x + viewboxWidth * 0.5,
-            bottom: target.y - viewboxHeight * 0.5,
-            left: target.x - viewboxWidth * 0.5
-        };
-    };
     return MapCamera;
 }());
 var MapLayer = (function () {
@@ -115,7 +118,7 @@ var MapLayer = (function () {
         this.id = id;
         this.mapSize = mapSize;
         this.element = document.createElement("div");
-        this.element.id = "id";
+        this.element.id = id;
         this.element.classList.add("ps2map__layer");
         this.element.style.height = this.element.style.width = mapSize + "px";
     }
@@ -147,8 +150,8 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var StaticLayer = (function (_super) {
     __extends(StaticLayer, _super);
-    function StaticLayer(name, mapSize) {
-        return _super.call(this, name, mapSize) || this;
+    function StaticLayer(id, mapSize) {
+        return _super.call(this, id, mapSize) || this;
     }
     StaticLayer.prototype.addChild = function (element) {
         this.element.appendChild(element);
@@ -160,7 +163,14 @@ var StaticLayer = (function (_super) {
         this.element.innerHTML = "";
     };
     StaticLayer.prototype.redraw = function (viewbox, zoom) {
-        this.element.style.transform = "matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + -0.5 * this.mapSize + ", " + -0.5 * this.mapSize + ")";
+        var targetX = (viewbox.right + viewbox.left) * 0.5;
+        var targetY = (viewbox.top + viewbox.bottom) * 0.5;
+        var halfMapSize = this.mapSize * 0.5;
+        var offsetX = -halfMapSize;
+        var offsetY = -halfMapSize;
+        offsetX += (halfMapSize - targetX) * zoom;
+        offsetY -= (halfMapSize - targetY) * zoom;
+        this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
     };
     return StaticLayer;
 }(MapLayer));
@@ -168,21 +178,19 @@ var MapRenderer = (function () {
     function MapRenderer(viewport, mapSize) {
         var _this = this;
         this.mapSize = 1024;
-        this.layers = new Map();
+        this.layers = [];
+        this.isPanning = false;
         this.viewboxCallbacks = [];
         this.onZoom = Utils.rafDebounce(function (evt) {
             evt.preventDefault();
+            if (_this.isPanning)
+                return;
             var view = _this.viewport.getBoundingClientRect();
             var relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
             var relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
-            var newTarget = _this.camera.zoomTo(evt.deltaY, relX, relY);
-            var newViewbox = _this.camera.viewboxFromTarget(newTarget);
-            _this.layers.forEach(function (layer) {
-                layer.redraw(newViewbox, _this.camera.getZoom());
-            });
-            var i = _this.viewboxCallbacks.length;
-            while (i-- > 0)
-                _this.viewboxCallbacks[i](newViewbox);
+            _this.camera.zoomTo(evt.deltaY, relX, relY);
+            _this.constrainMapTarget();
+            _this.redraw(_this.camera.getViewbox(), _this.camera.getZoom());
         });
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
@@ -205,34 +213,44 @@ var MapRenderer = (function () {
     MapRenderer.prototype.addLayer = function (layer) {
         if (layer.mapSize != this.mapSize)
             throw "Map layer size must match the map renderer's.";
-        this.layers.set(layer.id, layer);
+        this.layers.push(layer);
         this.anchor.appendChild(layer.element);
-        layer.redraw(this.camera.viewboxFromTarget(this.camera.target), this.camera.getZoom());
+        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
     };
     MapRenderer.prototype.getMapSize = function () {
         return this.mapSize;
     };
+    MapRenderer.prototype.jumpTo = function (target) {
+        this.camera.target = target;
+        this.constrainMapTarget();
+        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
+    };
     MapRenderer.prototype.setMapSize = function (value) {
-        if (this.layers.size > 0)
+        if (this.layers.length > 0)
             throw "Remove all map layers before changing map size.";
         this.mapSize = value;
         this.camera = new MapCamera(value, this.viewport.clientHeight, this.viewport.clientWidth);
     };
     MapRenderer.prototype.mousePan = function (evtDown) {
         var _this = this;
-        var refX = this.panOffsetX;
-        var refY = this.panOffsetY;
+        this.setPanLock(true);
+        var refX = this.camera.target.x;
+        var refY = this.camera.target.y;
+        var zoom = this.camera.getZoom();
         var startX = evtDown.clientX;
         var startY = evtDown.clientY;
         var drag = Utils.rafDebounce(function (evtDrag) {
             var deltaX = evtDrag.clientX - startX;
             var deltaY = evtDrag.clientY - startY;
-            _this.panOffsetX = refX + deltaX;
-            _this.panOffsetY = refY + deltaY;
-            _this.anchor.style.left = _this.panOffsetX + "px";
-            _this.anchor.style.top = _this.panOffsetY + "px";
+            _this.camera.target = {
+                x: refX - deltaX / zoom,
+                y: refY + deltaY / zoom
+            };
+            _this.constrainMapTarget();
+            _this.redraw(_this.camera.getViewbox(), zoom);
         });
         var up = function () {
+            _this.setPanLock(false);
             _this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
         };
@@ -240,6 +258,41 @@ var MapRenderer = (function () {
         this.viewport.addEventListener("mousemove", drag, {
             passive: true
         });
+    };
+    MapRenderer.prototype.setPanLock = function (locked) {
+        this.isPanning = locked;
+        var i = this.layers.length;
+        while (i-- > 0) {
+            var element = this.layers[i].element;
+            if (locked)
+                element.style.transition = "transform 0ms ease-out";
+            else
+                element.style.removeProperty("transition");
+        }
+    };
+    MapRenderer.prototype.redraw = function (viewbox, zoom) {
+        this.layers.forEach(function (layer) {
+            layer.redraw(viewbox, zoom);
+        });
+        var i = this.viewboxCallbacks.length;
+        while (i-- > 0)
+            this.viewboxCallbacks[i](viewbox);
+    };
+    MapRenderer.prototype.constrainMapTarget = function () {
+        var targetX = this.camera.target.x;
+        var targetY = this.camera.target.y;
+        if (targetX < 0)
+            targetX = 0;
+        if (targetX > this.mapSize)
+            targetX = this.mapSize;
+        if (targetY < 0)
+            targetY = 0;
+        if (targetY > this.mapSize)
+            targetY = this.mapSize;
+        this.camera.target = {
+            x: targetX,
+            y: targetY
+        };
     };
     return MapRenderer;
 }());
@@ -271,8 +324,57 @@ var Api;
     }
     Api.getContinent = getContinent;
 })(Api || (Api = {}));
+var HexLayer = (function (_super) {
+    __extends(HexLayer, _super);
+    function HexLayer(id, mapSize) {
+        var _this = _super.call(this, id, mapSize) || this;
+        _this.polygonHoverCallbacks = [];
+        _this.element.classList.add("ps2map__base-hexes");
+        return _this;
+    }
+    HexLayer.prototype.svgFactory = function (data) {
+        var factory = document.createElement("template");
+        factory.innerHTML = data;
+        var svg = factory.content.firstElementChild;
+        if (!(svg instanceof SVGElement))
+            throw "Unable to load contents from map hex SVG";
+        svg.classList.add("ps2map__base-hexes__svg");
+        this.applyPolygonHoverFix(svg);
+        return svg;
+    };
+    HexLayer.prototype.applyPolygonHoverFix = function (svg) {
+        var _this = this;
+        svg.querySelectorAll("polygon").forEach(function (polygon) {
+            var addHoverFx = function () {
+                svg.appendChild(polygon);
+                var removeHoverFx = function () { return polygon.style.removeProperty("stroke"); };
+                polygon.addEventListener("mouseleave", removeHoverFx, {
+                    passive: true
+                });
+                polygon.addEventListener("touchend", removeHoverFx, {
+                    passive: true
+                });
+                polygon.addEventListener("touchcancel", removeHoverFx, {
+                    passive: true
+                });
+                var i = _this.polygonHoverCallbacks.length;
+                while (i-- > 0)
+                    _this.polygonHoverCallbacks[i](parseInt(polygon.id), polygon);
+                polygon.style.stroke = "#ffffff";
+            };
+            polygon.addEventListener("mouseenter", addHoverFx, {
+                passive: true
+            });
+            polygon.addEventListener("touchstart", addHoverFx, {
+                passive: true
+            });
+        });
+    };
+    return HexLayer;
+}(StaticLayer));
 var Minimap = (function () {
     function Minimap(element, mapSize, background) {
+        this.jumpToCallbacks = [];
         this.mapSize = mapSize;
         this.element = element;
         this.cssSize = this.element.clientWidth;
@@ -281,10 +383,37 @@ var Minimap = (function () {
         this.element.appendChild(this.viewboxElement);
         this.element.style.backgroundImage = "url(" + background + ")";
         this.element.style.backgroundSize = "100%";
+        this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
+            passive: true
+        });
     }
     Minimap.prototype.configureMinimap = function (mapSize, background) {
         this.mapSize = mapSize;
         this.element.style.backgroundImage = "url(" + background + ")";
+    };
+    Minimap.prototype.jumpToPosition = function (evtDown) {
+        var _this = this;
+        var drag = Utils.rafDebounce(function (evtDrag) {
+            var rect = _this.element.getBoundingClientRect();
+            var relX = (evtDrag.clientX - rect.left) / (rect.width);
+            var relY = (evtDrag.clientY - rect.top) / (rect.height);
+            var target = {
+                x: Math.round(relX * _this.mapSize),
+                y: Math.round((1 - relY) * _this.mapSize)
+            };
+            var i = _this.jumpToCallbacks.length;
+            while (i-- > 0)
+                _this.jumpToCallbacks[i](target);
+        });
+        var up = function () {
+            _this.element.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", up);
+        };
+        document.addEventListener("mouseup", up);
+        this.element.addEventListener("mousemove", drag, {
+            passive: true
+        });
+        drag(evtDown);
     };
     Minimap.prototype.setViewbox = function (viewbox) {
         var mapSize = this.mapSize;
@@ -317,8 +446,8 @@ var HeroMap = (function () {
             throw "Minimap element must be a DIV";
         this.minimap = new Minimap(minimapElement, mapSize, "../ps2-map-api/map_assets/Indar_LOD3.png");
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
-        var hexLayer = new StaticLayer("hexes", mapSize);
-        hexLayer.element.classList.add("ps2map__base-hexes");
+        this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
+        var hexLayer = new HexLayer("hexes", mapSize);
         Api.getContinent(this.continentId)
             .then(function (continent) {
             return fetch(endpoint + "/static/hex/" + continent.code + ".svg");
@@ -327,40 +456,13 @@ var HeroMap = (function () {
             return data.text();
         })
             .then(function (payload) {
-            var factory = document.createElement("template");
-            factory.innerHTML = payload.trim();
-            var svg = factory.content.firstElementChild;
-            if (svg == null) {
-                throw "Unable to load map hexes";
-            }
-            svg.classList.add("ps2map__base-hexes__hex");
-            svg.querySelectorAll("polygon").forEach(function (polygon) {
-                var promoteElement = function () {
-                    svg.appendChild(polygon);
-                    var removeHover = function () {
-                        polygon.removeAttribute("style");
-                    };
-                    polygon.addEventListener("mouseleave", removeHover, {
-                        passive: true
-                    });
-                    polygon.addEventListener("touchend", removeHover, {
-                        passive: true
-                    });
-                    polygon.addEventListener("touchcancel", removeHover, {
-                        passive: true
-                    });
-                    polygon.style.stroke = "#ffffff";
-                };
-                polygon.addEventListener("mouseenter", promoteElement, {
-                    passive: true
-                });
-                polygon.addEventListener("touchstart", promoteElement, {
-                    passive: true
-                });
-            });
-            hexLayer.addChild(svg);
+            hexLayer.element.appendChild(hexLayer.svgFactory(payload));
         });
         this.controller.addLayer(hexLayer);
+        var namesLayer = new BaseNamesLayer("names", mapSize);
+        Api.getBasesFromContinent(this.continentId)
+            .then(function (bases) { return namesLayer.loadBaseInfo(bases); });
+        this.controller.addLayer(namesLayer);
     }
     return HeroMap;
 }());
@@ -376,3 +478,107 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     new HeroMap(viewport, continentId, apiEndpoint);
 });
+var PointFeature = (function () {
+    function PointFeature(pos, id, element, minZoom) {
+        if (minZoom === void 0) { minZoom = 0; }
+        this.element = element;
+        this.id = id;
+        this.pos = pos;
+        this.minZoom = minZoom;
+    }
+    return PointFeature;
+}());
+var PointLayer = (function (_super) {
+    __extends(PointLayer, _super);
+    function PointLayer() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.features = [];
+        _this.layerUpdateTimerId = null;
+        _this.resizeLayer = Utils.rafDebounce(function (viewbox, zoom) {
+            var unzoom = 1 / zoom;
+            var i = _this.features.length;
+            while (i-- > 0) {
+                var feat = _this.features[i];
+                feat.element.style.fontSize = "calc(20px * " + unzoom + ")";
+                feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
+            }
+        });
+        return _this;
+    }
+    PointLayer.prototype.redraw = function (viewbox, zoom) {
+        var targetX = (viewbox.right + viewbox.left) * 0.5;
+        var targetY = (viewbox.top + viewbox.bottom) * 0.5;
+        var halfMapSize = this.mapSize * 0.5;
+        var offsetX = -halfMapSize;
+        var offsetY = -halfMapSize;
+        offsetX += (halfMapSize - targetX) * zoom;
+        offsetY -= (halfMapSize - targetY) * zoom;
+        this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
+        if (this.layerUpdateTimerId != null)
+            clearTimeout(this.layerUpdateTimerId);
+        this.layerUpdateTimerId = setTimeout(this.resizeLayer.bind(this), 200, viewbox, zoom);
+    };
+    return PointLayer;
+}(MapLayer));
+var BaseNamesLayer = (function (_super) {
+    __extends(BaseNamesLayer, _super);
+    function BaseNamesLayer() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    BaseNamesLayer.prototype.getBaseIconFromType = function (typeId) {
+        var fileName = "containment-site";
+        switch (typeId) {
+            case 2:
+                fileName = "amp-station";
+                break;
+            case 3:
+                fileName = "bio-lab";
+                break;
+            case 4:
+                fileName = "tech-plant";
+                break;
+            case 5:
+                fileName = "large-outpost";
+                break;
+            case 6:
+                fileName = "small-outpost";
+                break;
+            case 7:
+                fileName = "warpgate";
+                break;
+            case 9:
+                fileName = "construction-outpost";
+                break;
+            default:
+                console.warn("Encountered unknown facility ID: " + typeId);
+        }
+        return fileName;
+    };
+    BaseNamesLayer.prototype.loadBaseInfo = function (bases) {
+        var features = [];
+        var i = bases.length;
+        while (i-- > 0) {
+            var baseInfo = bases[i];
+            var pos = {
+                x: baseInfo.map_pos[0],
+                y: baseInfo.map_pos[1]
+            };
+            var element = document.createElement("div");
+            element.innerText = "" + baseInfo.name;
+            element.classList.add("ps2map__base-names__icon");
+            element.style.left = this.mapSize * 0.5 + pos.x + "px";
+            element.style.bottom = this.mapSize * 0.5 + pos.y + "px";
+            var typeName = this.getBaseIconFromType(baseInfo.type_id);
+            element.classList.add("ps2map__base-names__icon__" + typeName);
+            var minZoom = 0;
+            if (typeName == "small-outpost")
+                minZoom = 0.5;
+            if (typeName == "large-outpost")
+                minZoom = 0.25;
+            features.push(new PointFeature(pos, baseInfo.id, element, minZoom));
+            this.element.appendChild(element);
+        }
+        this.features = features;
+    };
+    return BaseNamesLayer;
+}(PointLayer));

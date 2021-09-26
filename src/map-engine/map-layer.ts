@@ -21,7 +21,7 @@ abstract class MapLayer {
         this.mapSize = mapSize;
         // Create content element
         this.element = document.createElement("div");
-        this.element.id = `id`;
+        this.element.id = id;
         this.element.classList.add("ps2map__layer");
         this.element.style.height = this.element.style.width = `${mapSize}px`;
     }

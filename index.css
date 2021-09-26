@@ -10,7 +10,6 @@ body {
 }
 
 #hero-map {
-    border: 1px solid red;
     position: relative;
     margin-top: 5vh;
     margin-left: 5vw;
@@ -23,7 +22,7 @@ body {
     position: absolute;
     top: 20px;
     left: 20px;
-    width: 256px;
+    width: 262px;
     z-index: 999;
     overflow: hidden;
 }
@@ -32,5 +31,5 @@ body {
     position: absolute;
     background-color: rgba(255, 255, 255, 0.2);
     border: 1px solid white;
-    transition: all 200ms ease-out;
+    transition: all 100ms ease-out;
 }
