@@ -55,7 +55,11 @@ class BaseNamesLayer extends PointLayer {
             const typeName = this.getBaseIconFromType(baseInfo.type_id);
             element.classList.add(`ps2map__base-names__icon__${typeName}`)
 
-            features.push(new PointFeature(pos, baseInfo.id, element));
+            let minZoom = 0;
+            if (typeName == "small-outpost") minZoom = 0.5
+            if (typeName == "large-outpost") minZoom = 0.25;
+
+            features.push(new PointFeature(pos, baseInfo.id, element, minZoom));
             this.element.appendChild(element);
         }
         this.features = features;

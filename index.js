@@ -555,7 +555,12 @@ var BaseNamesLayer = (function (_super) {
             element.style.bottom = this.mapSize * 0.5 + pos.y + "px";
             var typeName = this.getBaseIconFromType(baseInfo.type_id);
             element.classList.add("ps2map__base-names__icon__" + typeName);
-            features.push(new PointFeature(pos, baseInfo.id, element));
+            var minZoom = 0;
+            if (typeName == "small-outpost")
+                minZoom = 0.5;
+            if (typeName == "large-outpost")
+                minZoom = 0.25;
+            features.push(new PointFeature(pos, baseInfo.id, element, minZoom));
             this.element.appendChild(element);
         }
         this.features = features;
