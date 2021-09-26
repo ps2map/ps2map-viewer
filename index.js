@@ -115,7 +115,7 @@ var MapLayer = (function () {
         this.id = id;
         this.mapSize = mapSize;
         this.element = document.createElement("div");
-        this.element.id = "id";
+        this.element.id = id;
         this.element.classList.add("ps2map__layer");
         this.element.style.height = this.element.style.width = mapSize + "px";
     }
