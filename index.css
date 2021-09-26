@@ -10,7 +10,6 @@ body {
 }
 
 #hero-map {
-    border: 1px solid red;
     position: relative;
     margin-top: 5vh;
     margin-left: 5vw;
