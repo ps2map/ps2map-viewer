@@ -78,10 +78,12 @@
 }
 
 .ps2map__base-names__icon__large-outpost::before {
+    --ps2map__base-icon-size: 1.2em;
     content: url(img/icons/large-outpost.svg);
 }
 
 .ps2map__base-names__icon__small-outpost::before {
+    --ps2map__base-icon-size: 1.08em;
     content: url(img/icons/small-outpost.svg);
 }
 
