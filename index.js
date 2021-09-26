@@ -459,3 +459,45 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     new HeroMap(viewport, continentId, apiEndpoint);
 });
+var PointFeature = (function () {
+    function PointFeature(pos, id, element, minZoom) {
+        if (minZoom === void 0) { minZoom = 0; }
+        this.element = element;
+        this.id = id;
+        this.pos = pos;
+        this.minZoom = minZoom;
+    }
+    return PointFeature;
+}());
+var PointLayer = (function (_super) {
+    __extends(PointLayer, _super);
+    function PointLayer() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.features = [];
+        _this.layerUpdateTimerId = null;
+        _this.resizeLayer = Utils.rafDebounce(function (viewbox, zoom) {
+            var unzoom = 1 / zoom;
+            var i = _this.features.length;
+            while (i-- > 0) {
+                var feat = _this.features[i];
+                feat.element.style.fontSize = "calc(24px * " + unzoom + ")";
+                feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
+            }
+        });
+        return _this;
+    }
+    PointLayer.prototype.redraw = function (viewbox, zoom) {
+        var targetX = (viewbox.right + viewbox.left) * 0.5;
+        var targetY = (viewbox.top + viewbox.bottom) * 0.5;
+        var halfMapSize = this.mapSize * 0.5;
+        var offsetX = -halfMapSize;
+        var offsetY = -halfMapSize;
+        offsetX += (halfMapSize - targetX) * zoom;
+        offsetY -= (halfMapSize - targetY) * zoom;
+        this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
+        if (this.layerUpdateTimerId != null)
+            clearTimeout(this.layerUpdateTimerId);
+        this.layerUpdateTimerId = setTimeout(this.resizeLayer.bind(this), 200, viewbox, zoom);
+    };
+    return PointLayer;
+}(MapLayer));
