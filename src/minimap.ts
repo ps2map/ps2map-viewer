@@ -35,7 +35,7 @@ class Minimap {
         this.element.style.backgroundSize = `100%`;
 
         // Attach event listeners
-        this.element.addEventListener("click", this.jumpToPosition.bind(this), {
+        this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
             passive: true
         });
     }
@@ -54,20 +54,35 @@ class Minimap {
      * Event callback for clicking on the minimap.
      * @param evt Position the mouse was clicked at
      */
-    private jumpToPosition(evt: MouseEvent): void {
-        // Get relative cursor position
-        const rect = this.element.getBoundingClientRect();
-        const relX = (evt.clientX - rect.left) / (rect.width);
-        const relY = (evt.clientY - rect.top) / (rect.height);
-        // Calculate target cursor position
-        const target: Point = {
-            x: Math.round(relX * this.mapSize),
-            y: Math.round((1 - relY) * this.mapSize)
+    private jumpToPosition(evtDown: MouseEvent): void {
+        // Continuous "mousemove" callback
+        const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
+            // Get relative cursor position
+            const rect = this.element.getBoundingClientRect();
+            const relX = (evtDrag.clientX - rect.left) / (rect.width);
+            const relY = (evtDrag.clientY - rect.top) / (rect.height);
+            // Calculate target cursor position
+            const target: Point = {
+                x: Math.round(relX * this.mapSize),
+                y: Math.round((1 - relY) * this.mapSize)
+            };
+            // Invoke jumpTo callbacks
+            let i = this.jumpToCallbacks.length;
+            while (i-- > 0)
+                this.jumpToCallbacks[i](target);
+        });
+        // Global "mouseup" callback
+        const up = () => {
+            this.element.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", up);
         };
-        // Invoke jumpTo callbacks
-        let i = this.jumpToCallbacks.length;
-        while (i-- > 0)
-            this.jumpToCallbacks[i](target);
+        // Add listeners
+        document.addEventListener("mouseup", up);
+        this.element.addEventListener("mousemove", drag, {
+            passive: true
+        });
+        // Manually invoke the "drag" callback once to handle single click pans
+        drag(evtDown);
     }
 
     /** Update the viewbox displayed on the minimap. */

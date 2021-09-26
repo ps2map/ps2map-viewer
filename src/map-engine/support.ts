@@ -23,21 +23,20 @@ namespace Utils {
      * arguments.
      * @param target The callback to run as part of the animation frame
      */
-    export function rafDebounce(target: any): () => void {
+    export function rafDebounce < T extends(...args: any) => void > (target: T): T {
         let isScheduled: boolean = false;
         let handle: number = 0;
 
-        function wrapper() {
+        function wrapper(...args: any): void {
             if (isScheduled)
                 cancelAnimationFrame(handle);
-            const args = arguments;
             handle = requestAnimationFrame(() => {
                 target.apply(wrapper, args);
                 isScheduled = false;
             });
             isScheduled = true;
         }
-        return wrapper;
+        return wrapper as any;
     }
 
     /**

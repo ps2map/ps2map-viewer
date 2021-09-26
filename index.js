@@ -15,9 +15,12 @@ var Utils;
         var isScheduled = false;
         var handle = 0;
         function wrapper() {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
             if (isScheduled)
                 cancelAnimationFrame(handle);
-            var args = arguments;
             handle = requestAnimationFrame(function () {
                 target.apply(wrapper, args);
                 isScheduled = false;
@@ -380,7 +383,7 @@ var Minimap = (function () {
         this.element.appendChild(this.viewboxElement);
         this.element.style.backgroundImage = "url(" + background + ")";
         this.element.style.backgroundSize = "100%";
-        this.element.addEventListener("click", this.jumpToPosition.bind(this), {
+        this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
             passive: true
         });
     }
@@ -388,17 +391,29 @@ var Minimap = (function () {
         this.mapSize = mapSize;
         this.element.style.backgroundImage = "url(" + background + ")";
     };
-    Minimap.prototype.jumpToPosition = function (evt) {
-        var rect = this.element.getBoundingClientRect();
-        var relX = (evt.clientX - rect.left) / (rect.width);
-        var relY = (evt.clientY - rect.top) / (rect.height);
-        var target = {
-            x: Math.round(relX * this.mapSize),
-            y: Math.round((1 - relY) * this.mapSize)
+    Minimap.prototype.jumpToPosition = function (evtDown) {
+        var _this = this;
+        var drag = Utils.rafDebounce(function (evtDrag) {
+            var rect = _this.element.getBoundingClientRect();
+            var relX = (evtDrag.clientX - rect.left) / (rect.width);
+            var relY = (evtDrag.clientY - rect.top) / (rect.height);
+            var target = {
+                x: Math.round(relX * _this.mapSize),
+                y: Math.round((1 - relY) * _this.mapSize)
+            };
+            var i = _this.jumpToCallbacks.length;
+            while (i-- > 0)
+                _this.jumpToCallbacks[i](target);
+        });
+        var up = function () {
+            _this.element.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", up);
         };
-        var i = this.jumpToCallbacks.length;
-        while (i-- > 0)
-            this.jumpToCallbacks[i](target);
+        document.addEventListener("mouseup", up);
+        this.element.addEventListener("mousemove", drag, {
+            passive: true
+        });
+        drag(evtDown);
     };
     Minimap.prototype.setViewbox = function (viewbox) {
         var mapSize = this.mapSize;
