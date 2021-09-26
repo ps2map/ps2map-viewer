@@ -27,6 +27,68 @@
     pointer-events: visiblePainted;
     stroke: #000000;
     stroke-width: 4px;
-    /* Note: polygon hover is applied in code as we need to reorder the SVG
-       elements, which breaks regular CSS hover. */
+    /* Hover effects are applied in code as we need to reorder the SVG contents
+       to promote the hovered element's outline, which has a habit of breaking
+       the :hover pseudoclass. */
+}
+
+.ps2map__base-names__icon {
+    --ps2map__base-color: #333333;
+    --ps2map__base-icon-size: 1.5em;
+    font-size: 1.5em;
+    position: absolute;
+    text-align: center;
+    height: 2em;
+    width: 8em;
+    transform: translate(-50%, calc(var(--ps2map__base-icon-size) * 1.5));
+    /* Slightly janky workaround for getting more pronounced text shadows. The
+       performance hit is not so bad, but we'll need to keep an eye on this as
+       more layers get implemented and start loading the renderer. */
+    text-shadow:
+        var(--ps2map__base-color) 0.1em 0.1em 0.2em,
+        var(--ps2map__base-color) 0.1em -0.1em 0.2em,
+        var(--ps2map__base-color) -0.1em -0.1em 0.2em,
+        var(--ps2map__base-color) -0.1em 0.1em 0.2em;
+}
+
+.ps2map__base-names__icon::before {
+    background-color: var(--ps2map__base-color);
+    position: absolute;
+    border-radius: calc(var(--ps2map__base-icon-size) * 0.5);
+    height: var(--ps2map__base-icon-size);
+    width: var(--ps2map__base-icon-size);
+    right: calc(50% - var(--ps2map__base-icon-size) * 0.5);
+    top: calc(0em - var(--ps2map__base-icon-size));
+}
+
+.ps2map__base-names__icon__amp-station::before {
+    content: url(img/icons/amp-station.svg);
+}
+
+.ps2map__base-names__icon__bio-lab::before {
+    content: url(img/icons/bio-lab.svg);
+}
+
+.ps2map__base-names__icon__construction-outpost::before {
+    content: url(img/icons/construction-outpost.svg);
+}
+
+.ps2map__base-names__icon__containment-site::before {
+    content: url(img/icons/containment-site.svg);
+}
+
+.ps2map__base-names__icon__large-outpost::before {
+    content: url(img/icons/large-outpost.svg);
+}
+
+.ps2map__base-names__icon__small-outpost::before {
+    content: url(img/icons/small-outpost.svg);
+}
+
+.ps2map__base-names__icon__tech-plant::before {
+    content: url(img/icons/tech-plant.svg);
+}
+
+.ps2map__base-names__icon__warpgate::before {
+    content: url(img/icons/warpgate.svg);
 }

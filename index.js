@@ -444,6 +444,10 @@ var HeroMap = (function () {
             hexLayer.element.appendChild(hexLayer.svgFactory(payload));
         });
         this.controller.addLayer(hexLayer);
+        var namesLayer = new BaseNamesLayer("names", mapSize);
+        Api.getBasesFromContinent(this.continentId)
+            .then(function (bases) { return namesLayer.loadBaseInfo(bases); });
+        this.controller.addLayer(namesLayer);
     }
     return HeroMap;
 }());
@@ -501,3 +505,60 @@ var PointLayer = (function (_super) {
     };
     return PointLayer;
 }(MapLayer));
+var BaseNamesLayer = (function (_super) {
+    __extends(BaseNamesLayer, _super);
+    function BaseNamesLayer() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    BaseNamesLayer.prototype.getBaseIconFromType = function (typeId) {
+        var fileName = "containment-site";
+        switch (typeId) {
+            case 2:
+                fileName = "amp-station";
+                break;
+            case 3:
+                fileName = "bio-lab";
+                break;
+            case 4:
+                fileName = "tech-plant";
+                break;
+            case 5:
+                fileName = "large-outpost";
+                break;
+            case 6:
+                fileName = "small-outpost";
+                break;
+            case 7:
+                fileName = "warpgate";
+                break;
+            case 9:
+                fileName = "construction-outpost";
+                break;
+            default:
+                console.warn("Encountered unknown facility ID: " + typeId);
+        }
+        return fileName;
+    };
+    BaseNamesLayer.prototype.loadBaseInfo = function (bases) {
+        var features = [];
+        var i = bases.length;
+        while (i-- > 0) {
+            var baseInfo = bases[i];
+            var pos = {
+                x: baseInfo.map_pos[0],
+                y: baseInfo.map_pos[1]
+            };
+            var element = document.createElement("div");
+            element.innerText = "" + baseInfo.name;
+            element.classList.add("ps2map__base-names__icon");
+            element.style.left = this.mapSize * 0.5 + pos.x + "px";
+            element.style.bottom = this.mapSize * 0.5 + pos.y + "px";
+            var typeName = this.getBaseIconFromType(baseInfo.type_id);
+            element.classList.add("ps2map__base-names__icon__" + typeName);
+            features.push(new PointFeature(pos, baseInfo.id, element));
+            this.element.appendChild(element);
+        }
+        this.features = features;
+    };
+    return BaseNamesLayer;
+}(PointLayer));

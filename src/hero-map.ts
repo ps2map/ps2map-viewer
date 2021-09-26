@@ -60,5 +60,12 @@ class HeroMap {
                 hexLayer.element.appendChild(hexLayer.svgFactory(payload));
             });
         this.controller.addLayer(hexLayer);
+
+        // Add map layer for base names
+        const namesLayer = new BaseNamesLayer("names", mapSize);
+        // Load continent data
+        Api.getBasesFromContinent(this.continentId)
+            .then((bases) => namesLayer.loadBaseInfo(bases));
+        this.controller.addLayer(namesLayer);
     }
 }
