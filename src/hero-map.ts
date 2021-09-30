@@ -49,7 +49,7 @@ class HeroMap {
         Api.getContinent(this.continentId)
             // Fetch base outlines
             .then((continent) => {
-                return fetch(`${endpoint}/static/hex/${continent.code}.svg`);
+                return fetch(`${endpoint}/static/hex/${continent.code}-minimal.svg`);
             })
             // Get raw text response (i.e. the SVG literal)
             .then((data) => {
