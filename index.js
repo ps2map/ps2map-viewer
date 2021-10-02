@@ -526,7 +526,7 @@ var BaseNamesLayer = (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     BaseNamesLayer.prototype.getBaseIconFromType = function (typeId) {
-        var fileName = "containment-site";
+        var fileName = "large-outpost";
         switch (typeId) {
             case 2:
                 fileName = "amp-station";
@@ -551,6 +551,7 @@ var BaseNamesLayer = (function (_super) {
                 break;
             case 11:
                 fileName = "containment-site";
+                break;
             default:
                 console.warn("Encountered unknown facility ID: " + typeId);
         }

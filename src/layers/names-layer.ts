@@ -8,31 +8,16 @@ class BaseNamesLayer extends PointLayer {
      * @returns Relative path to the target file
      */
     private getBaseIconFromType(typeId: number): string {
-        let fileName = "containment-site";
+        let fileName = "large-outpost";
         switch (typeId) {
-            case 2:
-                fileName = "amp-station";
-                break;
-            case 3:
-                fileName = "bio-lab";
-                break;
-            case 4:
-                fileName = "tech-plant";
-                break;
-            case 5:
-                fileName = "large-outpost";
-                break;
-            case 6:
-                fileName = "small-outpost";
-                break;
-            case 7:
-                fileName = "warpgate";
-                break;
-            case 9:
-                fileName = "construction-outpost";
-                break;
-            case 11:
-                fileName = "containment-site";
+            case 2:  fileName = "amp-station";          break;
+            case 3:  fileName = "bio-lab";              break;
+            case 4:  fileName = "tech-plant";           break;
+            case 5:  fileName = "large-outpost";        break;
+            case 6:  fileName = "small-outpost";        break;
+            case 7:  fileName = "warpgate";             break;
+            case 9:  fileName = "construction-outpost"; break;
+            case 11: fileName = "containment-site";     break;
             default:
                 console.warn(`Encountered unknown facility ID: ${typeId}`);
         }
