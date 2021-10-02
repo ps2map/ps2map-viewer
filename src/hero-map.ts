@@ -67,5 +67,8 @@ class HeroMap {
         Api.getBasesFromContinent(this.continentId)
             .then((bases) => namesLayer.loadBaseInfo(bases));
         this.controller.addLayer(namesLayer);
+
+        hexLayer.polygonHoverCallbacks.push(
+            namesLayer.onBaseHover.bind(namesLayer));
     }
 }

@@ -463,6 +463,7 @@ var HeroMap = (function () {
         Api.getBasesFromContinent(this.continentId)
             .then(function (bases) { return namesLayer.loadBaseInfo(bases); });
         this.controller.addLayer(namesLayer);
+        hexLayer.polygonHoverCallbacks.push(namesLayer.onBaseHover.bind(namesLayer));
     }
     return HeroMap;
 }());
@@ -481,6 +482,7 @@ document.addEventListener("DOMContentLoaded", function () {
 var PointFeature = (function () {
     function PointFeature(pos, id, element, minZoom) {
         if (minZoom === void 0) { minZoom = 0; }
+        this.visible = true;
         this.element = element;
         this.id = id;
         this.pos = pos;
@@ -501,6 +503,7 @@ var PointLayer = (function (_super) {
                 var feat = _this.features[i];
                 feat.element.style.fontSize = "calc(20px * " + unzoom + ")";
                 feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
+                feat.visible = zoom >= feat.minZoom;
             }
         });
         return _this;
@@ -590,6 +593,23 @@ var BaseNamesLayer = (function (_super) {
             this.element.appendChild(element);
         }
         this.features = features;
+    };
+    BaseNamesLayer.prototype.onBaseHover = function (baseId, element) {
+        var feat = null;
+        var i = this.features.length;
+        while (i-- > 0)
+            if (this.features[i].id == baseId)
+                feat = this.features[i];
+        if (feat == null)
+            return;
+        var leave = function () {
+            if (feat == null)
+                throw "feature was unset";
+            element.removeEventListener("mouseleave", leave);
+            feat.element.style.display = feat.visible ? "block" : "none";
+        };
+        element.addEventListener("mouseleave", leave);
+        feat.element.style.display = "block";
     };
     return BaseNamesLayer;
 }(PointLayer));
