@@ -450,7 +450,7 @@ var HeroMap = (function () {
         var hexLayer = new HexLayer("hexes", mapSize);
         Api.getContinent(this.continentId)
             .then(function (continent) {
-            return fetch(endpoint + "/static/hex/" + continent.code + ".svg");
+            return fetch(endpoint + "/static/hex/" + continent.code + "-minimal.svg");
         })
             .then(function (data) {
             return data.text();
