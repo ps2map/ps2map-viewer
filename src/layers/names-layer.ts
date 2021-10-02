@@ -31,6 +31,8 @@ class BaseNamesLayer extends PointLayer {
             case 9:
                 fileName = "construction-outpost";
                 break;
+            case 11:
+                fileName = "containment-site";
             default:
                 console.warn(`Encountered unknown facility ID: ${typeId}`);
         }
@@ -42,12 +44,22 @@ class BaseNamesLayer extends PointLayer {
         let i = bases.length;
         while (i-- > 0) {
             const baseInfo = bases[i];
+            if (baseInfo.type_id == 0)
+                // "No man's land" facilities do not get icons
+                continue;
             const pos = {
                 x: baseInfo.map_pos[0],
                 y: baseInfo.map_pos[1]
             };
             const element = document.createElement("div");
-            element.innerText = `${baseInfo.name}`;
+            let name = baseInfo.name;
+            // Append the facility type for primary facilities
+            if (baseInfo.type_id == 2 || // Amp Station
+                baseInfo.type_id == 3 || // Bio Lab
+                baseInfo.type_id == 4) { // Tech plant
+                name += ` ${baseInfo.type_name}`;
+            }
+            element.innerText = `${name}`;
             element.classList.add("ps2map__base-names__icon")
             element.style.left = `${this.mapSize * 0.5 + pos.x}px`;
             element.style.bottom = `${this.mapSize * 0.5 + pos.y}px`;

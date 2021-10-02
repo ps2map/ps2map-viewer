@@ -549,6 +549,8 @@ var BaseNamesLayer = (function (_super) {
             case 9:
                 fileName = "construction-outpost";
                 break;
+            case 11:
+                fileName = "containment-site";
             default:
                 console.warn("Encountered unknown facility ID: " + typeId);
         }
@@ -559,12 +561,20 @@ var BaseNamesLayer = (function (_super) {
         var i = bases.length;
         while (i-- > 0) {
             var baseInfo = bases[i];
+            if (baseInfo.type_id == 0)
+                continue;
             var pos = {
                 x: baseInfo.map_pos[0],
                 y: baseInfo.map_pos[1]
             };
             var element = document.createElement("div");
-            element.innerText = "" + baseInfo.name;
+            var name_1 = baseInfo.name;
+            if (baseInfo.type_id == 2 ||
+                baseInfo.type_id == 3 ||
+                baseInfo.type_id == 4) {
+                name_1 += " " + baseInfo.type_name;
+            }
+            element.innerText = "" + name_1;
             element.classList.add("ps2map__base-names__icon");
             element.style.left = this.mapSize * 0.5 + pos.x + "px";
             element.style.bottom = this.mapSize * 0.5 + pos.y + "px";
