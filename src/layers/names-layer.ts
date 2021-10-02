@@ -61,4 +61,28 @@ class BaseNamesLayer extends PointLayer {
         }
         this.features = features;
     }
+
+    /**
+     * Callback invoked when hovering over base hexes.
+     * 
+     * This displays the name of the current base regardless of zoom level.
+     * @param baseId ID of the base that was highlighted
+     * @param element SVG polygon of the highlighted base.
+     */
+    onBaseHover(baseId: number, element: SVGPolygonElement): void {
+        let feat: PointFeature | null = null;
+        let i = this.features.length;
+        while (i-- > 0)
+            if (this.features[i].id == baseId) 
+                feat = this.features[i];
+        if (feat == null)
+            return;
+        const leave = () => {
+            if (feat == null) throw "feature was unset";
+            element.removeEventListener("mouseleave", leave);
+            feat.element.style.display = feat.visible ? "block" : "none";
+        }
+        element.addEventListener("mouseleave", leave);
+        feat.element.style.display = "block";
+    }
 }

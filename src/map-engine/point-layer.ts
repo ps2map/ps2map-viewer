@@ -13,6 +13,8 @@ class PointFeature {
     readonly pos: Point;
     /** Minimum zoom level at which the element is visible. */
     readonly minZoom: number;
+    /** Visibility DOM cache */
+    visible: boolean = true;
 
     constructor(pos: Point, id: number, element: HTMLElement, minZoom: number = 0) {
         this.element = element;
@@ -61,6 +63,7 @@ class PointLayer extends MapLayer {
             // transformation matrix, which is not the point of point layers.
             feat.element.style.fontSize = `calc(20px * ${unzoom})`;
             feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
+            feat.visible = zoom >= feat.minZoom;
         }
     });
 }
