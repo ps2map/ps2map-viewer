@@ -498,6 +498,7 @@ var PointFeature = (function () {
     function PointFeature(pos, id, element, minZoom) {
         if (minZoom === void 0) { minZoom = 0; }
         this.visible = true;
+        this.forceVisible = false;
         this.element = element;
         this.id = id;
         this.pos = pos;
@@ -517,7 +518,8 @@ var PointLayer = (function (_super) {
             while (i-- > 0) {
                 var feat = _this.features[i];
                 feat.element.style.fontSize = "calc(20px * " + unzoom + ")";
-                feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
+                if (!feat.forceVisible)
+                    feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
                 feat.visible = zoom >= feat.minZoom;
             }
         });
@@ -621,9 +623,11 @@ var BaseNamesLayer = (function (_super) {
             if (feat == null)
                 throw "feature was unset";
             element.removeEventListener("mouseleave", leave);
+            feat.forceVisible = false;
             feat.element.style.display = feat.visible ? "block" : "none";
         };
         element.addEventListener("mouseleave", leave);
+        feat.forceVisible = true;
         feat.element.style.display = "block";
     };
     return BaseNamesLayer;

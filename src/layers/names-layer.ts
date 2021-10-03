@@ -80,9 +80,11 @@ class BaseNamesLayer extends PointLayer {
         const leave = () => {
             if (feat == null) throw "feature was unset";
             element.removeEventListener("mouseleave", leave);
+            feat.forceVisible = false;
             feat.element.style.display = feat.visible ? "block" : "none";
         }
         element.addEventListener("mouseleave", leave);
+        feat.forceVisible = true;
         feat.element.style.display = "block";
     }
 }
