@@ -37,7 +37,7 @@ class HeroMap {
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
         this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, "../ps2-map-api/map_assets/Indar_LOD3.png")
+            mapSize, "../ps2-map-api/map_assets/Esamir_LOD3.png")
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(
@@ -49,7 +49,7 @@ class HeroMap {
         Api.getContinent(this.continentId)
             // Fetch base outlines
             .then((continent) => {
-                return fetch(`${endpoint}/static/hex/${continent.code}.svg`);
+                return fetch(`${endpoint}/static/hex/${continent.code}-minimal.svg`);
             })
             // Get raw text response (i.e. the SVG literal)
             .then((data) => {
@@ -67,5 +67,25 @@ class HeroMap {
         Api.getBasesFromContinent(this.continentId)
             .then((bases) => namesLayer.loadBaseInfo(bases));
         this.controller.addLayer(namesLayer);
+
+        hexLayer.polygonHoverCallbacks.push(
+            namesLayer.onBaseHover.bind(namesLayer));
+
+        // Base info panel
+        let bases: Api.BaseInfo[] = [];
+        Api.getBasesFromContinent(this.continentId).then((data) => bases = data);
+        const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
+        const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
+        hexLayer.polygonHoverCallbacks.push((baseId: number) => {
+            let i = bases.length;
+            while (i-- > 0) {
+                const base = bases[i];
+                if (base.id == baseId) {
+                    regionName.innerText = base.name;
+                    regionType.innerText = base.type_name;
+                    return;
+                }
+            }
+        });
     }
 }

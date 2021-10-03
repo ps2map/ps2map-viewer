@@ -8,29 +8,16 @@ class BaseNamesLayer extends PointLayer {
      * @returns Relative path to the target file
      */
     private getBaseIconFromType(typeId: number): string {
-        let fileName = "containment-site";
+        let fileName = "large-outpost";
         switch (typeId) {
-            case 2:
-                fileName = "amp-station";
-                break;
-            case 3:
-                fileName = "bio-lab";
-                break;
-            case 4:
-                fileName = "tech-plant";
-                break;
-            case 5:
-                fileName = "large-outpost";
-                break;
-            case 6:
-                fileName = "small-outpost";
-                break;
-            case 7:
-                fileName = "warpgate";
-                break;
-            case 9:
-                fileName = "construction-outpost";
-                break;
+            case 2:  fileName = "amp-station";          break;
+            case 3:  fileName = "bio-lab";              break;
+            case 4:  fileName = "tech-plant";           break;
+            case 5:  fileName = "large-outpost";        break;
+            case 6:  fileName = "small-outpost";        break;
+            case 7:  fileName = "warpgate";             break;
+            case 9:  fileName = "construction-outpost"; break;
+            case 11: fileName = "containment-site";     break;
             default:
                 console.warn(`Encountered unknown facility ID: ${typeId}`);
         }
@@ -42,12 +29,22 @@ class BaseNamesLayer extends PointLayer {
         let i = bases.length;
         while (i-- > 0) {
             const baseInfo = bases[i];
+            if (baseInfo.type_id == 0)
+                // "No man's land" facilities do not get icons
+                continue;
             const pos = {
                 x: baseInfo.map_pos[0],
                 y: baseInfo.map_pos[1]
             };
             const element = document.createElement("div");
-            element.innerText = `${baseInfo.name}`;
+            let name = baseInfo.name;
+            // Append the facility type for primary facilities
+            if (baseInfo.type_id == 2 || // Amp Station
+                baseInfo.type_id == 3 || // Bio Lab
+                baseInfo.type_id == 4) { // Tech plant
+                name += ` ${baseInfo.type_name}`;
+            }
+            element.innerText = `${name}`;
             element.classList.add("ps2map__base-names__icon")
             element.style.left = `${this.mapSize * 0.5 + pos.x}px`;
             element.style.bottom = `${this.mapSize * 0.5 + pos.y}px`;
@@ -56,12 +53,38 @@ class BaseNamesLayer extends PointLayer {
             element.classList.add(`ps2map__base-names__icon__${typeName}`)
 
             let minZoom = 0;
-            if (typeName == "small-outpost") minZoom = 0.5
-            if (typeName == "large-outpost") minZoom = 0.25;
+            if (typeName == "small-outpost") minZoom = 0.60
+            if (typeName == "large-outpost") minZoom = 0.45;
 
             features.push(new PointFeature(pos, baseInfo.id, element, minZoom));
             this.element.appendChild(element);
         }
         this.features = features;
+    }
+
+    /**
+     * Callback invoked when hovering over base hexes.
+     * 
+     * This displays the name of the current base regardless of zoom level.
+     * @param baseId ID of the base that was highlighted
+     * @param element SVG polygon of the highlighted base.
+     */
+    onBaseHover(baseId: number, element: SVGPolygonElement): void {
+        let feat: PointFeature | null = null;
+        let i = this.features.length;
+        while (i-- > 0)
+            if (this.features[i].id == baseId) 
+                feat = this.features[i];
+        if (feat == null)
+            return;
+        const leave = () => {
+            if (feat == null) throw "feature was unset";
+            element.removeEventListener("mouseleave", leave);
+            feat.forceVisible = false;
+            feat.element.style.display = feat.visible ? "block" : "none";
+        }
+        element.addEventListener("mouseleave", leave);
+        feat.forceVisible = true;
+        feat.element.style.display = "block";
     }
 }

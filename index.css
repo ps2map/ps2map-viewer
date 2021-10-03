@@ -18,18 +18,46 @@ body {
 }
 
 #minimap {
-    border: 2px solid grey;
     position: absolute;
     top: 20px;
     left: 20px;
-    width: 262px;
     z-index: 999;
     overflow: hidden;
 }
 
 #minimap>div {
+    box-sizing: border-box;
     position: absolute;
     background-color: rgba(255, 255, 255, 0.2);
     border: 1px solid white;
     transition: all 100ms ease-out;
+}
+
+.widget {
+    position: absolute;
+    background: rgba(30, 30, 30, 0.8);
+    border: 2px solid grey;
+    width: 240px;
+}
+
+#widget_base-info {
+    right: 20px;
+    bottom: 60px;
+    padding: 10px;
+}
+
+#widget_base-info>h1 {
+    font-size: 18pt;
+    margin-block-start: 0;
+    margin-block-end: 0.5em;
+}
+
+#widget_base-info_name {
+    display: block;
+    font-size: 14pt;
+    margin-block-end: 0.5em;
+}
+
+#widget_base-info_type {
+    display: block;
 }

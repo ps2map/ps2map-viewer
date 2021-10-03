@@ -444,13 +444,13 @@ var HeroMap = (function () {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, "../ps2-map-api/map_assets/Indar_LOD3.png");
+        this.minimap = new Minimap(minimapElement, mapSize, "../ps2-map-api/map_assets/Esamir_LOD3.png");
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var hexLayer = new HexLayer("hexes", mapSize);
         Api.getContinent(this.continentId)
             .then(function (continent) {
-            return fetch(endpoint + "/static/hex/" + continent.code + ".svg");
+            return fetch(endpoint + "/static/hex/" + continent.code + "-minimal.svg");
         })
             .then(function (data) {
             return data.text();
@@ -463,12 +463,28 @@ var HeroMap = (function () {
         Api.getBasesFromContinent(this.continentId)
             .then(function (bases) { return namesLayer.loadBaseInfo(bases); });
         this.controller.addLayer(namesLayer);
+        hexLayer.polygonHoverCallbacks.push(namesLayer.onBaseHover.bind(namesLayer));
+        var bases = [];
+        Api.getBasesFromContinent(this.continentId).then(function (data) { return bases = data; });
+        var regionName = document.getElementById("widget_base-info_name");
+        var regionType = document.getElementById("widget_base-info_type");
+        hexLayer.polygonHoverCallbacks.push(function (baseId) {
+            var i = bases.length;
+            while (i-- > 0) {
+                var base = bases[i];
+                if (base.id == baseId) {
+                    regionName.innerText = base.name;
+                    regionType.innerText = base.type_name;
+                    return;
+                }
+            }
+        });
     }
     return HeroMap;
 }());
 document.addEventListener("DOMContentLoaded", function () {
     var apiEndpoint = "http://127.0.0.1:5000";
-    var continentId = 2;
+    var continentId = 8;
     var viewport = document.getElementById("hero-map");
     if (viewport == null) {
         throw "Unable to locate viewport element";
@@ -481,6 +497,8 @@ document.addEventListener("DOMContentLoaded", function () {
 var PointFeature = (function () {
     function PointFeature(pos, id, element, minZoom) {
         if (minZoom === void 0) { minZoom = 0; }
+        this.visible = true;
+        this.forceVisible = false;
         this.element = element;
         this.id = id;
         this.pos = pos;
@@ -500,7 +518,9 @@ var PointLayer = (function (_super) {
             while (i-- > 0) {
                 var feat = _this.features[i];
                 feat.element.style.fontSize = "calc(20px * " + unzoom + ")";
-                feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
+                if (!feat.forceVisible)
+                    feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
+                feat.visible = zoom >= feat.minZoom;
             }
         });
         return _this;
@@ -526,7 +546,7 @@ var BaseNamesLayer = (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     BaseNamesLayer.prototype.getBaseIconFromType = function (typeId) {
-        var fileName = "containment-site";
+        var fileName = "large-outpost";
         switch (typeId) {
             case 2:
                 fileName = "amp-station";
@@ -549,6 +569,9 @@ var BaseNamesLayer = (function (_super) {
             case 9:
                 fileName = "construction-outpost";
                 break;
+            case 11:
+                fileName = "containment-site";
+                break;
             default:
                 console.warn("Encountered unknown facility ID: " + typeId);
         }
@@ -559,12 +582,20 @@ var BaseNamesLayer = (function (_super) {
         var i = bases.length;
         while (i-- > 0) {
             var baseInfo = bases[i];
+            if (baseInfo.type_id == 0)
+                continue;
             var pos = {
                 x: baseInfo.map_pos[0],
                 y: baseInfo.map_pos[1]
             };
             var element = document.createElement("div");
-            element.innerText = "" + baseInfo.name;
+            var name_1 = baseInfo.name;
+            if (baseInfo.type_id == 2 ||
+                baseInfo.type_id == 3 ||
+                baseInfo.type_id == 4) {
+                name_1 += " " + baseInfo.type_name;
+            }
+            element.innerText = "" + name_1;
             element.classList.add("ps2map__base-names__icon");
             element.style.left = this.mapSize * 0.5 + pos.x + "px";
             element.style.bottom = this.mapSize * 0.5 + pos.y + "px";
@@ -572,13 +603,32 @@ var BaseNamesLayer = (function (_super) {
             element.classList.add("ps2map__base-names__icon__" + typeName);
             var minZoom = 0;
             if (typeName == "small-outpost")
-                minZoom = 0.5;
+                minZoom = 0.60;
             if (typeName == "large-outpost")
-                minZoom = 0.25;
+                minZoom = 0.45;
             features.push(new PointFeature(pos, baseInfo.id, element, minZoom));
             this.element.appendChild(element);
         }
         this.features = features;
+    };
+    BaseNamesLayer.prototype.onBaseHover = function (baseId, element) {
+        var feat = null;
+        var i = this.features.length;
+        while (i-- > 0)
+            if (this.features[i].id == baseId)
+                feat = this.features[i];
+        if (feat == null)
+            return;
+        var leave = function () {
+            if (feat == null)
+                throw "feature was unset";
+            element.removeEventListener("mouseleave", leave);
+            feat.forceVisible = false;
+            feat.element.style.display = feat.visible ? "block" : "none";
+        };
+        element.addEventListener("mouseleave", leave);
+        feat.forceVisible = true;
+        feat.element.style.display = "block";
     };
     return BaseNamesLayer;
 }(PointLayer));

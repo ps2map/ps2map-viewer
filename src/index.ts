@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Decide the continent to load
     // TODO: Restore the continent from cookies or depending on status
-    const continentId = 2;
+    const continentId = 8;
 
     // Initialise the map controller for the primary map
     const viewport = document.getElementById("hero-map");
