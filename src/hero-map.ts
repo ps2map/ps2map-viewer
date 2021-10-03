@@ -70,5 +70,22 @@ class HeroMap {
 
         hexLayer.polygonHoverCallbacks.push(
             namesLayer.onBaseHover.bind(namesLayer));
+
+        // Base info panel
+        let bases: Api.BaseInfo[] = [];
+        Api.getBasesFromContinent(this.continentId).then((data) => bases = data);
+        const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
+        const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
+        hexLayer.polygonHoverCallbacks.push((baseId: number) => {
+            let i = bases.length;
+            while (i-- > 0) {
+                const base = bases[i];
+                if (base.id == baseId) {
+                    regionName.innerText = base.name;
+                    regionType.innerText = base.type_name;
+                    return;
+                }
+            }
+        });
     }
 }
