@@ -39,3 +39,25 @@ body {
     border: 2px solid grey;
     width: 240px;
 }
+
+#widget_base-info {
+    right: 20px;
+    bottom: 60px;
+    padding: 10px;
+}
+
+#widget_base-info>h1 {
+    font-size: 18pt;
+    margin-block-start: 0;
+    margin-block-end: 0.5em;
+}
+
+#widget_base-info_name {
+    display: block;
+    font-size: 14pt;
+    margin-block-end: 0.5em;
+}
+
+#widget_base-info_type {
+    display: block;
+}

@@ -464,6 +464,21 @@ var HeroMap = (function () {
             .then(function (bases) { return namesLayer.loadBaseInfo(bases); });
         this.controller.addLayer(namesLayer);
         hexLayer.polygonHoverCallbacks.push(namesLayer.onBaseHover.bind(namesLayer));
+        var bases = [];
+        Api.getBasesFromContinent(this.continentId).then(function (data) { return bases = data; });
+        var regionName = document.getElementById("widget_base-info_name");
+        var regionType = document.getElementById("widget_base-info_type");
+        hexLayer.polygonHoverCallbacks.push(function (baseId) {
+            var i = bases.length;
+            while (i-- > 0) {
+                var base = bases[i];
+                if (base.id == baseId) {
+                    regionName.innerText = base.name;
+                    regionType.innerText = base.type_name;
+                    return;
+                }
+            }
+        });
     }
     return HeroMap;
 }());
