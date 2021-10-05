@@ -36,12 +36,21 @@ class HeroMap {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
+        // FIXME: Hard-coded minimap URL for now
         this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, "../ps2-map-api/map_assets/Esamir_LOD3.png")
+            mapSize, "http://127.0.0.1:5000/static/minimap/esamir.jpg")
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(
             this.controller.jumpTo.bind(this.controller));
+
+        // Add map layer for terrain texture
+        const terrainLayer = new TerrainLayer("terrain", mapSize);
+        // Load continent data
+        Api.getContinent(this.continentId).then((continent) => {
+            terrainLayer.setContinent(continent.code);
+        });
+        this.controller.addLayer(terrainLayer);
 
         // Add map layer for base hexes
         const hexLayer = new HexLayer("hexes", mapSize);
