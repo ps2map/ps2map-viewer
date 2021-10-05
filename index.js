@@ -444,7 +444,7 @@ var HeroMap = (function () {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, "../ps2-map-api/map_assets/Esamir_LOD3.png");
+        this.minimap = new Minimap(minimapElement, mapSize, "http://127.0.0.1:5000/static/minimap/esamir.jpg");
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var hexLayer = new HexLayer("hexes", mapSize);
