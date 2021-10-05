@@ -31,6 +31,24 @@ class TerrainLayer extends TileLayer {
         this.setUpGrid(gridSize);
     }
 
+    /**
+     * Determine the tile LOD for the given zoom level
+     * @param zoom Zoom level to use for calculation
+     * @returns Tile LOD for this zoom level
+     */
+    private calculateLod(zoom: number): number {
+        // Compensate for custom DPI scaling (avoids blur on high DPI screens)
+        const adjustedZoom = zoom * devicePixelRatio;
+        if (adjustedZoom < 0.125)
+            return 3;
+        if (adjustedZoom < 0.25)
+            return 2;
+        if (adjustedZoom < 0.5)
+            return 1;
+        return 0;
+
+    }
+
     protected createTile(pos: GridPos, gridSize: number): MapTile {
         const mapStep = this.mapSize / gridSize;
         const box = {
@@ -136,5 +154,23 @@ class TerrainLayer extends TileLayer {
         if (halfSize <= 0)
             return [-stepSize, -stepSize];
         return [-halfSize, halfSize - stepSize];
+    }
+
+    protected updateTiles(viewbox: Box, zoom: number): void {
+        const newLod = this.calculateLod(zoom);
+        // Update layer drawing style
+        if (zoom * devicePixelRatio > 2)
+            this.element.style.imageRendering = "pixelated";
+        else
+            this.element.style.removeProperty("image-rendering");
+        // Check if new LODs are required
+        if (newLod == this.lod) {
+            // Update tile visibilities only
+            this.updateTileVisibility(viewbox);
+            return;
+        }
+        // Update LOD and regenerate tiles
+        this.lod = newLod;
+        this.setUpGrid(this.mapTilesPerAxis(this.mapSize, newLod));
     }
 }

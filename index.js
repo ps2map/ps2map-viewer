@@ -669,14 +669,24 @@ var TileLayer = (function (_super) {
         this.element.style.setProperty("--ps2map__terrain__tile-size", tileSize.toFixed() + "px");
         var y = gridSize;
         while (y-- > 0) {
-            for (var x = 0; x < gridSize; x++) {
+            var _loop_1 = function (x) {
                 var pos = {
                     x: x,
                     y: y
                 };
-                var tile = this.createTile(pos, gridSize);
-                tile.element.style.backgroundImage = ("url(" + this.generateTilePath(pos, this.lod) + ")");
+                var tile = this_1.createTile(pos, gridSize);
+                var url = this_1.generateTilePath(pos, this_1.lod);
+                var img = new Image();
+                img.onload = function () {
+                    tile.element.style.backgroundImage = "url(" + url + ")";
+                    img = null;
+                };
+                img.src = url;
                 newTiles.push(tile);
+            };
+            var this_1 = this;
+            for (var x = 0; x < gridSize; x++) {
+                _loop_1(x);
             }
         }
         this.element.innerHTML = "";
@@ -733,6 +743,16 @@ var TerrainLayer = (function (_super) {
         var gridSize = this.mapTilesPerAxis(this.mapSize, this.lod);
         this.setUpGrid(gridSize);
     };
+    TerrainLayer.prototype.calculateLod = function (zoom) {
+        var adjustedZoom = zoom * devicePixelRatio;
+        if (adjustedZoom < 0.125)
+            return 3;
+        if (adjustedZoom < 0.25)
+            return 2;
+        if (adjustedZoom < 0.5)
+            return 1;
+        return 0;
+    };
     TerrainLayer.prototype.createTile = function (pos, gridSize) {
         var mapStep = this.mapSize / gridSize;
         var box = {
@@ -788,6 +808,19 @@ var TerrainLayer = (function (_super) {
         if (halfSize <= 0)
             return [-stepSize, -stepSize];
         return [-halfSize, halfSize - stepSize];
+    };
+    TerrainLayer.prototype.updateTiles = function (viewbox, zoom) {
+        var newLod = this.calculateLod(zoom);
+        if (zoom * devicePixelRatio > 2)
+            this.element.style.imageRendering = "pixelated";
+        else
+            this.element.style.removeProperty("image-rendering");
+        if (newLod == this.lod) {
+            this.updateTileVisibility(viewbox);
+            return;
+        }
+        this.lod = newLod;
+        this.setUpGrid(this.mapTilesPerAxis(this.mapSize, newLod));
     };
     return TerrainLayer;
 }(TileLayer));

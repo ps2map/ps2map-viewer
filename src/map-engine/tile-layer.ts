@@ -62,8 +62,14 @@ abstract class TileLayer extends MapLayer {
                     y: y
                 };
                 const tile = this.createTile(pos, gridSize);
-                tile.element.style.backgroundImage = (
-                    `url(${this.generateTilePath(pos, this.lod)})`);
+                // Lazy-load the background image as it is loaded
+                const url = this.generateTilePath(pos, this.lod);
+                let img: HTMLImageElement | null = new Image();
+                img.onload = () => {
+                    tile.element.style.backgroundImage = `url(${url})`;
+                    img = null;
+                };
+                img.src = url;
                 newTiles.push(tile);
             }
         }
