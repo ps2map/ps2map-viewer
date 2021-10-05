@@ -44,6 +44,14 @@ class HeroMap {
         this.minimap.jumpToCallbacks.push(
             this.controller.jumpTo.bind(this.controller));
 
+        // Add map layer for terrain texture
+        const terrainLayer = new TerrainLayer("terrain", mapSize);
+        // Load continent data
+        Api.getContinent(this.continentId).then((continent) => {
+            terrainLayer.setContinent(continent.code);
+        });
+        this.controller.addLayer(terrainLayer);
+
         // Add map layer for base hexes
         const hexLayer = new HexLayer("hexes", mapSize);
         // Load continent data

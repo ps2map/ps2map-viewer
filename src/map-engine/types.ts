@@ -4,6 +4,12 @@ type Point = {
     readonly y: number;
 };
 
+/** Type hint for TileLayer grid positions. */
+type GridPos = {
+    readonly x: number;
+    readonly y: number;
+};
+
 /** Type hint for axis-aligned bounding boxes. */
 type Box = {
     readonly top: number;
