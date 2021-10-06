@@ -30,6 +30,13 @@ var Utils;
         return wrapper;
     }
     Utils.rafDebounce = rafDebounce;
+    function rectanglesIntersect(a, b) {
+        return (a.left < b.right
+            && a.right > b.left
+            && a.top > b.bottom
+            && a.bottom < b.top);
+    }
+    Utils.rectanglesIntersect = rectanglesIntersect;
     function remap(value, sourceLower, sourceUpper, targetLower, targetUpper) {
         var sourceSpan = sourceUpper - sourceLower;
         var targetSpan = targetUpper - targetLower;
@@ -47,7 +54,7 @@ var Utils;
 })(Utils || (Utils = {}));
 var MapCamera = (function () {
     function MapCamera(mapSize, viewportHeight, viewportWidth) {
-        this.maxZoom = 10.0;
+        this.maxZoom = 4.0;
         this.zoomStep = 1.5;
         this.zoomIndex = -1;
         this.viewHeight = viewportHeight;
@@ -444,9 +451,14 @@ var HeroMap = (function () {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, "../ps2-map-api/map_assets/Esamir_LOD3.png");
+        this.minimap = new Minimap(minimapElement, mapSize, "http://127.0.0.1:5000/static/minimap/esamir.jpg");
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
+        var terrainLayer = new TerrainLayer("terrain", mapSize);
+        Api.getContinent(this.continentId).then(function (continent) {
+            terrainLayer.setContinent(continent.code);
+        });
+        this.controller.addLayer(terrainLayer);
         var hexLayer = new HexLayer("hexes", mapSize);
         Api.getContinent(this.continentId)
             .then(function (continent) {
@@ -632,3 +644,172 @@ var BaseNamesLayer = (function (_super) {
     };
     return BaseNamesLayer;
 }(PointLayer));
+var MapTile = (function () {
+    function MapTile(box, element, gridPos) {
+        this.visible = true;
+        this.box = box;
+        this.element = element;
+        this.gridPos = gridPos;
+    }
+    return MapTile;
+}());
+var TileLayer = (function (_super) {
+    __extends(TileLayer, _super);
+    function TileLayer(id, mapSize, initialLod) {
+        var _this = _super.call(this, id, mapSize) || this;
+        _this.layerUpdateTimerId = null;
+        _this.tiles = [];
+        _this.lod = initialLod;
+        return _this;
+    }
+    TileLayer.prototype.defineTiles = function (gridSize) {
+        var newTiles = [];
+        var tileSize = this.mapSize / gridSize;
+        var baseSize = this.mapSize / gridSize;
+        var y = gridSize;
+        while (y-- > 0) {
+            for (var x = 0; x < gridSize; x++) {
+                var pos = {
+                    x: x,
+                    y: y
+                };
+                var tile = this.createTile(pos, gridSize);
+                tile.element.style.height = tile.element.style.width = (tileSize.toFixed() + "px");
+                tile.element.style.left = pos.x * baseSize + "px";
+                tile.element.style.bottom = pos.y * baseSize + "px";
+                var url = this.generateTilePath(pos, this.lod);
+                tile.element.style.backgroundImage = "url(" + url + ")";
+                newTiles.push(tile);
+            }
+        }
+        this.tiles = newTiles;
+    };
+    TileLayer.prototype.tileIsVisible = function (tile, viewbox) {
+        return Utils.rectanglesIntersect(tile.box, viewbox);
+    };
+    TileLayer.prototype.updateTileVisibility = function (viewbox) {
+        var _this = this;
+        var activeTiles = [];
+        var i = this.tiles.length;
+        while (i-- > 0) {
+            var tile = this.tiles[i];
+            if (this.tileIsVisible(tile, viewbox))
+                activeTiles.push(tile.element);
+        }
+        requestAnimationFrame(function () {
+            _this.element.innerHTML = "";
+            i = activeTiles.length;
+            while (i-- > 0)
+                _this.element.append(activeTiles[i]);
+        });
+    };
+    TileLayer.prototype.updateTiles = function (viewbox, zoom) {
+        this.updateTileVisibility(viewbox);
+    };
+    TileLayer.prototype.redraw = function (viewbox, zoom) {
+        var targetX = (viewbox.right + viewbox.left) * 0.5;
+        var targetY = (viewbox.top + viewbox.bottom) * 0.5;
+        var halfMapSize = this.mapSize * 0.5;
+        var offsetX = -halfMapSize;
+        var offsetY = -halfMapSize;
+        offsetX += (halfMapSize - targetX) * zoom;
+        offsetY -= (halfMapSize - targetY) * zoom;
+        this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
+        if (this.layerUpdateTimerId != null)
+            clearTimeout(this.layerUpdateTimerId);
+        this.layerUpdateTimerId = setTimeout(this.updateTiles.bind(this), 200, viewbox, zoom);
+    };
+    return TileLayer;
+}(MapLayer));
+var TerrainLayer = (function (_super) {
+    __extends(TerrainLayer, _super);
+    function TerrainLayer(id, mapSize) {
+        var _this = _super.call(this, id, mapSize, 3) || this;
+        _this.code = "";
+        _this.element.classList.add("ps2map__terrain");
+        return _this;
+    }
+    TerrainLayer.prototype.setContinent = function (code) {
+        if (this.code == code)
+            return;
+        this.code = code;
+        this.element.style.backgroundImage = ("url(http://127.0.0.1:5000/static/minimap/" + code + ".jpg)");
+        var gridSize = this.mapTilesPerAxis(this.mapSize, this.lod);
+        this.defineTiles(gridSize);
+    };
+    TerrainLayer.prototype.calculateLod = function (zoom) {
+        var adjustedZoom = zoom * devicePixelRatio;
+        if (adjustedZoom < 0.125)
+            return 3;
+        if (adjustedZoom < 0.25)
+            return 2;
+        if (adjustedZoom < 0.5)
+            return 1;
+        return 0;
+    };
+    TerrainLayer.prototype.createTile = function (pos, gridSize) {
+        var mapStep = this.mapSize / gridSize;
+        var box = {
+            left: mapStep * pos.x,
+            right: mapStep * (pos.x + 1),
+            top: mapStep * (pos.y + 1),
+            bottom: mapStep * pos.y
+        };
+        var element = document.createElement("div");
+        element.classList.add("ps2map__terrain__tile");
+        return new MapTile(box, element, pos);
+    };
+    TerrainLayer.prototype.formatTileCoordinate = function (value) {
+        var negative = value < 0;
+        var coord = Math.abs(value).toFixed();
+        if (coord.length < 3)
+            coord = ("00" + coord).slice(-3);
+        if (negative)
+            coord = "-" + coord.slice(1);
+        return coord;
+    };
+    TerrainLayer.prototype.generateTilePath = function (pos, lod) {
+        var _a = this.gridPosToTilePos(pos, lod), tileX = _a[0], tileY = _a[1];
+        var coordX = this.formatTileCoordinate(tileX);
+        var coordY = this.formatTileCoordinate(tileY);
+        var filename = this.code + "_tile_" + coordX + "_" + coordY + "_lod" + lod + ".jpeg";
+        return "http://127.0.0.1:5000/static/tile/" + filename;
+    };
+    TerrainLayer.prototype.gridPosToTilePos = function (pos, lod) {
+        var min = this.mapGridLimits(this.mapSize, lod)[0];
+        var stepSize = this.mapStepSize(this.mapSize, lod);
+        return [min + (stepSize * pos.x), min + (stepSize * pos.y)];
+    };
+    TerrainLayer.prototype.mapStepSize = function (mapSize, lod) {
+        if (lod == 0)
+            return 4;
+        if (lod == 1 || mapSize <= 1024)
+            return 8;
+        if (lod == 2 || mapSize <= 2048)
+            return 16;
+        return 32;
+    };
+    TerrainLayer.prototype.mapTileCount = function (mapSize, lod) {
+        return Math.ceil(Math.pow(4, (Math.floor(Math.log2(mapSize)) - 8 - lod)));
+    };
+    TerrainLayer.prototype.mapTilesPerAxis = function (mapSize, lod) {
+        return Math.floor(Math.sqrt(this.mapTileCount(mapSize, lod)));
+    };
+    TerrainLayer.prototype.mapGridLimits = function (mapSize, lod) {
+        var stepSize = this.mapStepSize(mapSize, lod);
+        var tilesPerAxis = this.mapTilesPerAxis(mapSize, lod);
+        var halfSize = stepSize * Math.floor(tilesPerAxis / 2);
+        if (halfSize <= 0)
+            return [-stepSize, -stepSize];
+        return [-halfSize, halfSize - stepSize];
+    };
+    TerrainLayer.prototype.updateTiles = function (viewbox, zoom) {
+        var newLod = this.calculateLod(zoom);
+        if (newLod != this.lod) {
+            this.lod = newLod;
+            this.defineTiles(this.mapTilesPerAxis(this.mapSize, newLod));
+        }
+        this.updateTileVisibility(viewbox);
+    };
+    return TerrainLayer;
+}(TileLayer));

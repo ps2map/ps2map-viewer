@@ -23,7 +23,7 @@ namespace Utils {
      * arguments.
      * @param target The callback to run as part of the animation frame
      */
-    export function rafDebounce < T extends(...args: any) => void > (target: T): T {
+    export function rafDebounce<T extends (...args: any) => void>(target: T): T {
         let isScheduled: boolean = false;
         let handle: number = 0;
 
@@ -37,6 +37,19 @@ namespace Utils {
             isScheduled = true;
         }
         return wrapper as any;
+    }
+
+    /**
+     * Return whether the two rectangles overlap.
+     * @param a First rectangle
+     * @param b Second rewctangle
+     * @returns true if the rectangles have a non-zero overlap, otherwise false
+     */
+    export function rectanglesIntersect(a: Box, b: Box): boolean {
+        return (a.left < b.right
+            && a.right > b.left
+            && a.top > b.bottom
+            && a.bottom < b.top);
     }
 
     /**

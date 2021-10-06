@@ -16,12 +16,6 @@
     user-select: none;
 }
 
-.ps2map__base-hexes {
-    /* Temporary terrain texture to aid with alignment */
-    background-image: url(../ps2-map-api/map_assets/Esamir_LOD1.png);
-    background-size: 100%;
-}
-
 .ps2map__base-hexes__svg>polygon {
     fill: rgb(255, 255, 255);
     fill-opacity: 0.3;
@@ -93,4 +87,13 @@
 
 .ps2map__base-names__icon__warpgate::before {
     content: url(img/icons/warpgate.svg);
+}
+
+.ps2map__terrain {
+    background-size: 100%;
+}
+
+.ps2map__terrain__tile {
+    background-size: 100%;
+    position: absolute;
 }
