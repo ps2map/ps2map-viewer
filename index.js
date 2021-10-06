@@ -54,7 +54,7 @@ var Utils;
 })(Utils || (Utils = {}));
 var MapCamera = (function () {
     function MapCamera(mapSize, viewportHeight, viewportWidth) {
-        this.maxZoom = 10.0;
+        this.maxZoom = 4.0;
         this.zoomStep = 1.5;
         this.zoomIndex = -1;
         this.viewHeight = viewportHeight;
@@ -805,10 +805,6 @@ var TerrainLayer = (function (_super) {
     };
     TerrainLayer.prototype.updateTiles = function (viewbox, zoom) {
         var newLod = this.calculateLod(zoom);
-        if (zoom * devicePixelRatio > 2)
-            this.element.style.imageRendering = "pixelated";
-        else
-            this.element.style.removeProperty("image-rendering");
         if (newLod != this.lod) {
             this.lod = newLod;
             this.defineTiles(this.mapTilesPerAxis(this.mapSize, newLod));

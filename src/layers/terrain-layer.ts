@@ -158,11 +158,6 @@ class TerrainLayer extends TileLayer {
 
     protected updateTiles(viewbox: Box, zoom: number): void {
         const newLod = this.calculateLod(zoom);
-        // Update layer drawing style
-        if (zoom * devicePixelRatio > 2)
-            this.element.style.imageRendering = "pixelated";
-        else
-            this.element.style.removeProperty("image-rendering");
         // Update tiles for new LOD if required
         if (newLod != this.lod) {
             this.lod = newLod;

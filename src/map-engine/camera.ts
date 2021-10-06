@@ -11,8 +11,8 @@ class MapCamera {
 
     // Constants
 
-    /** Maximum zoom level (10 CSS pixels per map pixel). */
-    private readonly maxZoom: number = 10.0
+    /** Maximum zoom level (4 CSS pixels per map pixel). */
+    private readonly maxZoom: number = 4.0
     /** Zoom level step size (logarithmic scaling factor when zooming). */
     private readonly zoomStep: number = 1.5;
 
