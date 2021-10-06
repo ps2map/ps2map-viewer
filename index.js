@@ -688,6 +688,7 @@ var TileLayer = (function (_super) {
         return Utils.rectanglesIntersect(tile.box, viewbox);
     };
     TileLayer.prototype.updateTileVisibility = function (viewbox) {
+        var _this = this;
         var activeTiles = [];
         var i = this.tiles.length;
         while (i-- > 0) {
@@ -695,10 +696,12 @@ var TileLayer = (function (_super) {
             if (this.tileIsVisible(tile, viewbox))
                 activeTiles.push(tile.element);
         }
-        this.element.innerHTML = "";
-        i = activeTiles.length;
-        while (i-- > 0)
-            this.element.append(activeTiles[i]);
+        requestAnimationFrame(function () {
+            _this.element.innerHTML = "";
+            i = activeTiles.length;
+            while (i-- > 0)
+                _this.element.append(activeTiles[i]);
+        });
     };
     TileLayer.prototype.updateTiles = function (viewbox, zoom) {
         this.updateTileVisibility(viewbox);

@@ -110,10 +110,13 @@ abstract class TileLayer extends MapLayer {
                 activeTiles.push(tile.element);
         }
         // Load active tiles
-        this.element.innerHTML = "";
-        i = activeTiles.length;
-        while (i-- > 0)
-            this.element.append(activeTiles[i]);
+        requestAnimationFrame(() => {
+            this.element.innerHTML = "";
+            i = activeTiles.length;
+            while (i-- > 0)
+                this.element.append(activeTiles[i]);
+        });
+
     }
 
     /**
