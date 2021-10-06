@@ -28,7 +28,7 @@ class TerrainLayer extends TileLayer {
             `url(http://127.0.0.1:5000/static/minimap/${code}.jpg)`);
         // Generate grid
         const gridSize = this.mapTilesPerAxis(this.mapSize, this.lod);
-        this.setUpGrid(gridSize);
+        this.defineTiles(gridSize);
     }
 
     /**
@@ -163,14 +163,11 @@ class TerrainLayer extends TileLayer {
             this.element.style.imageRendering = "pixelated";
         else
             this.element.style.removeProperty("image-rendering");
-        // Check if new LODs are required
-        if (newLod == this.lod) {
-            // Update tile visibilities only
-            this.updateTileVisibility(viewbox);
-            return;
+        // Update tiles for new LOD if required
+        if (newLod != this.lod) {
+            this.lod = newLod;
+            this.defineTiles(this.mapTilesPerAxis(this.mapSize, newLod));
         }
-        // Update LOD and regenerate tiles
-        this.lod = newLod;
-        this.setUpGrid(this.mapTilesPerAxis(this.mapSize, newLod));
+        this.updateTileVisibility(viewbox);
     }
 }

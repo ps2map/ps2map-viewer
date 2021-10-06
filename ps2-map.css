@@ -90,16 +90,10 @@
 }
 
 .ps2map__terrain {
-    display: grid;
-    grid-template-rows: repeat(var(--ps2map__terrain__grid-size),
-            var(--ps2map__terrain__tile-size));
-    grid-template-columns: repeat(var(--ps2map__terrain__grid-size),
-            var(--ps2map__terrain__tile-size));
     background-size: 100%;
 }
 
 .ps2map__terrain__tile {
     background-size: 100%;
-    height: 100%;
-    width: 100%;
+    position: absolute;
 }

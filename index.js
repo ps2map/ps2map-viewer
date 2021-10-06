@@ -662,52 +662,43 @@ var TileLayer = (function (_super) {
         _this.lod = initialLod;
         return _this;
     }
-    TileLayer.prototype.setUpGrid = function (gridSize) {
+    TileLayer.prototype.defineTiles = function (gridSize) {
         var newTiles = [];
-        this.element.style.setProperty("--ps2map__terrain__grid-size", gridSize.toFixed());
         var tileSize = this.mapSize / gridSize;
-        this.element.style.setProperty("--ps2map__terrain__tile-size", tileSize.toFixed() + "px");
+        var baseSize = this.mapSize / gridSize;
         var y = gridSize;
         while (y-- > 0) {
-            var _loop_1 = function (x) {
+            for (var x = 0; x < gridSize; x++) {
                 var pos = {
                     x: x,
                     y: y
                 };
-                var tile = this_1.createTile(pos, gridSize);
-                var url = this_1.generateTilePath(pos, this_1.lod);
-                var img = new Image();
-                img.onload = function () {
-                    tile.element.style.backgroundImage = "url(" + url + ")";
-                    img = null;
-                };
-                img.src = url;
+                var tile = this.createTile(pos, gridSize);
+                tile.element.style.height = tile.element.style.width = (tileSize.toFixed() + "px");
+                tile.element.style.left = pos.x * baseSize + "px";
+                tile.element.style.bottom = pos.y * baseSize + "px";
+                var url = this.generateTilePath(pos, this.lod);
+                tile.element.style.backgroundImage = "url(" + url + ")";
                 newTiles.push(tile);
-            };
-            var this_1 = this;
-            for (var x = 0; x < gridSize; x++) {
-                _loop_1(x);
             }
         }
-        this.element.innerHTML = "";
-        var offset = newTiles.length - 1;
-        var i = newTiles.length;
-        while (i-- > 0)
-            this.element.appendChild(newTiles[offset - i].element);
         this.tiles = newTiles;
     };
     TileLayer.prototype.tileIsVisible = function (tile, viewbox) {
         return Utils.rectanglesIntersect(tile.box, viewbox);
     };
     TileLayer.prototype.updateTileVisibility = function (viewbox) {
+        var activeTiles = [];
         var i = this.tiles.length;
         while (i-- > 0) {
             var tile = this.tiles[i];
             if (this.tileIsVisible(tile, viewbox))
-                tile.element.style.removeProperty("visibility");
-            else
-                tile.element.style.visibility = "hidden";
+                activeTiles.push(tile.element);
         }
+        this.element.innerHTML = "";
+        i = activeTiles.length;
+        while (i-- > 0)
+            this.element.append(activeTiles[i]);
     };
     TileLayer.prototype.updateTiles = function (viewbox, zoom) {
         this.updateTileVisibility(viewbox);
@@ -741,7 +732,7 @@ var TerrainLayer = (function (_super) {
         this.code = code;
         this.element.style.backgroundImage = ("url(http://127.0.0.1:5000/static/minimap/" + code + ".jpg)");
         var gridSize = this.mapTilesPerAxis(this.mapSize, this.lod);
-        this.setUpGrid(gridSize);
+        this.defineTiles(gridSize);
     };
     TerrainLayer.prototype.calculateLod = function (zoom) {
         var adjustedZoom = zoom * devicePixelRatio;
@@ -815,12 +806,11 @@ var TerrainLayer = (function (_super) {
             this.element.style.imageRendering = "pixelated";
         else
             this.element.style.removeProperty("image-rendering");
-        if (newLod == this.lod) {
-            this.updateTileVisibility(viewbox);
-            return;
+        if (newLod != this.lod) {
+            this.lod = newLod;
+            this.defineTiles(this.mapTilesPerAxis(this.mapSize, newLod));
         }
-        this.lod = newLod;
-        this.setUpGrid(this.mapTilesPerAxis(this.mapSize, newLod));
+        this.updateTileVisibility(viewbox);
     };
     return TerrainLayer;
 }(TileLayer));

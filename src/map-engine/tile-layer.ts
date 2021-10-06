@@ -43,15 +43,11 @@ abstract class TileLayer extends MapLayer {
         this.lod = initialLod;
     }
 
-    /** Redefine the CSS grid and populate it with new tiles. */
-    protected setUpGrid(gridSize: number): void {
+    /** Generate new tiles for the given grid size. */
+    protected defineTiles(gridSize: number): void {
         const newTiles: MapTile[] = [];
-        // Define CSS grid
-        this.element.style.setProperty(
-            "--ps2map__terrain__grid-size", gridSize.toFixed());
         const tileSize = this.mapSize / gridSize;
-        this.element.style.setProperty(
-            "--ps2map__terrain__tile-size", `${tileSize.toFixed()}px`)
+        const baseSize = this.mapSize / gridSize;
         // Y loop has to count negative as it is populated top-to-bototm
         let y = gridSize;
         while (y-- > 0) {
@@ -62,23 +58,15 @@ abstract class TileLayer extends MapLayer {
                     y: y
                 };
                 const tile = this.createTile(pos, gridSize);
-                // Lazy-load the background image as it is loaded
+                tile.element.style.height = tile.element.style.width = (
+                    `${tileSize.toFixed()}px`);
+                tile.element.style.left = `${pos.x * baseSize}px`;
+                tile.element.style.bottom = `${pos.y * baseSize}px`;
                 const url = this.generateTilePath(pos, this.lod);
-                let img: HTMLImageElement | null = new Image();
-                img.onload = () => {
-                    tile.element.style.backgroundImage = `url(${url})`;
-                    img = null;
-                };
-                img.src = url;
+                tile.element.style.backgroundImage = `url(${url})`;
                 newTiles.push(tile);
             }
         }
-        // Add tiles
-        this.element.innerHTML = "";
-        const offset = newTiles.length - 1;
-        let i = newTiles.length;
-        while (i-- > 0)
-            this.element.appendChild(newTiles[offset - i].element);
         this.tiles = newTiles;
     }
 
@@ -113,14 +101,19 @@ abstract class TileLayer extends MapLayer {
      * @param viewbox Current viewbox to apply
      */
     protected updateTileVisibility(viewbox: Box): void {
+        // Process all tiles to determine which ones are active
+        const activeTiles: HTMLElement[] = [];
         let i = this.tiles.length;
         while (i-- > 0) {
             const tile = this.tiles[i];
             if (this.tileIsVisible(tile, viewbox))
-                tile.element.style.removeProperty("visibility");
-            else
-                tile.element.style.visibility = "hidden";
+                activeTiles.push(tile.element);
         }
+        // Load active tiles
+        this.element.innerHTML = "";
+        i = activeTiles.length;
+        while (i-- > 0)
+            this.element.append(activeTiles[i]);
     }
 
     /**
