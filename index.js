@@ -730,7 +730,7 @@ var TileLayer = (function (_super) {
 var TerrainLayer = (function (_super) {
     __extends(TerrainLayer, _super);
     function TerrainLayer(id, mapSize) {
-        var _this = _super.call(this, id, mapSize, 0) || this;
+        var _this = _super.call(this, id, mapSize, 3) || this;
         _this.code = "";
         _this.element.classList.add("ps2map__terrain");
         return _this;

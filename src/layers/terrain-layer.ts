@@ -8,7 +8,7 @@ class TerrainLayer extends TileLayer {
     private code: string = "";
 
     constructor(id: string, mapSize: number) {
-        super(id, mapSize, 0);
+        super(id, mapSize, 3);
         this.element.classList.add("ps2map__terrain");
     }
 
