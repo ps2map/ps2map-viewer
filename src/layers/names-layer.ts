@@ -10,14 +10,14 @@ class BaseNamesLayer extends PointLayer {
     private getBaseIconFromType(typeId: number): string {
         let fileName = "large-outpost";
         switch (typeId) {
-            case 2:  fileName = "amp-station";          break;
-            case 3:  fileName = "bio-lab";              break;
-            case 4:  fileName = "tech-plant";           break;
-            case 5:  fileName = "large-outpost";        break;
-            case 6:  fileName = "small-outpost";        break;
-            case 7:  fileName = "warpgate";             break;
-            case 9:  fileName = "construction-outpost"; break;
-            case 11: fileName = "containment-site";     break;
+            case 2: fileName = "amp-station"; break;
+            case 3: fileName = "bio-lab"; break;
+            case 4: fileName = "tech-plant"; break;
+            case 5: fileName = "large-outpost"; break;
+            case 6: fileName = "small-outpost"; break;
+            case 7: fileName = "warpgate"; break;
+            case 9: fileName = "construction-outpost"; break;
+            case 11: fileName = "containment-site"; break;
             default:
                 console.warn(`Encountered unknown facility ID: ${typeId}`);
         }
@@ -73,7 +73,7 @@ class BaseNamesLayer extends PointLayer {
         let feat: PointFeature | null = null;
         let i = this.features.length;
         while (i-- > 0)
-            if (this.features[i].id == baseId) 
+            if (this.features[i].id == baseId)
                 feat = this.features[i];
         if (feat == null)
             return;
@@ -81,7 +81,10 @@ class BaseNamesLayer extends PointLayer {
             if (feat == null) throw "feature was unset";
             element.removeEventListener("mouseleave", leave);
             feat.forceVisible = false;
-            feat.element.style.display = feat.visible ? "block" : "none";
+            if (feat.visible)
+                feat.element.style.display = "block";
+            else
+                feat.element.style.removeProperty("display");
         }
         element.addEventListener("mouseleave", leave);
         feat.forceVisible = true;

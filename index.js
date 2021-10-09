@@ -532,7 +532,10 @@ var PointLayer = (function (_super) {
                 feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * " + unzoom + ")) " +
                     ("scale(" + unzoom + ", " + unzoom + ")"));
                 if (!feat.forceVisible)
-                    feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
+                    if (zoom >= feat.minZoom)
+                        feat.element.style.display = "block";
+                    else
+                        feat.element.style.removeProperty("display");
                 feat.visible = zoom >= feat.minZoom;
             }
         });
@@ -637,7 +640,10 @@ var BaseNamesLayer = (function (_super) {
                 throw "feature was unset";
             element.removeEventListener("mouseleave", leave);
             feat.forceVisible = false;
-            feat.element.style.display = feat.visible ? "block" : "none";
+            if (feat.visible)
+                feat.element.style.display = "block";
+            else
+                feat.element.style.removeProperty("display");
         };
         element.addEventListener("mouseleave", leave);
         feat.forceVisible = true;

@@ -65,7 +65,10 @@ class PointLayer extends MapLayer {
                 `translate(-50%, calc(var(--ps2map__base-icon-size) * ${unzoom})) ` +
                 `scale(${unzoom}, ${unzoom})`);
             if (!feat.forceVisible)
-                feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
+                if (zoom >= feat.minZoom)
+                    feat.element.style.display = "block";
+                else
+                    feat.element.style.removeProperty("display");
             feat.visible = zoom >= feat.minZoom;
         }
     });
