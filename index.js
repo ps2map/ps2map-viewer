@@ -529,7 +529,8 @@ var PointLayer = (function (_super) {
             var i = _this.features.length;
             while (i-- > 0) {
                 var feat = _this.features[i];
-                feat.element.style.fontSize = "calc(20px * " + unzoom + ")";
+                feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * " + unzoom + ")) " +
+                    ("scale(" + unzoom + ", " + unzoom + ")"));
                 if (!feat.forceVisible)
                     feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
                 feat.visible = zoom >= feat.minZoom;

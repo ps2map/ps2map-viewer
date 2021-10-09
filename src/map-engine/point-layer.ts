@@ -61,9 +61,9 @@ class PointLayer extends MapLayer {
         let i = this.features.length;
         while (i-- > 0) {
             const feat = this.features[i];
-            // FIXME: Temporary solution; the layer is still scaled by a CSS
-            // transformation matrix, which is not the point of point layers.
-            feat.element.style.fontSize = `calc(20px * ${unzoom})`;
+            feat.element.style.transform = (
+                `translate(-50%, calc(var(--ps2map__base-icon-size) * ${unzoom})) ` +
+                `scale(${unzoom}, ${unzoom})`);
             if (!feat.forceVisible)
                 feat.element.style.display = zoom >= feat.minZoom ? "block" : "none";
             feat.visible = zoom >= feat.minZoom;

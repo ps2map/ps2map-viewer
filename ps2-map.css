@@ -36,7 +36,6 @@
     text-align: center;
     height: 2em;
     width: 8em;
-    transform: translate(-50%, calc(var(--ps2map__base-icon-size) * 2));
     /* Slightly janky workaround for getting more pronounced text shadows. The
        performance hit is not so bad, but we'll need to keep an eye on this as
        more layers get implemented and start loading the renderer. */
