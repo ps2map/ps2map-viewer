@@ -49,6 +49,7 @@ class HeroMap {
         // Load continent data
         Api.getContinent(this.continentId).then((continent) => {
             terrainLayer.setContinent(continent.code);
+            terrainLayer.updateLayer();
         });
         this.controller.addLayer(terrainLayer);
 
@@ -67,6 +68,7 @@ class HeroMap {
             // Load the SVG literal into the layer
             .then((payload) => {
                 hexLayer.element.appendChild(hexLayer.svgFactory(payload));
+                hexLayer.updateLayer();
             });
         this.controller.addLayer(hexLayer);
 
@@ -74,7 +76,11 @@ class HeroMap {
         const namesLayer = new BaseNamesLayer("names", mapSize);
         // Load continent data
         Api.getBasesFromContinent(this.continentId)
-            .then((bases) => namesLayer.loadBaseInfo(bases));
+            .then((bases) => {
+                namesLayer.loadBaseInfo(bases);
+                namesLayer.updateLayer();
+            });
+
         this.controller.addLayer(namesLayer);
 
         hexLayer.polygonHoverCallbacks.push(

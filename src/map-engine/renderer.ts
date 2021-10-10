@@ -135,6 +135,8 @@ class MapRenderer {
      * @param evtDown "mousedown" event starting the panning operation
      */
     private mousePan(evtDown: MouseEvent): void {
+        if (evtDown.button == 2)
+            return;
         this.setPanLock(true);
         // Cache the initial anchor offset relative to which the pan will occur
         const refX = this.camera.target.x;
@@ -194,11 +196,14 @@ class MapRenderer {
      */
     private redraw(viewbox: Box, zoom: number): void {
         // Apply new zoom level and schedule map layer updates
-        this.layers.forEach((layer) => {
+        let i = this.layers.length;
+        while (i-- > 0) {
+            const layer = this.layers[i];
             layer.redraw(viewbox, zoom);
-        });
+            layer.setRedrawArgs(viewbox, zoom);
+        }
         // Invoke viewbox callbacks
-        let i = this.viewboxCallbacks.length;
+        i = this.viewboxCallbacks.length;
         while (i-- > 0)
             this.viewboxCallbacks[i](viewbox);
     }
