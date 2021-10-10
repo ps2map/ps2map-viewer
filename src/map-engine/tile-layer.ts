@@ -29,10 +29,7 @@ class MapTile {
  * Tiles are generally all the same base size, but the map area they cover
  * changes with the current zoom level.
  */
-abstract class TileLayer extends MapLayer {
-    /** Internal timer used for deferred LOD updates. */
-    private layerUpdateTimerId: number | null = null;
-
+abstract class TileLayer extends StagedUpdateLayer {
     /** Current level of detail for terrain tiles. */
     protected lod: number;
     /** Map tiles for the current grid. */
@@ -119,15 +116,7 @@ abstract class TileLayer extends MapLayer {
 
     }
 
-    /**
-     * Determine if new tiles need to be loaded (i.e. new LOD levels).
-     * 
-     * This is called as part of the deferred layer update after a zoom
-     * transformation was applied.
-     * @param viewbox Current viewbox
-     * @param zoom Current zoom level to calculate
-     */
-    protected updateTiles(viewbox: Box, zoom: number): void {
+    protected deferredLayerUpdate(viewbox: Box, zoom: number): void {
         this.updateTileVisibility(viewbox);
     }
 
@@ -144,10 +133,5 @@ abstract class TileLayer extends MapLayer {
         // Apply transform
         this.element.style.transform = (
             `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);
-        // Schedule layer resize after transition animation finished
-        if (this.layerUpdateTimerId != null)
-            clearTimeout(this.layerUpdateTimerId);
-        this.layerUpdateTimerId = setTimeout(
-            this.updateTiles.bind(this), 200, viewbox, zoom);
     }
 }

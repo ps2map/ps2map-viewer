@@ -684,7 +684,6 @@ var TileLayer = (function (_super) {
     __extends(TileLayer, _super);
     function TileLayer(id, mapSize, initialLod) {
         var _this = _super.call(this, id, mapSize) || this;
-        _this.layerUpdateTimerId = null;
         _this.tiles = [];
         _this.lod = initialLod;
         return _this;
@@ -730,7 +729,7 @@ var TileLayer = (function (_super) {
                 _this.element.append(activeTiles[i]);
         });
     };
-    TileLayer.prototype.updateTiles = function (viewbox, zoom) {
+    TileLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
         this.updateTileVisibility(viewbox);
     };
     TileLayer.prototype.redraw = function (viewbox, zoom) {
@@ -742,12 +741,9 @@ var TileLayer = (function (_super) {
         offsetX += (halfMapSize - targetX) * zoom;
         offsetY -= (halfMapSize - targetY) * zoom;
         this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
-        if (this.layerUpdateTimerId != null)
-            clearTimeout(this.layerUpdateTimerId);
-        this.layerUpdateTimerId = setTimeout(this.updateTiles.bind(this), 200, viewbox, zoom);
     };
     return TileLayer;
-}(MapLayer));
+}(StagedUpdateLayer));
 var TerrainLayer = (function (_super) {
     __extends(TerrainLayer, _super);
     function TerrainLayer(id, mapSize) {
@@ -830,7 +826,7 @@ var TerrainLayer = (function (_super) {
             return [-stepSize, -stepSize];
         return [-halfSize, halfSize - stepSize];
     };
-    TerrainLayer.prototype.updateTiles = function (viewbox, zoom) {
+    TerrainLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
         var newLod = this.calculateLod(zoom);
         if (newLod != this.lod) {
             this.lod = newLod;
