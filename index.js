@@ -396,6 +396,13 @@ var HexLayer = (function (_super) {
             });
         });
     };
+    HexLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
+        var svg = this.element.firstElementChild;
+        if (svg != null) {
+            var strokeWith = 10 / Math.pow(1.5, zoom);
+            svg.style.setProperty("--ps2map__base-hexes__stroke-width", strokeWith + "px");
+        }
+    };
     return HexLayer;
 }(StaticLayer));
 var Minimap = (function () {

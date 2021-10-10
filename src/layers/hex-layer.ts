@@ -62,4 +62,13 @@ class HexLayer extends StaticLayer {
             });
         });
     }
+
+    protected deferredLayerUpdate(viewbox: Box, zoom: number): void {
+        const svg = this.element.firstElementChild as SVGElement | null;
+        if (svg != null) {
+            const strokeWith = 10 / 1.5 ** zoom;
+            svg.style.setProperty(
+                "--ps2map__base-hexes__stroke-width", `${strokeWith}px`);
+        }
+    }
 }
