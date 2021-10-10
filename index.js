@@ -121,14 +121,26 @@ var MapCamera = (function () {
 }());
 var MapLayer = (function () {
     function MapLayer(id, mapSize) {
+        var _this = this;
         this.isVisible = true;
+        this.lastRedraw = null;
+        this.runDeferredLayerUpdate = Utils.rafDebounce(function () {
+            if (_this.lastRedraw == null)
+                return;
+            var _a = _this.lastRedraw, viewbox = _a[0], zoom = _a[1];
+            _this.deferredLayerUpdate(viewbox, zoom);
+        });
         this.id = id;
         this.mapSize = mapSize;
         this.element = document.createElement("div");
         this.element.id = id;
         this.element.classList.add("ps2map__layer");
         this.element.style.height = this.element.style.width = mapSize + "px";
+        this.element.addEventListener("transitionend", this.runDeferredLayerUpdate.bind(this), { passive: true });
     }
+    MapLayer.prototype.setRedrawArgs = function (viewbox, zoom) {
+        this.lastRedraw = [viewbox, zoom];
+    };
     MapLayer.prototype.setVisibility = function (visible) {
         if (this.isVisible == visible)
             return;
@@ -138,6 +150,7 @@ var MapLayer = (function () {
             this.element.style.display = "none";
         this.isVisible = visible;
     };
+    MapLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) { };
     return MapLayer;
 }());
 var __extends = (this && this.__extends) || (function () {
@@ -278,10 +291,13 @@ var MapRenderer = (function () {
         }
     };
     MapRenderer.prototype.redraw = function (viewbox, zoom) {
-        this.layers.forEach(function (layer) {
+        var i = this.layers.length;
+        while (i-- > 0) {
+            var layer = this.layers[i];
             layer.redraw(viewbox, zoom);
-        });
-        var i = this.viewboxCallbacks.length;
+            layer.setRedrawArgs(viewbox, zoom);
+        }
+        i = this.viewboxCallbacks.length;
         while (i-- > 0)
             this.viewboxCallbacks[i](viewbox);
     };
@@ -523,22 +539,6 @@ var PointLayer = (function (_super) {
     function PointLayer() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.features = [];
-        _this.layerUpdateTimerId = null;
-        _this.resizeLayer = Utils.rafDebounce(function (viewbox, zoom) {
-            var unzoom = 1 / zoom;
-            var i = _this.features.length;
-            while (i-- > 0) {
-                var feat = _this.features[i];
-                feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * " + unzoom + ")) " +
-                    ("scale(" + unzoom + ", " + unzoom + ")"));
-                if (!feat.forceVisible)
-                    if (zoom >= feat.minZoom)
-                        feat.element.style.display = "block";
-                    else
-                        feat.element.style.removeProperty("display");
-                feat.visible = zoom >= feat.minZoom;
-            }
-        });
         return _this;
     }
     PointLayer.prototype.redraw = function (viewbox, zoom) {
@@ -550,9 +550,21 @@ var PointLayer = (function (_super) {
         offsetX += (halfMapSize - targetX) * zoom;
         offsetY -= (halfMapSize - targetY) * zoom;
         this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
-        if (this.layerUpdateTimerId != null)
-            clearTimeout(this.layerUpdateTimerId);
-        this.layerUpdateTimerId = setTimeout(this.resizeLayer.bind(this), 200, viewbox, zoom);
+    };
+    PointLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
+        var unzoom = 1 / zoom;
+        var i = this.features.length;
+        while (i-- > 0) {
+            var feat = this.features[i];
+            feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * " + unzoom + ")) " +
+                ("scale(" + unzoom + ", " + unzoom + ")"));
+            if (!feat.forceVisible)
+                if (zoom >= feat.minZoom)
+                    feat.element.style.display = "block";
+                else
+                    feat.element.style.removeProperty("display");
+            feat.visible = zoom >= feat.minZoom;
+        }
     };
     return PointLayer;
 }(MapLayer));
@@ -626,6 +638,7 @@ var BaseNamesLayer = (function (_super) {
             this.element.appendChild(element);
         }
         this.features = features;
+        this.element.dispatchEvent(new Event("transitionend"));
     };
     BaseNamesLayer.prototype.onBaseHover = function (baseId, element) {
         var feat = null;
@@ -664,7 +677,6 @@ var TileLayer = (function (_super) {
     __extends(TileLayer, _super);
     function TileLayer(id, mapSize, initialLod) {
         var _this = _super.call(this, id, mapSize) || this;
-        _this.layerUpdateTimerId = null;
         _this.tiles = [];
         _this.lod = initialLod;
         return _this;
@@ -710,7 +722,7 @@ var TileLayer = (function (_super) {
                 _this.element.append(activeTiles[i]);
         });
     };
-    TileLayer.prototype.updateTiles = function (viewbox, zoom) {
+    TileLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
         this.updateTileVisibility(viewbox);
     };
     TileLayer.prototype.redraw = function (viewbox, zoom) {
@@ -722,9 +734,6 @@ var TileLayer = (function (_super) {
         offsetX += (halfMapSize - targetX) * zoom;
         offsetY -= (halfMapSize - targetY) * zoom;
         this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
-        if (this.layerUpdateTimerId != null)
-            clearTimeout(this.layerUpdateTimerId);
-        this.layerUpdateTimerId = setTimeout(this.updateTiles.bind(this), 200, viewbox, zoom);
     };
     return TileLayer;
 }(MapLayer));
@@ -810,7 +819,7 @@ var TerrainLayer = (function (_super) {
             return [-stepSize, -stepSize];
         return [-halfSize, halfSize - stepSize];
     };
-    TerrainLayer.prototype.updateTiles = function (viewbox, zoom) {
+    TerrainLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
         var newLod = this.calculateLod(zoom);
         if (newLod != this.lod) {
             this.lod = newLod;

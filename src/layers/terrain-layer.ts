@@ -156,13 +156,15 @@ class TerrainLayer extends TileLayer {
         return [-halfSize, halfSize - stepSize];
     }
 
-    protected updateTiles(viewbox: Box, zoom: number): void {
+    protected deferredLayerUpdate(viewbox: Box, zoom: number): void {
+        // Calculate appropriate LOD for the new zoom level
         const newLod = this.calculateLod(zoom);
         // Update tiles for new LOD if required
         if (newLod != this.lod) {
             this.lod = newLod;
             this.defineTiles(this.mapTilesPerAxis(this.mapSize, newLod));
         }
+        // Update visibility of tiles
         this.updateTileVisibility(viewbox);
     }
 }
