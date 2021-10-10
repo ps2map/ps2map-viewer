@@ -119,6 +119,21 @@ var MapCamera = (function () {
     };
     return MapCamera;
 }());
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var MapLayer = (function () {
     function MapLayer(id, mapSize) {
         this.isVisible = true;
@@ -140,21 +155,25 @@ var MapLayer = (function () {
     };
     return MapLayer;
 }());
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
+var StagedUpdateLayer = (function (_super) {
+    __extends(StagedUpdateLayer, _super);
+    function StagedUpdateLayer(id, mapSize) {
+        var _this = _super.call(this, id, mapSize) || this;
+        _this.lastRedraw = null;
+        _this.runDeferredLayerUpdate = Utils.rafDebounce(function () {
+            if (_this.lastRedraw == null)
+                return;
+            var _a = _this.lastRedraw, viewbox = _a[0], zoom = _a[1];
+            _this.deferredLayerUpdate(viewbox, zoom);
+        });
+        _this.element.addEventListener("transitionend", _this.runDeferredLayerUpdate.bind(_this), { passive: true });
+        return _this;
+    }
+    StagedUpdateLayer.prototype.storeRedrawArgs = function (viewbox, zoom) {
+        this.lastRedraw = [viewbox, zoom];
     };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+    return StagedUpdateLayer;
+}(MapLayer));
 var StaticLayer = (function (_super) {
     __extends(StaticLayer, _super);
     function StaticLayer(id, mapSize) {
@@ -278,10 +297,14 @@ var MapRenderer = (function () {
         }
     };
     MapRenderer.prototype.redraw = function (viewbox, zoom) {
-        this.layers.forEach(function (layer) {
+        var i = this.layers.length;
+        while (i-- > 0) {
+            var layer = this.layers[i];
             layer.redraw(viewbox, zoom);
-        });
-        var i = this.viewboxCallbacks.length;
+            if (layer instanceof StagedUpdateLayer)
+                layer.storeRedrawArgs(viewbox, zoom);
+        }
+        i = this.viewboxCallbacks.length;
         while (i-- > 0)
             this.viewboxCallbacks[i](viewbox);
     };

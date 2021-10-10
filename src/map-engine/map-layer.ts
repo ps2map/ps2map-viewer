@@ -54,3 +54,55 @@ abstract class MapLayer {
      */
     abstract redraw(viewbox: Box, zoom: number): void;
 }
+
+
+/**
+ * Customised MapLayer base class that uses a two-stage layer update system.
+ * 
+ * In the first step, `redraw()`, only cheap updates are performed, like
+ * updating the CSS transformation for static layers. In a second step, the
+ * `deferredLayerUpdate()` hook will perform major updates like visibility
+ * checks or texture replacements once the map is idle (i.e. not scrolling or
+ * zooming).
+ */
+abstract class StagedUpdateLayer extends MapLayer {
+    /** Internal cache for two-stage layer updates. */
+    private lastRedraw: [Box, number] | null = null;
+
+    constructor(id: string, mapSize: number) {
+        super(id, mapSize);
+        this.element.addEventListener(
+            "transitionend", this.runDeferredLayerUpdate.bind(this), { passive: true });
+    }
+
+    /**
+     * External hook used by the map renderer to store redraw call arguments.
+     * 
+     * This is used to implement the StagedUpdateLayer class and should not be
+     * called from or modified in sub classes.
+     * @param viewbox New viewbox of the client
+     * @param zoom New zoom level
+     */
+    storeRedrawArgs(viewbox: Box, zoom: number): void {
+        this.lastRedraw = [viewbox, zoom];
+    }
+
+    /** Wrapper to run deferred layer updates from event listeners. */
+    private runDeferredLayerUpdate = Utils.rafDebounce(() => {
+        if (this.lastRedraw == null)
+            return;
+        const [viewbox, zoom] = this.lastRedraw;
+        this.deferredLayerUpdate(viewbox, zoom);
+    });
+
+    /**
+     * Implementation of the deferred layer update.
+     * 
+     * This is similar to `MapLayer.redraw`, but only runs after all zooming or
+     * panning animations ended. Use this hook for expensive layer updates like
+     * visibility checks or DOM updates.
+     * @param viewbox New viewbox of the client
+     * @param zoom New zoom level
+     */
+    protected abstract deferredLayerUpdate(viewbox: Box, zoom: number): void;
+}
