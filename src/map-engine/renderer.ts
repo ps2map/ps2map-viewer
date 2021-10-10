@@ -135,6 +135,8 @@ class MapRenderer {
      * @param evtDown "mousedown" event starting the panning operation
      */
     private mousePan(evtDown: MouseEvent): void {
+        if (evtDown.button == 2)
+            return;
         this.setPanLock(true);
         // Cache the initial anchor offset relative to which the pan will occur
         const refX = this.camera.target.x;

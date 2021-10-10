@@ -256,6 +256,8 @@ var MapRenderer = (function () {
     };
     MapRenderer.prototype.mousePan = function (evtDown) {
         var _this = this;
+        if (evtDown.button == 2)
+            return;
         this.setPanLock(true);
         var refX = this.camera.target.x;
         var refY = this.camera.target.y;
