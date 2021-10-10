@@ -26,11 +26,9 @@ class PointFeature {
     }
 }
 
-class PointLayer extends MapLayer {
+class PointLayer extends StagedUpdateLayer {
     /** Container for point features loaded into the layer. */
     features: PointFeature[] = []
-    /** Timer used to delay layer updates while zooming. */
-    private layerUpdateTimerId: number | null = null;
 
     redraw(viewbox: Box, zoom: number): void {
         const targetX = (viewbox.right + viewbox.left) * 0.5;
@@ -45,18 +43,9 @@ class PointLayer extends MapLayer {
         // Apply transform
         this.element.style.transform = (
             `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);
-        // Schedule layer resize after transition animation finished
-        if (this.layerUpdateTimerId != null)
-            clearTimeout(this.layerUpdateTimerId);
-        this.layerUpdateTimerId = setTimeout(
-            this.resizeLayer.bind(this), 200, viewbox, zoom);
     }
 
-    /**
-     * Update the layer geometry after the CSS transition finished.
-     * @param viewbox New viewbox to apply
-     */
-    private resizeLayer = Utils.rafDebounce((viewbox: Box, zoom: number) => {
+    protected deferredLayerUpdate(viewbox: Box, zoom: number) {
         const unzoom = 1 / zoom;
         let i = this.features.length;
         while (i-- > 0) {
@@ -71,5 +60,5 @@ class PointLayer extends MapLayer {
                     feat.element.style.removeProperty("display");
             feat.visible = zoom >= feat.minZoom;
         }
-    });
+    }
 }
