@@ -198,8 +198,7 @@ class MapRenderer {
         while (i-- > 0) {
             const layer = this.layers[i];
             layer.redraw(viewbox, zoom);
-            if (layer instanceof StagedUpdateLayer)
-                layer.storeRedrawArgs(viewbox, zoom);
+            layer.setRedrawArgs(viewbox, zoom);
         }
         // Invoke viewbox callbacks
         i = this.viewboxCallbacks.length;

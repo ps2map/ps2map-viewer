@@ -13,8 +13,12 @@ abstract class MapLayer {
     readonly mapSize: number;
     /** DOM element containing the layer's features. */
     readonly element: HTMLDivElement;
+
     /** Whether the layer is currently visible. */
     protected isVisible: boolean = true;
+
+    /** Internal cache for deferred layer updates. */
+    private lastRedraw: [Box, number] | null = null;
 
     constructor(id: string, mapSize: number) {
         this.id = id;
@@ -24,6 +28,21 @@ abstract class MapLayer {
         this.element.id = id;
         this.element.classList.add("ps2map__layer");
         this.element.style.height = this.element.style.width = `${mapSize}px`;
+        // Add event listener for deferred updates
+        this.element.addEventListener(
+            "transitionend", this.runDeferredLayerUpdate.bind(this), { passive: true });
+    }
+
+    /**
+     * External hook used by the map renderer to store redraw call arguments.
+     * 
+     * This is used to implement the StagedUpdateLayer class and should not be
+     * called from or modified in sub classes.
+     * @param viewbox New viewbox of the client
+     * @param zoom New zoom level
+     */
+    setRedrawArgs(viewbox: Box, zoom: number): void {
+        this.lastRedraw = [viewbox, zoom];
     }
 
     /**
@@ -40,53 +59,6 @@ abstract class MapLayer {
         this.isVisible = visible;
     }
 
-    /**
-     * Callback used to trigger updates in the map layer.
-     *
-     * Implement this hook to control visibility and zoom level updates
-     * efficiently.
-     *
-     * Do not call requestAnimationFrame() as part of this method as timing is
-     * the responsibility of the caller. Debouncing and other throttling
-     * strategies are permitted.
-     * @param viewbox New viewbox of the client
-     * @param zoom New zoom level
-     */
-    abstract redraw(viewbox: Box, zoom: number): void;
-}
-
-
-/**
- * Customised MapLayer base class that uses a two-stage layer update system.
- * 
- * In the first step, `redraw()`, only cheap updates are performed, like
- * updating the CSS transformation for static layers. In a second step, the
- * `deferredLayerUpdate()` hook will perform major updates like visibility
- * checks or texture replacements once the map is idle (i.e. not scrolling or
- * zooming).
- */
-abstract class StagedUpdateLayer extends MapLayer {
-    /** Internal cache for two-stage layer updates. */
-    private lastRedraw: [Box, number] | null = null;
-
-    constructor(id: string, mapSize: number) {
-        super(id, mapSize);
-        this.element.addEventListener(
-            "transitionend", this.runDeferredLayerUpdate.bind(this), { passive: true });
-    }
-
-    /**
-     * External hook used by the map renderer to store redraw call arguments.
-     * 
-     * This is used to implement the StagedUpdateLayer class and should not be
-     * called from or modified in sub classes.
-     * @param viewbox New viewbox of the client
-     * @param zoom New zoom level
-     */
-    storeRedrawArgs(viewbox: Box, zoom: number): void {
-        this.lastRedraw = [viewbox, zoom];
-    }
-
     /** Wrapper to run deferred layer updates from event listeners. */
     private runDeferredLayerUpdate = Utils.rafDebounce(() => {
         if (this.lastRedraw == null)
@@ -96,13 +68,27 @@ abstract class StagedUpdateLayer extends MapLayer {
     });
 
     /**
-     * Implementation of the deferred layer update.
-     * 
-     * This is similar to `MapLayer.redraw`, but only runs after all zooming or
-     * panning animations ended. Use this hook for expensive layer updates like
-     * visibility checks or DOM updates.
+     * Callback used to trigger updates in the map layer.
+     *
+     * Implement this hook to control visibility and zoom level updates
+     * efficiently.
+     *
+     * Do not call `requestAnimationFrame()` as part of this method as timing
+     * is the responsibility of the caller. Debouncing and other throttling
+     * strategies are permitted.
      * @param viewbox New viewbox of the client
      * @param zoom New zoom level
      */
-    protected abstract deferredLayerUpdate(viewbox: Box, zoom: number): void;
+    abstract redraw(viewbox: Box, zoom: number): void;
+
+    /**
+     * Implementation of the deferred layer update.
+     * 
+     * This is similar to `MapLayer.redraw()`, but only runs after all zooming
+     * or panning animations ended. Use this hook for expensive layer updates
+     * like visibility checks or DOM updates.
+     * @param viewbox New viewbox of the client
+     * @param zoom New zoom level
+     */
+    protected deferredLayerUpdate(viewbox: Box, zoom: number): void { }
 }

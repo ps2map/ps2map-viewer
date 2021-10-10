@@ -29,7 +29,7 @@ class MapTile {
  * Tiles are generally all the same base size, but the map area they cover
  * changes with the current zoom level.
  */
-abstract class TileLayer extends StagedUpdateLayer {
+abstract class TileLayer extends MapLayer {
     /** Current level of detail for terrain tiles. */
     protected lod: number;
     /** Map tiles for the current grid. */

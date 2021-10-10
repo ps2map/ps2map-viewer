@@ -119,6 +119,40 @@ var MapCamera = (function () {
     };
     return MapCamera;
 }());
+var MapLayer = (function () {
+    function MapLayer(id, mapSize) {
+        var _this = this;
+        this.isVisible = true;
+        this.lastRedraw = null;
+        this.runDeferredLayerUpdate = Utils.rafDebounce(function () {
+            if (_this.lastRedraw == null)
+                return;
+            var _a = _this.lastRedraw, viewbox = _a[0], zoom = _a[1];
+            _this.deferredLayerUpdate(viewbox, zoom);
+        });
+        this.id = id;
+        this.mapSize = mapSize;
+        this.element = document.createElement("div");
+        this.element.id = id;
+        this.element.classList.add("ps2map__layer");
+        this.element.style.height = this.element.style.width = mapSize + "px";
+        this.element.addEventListener("transitionend", this.runDeferredLayerUpdate.bind(this), { passive: true });
+    }
+    MapLayer.prototype.setRedrawArgs = function (viewbox, zoom) {
+        this.lastRedraw = [viewbox, zoom];
+    };
+    MapLayer.prototype.setVisibility = function (visible) {
+        if (this.isVisible == visible)
+            return;
+        if (visible)
+            this.element.style.removeProperty("display");
+        else
+            this.element.style.display = "none";
+        this.isVisible = visible;
+    };
+    MapLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) { };
+    return MapLayer;
+}());
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -134,46 +168,6 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var MapLayer = (function () {
-    function MapLayer(id, mapSize) {
-        this.isVisible = true;
-        this.id = id;
-        this.mapSize = mapSize;
-        this.element = document.createElement("div");
-        this.element.id = id;
-        this.element.classList.add("ps2map__layer");
-        this.element.style.height = this.element.style.width = mapSize + "px";
-    }
-    MapLayer.prototype.setVisibility = function (visible) {
-        if (this.isVisible == visible)
-            return;
-        if (visible)
-            this.element.style.removeProperty("display");
-        else
-            this.element.style.display = "none";
-        this.isVisible = visible;
-    };
-    return MapLayer;
-}());
-var StagedUpdateLayer = (function (_super) {
-    __extends(StagedUpdateLayer, _super);
-    function StagedUpdateLayer(id, mapSize) {
-        var _this = _super.call(this, id, mapSize) || this;
-        _this.lastRedraw = null;
-        _this.runDeferredLayerUpdate = Utils.rafDebounce(function () {
-            if (_this.lastRedraw == null)
-                return;
-            var _a = _this.lastRedraw, viewbox = _a[0], zoom = _a[1];
-            _this.deferredLayerUpdate(viewbox, zoom);
-        });
-        _this.element.addEventListener("transitionend", _this.runDeferredLayerUpdate.bind(_this), { passive: true });
-        return _this;
-    }
-    StagedUpdateLayer.prototype.storeRedrawArgs = function (viewbox, zoom) {
-        this.lastRedraw = [viewbox, zoom];
-    };
-    return StagedUpdateLayer;
-}(MapLayer));
 var StaticLayer = (function (_super) {
     __extends(StaticLayer, _super);
     function StaticLayer(id, mapSize) {
@@ -301,8 +295,7 @@ var MapRenderer = (function () {
         while (i-- > 0) {
             var layer = this.layers[i];
             layer.redraw(viewbox, zoom);
-            if (layer instanceof StagedUpdateLayer)
-                layer.storeRedrawArgs(viewbox, zoom);
+            layer.setRedrawArgs(viewbox, zoom);
         }
         i = this.viewboxCallbacks.length;
         while (i-- > 0)
@@ -574,7 +567,7 @@ var PointLayer = (function (_super) {
         }
     };
     return PointLayer;
-}(StagedUpdateLayer));
+}(MapLayer));
 var BaseNamesLayer = (function (_super) {
     __extends(BaseNamesLayer, _super);
     function BaseNamesLayer() {
@@ -743,7 +736,7 @@ var TileLayer = (function (_super) {
         this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
     };
     return TileLayer;
-}(StagedUpdateLayer));
+}(MapLayer));
 var TerrainLayer = (function (_super) {
     __extends(TerrainLayer, _super);
     function TerrainLayer(id, mapSize) {

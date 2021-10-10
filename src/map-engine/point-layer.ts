@@ -26,7 +26,7 @@ class PointFeature {
     }
 }
 
-class PointLayer extends StagedUpdateLayer {
+class PointLayer extends MapLayer {
     /** Container for point features loaded into the layer. */
     features: PointFeature[] = []
 
