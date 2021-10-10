@@ -16,12 +16,16 @@
     user-select: none;
 }
 
+.ps2map__base-hexes__svg {
+    --ps2map__base-hexes__stroke-width: 4px;
+}
+
 .ps2map__base-hexes__svg>polygon {
     fill: rgb(255, 255, 255);
     fill-opacity: 0.3;
     pointer-events: visiblePainted;
     stroke: #000000;
-    stroke-width: 4px;
+    stroke-width: var(--ps2map__base-hexes__stroke-width);
     /* Hover effects are applied in code as we need to reorder the SVG contents
        to promote the hovered element's outline, which has a habit of breaking
        the :hover pseudoclass. */

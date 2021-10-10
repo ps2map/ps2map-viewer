@@ -150,6 +150,9 @@ var MapLayer = (function () {
             this.element.style.display = "none";
         this.isVisible = visible;
     };
+    MapLayer.prototype.updateLayer = function () {
+        this.element.dispatchEvent(new Event("transitionend"));
+    };
     MapLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) { };
     return MapLayer;
 }());
@@ -393,6 +396,13 @@ var HexLayer = (function (_super) {
             });
         });
     };
+    HexLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
+        var svg = this.element.firstElementChild;
+        if (svg != null) {
+            var strokeWith = 10 / Math.pow(1.5, zoom);
+            svg.style.setProperty("--ps2map__base-hexes__stroke-width", strokeWith + "px");
+        }
+    };
     return HexLayer;
 }(StaticLayer));
 var Minimap = (function () {
@@ -473,6 +483,7 @@ var HeroMap = (function () {
         var terrainLayer = new TerrainLayer("terrain", mapSize);
         Api.getContinent(this.continentId).then(function (continent) {
             terrainLayer.setContinent(continent.code);
+            terrainLayer.updateLayer();
         });
         this.controller.addLayer(terrainLayer);
         var hexLayer = new HexLayer("hexes", mapSize);
@@ -485,11 +496,15 @@ var HeroMap = (function () {
         })
             .then(function (payload) {
             hexLayer.element.appendChild(hexLayer.svgFactory(payload));
+            hexLayer.updateLayer();
         });
         this.controller.addLayer(hexLayer);
         var namesLayer = new BaseNamesLayer("names", mapSize);
         Api.getBasesFromContinent(this.continentId)
-            .then(function (bases) { return namesLayer.loadBaseInfo(bases); });
+            .then(function (bases) {
+            namesLayer.loadBaseInfo(bases);
+            namesLayer.updateLayer();
+        });
         this.controller.addLayer(namesLayer);
         hexLayer.polygonHoverCallbacks.push(namesLayer.onBaseHover.bind(namesLayer));
         var bases = [];
@@ -638,7 +653,6 @@ var BaseNamesLayer = (function (_super) {
             this.element.appendChild(element);
         }
         this.features = features;
-        this.element.dispatchEvent(new Event("transitionend"));
     };
     BaseNamesLayer.prototype.onBaseHover = function (baseId, element) {
         var feat = null;

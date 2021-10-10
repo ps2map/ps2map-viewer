@@ -60,7 +60,6 @@ class BaseNamesLayer extends PointLayer {
             this.element.appendChild(element);
         }
         this.features = features;
-        this.element.dispatchEvent(new Event("transitionend"));
     }
 
     /**
