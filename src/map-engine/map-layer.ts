@@ -59,6 +59,11 @@ abstract class MapLayer {
         this.isVisible = visible;
     }
 
+    /** Hook for manually triggering a layer update. */
+    updateLayer(): void {
+        this.element.dispatchEvent(new Event("transitionend"));
+    }
+
     /** Wrapper to run deferred layer updates from event listeners. */
     private runDeferredLayerUpdate = Utils.rafDebounce(() => {
         if (this.lastRedraw == null)
