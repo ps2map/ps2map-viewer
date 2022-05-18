@@ -25,7 +25,7 @@ class TerrainLayer extends TileLayer {
         this.code = code;
         // Add low-res background buffer for antialiasing and preloading
         this.element.style.backgroundImage = (
-            `url(http://127.0.0.1:5000/static/minimap/${code}.jpg)`);
+            `url(${Api.getMinimapImagePath(code)})`);
         // Generate grid
         const gridSize = this.mapTilesPerAxis(this.mapSize, this.lod);
         this.defineTiles(gridSize);
@@ -80,10 +80,10 @@ class TerrainLayer extends TileLayer {
 
     protected generateTilePath(pos: GridPos, lod: number): string {
         const [tileX, tileY] = this.gridPosToTilePos(pos, lod);
-        const coordX = this.formatTileCoordinate(tileX);
-        const coordY = this.formatTileCoordinate(tileY);
-        const filename = `${this.code}_tile_${coordX}_${coordY}_lod${lod}.jpeg`;
-        return `http://127.0.0.1:5000/static/tile/${filename}`;
+        const tilePos: [string, string] = [
+            this.formatTileCoordinate(tileX),
+            this.formatTileCoordinate(tileY)];
+        return Api.getTerrainTilePath(this.code, tilePos, lod);
     }
 
     /**

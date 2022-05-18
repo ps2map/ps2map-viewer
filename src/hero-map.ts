@@ -19,8 +19,7 @@ class HeroMap {
 
     constructor(
         viewport: HTMLDivElement,
-        initialContinentId: number,
-        endpoint: string
+        initialContinentId: number
     ) {
         this.continentId = initialContinentId;
 
@@ -38,7 +37,7 @@ class HeroMap {
             throw "Minimap element must be a DIV";
         // FIXME: Hard-coded minimap URL for now
         this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, "http://127.0.0.1:5000/static/minimap/esamir.jpg")
+            mapSize, Api.getMinimapImagePath('esamir'));
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(
@@ -59,7 +58,7 @@ class HeroMap {
         Api.getContinent(this.continentId)
             // Fetch base outlines
             .then((continent) => {
-                return fetch(`${endpoint}/static/hex/${continent.code}-minimal.svg`);
+                return fetch(`${Api.getApiEndpoint()}static/hex/${continent.code}-minimal.svg`);
             })
             // Get raw text response (i.e. the SVG literal)
             .then((data) => {

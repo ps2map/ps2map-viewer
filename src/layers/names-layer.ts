@@ -9,15 +9,14 @@ class BaseNamesLayer extends PointLayer {
         while (i-- > 0) {
             const baseInfo = bases[i];
             if (baseInfo.type_code == "no-mans-land")
-                // "No man's land" facilities do not get icons
-                continue;
+                continue; // "No man's land" bases do not get icons
             const pos = {
                 x: baseInfo.map_pos[0],
                 y: baseInfo.map_pos[1]
             };
             const element = document.createElement("div");
             let name = baseInfo.name;
-            // Append the facility type for primary facilities
+            // Append the facility type for primary bases
             if (baseInfo.type_code == "amp-station" ||
                 baseInfo.type_code == "bio-lab" ||
                 baseInfo.type_code == "tech-plant") {

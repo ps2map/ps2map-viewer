@@ -48,4 +48,35 @@ namespace Api {
                 throw `unknown continent ID: ${continentId}`;
             });
     }
+
+    /**
+     * Return the minimap path for the given continent code.
+     * @param continentCode Code of the continent for which to retrieve the
+     * minimap asset path.
+     */
+    export function getMinimapImagePath(continentCode: string): string {
+        return `${restEndpoint}static/minimap/${continentCode}.jpg`;
+    }
+
+    /**
+     * Return the terrain tile path for a given position, continent, and lod.
+     * @param continentCode ID of the continent for which to retrieve the tile.
+     * @param pos Position of the tile to retrieve.
+     * @param lod LOD of the tile to retrieve.
+     * 
+     * 
+     */
+    export function getTerrainTilePath(
+        continentCode: string,
+        pos: [string, string],
+        lod: number): string {
+
+        const filename = `${continentCode}_tile_${pos[0]}_${pos[1]}_lod${lod}.jpeg`;
+        return `${restEndpoint}static/tile/${filename}`;
+    }
+
+    /** Temporary getter for REST API endpoint. */
+    export function getApiEndpoint(): string {
+        return restEndpoint;
+    }
 }

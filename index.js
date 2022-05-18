@@ -351,6 +351,19 @@ var Api;
         });
     }
     Api.getContinent = getContinent;
+    function getMinimapImagePath(continentCode) {
+        return restEndpoint + "static/minimap/" + continentCode + ".jpg";
+    }
+    Api.getMinimapImagePath = getMinimapImagePath;
+    function getTerrainTilePath(continentCode, pos, lod) {
+        var filename = continentCode + "_tile_" + pos[0] + "_" + pos[1] + "_lod" + lod + ".jpeg";
+        return restEndpoint + "static/tile/" + filename;
+    }
+    Api.getTerrainTilePath = getTerrainTilePath;
+    function getApiEndpoint() {
+        return restEndpoint;
+    }
+    Api.getApiEndpoint = getApiEndpoint;
 })(Api || (Api = {}));
 var HexLayer = (function (_super) {
     __extends(HexLayer, _super);
@@ -470,7 +483,7 @@ var Minimap = (function () {
     return Minimap;
 }());
 var HeroMap = (function () {
-    function HeroMap(viewport, initialContinentId, endpoint) {
+    function HeroMap(viewport, initialContinentId) {
         this.continentId = initialContinentId;
         var mapSize = 8192;
         this.controller = new MapRenderer(viewport, mapSize);
@@ -479,7 +492,7 @@ var HeroMap = (function () {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, "http://127.0.0.1:5000/static/minimap/esamir.jpg");
+        this.minimap = new Minimap(minimapElement, mapSize, Api.getMinimapImagePath('esamir'));
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var terrainLayer = new TerrainLayer("terrain", mapSize);
@@ -491,7 +504,7 @@ var HeroMap = (function () {
         var hexLayer = new HexLayer("hexes", mapSize);
         Api.getContinent(this.continentId)
             .then(function (continent) {
-            return fetch(endpoint + "/static/hex/" + continent.code + "-minimal.svg");
+            return fetch(Api.getApiEndpoint() + "static/hex/" + continent.code + "-minimal.svg");
         })
             .then(function (data) {
             return data.text();
@@ -528,7 +541,6 @@ var HeroMap = (function () {
     return HeroMap;
 }());
 document.addEventListener("DOMContentLoaded", function () {
-    var apiEndpoint = "http://127.0.0.1:5000";
     var continentId = 8;
     var viewport = document.getElementById("hero-map");
     if (viewport == null) {
@@ -537,7 +549,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (viewport.tagName != "DIV") {
         throw "Expected viewport of type \"DIV\" (got " + viewport.tagName + ")";
     }
-    new HeroMap(viewport, continentId, apiEndpoint);
+    new HeroMap(viewport, continentId);
 });
 var PointFeature = (function () {
     function PointFeature(pos, id, element, minZoom) {
@@ -732,7 +744,7 @@ var TerrainLayer = (function (_super) {
         if (this.code == code)
             return;
         this.code = code;
-        this.element.style.backgroundImage = ("url(http://127.0.0.1:5000/static/minimap/" + code + ".jpg)");
+        this.element.style.backgroundImage = ("url(" + Api.getMinimapImagePath(code) + ")");
         var gridSize = this.mapTilesPerAxis(this.mapSize, this.lod);
         this.defineTiles(gridSize);
     };
@@ -769,10 +781,11 @@ var TerrainLayer = (function (_super) {
     };
     TerrainLayer.prototype.generateTilePath = function (pos, lod) {
         var _a = this.gridPosToTilePos(pos, lod), tileX = _a[0], tileY = _a[1];
-        var coordX = this.formatTileCoordinate(tileX);
-        var coordY = this.formatTileCoordinate(tileY);
-        var filename = this.code + "_tile_" + coordX + "_" + coordY + "_lod" + lod + ".jpeg";
-        return "http://127.0.0.1:5000/static/tile/" + filename;
+        var tilePos = [
+            this.formatTileCoordinate(tileX),
+            this.formatTileCoordinate(tileY)
+        ];
+        return Api.getTerrainTilePath(this.code, tilePos, lod);
     };
     TerrainLayer.prototype.gridPosToTilePos = function (pos, lod) {
         var min = this.mapGridLimits(this.mapSize, lod)[0];
