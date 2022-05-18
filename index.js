@@ -329,14 +329,14 @@ var Api;
     var restEndpoint = "http://127.0.0.1:5000/";
     function getBasesFromContinent(continentId) {
         var rounded = Math.round(continentId);
-        var url = restEndpoint + "bases/info?continent_id=" + rounded;
+        var url = restEndpoint + "base?continent_id=" + rounded;
         return fetch(url).then(function (value) {
             return value.json();
         });
     }
     Api.getBasesFromContinent = getBasesFromContinent;
     function getContinent(continentId) {
-        var url = restEndpoint + "continents/info";
+        var url = restEndpoint + "continent";
         return fetch(url)
             .then(function (value) {
             return value.json();
@@ -590,44 +590,12 @@ var BaseNamesLayer = (function (_super) {
     function BaseNamesLayer() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    BaseNamesLayer.prototype.getBaseIconFromType = function (typeId) {
-        var fileName = "large-outpost";
-        switch (typeId) {
-            case 2:
-                fileName = "amp-station";
-                break;
-            case 3:
-                fileName = "bio-lab";
-                break;
-            case 4:
-                fileName = "tech-plant";
-                break;
-            case 5:
-                fileName = "large-outpost";
-                break;
-            case 6:
-                fileName = "small-outpost";
-                break;
-            case 7:
-                fileName = "warpgate";
-                break;
-            case 9:
-                fileName = "construction-outpost";
-                break;
-            case 11:
-                fileName = "containment-site";
-                break;
-            default:
-                console.warn("Encountered unknown facility ID: " + typeId);
-        }
-        return fileName;
-    };
     BaseNamesLayer.prototype.loadBaseInfo = function (bases) {
         var features = [];
         var i = bases.length;
         while (i-- > 0) {
             var baseInfo = bases[i];
-            if (baseInfo.type_id == 0)
+            if (baseInfo.type_code == "no-mans-land")
                 continue;
             var pos = {
                 x: baseInfo.map_pos[0],
@@ -635,21 +603,20 @@ var BaseNamesLayer = (function (_super) {
             };
             var element = document.createElement("div");
             var name_1 = baseInfo.name;
-            if (baseInfo.type_id == 2 ||
-                baseInfo.type_id == 3 ||
-                baseInfo.type_id == 4) {
+            if (baseInfo.type_code == "amp-station" ||
+                baseInfo.type_code == "bio-lab" ||
+                baseInfo.type_code == "tech-plant") {
                 name_1 += " " + baseInfo.type_name;
             }
             element.innerText = "" + name_1;
             element.classList.add("ps2map__base-names__icon");
             element.style.left = this.mapSize * 0.5 + pos.x + "px";
             element.style.bottom = this.mapSize * 0.5 + pos.y + "px";
-            var typeName = this.getBaseIconFromType(baseInfo.type_id);
-            element.classList.add("ps2map__base-names__icon__" + typeName);
+            element.classList.add("ps2map__base-names__icon__" + baseInfo.type_code);
             var minZoom = 0;
-            if (typeName == "small-outpost")
+            if (baseInfo.type_code == "small-outpost")
                 minZoom = 0.60;
-            if (typeName == "large-outpost")
+            if (baseInfo.type_code == "large-outpost")
                 minZoom = 0.45;
             features.push(new PointFeature(pos, baseInfo.id, element, minZoom));
             this.element.appendChild(element);

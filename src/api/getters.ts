@@ -18,11 +18,11 @@ namespace Api {
      * @param continentId ID of the continent for which to retrieve bases.
      * Will be rounded to an integer as part of the URL generation.
      */
-    export function getBasesFromContinent(continentId: number): Promise < Array < Api.BaseInfo >> {
+    export function getBasesFromContinent(continentId: number): Promise<Array<Api.Base>> {
         const rounded = Math.round(continentId);
-        const url = `${restEndpoint}bases/info?continent_id=${rounded}`;
+        const url = `${restEndpoint}base?continent_id=${rounded}`;
         return fetch(url).then((value) => {
-            return value.json() as unknown as Array < Api.BaseInfo > ;
+            return value.json() as unknown as Array<Api.Base>;
         });
     }
 
@@ -34,11 +34,11 @@ namespace Api {
      */
     export function getContinent(
         continentId: number
-    ): Promise < Api.ContinentInfo > {
-        const url = `${restEndpoint}continents/info`;
+    ): Promise<Api.Continent> {
+        const url = `${restEndpoint}continent`;
         return fetch(url)
             .then((value) => {
-                return value.json() as unknown as Array < Api.ContinentInfo > ;
+                return value.json() as unknown as Array<Api.Continent>;
             })
             .then((contList) => {
                 for (let i = 0; i < contList.length; i++) {

@@ -87,7 +87,7 @@ class HeroMap {
             namesLayer.onBaseHover.bind(namesLayer));
 
         // Base info panel
-        let bases: Api.BaseInfo[] = [];
+        let bases: Api.Base[] = [];
         Api.getBasesFromContinent(this.continentId).then((data) => bases = data);
         const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
         const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
