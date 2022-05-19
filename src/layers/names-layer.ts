@@ -19,7 +19,9 @@ class BaseNamesLayer extends PointLayer {
             // Append the facility type for primary bases
             if (baseInfo.type_code == "amp-station" ||
                 baseInfo.type_code == "bio-lab" ||
-                baseInfo.type_code == "tech-plant") {
+                baseInfo.type_code == "interlink" ||
+                baseInfo.type_code == "tech-plant" ||
+                baseInfo.type_code == "trident") {
                 name += ` ${baseInfo.type_name}`;
             }
             element.innerText = `${name}`;
