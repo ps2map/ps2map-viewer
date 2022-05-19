@@ -492,7 +492,7 @@ var HeroMap = (function () {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, Api.getMinimapImagePath('esamir'));
+        this.minimap = new Minimap(minimapElement, mapSize, Api.getMinimapImagePath('oshur'));
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var terrainLayer = new TerrainLayer("terrain", mapSize);
@@ -541,7 +541,7 @@ var HeroMap = (function () {
     return HeroMap;
 }());
 document.addEventListener("DOMContentLoaded", function () {
-    var continentId = 8;
+    var continentId = 344;
     var viewport = document.getElementById("hero-map");
     if (viewport == null) {
         throw "Unable to locate viewport element";

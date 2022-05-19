@@ -37,7 +37,7 @@ class HeroMap {
             throw "Minimap element must be a DIV";
         // FIXME: Hard-coded minimap URL for now
         this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, Api.getMinimapImagePath('esamir'));
+            mapSize, Api.getMinimapImagePath('oshur'));
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(
