@@ -324,46 +324,108 @@ var MapRenderer = (function () {
     };
     return MapRenderer;
 }());
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 var Api;
 (function (Api) {
-    var restEndpoint = "http://127.0.0.1:5000/";
-    function getBasesFromContinent(continentId) {
-        var rounded = Math.round(continentId);
-        var url = restEndpoint + "base?continent_id=" + rounded;
-        return fetch(url).then(function (value) {
-            return value.json();
+    function getBasesFromContinent(id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getBasesFromContinentUrl(id))];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok) {
+                            throw new Error(response.statusText);
+                        }
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
         });
     }
     Api.getBasesFromContinent = getBasesFromContinent;
-    function getContinent(continentId) {
-        var url = restEndpoint + "continent";
-        return fetch(url)
-            .then(function (value) {
-            return value.json();
-        })
-            .then(function (contList) {
-            for (var i = 0; i < contList.length; i++) {
-                var cont = contList[i];
-                if (cont.id == continentId)
-                    return cont;
-            }
-            throw "unknown continent ID: " + continentId;
-        });
+})(Api || (Api = {}));
+var Api;
+(function (Api) {
+    Api.restEndpoint = "http://127.0.0.1:5000/";
+    function getContinentListUrl() {
+        return Api.restEndpoint + "continent";
     }
-    Api.getContinent = getContinent;
-    function getMinimapImagePath(continentCode) {
-        return restEndpoint + "static/minimap/" + continentCode + ".jpg";
+    Api.getContinentListUrl = getContinentListUrl;
+    function getBasesFromContinentUrl(id) {
+        return Api.restEndpoint + "base?continent_id=" + id;
+    }
+    Api.getBasesFromContinentUrl = getBasesFromContinentUrl;
+    function getMinimapImagePath(code) {
+        return Api.restEndpoint + "static/minimap/" + code + ".jpg";
     }
     Api.getMinimapImagePath = getMinimapImagePath;
-    function getTerrainTilePath(continentCode, pos, lod) {
-        var filename = continentCode + "_tile_" + pos[0] + "_" + pos[1] + "_lod" + lod + ".jpeg";
-        return restEndpoint + "static/tile/" + filename;
+    function getTerrainTilePath(code, pos, lod) {
+        var filename = code + "_tile_" + pos[0] + "_" + pos[1] + "_lod" + lod + ".jpeg";
+        return Api.restEndpoint + "static/tile/" + filename;
     }
     Api.getTerrainTilePath = getTerrainTilePath;
-    function getApiEndpoint() {
-        return restEndpoint;
+    function getHexesPath(code) {
+        return Api.restEndpoint + "static/hex/" + code + "-minimal.svg";
     }
-    Api.getApiEndpoint = getApiEndpoint;
+    Api.getHexesPath = getHexesPath;
+})(Api || (Api = {}));
+var Api;
+(function (Api) {
+    function getContinentList() {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getContinentListUrl())];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok) {
+                            throw new Error(response.statusText);
+                        }
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    }
+    Api.getContinentList = getContinentList;
 })(Api || (Api = {}));
 var HexLayer = (function (_super) {
     __extends(HexLayer, _super);
@@ -484,6 +546,7 @@ var Minimap = (function () {
 }());
 var HeroMap = (function () {
     function HeroMap(viewport, initialContinentId) {
+        var _this = this;
         this.continentId = initialContinentId;
         var mapSize = 8192;
         this.controller = new MapRenderer(viewport, mapSize);
@@ -496,15 +559,25 @@ var HeroMap = (function () {
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var terrainLayer = new TerrainLayer("terrain", mapSize);
-        Api.getContinent(this.continentId).then(function (continent) {
-            terrainLayer.setContinent(continent.code);
-            terrainLayer.updateLayer();
+        Api.getContinentList().then(function (continents) {
+            continents.forEach(function (continent) {
+                if (continent.id == _this.continentId) {
+                    terrainLayer.setContinent(continent.code);
+                    terrainLayer.updateLayer();
+                }
+            });
         });
         this.controller.addLayer(terrainLayer);
         var hexLayer = new HexLayer("hexes", mapSize);
-        Api.getContinent(this.continentId)
-            .then(function (continent) {
-            return fetch(Api.getApiEndpoint() + "static/hex/" + continent.code + "-minimal.svg");
+        Api.getContinentList()
+            .then(function (continents) {
+            var cont = continents[0];
+            continents.forEach(function (continent) {
+                if (continent.id == _this.continentId) {
+                    cont = continent;
+                }
+            });
+            return fetch(Api.getHexesPath(cont.code));
         })
             .then(function (data) {
             return data.text();

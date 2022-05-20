@@ -1,5 +1,5 @@
 /// <reference path="./map-engine/renderer.ts" />
-/// <reference path="./api/getters.ts" />
+/// <reference path="./api/index.ts" />
 /// <reference path="./layers/hex-layer.ts" />
 /// <reference path="./minimap.ts" />
 
@@ -46,19 +46,29 @@ class HeroMap {
         // Add map layer for terrain texture
         const terrainLayer = new TerrainLayer("terrain", mapSize);
         // Load continent data
-        Api.getContinent(this.continentId).then((continent) => {
-            terrainLayer.setContinent(continent.code);
-            terrainLayer.updateLayer();
+        Api.getContinentList().then((continents) => {
+            continents.forEach((continent) => {
+                if (continent.id == this.continentId) {
+                    terrainLayer.setContinent(continent.code);
+                    terrainLayer.updateLayer();
+                }
+            });
         });
         this.controller.addLayer(terrainLayer);
 
         // Add map layer for base hexes
         const hexLayer = new HexLayer("hexes", mapSize);
         // Load continent data
-        Api.getContinent(this.continentId)
+        Api.getContinentList()
             // Fetch base outlines
-            .then((continent) => {
-                return fetch(`${Api.getApiEndpoint()}static/hex/${continent.code}-minimal.svg`);
+            .then((continents) => {
+                let cont = continents[0];
+                continents.forEach((continent) => {
+                    if (continent.id == this.continentId) {
+                        cont = continent;
+                    }
+                });
+                return fetch(Api.getHexesPath(cont.code));
             })
             // Get raw text response (i.e. the SVG literal)
             .then((data) => {
