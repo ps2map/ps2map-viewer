@@ -492,7 +492,7 @@ var HeroMap = (function () {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, Api.getMinimapImagePath('esamir'));
+        this.minimap = new Minimap(minimapElement, mapSize, Api.getMinimapImagePath('oshur'));
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var terrainLayer = new TerrainLayer("terrain", mapSize);
@@ -541,7 +541,7 @@ var HeroMap = (function () {
     return HeroMap;
 }());
 document.addEventListener("DOMContentLoaded", function () {
-    var continentId = 8;
+    var continentId = 344;
     var viewport = document.getElementById("hero-map");
     if (viewport == null) {
         throw "Unable to locate viewport element";
@@ -617,7 +617,9 @@ var BaseNamesLayer = (function (_super) {
             var name_1 = baseInfo.name;
             if (baseInfo.type_code == "amp-station" ||
                 baseInfo.type_code == "bio-lab" ||
-                baseInfo.type_code == "tech-plant") {
+                baseInfo.type_code == "interlink" ||
+                baseInfo.type_code == "tech-plant" ||
+                baseInfo.type_code == "trident") {
                 name_1 += " " + baseInfo.type_name;
             }
             element.innerText = "" + name_1;

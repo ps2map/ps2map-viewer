@@ -75,6 +75,10 @@
     content: url(img/icons/containment-site.svg);
 }
 
+.ps2map__base-names__icon__interlink::before {
+    content: url(img/icons/interlink.svg);
+}
+
 .ps2map__base-names__icon__large-outpost::before {
     --ps2map__base-icon-size: 1.2em;
     content: url(img/icons/large-outpost.svg);
@@ -87,6 +91,10 @@
 
 .ps2map__base-names__icon__tech-plant::before {
     content: url(img/icons/tech-plant.svg);
+}
+
+.ps2map__base-names__icon__trident::before {
+    content: url(img/icons/trident.svg);
 }
 
 .ps2map__base-names__icon__warpgate::before {
