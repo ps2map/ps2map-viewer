@@ -22,10 +22,22 @@ class HeroMap {
     private continentId: number = 0;
     private baseUpdateIntervalId: number | undefined = undefined;
 
+    private baseOwnershipStore: Map<number, number> = new Map();
+
     constructor(
         viewport: HTMLDivElement
     ) {
         this.viewport = viewport;
+    }
+
+    setBaseOwner(baseId: number, factionId: number): void {
+        this.baseOwnershipStore.set(baseId, factionId);
+        // Update map layers
+        this.controller?.forEachLayer((layer) => {
+            if (layer.id == "hexes") {
+                (layer as HexLayer).setBaseOwner(baseId, factionId);
+            }
+        })
     }
 
     setContinent(continent: Api.Continent): void {
@@ -126,31 +138,14 @@ class HeroMap {
     }
 
     updateBaseOwnership(): void {
-        const colours: any = {
-            "0": "rgba(0, 0, 0, 1.0)",
-            "1": "rgba(160, 77, 183, 1.0)",
-            "2": "rgba(81, 123, 204, 1.0)",
-            "3": "rgba(226, 25, 25, 1.0)",
-            "4": "rgba(255, 255, 255, 1.0)",
-        }
         // TODO: Add safeguard against multiple updates at once
         // TODO: Add dynamic server selection
         const server_id = 13;
         Api.getBaseOwnership(this.continentId, server_id).then((data) => {
-            console.log('Updating base ownership');
-            const hexLayer = this.controller?.getLayer("hexes") as HexLayer;
-            if (hexLayer == undefined) {
-                throw "Hex layer not found.";
+            let i = data.length;
+            while (i-- > 0) {
+                this.setBaseOwner(data[i].base_id, data[i].owning_faction_id);
             }
-            // Update colour
-            hexLayer.element.querySelectorAll("polygon").forEach((polygon) => {
-                for (const base of data) {
-                    if (base.base_id.toFixed() == polygon.id) {
-                        polygon.style.fill = colours[base.owning_faction_id.toFixed()];
-                        return;
-                    }
-                }
-            });
         });
     }
 

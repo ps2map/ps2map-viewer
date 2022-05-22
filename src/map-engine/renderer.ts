@@ -93,11 +93,11 @@ class MapRenderer {
         return undefined;
     }
 
-    /** Get the current map size of the map renderer.
-     * @returns Current size of the map
-     */
-    getMapSize(): number {
-        return this.mapSize;
+    forEachLayer(callback: (layer: MapLayer) => void): void {
+        let i = this.layers.length;
+        while (i-- > 0) {
+            callback(this.layers[i]);
+        }
     }
 
     /**

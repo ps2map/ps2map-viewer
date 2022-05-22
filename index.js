@@ -249,8 +249,11 @@ var MapRenderer = (function () {
         }
         return undefined;
     };
-    MapRenderer.prototype.getMapSize = function () {
-        return this.mapSize;
+    MapRenderer.prototype.forEachLayer = function (callback) {
+        var i = this.layers.length;
+        while (i-- > 0) {
+            callback(this.layers[i]);
+        }
     };
     MapRenderer.prototype.jumpTo = function (target) {
         this.camera.target = target;
@@ -476,6 +479,25 @@ var HexLayer = (function (_super) {
         this.applyPolygonHoverFix(svg);
         return svg;
     };
+    HexLayer.prototype.setBaseOwner = function (baseId, factionId) {
+        var svg = this.element.firstElementChild;
+        if (svg != null) {
+            var polygon = svg.querySelector("polygon[id=\"" + baseId + "\"]");
+            if (polygon != null) {
+                var colours = {
+                    "0": "rgba(0, 0, 0, 1.0)",
+                    "1": "rgba(160, 77, 183, 1.0)",
+                    "2": "rgba(81, 123, 204, 1.0)",
+                    "3": "rgba(226, 25, 25, 1.0)",
+                    "4": "rgba(255, 255, 255, 1.0)"
+                };
+                polygon.style.fill = colours[factionId.toFixed()];
+            }
+            else {
+                console.log("Unable to find base " + baseId);
+            }
+        }
+    };
     HexLayer.prototype.applyPolygonHoverFix = function (svg) {
         var _this = this;
         svg.querySelectorAll("polygon").forEach(function (polygon) {
@@ -582,8 +604,18 @@ var HeroMap = (function () {
         this.minimap = undefined;
         this.continentId = 0;
         this.baseUpdateIntervalId = undefined;
+        this.baseOwnershipStore = new Map();
         this.viewport = viewport;
     }
+    HeroMap.prototype.setBaseOwner = function (baseId, factionId) {
+        var _a;
+        this.baseOwnershipStore.set(baseId, factionId);
+        (_a = this.controller) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
+            if (layer.id == "hexes") {
+                layer.setBaseOwner(baseId, factionId);
+            }
+        });
+    };
     HeroMap.prototype.setContinent = function (continent) {
         var _this = this;
         var _a, _b;
@@ -659,30 +691,12 @@ var HeroMap = (function () {
     };
     HeroMap.prototype.updateBaseOwnership = function () {
         var _this = this;
-        var colours = {
-            "0": "rgba(0, 0, 0, 1.0)",
-            "1": "rgba(160, 77, 183, 1.0)",
-            "2": "rgba(81, 123, 204, 1.0)",
-            "3": "rgba(226, 25, 25, 1.0)",
-            "4": "rgba(255, 255, 255, 1.0)"
-        };
         var server_id = 13;
         Api.getBaseOwnership(this.continentId, server_id).then(function (data) {
-            var _a;
-            console.log('Updating base ownership');
-            var hexLayer = (_a = _this.controller) === null || _a === void 0 ? void 0 : _a.getLayer("hexes");
-            if (hexLayer == undefined) {
-                throw "Hex layer not found.";
+            var i = data.length;
+            while (i-- > 0) {
+                _this.setBaseOwner(data[i].base_id, data[i].owning_faction_id);
             }
-            hexLayer.element.querySelectorAll("polygon").forEach(function (polygon) {
-                for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
-                    var base = data_1[_i];
-                    if (base.base_id.toFixed() == polygon.id) {
-                        polygon.style.fill = colours[base.owning_faction_id.toFixed()];
-                        return;
-                    }
-                }
-            });
         });
     };
     return HeroMap;

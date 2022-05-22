@@ -28,6 +28,26 @@ class HexLayer extends StaticLayer {
         return svg;
     }
 
+    setBaseOwner(baseId: number, factionId: number): void {
+        const svg = this.element.firstElementChild as SVGElement | null;
+        if (svg != null) {
+            const polygon = svg.querySelector(`polygon[id="${baseId}"]`) as SVGPolygonElement | null;
+            if (polygon != null) {
+                const colours: any = {
+                    "0": "rgba(0, 0, 0, 1.0)",
+                    "1": "rgba(160, 77, 183, 1.0)",
+                    "2": "rgba(81, 123, 204, 1.0)",
+                    "3": "rgba(226, 25, 25, 1.0)",
+                    "4": "rgba(255, 255, 255, 1.0)",
+                }
+                polygon.style.fill = colours[factionId.toFixed()];
+            }
+            else {
+                console.log(`Unable to find base ${baseId}`);
+            }
+        }
+    }
+
     private applyPolygonHoverFix(svg: SVGElement): void {
         svg.querySelectorAll("polygon").forEach((polygon) => {
             // Event handler for applying hover effects
