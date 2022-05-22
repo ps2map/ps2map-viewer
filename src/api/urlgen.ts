@@ -32,4 +32,11 @@ namespace Api {
         return `${restEndpoint}static/hex/${code}-minimal.svg`
     }
 
+    export function getBaseOwnershipUrl(
+        continent_id: number,
+        server_id: number): string {
+
+        return `${restEndpoint}base/status?continent_id=${continent_id}&server_id=${server_id}`;
+    }
+
 }

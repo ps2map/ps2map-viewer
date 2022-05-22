@@ -240,6 +240,15 @@ var MapRenderer = (function () {
         this.anchor.appendChild(layer.element);
         this.redraw(this.camera.getViewbox(), this.camera.getZoom());
     };
+    MapRenderer.prototype.getLayer = function (id) {
+        for (var _i = 0, _a = this.layers; _i < _a.length; _i++) {
+            var layer = _a[_i];
+            if (layer.id == id) {
+                return layer;
+            }
+        }
+        return undefined;
+    };
     MapRenderer.prototype.getMapSize = function () {
         return this.mapSize;
     };
@@ -380,6 +389,24 @@ var Api;
         });
     }
     Api.getBasesFromContinent = getBasesFromContinent;
+    function getBaseOwnership(continent_id, server_id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getBaseOwnershipUrl(continent_id, server_id))];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok) {
+                            throw new Error(response.statusText);
+                        }
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    }
+    Api.getBaseOwnership = getBaseOwnership;
 })(Api || (Api = {}));
 var Api;
 (function (Api) {
@@ -405,6 +432,10 @@ var Api;
         return Api.restEndpoint + "static/hex/" + code + "-minimal.svg";
     }
     Api.getHexesPath = getHexesPath;
+    function getBaseOwnershipUrl(continent_id, server_id) {
+        return Api.restEndpoint + "base/status?continent_id=" + continent_id + "&server_id=" + server_id;
+    }
+    Api.getBaseOwnershipUrl = getBaseOwnershipUrl;
 })(Api || (Api = {}));
 var Api;
 (function (Api) {
@@ -549,9 +580,12 @@ var HeroMap = (function () {
         this.continentCode = "";
         this.controller = undefined;
         this.minimap = undefined;
+        this.continentId = 0;
+        this.baseUpdateIntervalId = undefined;
         this.viewport = viewport;
     }
     HeroMap.prototype.setContinent = function (continent) {
+        var _this = this;
         var _a, _b;
         if (continent.code == this.continentCode) {
             return;
@@ -613,6 +647,42 @@ var HeroMap = (function () {
                     return;
                 }
             }
+        });
+        this.continentId = continent.id;
+        if (this.baseUpdateIntervalId != undefined) {
+            clearInterval(this.baseUpdateIntervalId);
+        }
+        this.updateBaseOwnership();
+        this.baseUpdateIntervalId = setInterval(function () {
+            _this.updateBaseOwnership();
+        }, 5000);
+    };
+    HeroMap.prototype.updateBaseOwnership = function () {
+        var _this = this;
+        var colours = {
+            "0": "rgba(0, 0, 0, 1.0)",
+            "1": "rgba(160, 77, 183, 1.0)",
+            "2": "rgba(81, 123, 204, 1.0)",
+            "3": "rgba(226, 25, 25, 1.0)",
+            "4": "rgba(255, 255, 255, 1.0)"
+        };
+        var server_id = 13;
+        Api.getBaseOwnership(this.continentId, server_id).then(function (data) {
+            var _a;
+            console.log('Updating base ownership');
+            var hexLayer = (_a = _this.controller) === null || _a === void 0 ? void 0 : _a.getLayer("hexes");
+            if (hexLayer == undefined) {
+                throw "Hex layer not found.";
+            }
+            hexLayer.element.querySelectorAll("polygon").forEach(function (polygon) {
+                for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
+                    var base = data_1[_i];
+                    if (base.base_id.toFixed() == polygon.id) {
+                        polygon.style.fill = colours[base.owning_faction_id.toFixed()];
+                        return;
+                    }
+                }
+            });
         });
     };
     return HeroMap;

@@ -66,7 +66,7 @@ class MapRenderer {
     }
 
     /**
-     * Add a new map layer to the.
+     * Add a new map layer to the map.
      *
      * The map size of the layer must match the map renderer's.
      * @param layer Map layer to add.
@@ -77,6 +77,20 @@ class MapRenderer {
         this.layers.push(layer);
         this.anchor.appendChild(layer.element);
         this.redraw(this.camera.getViewbox(), this.camera.getZoom());
+    }
+
+    /**
+     * Retrieve an existing layer by its unique ID.
+     * @param id ID of the layer to retrieve
+     * @returns Layer with the given name, or null if not found.
+     */
+    getLayer(id: string): MapLayer | undefined {
+        for (const layer of this.layers) {
+            if (layer.id == id) {
+                return layer;
+            }
+        }
+        return undefined;
     }
 
     /** Get the current map size of the map renderer.
