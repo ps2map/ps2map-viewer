@@ -85,19 +85,16 @@ class MapRenderer {
      * @returns Layer with the given name, or null if not found.
      */
     getLayer(id: string): MapLayer | undefined {
-        for (const layer of this.layers) {
-            if (layer.id == id) {
+        for (const layer of this.layers)
+            if (layer.id == id)
                 return layer;
-            }
-        }
         return undefined;
     }
 
     forEachLayer(callback: (layer: MapLayer) => void): void {
         let i = this.layers.length;
-        while (i-- > 0) {
+        while (i-- > 0)
             callback(this.layers[i]);
-        }
     }
 
     /**

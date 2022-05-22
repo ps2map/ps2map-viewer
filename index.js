@@ -243,17 +243,15 @@ var MapRenderer = (function () {
     MapRenderer.prototype.getLayer = function (id) {
         for (var _i = 0, _a = this.layers; _i < _a.length; _i++) {
             var layer = _a[_i];
-            if (layer.id == id) {
+            if (layer.id == id)
                 return layer;
-            }
         }
         return undefined;
     };
     MapRenderer.prototype.forEachLayer = function (callback) {
         var i = this.layers.length;
-        while (i-- > 0) {
+        while (i-- > 0)
             callback(this.layers[i]);
-        }
     };
     MapRenderer.prototype.jumpTo = function (target) {
         this.camera.target = target;
@@ -382,9 +380,8 @@ var Api;
                     case 0: return [4, fetch(Api.getBasesFromContinentUrl(id))];
                     case 1:
                         response = _a.sent();
-                        if (!response.ok) {
+                        if (!response.ok)
                             throw new Error(response.statusText);
-                        }
                         return [4, response.json()];
                     case 2: return [2, _a.sent()];
                 }
@@ -400,9 +397,8 @@ var Api;
                     case 0: return [4, fetch(Api.getBaseOwnershipUrl(continent_id, server_id))];
                     case 1:
                         response = _a.sent();
-                        if (!response.ok) {
+                        if (!response.ok)
                             throw new Error(response.statusText);
-                        }
                         return [4, response.json()];
                     case 2: return [2, _a.sent()];
                 }
@@ -450,9 +446,8 @@ var Api;
                     case 0: return [4, fetch(Api.getContinentListUrl())];
                     case 1:
                         response = _a.sent();
-                        if (!response.ok) {
+                        if (!response.ok)
                             throw new Error(response.statusText);
-                        }
                         return [4, response.json()];
                     case 2: return [2, _a.sent()];
                 }
@@ -468,18 +463,16 @@ var Api;
                     case 0: return [4, fetch(Api.getContinentOutlinesPath(continent.code))];
                     case 1:
                         response = _a.sent();
-                        if (!response.ok) {
+                        if (!response.ok)
                             throw new Error(response.statusText);
-                        }
                         return [4, response.text()];
                     case 2:
                         payload = _a.sent();
                         factory = document.createElement("template");
                         factory.innerHTML = payload;
                         svg = factory.content.firstElementChild;
-                        if (!(svg instanceof SVGElement)) {
+                        if (!(svg instanceof SVGElement))
                             throw "Unable to load contents from map hex SVG";
-                        }
                         return [2, svg];
                 }
             });
@@ -497,22 +490,19 @@ var HexLayer = (function (_super) {
     }
     HexLayer.prototype.setBaseOwner = function (baseId, factionId) {
         var svg = this.element.firstElementChild;
-        if (svg != null) {
-            var polygon = svg.querySelector("polygon[id=\"" + baseId + "\"]");
-            if (polygon != null) {
-                var colours = {
-                    "0": "rgba(0, 0, 0, 1.0)",
-                    "1": "rgba(160, 77, 183, 1.0)",
-                    "2": "rgba(81, 123, 204, 1.0)",
-                    "3": "rgba(226, 25, 25, 1.0)",
-                    "4": "rgba(255, 255, 255, 1.0)"
-                };
-                polygon.style.fill = colours[factionId.toFixed()];
-            }
-            else {
-                console.log("Unable to find base " + baseId);
-            }
-        }
+        if (svg == null)
+            throw "Unable to find HexLayer SVG element";
+        var polygon = svg.querySelector("polygon[id=\"" + baseId + "\"]");
+        if (polygon == null)
+            throw "Unable to find base polygon with id " + baseId;
+        var colours = {
+            "0": "rgba(0, 0, 0, 1.0)",
+            "1": "rgba(160, 77, 183, 1.0)",
+            "2": "rgba(81, 123, 204, 1.0)",
+            "3": "rgba(226, 25, 25, 1.0)",
+            "4": "rgba(255, 255, 255, 1.0)"
+        };
+        polygon.style.fill = colours[factionId.toFixed()];
     };
     HexLayer.prototype.applyPolygonHoverFix = function (svg) {
         var _this = this;
@@ -632,9 +622,8 @@ var Minimap = (function () {
             4: "rgba(255, 255, 255, " + this.minimapHexAlpha + ")"
         };
         var polygon = this.polygons.get(baseId);
-        if (polygon) {
+        if (polygon)
             polygon.style.fill = colours[factionId];
-        }
     };
     return Minimap;
 }());
@@ -667,15 +656,13 @@ var HeroMap = (function () {
         this.continentCode = continent.code;
         var mapSize = continent.map_size;
         var i = (_a = this.minimap) === null || _a === void 0 ? void 0 : _a.element.children.length;
-        while (i != undefined && i--) {
+        while (i != undefined && i--)
             (_b = this.minimap) === null || _b === void 0 ? void 0 : _b.element.children[i].remove();
-        }
         delete this.minimap;
         delete this.controller;
         i = this.viewport.children.length;
-        while (i-- > 0) {
+        while (i-- > 0)
             this.viewport.removeChild(this.viewport.children[i]);
-        }
         this.controller = new MapRenderer(this.viewport, mapSize);
         var minimapElement = document.getElementById("minimap");
         if (minimapElement == null)
@@ -734,9 +721,8 @@ var HeroMap = (function () {
         var server_id = 13;
         Api.getBaseOwnership(this.continentId, server_id).then(function (data) {
             var i = data.length;
-            while (i-- > 0) {
+            while (i-- > 0)
                 _this.setBaseOwner(data[i].base_id, data[i].owning_faction_id);
-            }
         });
     };
     return HeroMap;
@@ -744,12 +730,10 @@ var HeroMap = (function () {
 document.addEventListener("DOMContentLoaded", function () {
     var dropdown = document.getElementById("continent-selector");
     var viewport = document.getElementById("hero-map");
-    if (viewport == null) {
+    if (viewport == null)
         throw "Unable to locate viewport element";
-    }
-    if (viewport.tagName != "DIV") {
+    if (viewport.tagName != "DIV")
         throw "Expected viewport of type \"DIV\" (got " + viewport.tagName + ")";
-    }
     var heroMap = new HeroMap(viewport);
     console.log("Loading available continents...");
     Api.getContinentList()
@@ -766,9 +750,8 @@ document.addEventListener("DOMContentLoaded", function () {
         heroMap.setContinent(JSON.parse(dropdown.value));
     });
     dropdown.addEventListener("change", function (event) {
-        if (event.target == null) {
+        if (event.target == null)
             return;
-        }
         var continent = JSON.parse(dropdown.value);
         console.log("Switching to " + continent.name + "...");
         heroMap.setContinent(continent);
@@ -810,9 +793,8 @@ var BaseNamesLayer = (function (_super) {
                 baseInfo.type_code == "bio-lab" ||
                 baseInfo.type_code == "interlink" ||
                 baseInfo.type_code == "tech-plant" ||
-                baseInfo.type_code == "trident") {
+                baseInfo.type_code == "trident")
                 name_1 += " " + baseInfo.type_name;
-            }
             element.innerText = "" + name_1;
             element.classList.add("ps2map__base-names__icon");
             element.style.left = this.mapSize * 0.5 + pos.x + "px";
@@ -859,9 +841,9 @@ var BaseNamesLayer = (function (_super) {
                 ("scale(" + unzoom + ", " + unzoom + ")"));
             if (!feat.forceVisible)
                 if (zoom >= feat.minZoom)
-                    feat.element.innerText = feat.text;
+                    feat.element.style.display = "block";
                 else
-                    feat.element.innerText = "";
+                    feat.element.style.removeProperty("display");
             feat.visible = zoom >= feat.minZoom;
         }
     };
@@ -889,7 +871,7 @@ var TileLayer = (function (_super) {
         var tileSize = this.mapSize / gridSize;
         var baseSize = this.mapSize / gridSize;
         var y = gridSize;
-        while (y-- > 0) {
+        while (y-- > 0)
             for (var x = 0; x < gridSize; x++) {
                 var pos = {
                     x: x,
@@ -903,7 +885,6 @@ var TileLayer = (function (_super) {
                 tile.element.style.backgroundImage = "url(" + url + ")";
                 newTiles.push(tile);
             }
-        }
         this.tiles = newTiles;
     };
     TileLayer.prototype.tileIsVisible = function (tile, viewbox) {

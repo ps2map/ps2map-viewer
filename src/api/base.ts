@@ -26,18 +26,16 @@ namespace Api {
     export async function getBasesFromContinent(id: number): Promise<Base[]> {
         const response = await fetch(getBasesFromContinentUrl(id));
         // Handle HTTP errors
-        if (!response.ok) {
+        if (!response.ok)
             throw new Error(response.statusText);
-        }
         return await response.json();
     }
 
     export async function getBaseOwnership(continent_id: number, server_id: number): Promise<BaseStatus[]> {
         const response = await fetch(getBaseOwnershipUrl(continent_id, server_id));
         // Handle HTTP errors
-        if (!response.ok) {
+        if (!response.ok)
             throw new Error(response.statusText);
-        }
         return await response.json();
     }
 

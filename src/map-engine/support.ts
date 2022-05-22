@@ -68,6 +68,7 @@ namespace Utils {
         targetLower: number,
         targetUpper: number
     ): number {
+
         const sourceSpan = sourceUpper - sourceLower;
         const targetSpan = targetUpper - targetLower;
         if (sourceSpan == 0) return targetLower;

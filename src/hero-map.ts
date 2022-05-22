@@ -50,15 +50,13 @@ class HeroMap {
         const mapSize = continent.map_size;
 
         let i = this.minimap?.element.children.length;
-        while (i != undefined && i--) {
+        while (i != undefined && i--)
             this.minimap?.element.children[i].remove();
-        }
         delete this.minimap
         delete this.controller
         i = this.viewport.children.length;
-        while (i-- > 0) {
+        while (i-- > 0)
             this.viewport.removeChild(this.viewport.children[i]);
-        }
 
         // Set up controller
         this.controller = new MapRenderer(this.viewport, mapSize);
@@ -140,9 +138,8 @@ class HeroMap {
         const server_id = 13;
         Api.getBaseOwnership(this.continentId, server_id).then((data) => {
             let i = data.length;
-            while (i-- > 0) {
+            while (i-- > 0)
                 this.setBaseOwner(data[i].base_id, data[i].owning_faction_id);
-            }
         });
     }
 

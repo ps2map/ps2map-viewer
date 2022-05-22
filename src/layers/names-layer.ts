@@ -46,9 +46,9 @@ class BaseNamesLayer extends StaticLayer {
                 baseInfo.type_code == "bio-lab" ||
                 baseInfo.type_code == "interlink" ||
                 baseInfo.type_code == "tech-plant" ||
-                baseInfo.type_code == "trident") {
+                baseInfo.type_code == "trident")
+
                 name += ` ${baseInfo.type_name}`;
-            }
             element.innerText = `${name}`;
             element.classList.add("ps2map__base-names__icon")
             element.style.left = `${this.mapSize * 0.5 + pos.x}px`;

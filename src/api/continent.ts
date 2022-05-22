@@ -20,27 +20,24 @@ namespace Api {
     export async function getContinentList(): Promise<Continent[]> {
         const response = await fetch(getContinentListUrl())
         // Handle HTTP errors
-        if (!response.ok) {
+        if (!response.ok)
             throw new Error(response.statusText);
-        }
         return await response.json();
     }
 
     export async function getContinentOutlinesSvg(continent: Continent): Promise<SVGElement> {
         const response = await fetch(getContinentOutlinesPath(continent.code));
         // Handle HTTP errors
-        if (!response.ok) {
+        if (!response.ok)
             throw new Error(response.statusText);
-        }
         const payload = await response.text();
         // Create SVG element from string response
         const factory = document.createElement("template");
         factory.innerHTML = payload;
         // Extract the SVG node
         const svg = factory.content.firstElementChild;
-        if (!(svg instanceof SVGElement)) {
+        if (!(svg instanceof SVGElement))
             throw "Unable to load contents from map hex SVG";
-        }
         return svg;
     }
 

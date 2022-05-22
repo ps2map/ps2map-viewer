@@ -3,17 +3,14 @@
 
 /** Initialisation hook for components that need to be run on DOM load. */
 document.addEventListener("DOMContentLoaded", () => {
-
     const dropdown = document.getElementById("continent-selector") as HTMLSelectElement;
 
     // Initialise the map controller for the primary map
     const viewport = document.getElementById("hero-map");
-    if (viewport == null) {
+    if (viewport == null)
         throw "Unable to locate viewport element";
-    }
-    if (viewport.tagName != "DIV") {
+    if (viewport.tagName != "DIV")
         throw `Expected viewport of type "DIV" (got ${viewport.tagName})`;
-    }
     const heroMap = new HeroMap(viewport as HTMLDivElement);
 
 
@@ -40,9 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Hook up event handlers for map selection
     dropdown.addEventListener("change", (event) => {
-        if (event.target == null) {
+        if (event.target == null)
             return;
-        }
         const continent = JSON.parse(dropdown.value);
         console.log(`Switching to ${continent.name}...`);
         heroMap.setContinent(continent);

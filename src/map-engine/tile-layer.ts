@@ -47,7 +47,7 @@ abstract class TileLayer extends MapLayer {
         const baseSize = this.mapSize / gridSize;
         // Y loop has to count negative as it is populated top-to-bototm
         let y = gridSize;
-        while (y-- > 0) {
+        while (y-- > 0)
             // X loop is positive, left-to-right
             for (let x = 0; x < gridSize; x++) {
                 const pos: GridPos = {
@@ -63,7 +63,6 @@ abstract class TileLayer extends MapLayer {
                 tile.element.style.backgroundImage = `url(${url})`;
                 newTiles.push(tile);
             }
-        }
         this.tiles = newTiles;
     }
 

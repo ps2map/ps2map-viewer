@@ -126,9 +126,8 @@ class Minimap {
         }
 
         const polygon = this.polygons.get(baseId);
-        if (polygon) {
+        if (polygon)
             polygon.style.fill = colours[factionId];
-        }
     }
 
 }
