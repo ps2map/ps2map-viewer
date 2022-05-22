@@ -537,7 +537,10 @@ var HexLayer = (function (_super) {
 }(StaticLayer));
 var Minimap = (function () {
     function Minimap(element, mapSize, continent) {
+        var _this = this;
         this.jumpToCallbacks = [];
+        this.minimapHexAlpha = 0.5;
+        this.polygons = new Map();
         this.mapSize = mapSize;
         this.element = element;
         this.element.classList.add("ps2map__minimap");
@@ -547,6 +550,22 @@ var Minimap = (function () {
         this.viewboxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this.viewboxElement);
         this.element.style.backgroundImage = "url(" + Api.getMinimapImagePath(continent.code) + ")";
+        var hexes = document.createElement("div");
+        fetch(Api.getHexesPath(continent.code))
+            .then(function (data) {
+            return data.text();
+        })
+            .then(function (payload) {
+            var svg = _this.svgFactory(payload);
+            hexes.appendChild(svg);
+            var polygons = svg.querySelectorAll("polygon");
+            var i = polygons.length;
+            while (i--) {
+                var polygon = polygons[i];
+                _this.polygons.set(parseInt(polygon.id), polygon);
+            }
+        });
+        this.element.appendChild(hexes);
         this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
             passive: true
         });
@@ -592,6 +611,28 @@ var Minimap = (function () {
         this.viewboxElement.style.left = this.cssSize * relLeft + "px";
         this.viewboxElement.style.bottom = this.cssSize * relTop + "px";
     };
+    Minimap.prototype.setBaseOwnership = function (baseId, factionId) {
+        var colours = {
+            0: "rgba(0, 0, 0, " + this.minimapHexAlpha + ")",
+            1: "rgba(160, 77, 183, " + this.minimapHexAlpha + ")",
+            2: "rgba(81, 123, 204, " + this.minimapHexAlpha + ")",
+            3: "rgba(226, 25, 25, " + this.minimapHexAlpha + ")",
+            4: "rgba(255, 255, 255, " + this.minimapHexAlpha + ")"
+        };
+        var polygon = this.polygons.get(baseId);
+        if (polygon) {
+            polygon.style.fill = colours[factionId];
+        }
+    };
+    Minimap.prototype.svgFactory = function (data) {
+        var factory = document.createElement("template");
+        factory.innerHTML = data;
+        var svg = factory.content.firstElementChild;
+        if (!(svg instanceof SVGElement))
+            throw "Unable to load contents from map hex SVG";
+        svg.classList.add("ps2map__minimap__hexes");
+        return svg;
+    };
     return Minimap;
 }());
 var HeroMap = (function () {
@@ -605,13 +646,14 @@ var HeroMap = (function () {
         this.viewport = viewport;
     }
     HeroMap.prototype.setBaseOwner = function (baseId, factionId) {
-        var _a;
+        var _a, _b;
         this.baseOwnershipStore.set(baseId, factionId);
         (_a = this.controller) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
             if (layer.id == "hexes") {
                 layer.setBaseOwner(baseId, factionId);
             }
         });
+        (_b = this.minimap) === null || _b === void 0 ? void 0 : _b.setBaseOwnership(baseId, factionId);
     };
     HeroMap.prototype.setContinent = function (continent) {
         var _this = this;

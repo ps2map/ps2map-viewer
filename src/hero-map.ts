@@ -39,6 +39,7 @@ class HeroMap {
                 (layer as HexLayer).setBaseOwner(baseId, factionId);
             }
         })
+        this.minimap?.setBaseOwnership(baseId, factionId);
     }
 
     setContinent(continent: Api.Continent): void {

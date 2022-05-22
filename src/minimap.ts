@@ -22,6 +22,9 @@ class Minimap {
     /** Callbacks invoked when the the user clicks on the minimap. */
     jumpToCallbacks: ((arg0: Point) => void)[] = []
 
+    private minimapHexAlpha: number = 0.5;
+    private polygons: Map<number, SVGPolygonElement> = new Map();
+
     constructor(element: HTMLDivElement, mapSize: number, continent: Api.Continent) {
         this.mapSize = mapSize;
         // Set up DOM containers
@@ -35,6 +38,26 @@ class Minimap {
 
         // Set background image
         this.element.style.backgroundImage = `url(${Api.getMinimapImagePath(continent.code)})`;
+
+        // Create base outlines
+        const hexes = document.createElement("div");
+        fetch(Api.getHexesPath(continent.code))
+            // Get raw text response (i.e. the SVG literal)
+            .then((data) => {
+                return data.text();
+            })
+            // Load the SVG literal into the layer
+            .then((payload) => {
+                const svg = this.svgFactory(payload);
+                hexes.appendChild(svg);
+                const polygons = svg.querySelectorAll("polygon");
+                let i = polygons.length;
+                while (i--) {
+                    const polygon = polygons[i];
+                    this.polygons.set(parseInt(polygon.id), polygon);
+                }
+            });
+        this.element.appendChild(hexes);
 
         // Attach event listeners
         this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
@@ -97,4 +120,33 @@ class Minimap {
         this.viewboxElement.style.left = `${this.cssSize * relLeft}px`;
         this.viewboxElement.style.bottom = `${this.cssSize * relTop}px`;
     }
+
+    setBaseOwnership(baseId: number, factionId: number): void {
+        // TODO: Read faction colours from CSS variables/user config
+        const colours: any = {
+            0: `rgba(0, 0, 0, ${this.minimapHexAlpha})`,
+            1: `rgba(160, 77, 183, ${this.minimapHexAlpha})`,
+            2: `rgba(81, 123, 204, ${this.minimapHexAlpha})`,
+            3: `rgba(226, 25, 25, ${this.minimapHexAlpha})`,
+            4: `rgba(255, 255, 255, ${this.minimapHexAlpha})`,
+        }
+
+        const polygon = this.polygons.get(baseId);
+        if (polygon) {
+            polygon.style.fill = colours[factionId];
+        }
+    }
+
+    private svgFactory(data: string): SVGElement {
+        const factory = document.createElement("template");
+        factory.innerHTML = data;
+        // Extract the SVG node
+        const svg = factory.content.firstElementChild;
+        if (!(svg instanceof SVGElement))
+            throw "Unable to load contents from map hex SVG";
+        // Setup SVG element
+        svg.classList.add("ps2map__minimap__hexes");
+        return svg;
+    }
+
 }
