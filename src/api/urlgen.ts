@@ -28,7 +28,7 @@ namespace Api {
         return `${restEndpoint}static/tile/${filename}`;
     }
 
-    export function getHexesPath(code: string): string {
+    export function getContinentOutlinesPath(code: string): string {
         return `${restEndpoint}static/hex/${code}-minimal.svg`
     }
 

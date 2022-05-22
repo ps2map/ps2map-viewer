@@ -41,14 +41,8 @@ class Minimap {
 
         // Create base outlines
         const hexes = document.createElement("div");
-        fetch(Api.getHexesPath(continent.code))
-            // Get raw text response (i.e. the SVG literal)
-            .then((data) => {
-                return data.text();
-            })
-            // Load the SVG literal into the layer
-            .then((payload) => {
-                const svg = this.svgFactory(payload);
+        Api.getContinentOutlinesSvg(continent)
+            .then((svg) => {
                 hexes.appendChild(svg);
                 const polygons = svg.querySelectorAll("polygon");
                 let i = polygons.length;
@@ -135,18 +129,6 @@ class Minimap {
         if (polygon) {
             polygon.style.fill = colours[factionId];
         }
-    }
-
-    private svgFactory(data: string): SVGElement {
-        const factory = document.createElement("template");
-        factory.innerHTML = data;
-        // Extract the SVG node
-        const svg = factory.content.firstElementChild;
-        if (!(svg instanceof SVGElement))
-            throw "Unable to load contents from map hex SVG";
-        // Setup SVG element
-        svg.classList.add("ps2map__minimap__hexes");
-        return svg;
     }
 
 }

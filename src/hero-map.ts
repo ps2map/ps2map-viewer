@@ -85,17 +85,12 @@ class HeroMap {
 
         // Add map layer for base hexes
         const hexLayer = new HexLayer("hexes", mapSize);
-        // Load continent data
-        fetch(Api.getHexesPath(continent.code))
-            // Get raw text response (i.e. the SVG literal)
-            .then((data) => {
-                return data.text();
+        Api.getContinentOutlinesSvg(continent)
+            .then((svg) => {
+                svg.classList.add("ps2map__base-hexes__svg");
+                hexLayer.element.appendChild(svg);
+                hexLayer.applyPolygonHoverFix(svg);
             })
-            // Load the SVG literal into the layer
-            .then((payload) => {
-                hexLayer.element.appendChild(hexLayer.svgFactory(payload));
-                hexLayer.updateLayer();
-            });
         this.controller.addLayer(hexLayer);
 
         // Add map layer for base names
