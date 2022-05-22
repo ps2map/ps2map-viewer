@@ -1,0 +1,20 @@
+.ps2map__minimap {
+    background-size: 100%;
+}
+
+.ps2map__minimap__hexes {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.ps2map__minimap__viewbox {
+    box-sizing: border-box;
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    transition: all 100ms ease-out;
+    pointer-events: none;
+}

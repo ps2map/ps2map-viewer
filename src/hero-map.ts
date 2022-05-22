@@ -17,6 +17,7 @@ class HeroMap {
     private viewport: HTMLDivElement;
 
     /** Minimap DOM container. */
+    // TODO: Move minimap out of heromap
     private minimap: Minimap | undefined = undefined;
 
     private continentId: number = 0;
@@ -68,7 +69,7 @@ class HeroMap {
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
         this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, Api.getMinimapImagePath(continent.code));
+            mapSize, continent);
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(

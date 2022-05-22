@@ -536,24 +536,21 @@ var HexLayer = (function (_super) {
     return HexLayer;
 }(StaticLayer));
 var Minimap = (function () {
-    function Minimap(element, mapSize, background) {
+    function Minimap(element, mapSize, continent) {
         this.jumpToCallbacks = [];
         this.mapSize = mapSize;
         this.element = element;
+        this.element.classList.add("ps2map__minimap");
         this.cssSize = this.element.clientWidth;
         this.element.style.height = this.cssSize + "px";
         this.viewboxElement = document.createElement("div");
+        this.viewboxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this.viewboxElement);
-        this.element.style.backgroundImage = "url(" + background + ")";
-        this.element.style.backgroundSize = "100%";
+        this.element.style.backgroundImage = "url(" + Api.getMinimapImagePath(continent.code) + ")";
         this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
             passive: true
         });
     }
-    Minimap.prototype.configureMinimap = function (mapSize, background) {
-        this.mapSize = mapSize;
-        this.element.style.backgroundImage = "url(" + background + ")";
-    };
     Minimap.prototype.jumpToPosition = function (evtDown) {
         var _this = this;
         var drag = Utils.rafDebounce(function (evtDrag) {
@@ -640,7 +637,7 @@ var HeroMap = (function () {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, Api.getMinimapImagePath(continent.code));
+        this.minimap = new Minimap(minimapElement, mapSize, continent);
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var terrainLayer = new TerrainLayer("terrain", mapSize);
