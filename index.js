@@ -431,10 +431,10 @@ var Api;
         return Api.restEndpoint + "static/tile/" + filename;
     }
     Api.getTerrainTilePath = getTerrainTilePath;
-    function getHexesPath(code) {
+    function getContinentOutlinesPath(code) {
         return Api.restEndpoint + "static/hex/" + code + "-minimal.svg";
     }
-    Api.getHexesPath = getHexesPath;
+    Api.getContinentOutlinesPath = getContinentOutlinesPath;
     function getBaseOwnershipUrl(continent_id, server_id) {
         return Api.restEndpoint + "base/status?continent_id=" + continent_id + "&server_id=" + server_id;
     }
@@ -460,6 +460,32 @@ var Api;
         });
     }
     Api.getContinentList = getContinentList;
+    function getContinentOutlinesSvg(continent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response, payload, factory, svg;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getContinentOutlinesPath(continent.code))];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok) {
+                            throw new Error(response.statusText);
+                        }
+                        return [4, response.text()];
+                    case 2:
+                        payload = _a.sent();
+                        factory = document.createElement("template");
+                        factory.innerHTML = payload;
+                        svg = factory.content.firstElementChild;
+                        if (!(svg instanceof SVGElement)) {
+                            throw "Unable to load contents from map hex SVG";
+                        }
+                        return [2, svg];
+                }
+            });
+        });
+    }
+    Api.getContinentOutlinesSvg = getContinentOutlinesSvg;
 })(Api || (Api = {}));
 var HexLayer = (function (_super) {
     __extends(HexLayer, _super);
@@ -469,16 +495,6 @@ var HexLayer = (function (_super) {
         _this.element.classList.add("ps2map__base-hexes");
         return _this;
     }
-    HexLayer.prototype.svgFactory = function (data) {
-        var factory = document.createElement("template");
-        factory.innerHTML = data;
-        var svg = factory.content.firstElementChild;
-        if (!(svg instanceof SVGElement))
-            throw "Unable to load contents from map hex SVG";
-        svg.classList.add("ps2map__base-hexes__svg");
-        this.applyPolygonHoverFix(svg);
-        return svg;
-    };
     HexLayer.prototype.setBaseOwner = function (baseId, factionId) {
         var svg = this.element.firstElementChild;
         if (svg != null) {
@@ -536,24 +552,36 @@ var HexLayer = (function (_super) {
     return HexLayer;
 }(StaticLayer));
 var Minimap = (function () {
-    function Minimap(element, mapSize, background) {
+    function Minimap(element, mapSize, continent) {
+        var _this = this;
         this.jumpToCallbacks = [];
+        this.minimapHexAlpha = 0.5;
+        this.polygons = new Map();
         this.mapSize = mapSize;
         this.element = element;
+        this.element.classList.add("ps2map__minimap");
         this.cssSize = this.element.clientWidth;
         this.element.style.height = this.cssSize + "px";
         this.viewboxElement = document.createElement("div");
+        this.viewboxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this.viewboxElement);
-        this.element.style.backgroundImage = "url(" + background + ")";
-        this.element.style.backgroundSize = "100%";
+        this.element.style.backgroundImage = "url(" + Api.getMinimapImagePath(continent.code) + ")";
+        var hexes = document.createElement("div");
+        Api.getContinentOutlinesSvg(continent)
+            .then(function (svg) {
+            hexes.appendChild(svg);
+            var polygons = svg.querySelectorAll("polygon");
+            var i = polygons.length;
+            while (i--) {
+                var polygon = polygons[i];
+                _this.polygons.set(parseInt(polygon.id), polygon);
+            }
+        });
+        this.element.appendChild(hexes);
         this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
             passive: true
         });
     }
-    Minimap.prototype.configureMinimap = function (mapSize, background) {
-        this.mapSize = mapSize;
-        this.element.style.backgroundImage = "url(" + background + ")";
-    };
     Minimap.prototype.jumpToPosition = function (evtDown) {
         var _this = this;
         var drag = Utils.rafDebounce(function (evtDrag) {
@@ -595,6 +623,19 @@ var Minimap = (function () {
         this.viewboxElement.style.left = this.cssSize * relLeft + "px";
         this.viewboxElement.style.bottom = this.cssSize * relTop + "px";
     };
+    Minimap.prototype.setBaseOwnership = function (baseId, factionId) {
+        var colours = {
+            0: "rgba(0, 0, 0, " + this.minimapHexAlpha + ")",
+            1: "rgba(160, 77, 183, " + this.minimapHexAlpha + ")",
+            2: "rgba(81, 123, 204, " + this.minimapHexAlpha + ")",
+            3: "rgba(226, 25, 25, " + this.minimapHexAlpha + ")",
+            4: "rgba(255, 255, 255, " + this.minimapHexAlpha + ")"
+        };
+        var polygon = this.polygons.get(baseId);
+        if (polygon) {
+            polygon.style.fill = colours[factionId];
+        }
+    };
     return Minimap;
 }());
 var HeroMap = (function () {
@@ -608,13 +649,14 @@ var HeroMap = (function () {
         this.viewport = viewport;
     }
     HeroMap.prototype.setBaseOwner = function (baseId, factionId) {
-        var _a;
+        var _a, _b;
         this.baseOwnershipStore.set(baseId, factionId);
         (_a = this.controller) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
             if (layer.id == "hexes") {
                 layer.setBaseOwner(baseId, factionId);
             }
         });
+        (_b = this.minimap) === null || _b === void 0 ? void 0 : _b.setBaseOwnership(baseId, factionId);
     };
     HeroMap.prototype.setContinent = function (continent) {
         var _this = this;
@@ -640,7 +682,7 @@ var HeroMap = (function () {
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, Api.getMinimapImagePath(continent.code));
+        this.minimap = new Minimap(minimapElement, mapSize, continent);
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var terrainLayer = new TerrainLayer("terrain", mapSize);
@@ -648,13 +690,11 @@ var HeroMap = (function () {
         terrainLayer.updateLayer();
         this.controller.addLayer(terrainLayer);
         var hexLayer = new HexLayer("hexes", mapSize);
-        fetch(Api.getHexesPath(continent.code))
-            .then(function (data) {
-            return data.text();
-        })
-            .then(function (payload) {
-            hexLayer.element.appendChild(hexLayer.svgFactory(payload));
-            hexLayer.updateLayer();
+        Api.getContinentOutlinesSvg(continent)
+            .then(function (svg) {
+            svg.classList.add("ps2map__base-hexes__svg");
+            hexLayer.element.appendChild(svg);
+            hexLayer.applyPolygonHoverFix(svg);
         });
         this.controller.addLayer(hexLayer);
         var namesLayer = new BaseNamesLayer("names", mapSize);

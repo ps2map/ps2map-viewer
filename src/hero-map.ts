@@ -17,6 +17,7 @@ class HeroMap {
     private viewport: HTMLDivElement;
 
     /** Minimap DOM container. */
+    // TODO: Move minimap out of heromap
     private minimap: Minimap | undefined = undefined;
 
     private continentId: number = 0;
@@ -38,6 +39,7 @@ class HeroMap {
                 (layer as HexLayer).setBaseOwner(baseId, factionId);
             }
         })
+        this.minimap?.setBaseOwnership(baseId, factionId);
     }
 
     setContinent(continent: Api.Continent): void {
@@ -68,7 +70,7 @@ class HeroMap {
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
         this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, Api.getMinimapImagePath(continent.code));
+            mapSize, continent);
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(
@@ -83,17 +85,12 @@ class HeroMap {
 
         // Add map layer for base hexes
         const hexLayer = new HexLayer("hexes", mapSize);
-        // Load continent data
-        fetch(Api.getHexesPath(continent.code))
-            // Get raw text response (i.e. the SVG literal)
-            .then((data) => {
-                return data.text();
+        Api.getContinentOutlinesSvg(continent)
+            .then((svg) => {
+                svg.classList.add("ps2map__base-hexes__svg");
+                hexLayer.element.appendChild(svg);
+                hexLayer.applyPolygonHoverFix(svg);
             })
-            // Load the SVG literal into the layer
-            .then((payload) => {
-                hexLayer.element.appendChild(hexLayer.svgFactory(payload));
-                hexLayer.updateLayer();
-            });
         this.controller.addLayer(hexLayer);
 
         // Add map layer for base names

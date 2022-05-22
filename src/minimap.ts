@@ -1,3 +1,4 @@
+/// <reference path="api/index.ts" />
 /// <reference path="map-engine/types.ts" />
 
 /**
@@ -21,33 +22,41 @@ class Minimap {
     /** Callbacks invoked when the the user clicks on the minimap. */
     jumpToCallbacks: ((arg0: Point) => void)[] = []
 
-    constructor(element: HTMLDivElement, mapSize: number, background: string) {
+    private minimapHexAlpha: number = 0.5;
+    private polygons: Map<number, SVGPolygonElement> = new Map();
+
+    constructor(element: HTMLDivElement, mapSize: number, continent: Api.Continent) {
         this.mapSize = mapSize;
         // Set up DOM containers
         this.element = element;
+        this.element.classList.add("ps2map__minimap");
         this.cssSize = this.element.clientWidth;
         this.element.style.height = `${this.cssSize}px`;
         this.viewboxElement = document.createElement("div");
+        this.viewboxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this.viewboxElement);
 
         // Set background image
-        this.element.style.backgroundImage = `url(${background})`;
-        this.element.style.backgroundSize = `100%`;
+        this.element.style.backgroundImage = `url(${Api.getMinimapImagePath(continent.code)})`;
+
+        // Create base outlines
+        const hexes = document.createElement("div");
+        Api.getContinentOutlinesSvg(continent)
+            .then((svg) => {
+                hexes.appendChild(svg);
+                const polygons = svg.querySelectorAll("polygon");
+                let i = polygons.length;
+                while (i--) {
+                    const polygon = polygons[i];
+                    this.polygons.set(parseInt(polygon.id), polygon);
+                }
+            });
+        this.element.appendChild(hexes);
 
         // Attach event listeners
         this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
             passive: true
         });
-    }
-
-    /**
-     * Update the minimap with a new map size and background texture.
-     * @param mapSize New map size to use
-     * @param background Updated background texture for the new map
-     */
-    configureMinimap(mapSize: number, background: string): void {
-        this.mapSize = mapSize;
-        this.element.style.backgroundImage = `url(${background})`;
     }
 
     /**
@@ -105,4 +114,21 @@ class Minimap {
         this.viewboxElement.style.left = `${this.cssSize * relLeft}px`;
         this.viewboxElement.style.bottom = `${this.cssSize * relTop}px`;
     }
+
+    setBaseOwnership(baseId: number, factionId: number): void {
+        // TODO: Read faction colours from CSS variables/user config
+        const colours: any = {
+            0: `rgba(0, 0, 0, ${this.minimapHexAlpha})`,
+            1: `rgba(160, 77, 183, ${this.minimapHexAlpha})`,
+            2: `rgba(81, 123, 204, ${this.minimapHexAlpha})`,
+            3: `rgba(226, 25, 25, ${this.minimapHexAlpha})`,
+            4: `rgba(255, 255, 255, ${this.minimapHexAlpha})`,
+        }
+
+        const polygon = this.polygons.get(baseId);
+        if (polygon) {
+            polygon.style.fill = colours[factionId];
+        }
+    }
+
 }

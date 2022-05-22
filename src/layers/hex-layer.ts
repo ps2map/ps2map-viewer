@@ -14,20 +14,6 @@ class HexLayer extends StaticLayer {
         this.element.classList.add("ps2map__base-hexes");
     }
 
-    svgFactory(data: string): SVGElement {
-        const factory = document.createElement("template");
-        factory.innerHTML = data;
-        // Extract the SVG node
-        const svg = factory.content.firstElementChild;
-        if (!(svg instanceof SVGElement))
-            throw "Unable to load contents from map hex SVG";
-        // Setup SVG element
-        svg.classList.add("ps2map__base-hexes__svg");
-        // Apply polygon hover fix to ensure hovered outlines are drawn on top
-        this.applyPolygonHoverFix(svg);
-        return svg;
-    }
-
     setBaseOwner(baseId: number, factionId: number): void {
         const svg = this.element.firstElementChild as SVGElement | null;
         if (svg != null) {
@@ -48,7 +34,8 @@ class HexLayer extends StaticLayer {
         }
     }
 
-    private applyPolygonHoverFix(svg: SVGElement): void {
+    // TODO: Make private
+    applyPolygonHoverFix(svg: SVGElement): void {
         svg.querySelectorAll("polygon").forEach((polygon) => {
             // Event handler for applying hover effects
             const addHoverFx = () => {
