@@ -774,8 +774,8 @@ document.addEventListener("DOMContentLoaded", function () {
         heroMap.setContinent(continent);
     });
 });
-var PointFeature = (function () {
-    function PointFeature(pos, id, element, minZoom) {
+var BaseNameFeature = (function () {
+    function BaseNameFeature(pos, id, element, minZoom) {
         if (minZoom === void 0) { minZoom = 0; }
         this.visible = true;
         this.forceVisible = false;
@@ -784,46 +784,14 @@ var PointFeature = (function () {
         this.pos = pos;
         this.minZoom = minZoom;
     }
-    return PointFeature;
+    return BaseNameFeature;
 }());
-var PointLayer = (function (_super) {
-    __extends(PointLayer, _super);
-    function PointLayer() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.features = [];
-        return _this;
-    }
-    PointLayer.prototype.redraw = function (viewbox, zoom) {
-        var targetX = (viewbox.right + viewbox.left) * 0.5;
-        var targetY = (viewbox.top + viewbox.bottom) * 0.5;
-        var halfMapSize = this.mapSize * 0.5;
-        var offsetX = -halfMapSize;
-        var offsetY = -halfMapSize;
-        offsetX += (halfMapSize - targetX) * zoom;
-        offsetY -= (halfMapSize - targetY) * zoom;
-        this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
-    };
-    PointLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
-        var unzoom = 1 / zoom;
-        var i = this.features.length;
-        while (i-- > 0) {
-            var feat = this.features[i];
-            feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * " + unzoom + ")) " +
-                ("scale(" + unzoom + ", " + unzoom + ")"));
-            if (!feat.forceVisible)
-                if (zoom >= feat.minZoom)
-                    feat.element.style.display = "block";
-                else
-                    feat.element.style.removeProperty("display");
-            feat.visible = zoom >= feat.minZoom;
-        }
-    };
-    return PointLayer;
-}(MapLayer));
 var BaseNamesLayer = (function (_super) {
     __extends(BaseNamesLayer, _super);
     function BaseNamesLayer() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.features = [];
+        return _this;
     }
     BaseNamesLayer.prototype.loadBaseInfo = function (bases) {
         var features = [];
@@ -855,7 +823,7 @@ var BaseNamesLayer = (function (_super) {
                 minZoom = 0.60;
             if (baseInfo.type_code == "large-outpost")
                 minZoom = 0.45;
-            features.push(new PointFeature(pos, baseInfo.id, element, minZoom));
+            features.push(new BaseNameFeature(pos, baseInfo.id, element, minZoom));
             this.element.appendChild(element);
         }
         this.features = features;
@@ -882,8 +850,23 @@ var BaseNamesLayer = (function (_super) {
         feat.forceVisible = true;
         feat.element.style.display = "block";
     };
+    BaseNamesLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
+        var unzoom = 1 / zoom;
+        var i = this.features.length;
+        while (i-- > 0) {
+            var feat = this.features[i];
+            feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * " + unzoom + ")) " +
+                ("scale(" + unzoom + ", " + unzoom + ")"));
+            if (!feat.forceVisible)
+                if (zoom >= feat.minZoom)
+                    feat.element.innerText = feat.text;
+                else
+                    feat.element.innerText = "";
+            feat.visible = zoom >= feat.minZoom;
+        }
+    };
     return BaseNamesLayer;
-}(PointLayer));
+}(StaticLayer));
 var MapTile = (function () {
     function MapTile(box, element, gridPos) {
         this.visible = true;

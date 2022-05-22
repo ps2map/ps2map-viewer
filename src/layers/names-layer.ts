@@ -1,10 +1,35 @@
-/// <reference path="../map-engine/point-layer.ts" />
+/// <reference path="../map-engine/static-layer.ts" />
+
+class BaseNameFeature {
+    /** HTML element associated with the feature. */
+    readonly element: HTMLElement;
+    /** Unique identifier for the feature. */
+    readonly id: number;
+    /** Position of the feature on the map. */
+    readonly pos: Point;
+    /** Minimum zoom level at which the element is visible. */
+    readonly minZoom: number;
+    /** Visibility DOM cache */
+    visible: boolean = true;
+
+    forceVisible: boolean = false;
+
+    constructor(pos: Point, id: number, element: HTMLElement, minZoom: number = 0) {
+        this.element = element;
+        this.id = id;
+        this.pos = pos;
+        this.minZoom = minZoom;
+    }
+}
+
+
 
 /** Base name and icon layer subclass. */
-class BaseNamesLayer extends PointLayer {
+class BaseNamesLayer extends StaticLayer {
+    features: BaseNameFeature[] = []
 
     loadBaseInfo(bases: Api.Base[]): void {
-        const features: PointFeature[] = [];
+        const features: BaseNameFeature[] = [];
         let i = bases.length;
         while (i-- > 0) {
             const baseInfo = bases[i];
@@ -35,7 +60,7 @@ class BaseNamesLayer extends PointLayer {
             if (baseInfo.type_code == "small-outpost") minZoom = 0.60
             if (baseInfo.type_code == "large-outpost") minZoom = 0.45;
 
-            features.push(new PointFeature(pos, baseInfo.id, element, minZoom));
+            features.push(new BaseNameFeature(pos, baseInfo.id, element, minZoom));
             this.element.appendChild(element);
         }
         this.features = features;
@@ -49,7 +74,7 @@ class BaseNamesLayer extends PointLayer {
      * @param element SVG polygon of the highlighted base.
      */
     onBaseHover(baseId: number, element: SVGPolygonElement): void {
-        let feat: PointFeature | null = null;
+        let feat: BaseNameFeature | null = null;
         let i = this.features.length;
         while (i-- > 0)
             if (this.features[i].id == baseId)
@@ -68,5 +93,22 @@ class BaseNamesLayer extends PointLayer {
         element.addEventListener("mouseleave", leave);
         feat.forceVisible = true;
         feat.element.style.display = "block";
+    }
+
+    protected deferredLayerUpdate(viewbox: Box, zoom: number) {
+        const unzoom = 1 / zoom;
+        let i = this.features.length;
+        while (i-- > 0) {
+            const feat = this.features[i];
+            feat.element.style.transform = (
+                `translate(-50%, calc(var(--ps2map__base-icon-size) * ${unzoom})) ` +
+                `scale(${unzoom}, ${unzoom})`);
+            if (!feat.forceVisible)
+                if (zoom >= feat.minZoom)
+                    feat.element.style.display = "block";
+                else
+                    feat.element.style.removeProperty("display");
+            feat.visible = zoom >= feat.minZoom;
+        }
     }
 }
