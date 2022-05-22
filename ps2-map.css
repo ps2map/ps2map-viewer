@@ -38,7 +38,6 @@
     font-weight: 500;
     position: absolute;
     text-align: center;
-    display: none;
     height: 2em;
     width: 8em;
     /* Slightly janky workaround for getting more pronounced text shadows. The

@@ -7,6 +7,8 @@ class BaseNameFeature {
     readonly id: number;
     /** Position of the feature on the map. */
     readonly pos: Point;
+    /** Text displayed on the base icon. */
+    readonly text: string;
     /** Minimum zoom level at which the element is visible. */
     readonly minZoom: number;
     /** Visibility DOM cache */
@@ -14,9 +16,10 @@ class BaseNameFeature {
 
     forceVisible: boolean = false;
 
-    constructor(pos: Point, id: number, element: HTMLElement, minZoom: number = 0) {
+    constructor(pos: Point, id: number, text: string, element: HTMLElement, minZoom: number = 0) {
         this.element = element;
         this.id = id;
+        this.text = text;
         this.pos = pos;
         this.minZoom = minZoom;
     }
@@ -60,7 +63,7 @@ class BaseNamesLayer extends StaticLayer {
             if (baseInfo.type_code == "small-outpost") minZoom = 0.60
             if (baseInfo.type_code == "large-outpost") minZoom = 0.45;
 
-            features.push(new BaseNameFeature(pos, baseInfo.id, element, minZoom));
+            features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
             this.element.appendChild(element);
         }
         this.features = features;
@@ -86,13 +89,13 @@ class BaseNamesLayer extends StaticLayer {
             element.removeEventListener("mouseleave", leave);
             feat.forceVisible = false;
             if (feat.visible)
-                feat.element.style.display = "block";
+                feat.element.innerText = feat.text;
             else
-                feat.element.style.removeProperty("display");
+                feat.element.innerText = "";
         }
         element.addEventListener("mouseleave", leave);
         feat.forceVisible = true;
-        feat.element.style.display = "block";
+        feat.element.innerText = feat.text;
     }
 
     protected deferredLayerUpdate(viewbox: Box, zoom: number) {
@@ -105,9 +108,9 @@ class BaseNamesLayer extends StaticLayer {
                 `scale(${unzoom}, ${unzoom})`);
             if (!feat.forceVisible)
                 if (zoom >= feat.minZoom)
-                    feat.element.style.display = "block";
+                    feat.element.innerText = feat.text;
                 else
-                    feat.element.style.removeProperty("display");
+                    feat.element.innerText = "";
             feat.visible = zoom >= feat.minZoom;
         }
     }

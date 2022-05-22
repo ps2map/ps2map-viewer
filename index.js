@@ -758,12 +758,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 var BaseNameFeature = (function () {
-    function BaseNameFeature(pos, id, element, minZoom) {
+    function BaseNameFeature(pos, id, text, element, minZoom) {
         if (minZoom === void 0) { minZoom = 0; }
         this.visible = true;
         this.forceVisible = false;
         this.element = element;
         this.id = id;
+        this.text = text;
         this.pos = pos;
         this.minZoom = minZoom;
     }
@@ -805,7 +806,7 @@ var BaseNamesLayer = (function (_super) {
                 minZoom = 0.60;
             if (baseInfo.type_code == "large-outpost")
                 minZoom = 0.45;
-            features.push(new BaseNameFeature(pos, baseInfo.id, element, minZoom));
+            features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
             this.element.appendChild(element);
         }
         this.features = features;
@@ -824,13 +825,13 @@ var BaseNamesLayer = (function (_super) {
             element.removeEventListener("mouseleave", leave);
             feat.forceVisible = false;
             if (feat.visible)
-                feat.element.style.display = "block";
+                feat.element.innerText = feat.text;
             else
-                feat.element.style.removeProperty("display");
+                feat.element.innerText = "";
         };
         element.addEventListener("mouseleave", leave);
         feat.forceVisible = true;
-        feat.element.style.display = "block";
+        feat.element.innerText = feat.text;
     };
     BaseNamesLayer.prototype.deferredLayerUpdate = function (viewbox, zoom) {
         var unzoom = 1 / zoom;
@@ -841,9 +842,9 @@ var BaseNamesLayer = (function (_super) {
                 ("scale(" + unzoom + ", " + unzoom + ")"));
             if (!feat.forceVisible)
                 if (zoom >= feat.minZoom)
-                    feat.element.style.display = "block";
+                    feat.element.innerText = feat.text;
                 else
-                    feat.element.style.removeProperty("display");
+                    feat.element.innerText = "";
             feat.visible = zoom >= feat.minZoom;
         }
     };
