@@ -10,34 +10,50 @@
  */
 class HeroMap {
     /** Current continent ID */
-    private continentId: number;
+    private continentCode: string = "";
     /** Internal map renderer wrapped by this class. */
-    private controller: MapRenderer;
+    private controller: MapRenderer | undefined = undefined;
+    /** Viewport. */
+    private viewport: HTMLDivElement;
 
     /** Minimap DOM container. */
-    private readonly minimap: Minimap;
+    private minimap: Minimap | undefined = undefined;
 
     constructor(
-        viewport: HTMLDivElement,
-        initialContinentId: number
+        viewport: HTMLDivElement
     ) {
-        this.continentId = initialContinentId;
+        this.viewport = viewport;
+    }
 
-        // TODO: Query the API to determine the appropriate map size for the
-        // given continent
-        const mapSize = 8192;
+    setContinent(continent: Api.Continent): void {
+        if (continent.code == this.continentCode) {
+            return;
+        }
+        this.continentCode = continent.code;
+        const mapSize = continent.map_size;
 
-        // Initialise map controller
-        this.controller = new MapRenderer(viewport, mapSize);
+        let i = this.minimap?.element.children.length;
+        while (i != undefined && i--) {
+            this.minimap?.element.children[i].remove();
+        }
+        delete this.minimap
+        delete this.controller
+        i = this.viewport.children.length;
+        while (i--) {
+            this.viewport.removeChild(this.viewport.children[i]);
+        }
+
+        // Set up controller
+        this.controller = new MapRenderer(this.viewport, mapSize);
+
         // Set up minimap
         const minimapElement = document.getElementById("minimap");
         if (minimapElement == null)
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        // FIXME: Hard-coded minimap URL for now
         this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, Api.getMinimapImagePath('oshur'));
+            mapSize, Api.getMinimapImagePath(continent.code));
         this.controller.viewboxCallbacks.push(
             this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(
@@ -46,30 +62,14 @@ class HeroMap {
         // Add map layer for terrain texture
         const terrainLayer = new TerrainLayer("terrain", mapSize);
         // Load continent data
-        Api.getContinentList().then((continents) => {
-            continents.forEach((continent) => {
-                if (continent.id == this.continentId) {
-                    terrainLayer.setContinent(continent.code);
-                    terrainLayer.updateLayer();
-                }
-            });
-        });
+        terrainLayer.setContinent(continent.code);
+        terrainLayer.updateLayer();
         this.controller.addLayer(terrainLayer);
 
         // Add map layer for base hexes
         const hexLayer = new HexLayer("hexes", mapSize);
         // Load continent data
-        Api.getContinentList()
-            // Fetch base outlines
-            .then((continents) => {
-                let cont = continents[0];
-                continents.forEach((continent) => {
-                    if (continent.id == this.continentId) {
-                        cont = continent;
-                    }
-                });
-                return fetch(Api.getHexesPath(cont.code));
-            })
+        fetch(Api.getHexesPath(continent.code))
             // Get raw text response (i.e. the SVG literal)
             .then((data) => {
                 return data.text();
@@ -84,7 +84,7 @@ class HeroMap {
         // Add map layer for base names
         const namesLayer = new BaseNamesLayer("names", mapSize);
         // Load continent data
-        Api.getBasesFromContinent(this.continentId)
+        Api.getBasesFromContinent(continent.id)
             .then((bases) => {
                 namesLayer.loadBaseInfo(bases);
                 namesLayer.updateLayer();
@@ -97,7 +97,7 @@ class HeroMap {
 
         // Base info panel
         let bases: Api.Base[] = [];
-        Api.getBasesFromContinent(this.continentId).then((data) => bases = data);
+        Api.getBasesFromContinent(continent.id).then((data) => bases = data);
         const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
         const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
         hexLayer.polygonHoverCallbacks.push((baseId: number) => {

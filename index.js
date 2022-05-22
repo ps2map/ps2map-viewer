@@ -545,40 +545,44 @@ var Minimap = (function () {
     return Minimap;
 }());
 var HeroMap = (function () {
-    function HeroMap(viewport, initialContinentId) {
-        var _this = this;
-        this.continentId = initialContinentId;
-        var mapSize = 8192;
-        this.controller = new MapRenderer(viewport, mapSize);
+    function HeroMap(viewport) {
+        this.continentCode = "";
+        this.controller = undefined;
+        this.minimap = undefined;
+        this.viewport = viewport;
+    }
+    HeroMap.prototype.setContinent = function (continent) {
+        var _a, _b;
+        if (continent.code == this.continentCode) {
+            return;
+        }
+        this.continentCode = continent.code;
+        var mapSize = continent.map_size;
+        var i = (_a = this.minimap) === null || _a === void 0 ? void 0 : _a.element.children.length;
+        while (i != undefined && i--) {
+            (_b = this.minimap) === null || _b === void 0 ? void 0 : _b.element.children[i].remove();
+        }
+        delete this.minimap;
+        delete this.controller;
+        i = this.viewport.children.length;
+        while (i--) {
+            this.viewport.removeChild(this.viewport.children[i]);
+        }
+        this.controller = new MapRenderer(this.viewport, mapSize);
         var minimapElement = document.getElementById("minimap");
         if (minimapElement == null)
             throw "Unable to locate minimap element.";
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, Api.getMinimapImagePath('oshur'));
+        this.minimap = new Minimap(minimapElement, mapSize, Api.getMinimapImagePath(continent.code));
         this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
         this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
         var terrainLayer = new TerrainLayer("terrain", mapSize);
-        Api.getContinentList().then(function (continents) {
-            continents.forEach(function (continent) {
-                if (continent.id == _this.continentId) {
-                    terrainLayer.setContinent(continent.code);
-                    terrainLayer.updateLayer();
-                }
-            });
-        });
+        terrainLayer.setContinent(continent.code);
+        terrainLayer.updateLayer();
         this.controller.addLayer(terrainLayer);
         var hexLayer = new HexLayer("hexes", mapSize);
-        Api.getContinentList()
-            .then(function (continents) {
-            var cont = continents[0];
-            continents.forEach(function (continent) {
-                if (continent.id == _this.continentId) {
-                    cont = continent;
-                }
-            });
-            return fetch(Api.getHexesPath(cont.code));
-        })
+        fetch(Api.getHexesPath(continent.code))
             .then(function (data) {
             return data.text();
         })
@@ -588,7 +592,7 @@ var HeroMap = (function () {
         });
         this.controller.addLayer(hexLayer);
         var namesLayer = new BaseNamesLayer("names", mapSize);
-        Api.getBasesFromContinent(this.continentId)
+        Api.getBasesFromContinent(continent.id)
             .then(function (bases) {
             namesLayer.loadBaseInfo(bases);
             namesLayer.updateLayer();
@@ -596,7 +600,7 @@ var HeroMap = (function () {
         this.controller.addLayer(namesLayer);
         hexLayer.polygonHoverCallbacks.push(namesLayer.onBaseHover.bind(namesLayer));
         var bases = [];
-        Api.getBasesFromContinent(this.continentId).then(function (data) { return bases = data; });
+        Api.getBasesFromContinent(continent.id).then(function (data) { return bases = data; });
         var regionName = document.getElementById("widget_base-info_name");
         var regionType = document.getElementById("widget_base-info_type");
         hexLayer.polygonHoverCallbacks.push(function (baseId) {
@@ -610,11 +614,11 @@ var HeroMap = (function () {
                 }
             }
         });
-    }
+    };
     return HeroMap;
 }());
 document.addEventListener("DOMContentLoaded", function () {
-    var continentId = 344;
+    var dropdown = document.getElementById("continent-selector");
     var viewport = document.getElementById("hero-map");
     if (viewport == null) {
         throw "Unable to locate viewport element";
@@ -622,7 +626,29 @@ document.addEventListener("DOMContentLoaded", function () {
     if (viewport.tagName != "DIV") {
         throw "Expected viewport of type \"DIV\" (got " + viewport.tagName + ")";
     }
-    new HeroMap(viewport, continentId);
+    var heroMap = new HeroMap(viewport);
+    console.log("Loading available continents...");
+    Api.getContinentList()
+        .then(function (continentList) {
+        continentList.sort(function (a, b) { return b.name.localeCompare(a.name); });
+        var i = continentList.length;
+        while (i--) {
+            var cont = continentList[i];
+            var option = document.createElement("option");
+            option.value = JSON.stringify(cont);
+            option.text = cont.name;
+            dropdown.appendChild(option);
+        }
+        heroMap.setContinent(JSON.parse(dropdown.value));
+    });
+    dropdown.addEventListener("change", function (event) {
+        if (event.target == null) {
+            return;
+        }
+        var continent = JSON.parse(dropdown.value);
+        console.log("Switching to " + continent.name + "...");
+        heroMap.setContinent(continent);
+    });
 });
 var PointFeature = (function () {
     function PointFeature(pos, id, element, minZoom) {
