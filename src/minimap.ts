@@ -46,7 +46,7 @@ class Minimap {
                 hexes.appendChild(svg);
                 const polygons = svg.querySelectorAll("polygon");
                 let i = polygons.length;
-                while (i--) {
+                while (i-- > 0) {
                     const polygon = polygons[i];
                     this.polygons.set(parseInt(polygon.id), polygon);
                 }

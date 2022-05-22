@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Populate continent selection dropdown
 
             let i = continentList.length;
-            while (i--) {
+            while (i-- > 0) {
                 const cont = continentList[i];
                 const option = document.createElement("option");
                 option.value = JSON.stringify(cont);

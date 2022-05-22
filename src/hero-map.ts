@@ -56,7 +56,7 @@ class HeroMap {
         delete this.minimap
         delete this.controller
         i = this.viewport.children.length;
-        while (i--) {
+        while (i-- > 0) {
             this.viewport.removeChild(this.viewport.children[i]);
         }
 

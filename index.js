@@ -572,7 +572,7 @@ var Minimap = (function () {
             hexes.appendChild(svg);
             var polygons = svg.querySelectorAll("polygon");
             var i = polygons.length;
-            while (i--) {
+            while (i-- > 0) {
                 var polygon = polygons[i];
                 _this.polygons.set(parseInt(polygon.id), polygon);
             }
@@ -673,7 +673,7 @@ var HeroMap = (function () {
         delete this.minimap;
         delete this.controller;
         i = this.viewport.children.length;
-        while (i--) {
+        while (i-- > 0) {
             this.viewport.removeChild(this.viewport.children[i]);
         }
         this.controller = new MapRenderer(this.viewport, mapSize);
@@ -756,7 +756,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(function (continentList) {
         continentList.sort(function (a, b) { return b.name.localeCompare(a.name); });
         var i = continentList.length;
-        while (i--) {
+        while (i-- > 0) {
             var cont = continentList[i];
             var option = document.createElement("option");
             option.value = JSON.stringify(cont);
