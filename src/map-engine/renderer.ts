@@ -18,24 +18,22 @@
 class MapRenderer {
     /** User-provided viewport element. Everything happens within this. */
     readonly viewport: HTMLDivElement;
+
     /** Helper element used to centre map layers in the viewport. */
     private readonly anchor: HTMLDivElement;
-
     /** The base map size for the current map. */
     private mapSize: number = 1024;
     /** Collection of map layers added to the map renderer. */
     private layers: MapLayer[] = [];
 
-    // Current map panning offset - TBD anbd merged into camera target
+    // Current map panning offset - TODO: maybe merge into camera target?
     private panOffsetX: number;
     private panOffsetY: number;
-
     private isPanning: boolean = false;
-
     private camera: MapCamera;
 
     /** Additional callbacks to invoke when the map viewbox changes. */
-    viewboxCallbacks: ((arg0: Box) => any)[] = [];
+    onViewboxChanged: ((arg0: Box) => any)[] = [];
 
     constructor(viewport: HTMLDivElement, mapSize: number) {
         // Set up DOM containers
@@ -214,9 +212,9 @@ class MapRenderer {
             layer.setRedrawArgs(viewbox, zoom);
         }
         // Invoke viewbox callbacks
-        i = this.viewboxCallbacks.length;
+        i = this.onViewboxChanged.length;
         while (i-- > 0)
-            this.viewboxCallbacks[i](viewbox);
+            this.onViewboxChanged[i](viewbox);
     }
 
     /**

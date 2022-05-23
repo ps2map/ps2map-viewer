@@ -30,6 +30,7 @@ body {
     background: rgba(30, 30, 30, 0.8);
     border: 2px solid grey;
     width: 240px;
+    z-index: 10;
 }
 
 #widget_base-info {
@@ -52,4 +53,11 @@ body {
 
 #widget_base-info_type {
     display: block;
+}
+
+#continent-selector-frame {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px;
 }

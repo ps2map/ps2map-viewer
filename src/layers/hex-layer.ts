@@ -7,7 +7,7 @@
  */
 class HexLayer extends StaticLayer {
     /** A list of callbacks to invoke when a base polygon is hovered. */
-    polygonHoverCallbacks: ((arg0: number, arg1: SVGPolygonElement) => void)[] = [];
+    onBaseHover: ((arg0: number, arg1: SVGPolygonElement) => void)[] = [];
 
     constructor(id: string, mapSize: number) {
         super(id, mapSize);
@@ -53,9 +53,9 @@ class HexLayer extends StaticLayer {
                     passive: true
                 });
                 // Dispatch polygon hover callbacks
-                let i = this.polygonHoverCallbacks.length;
+                let i = this.onBaseHover.length;
                 while (i-- > 0)
-                    this.polygonHoverCallbacks[i](parseInt(polygon.id), polygon);
+                    this.onBaseHover[i](parseInt(polygon.id), polygon);
                 // Apply hover
                 polygon.style.stroke = "#ffffff";
             };

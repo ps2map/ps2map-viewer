@@ -20,7 +20,7 @@ class Minimap {
     private readonly cssSize: number;
 
     /** Callbacks invoked when the the user clicks on the minimap. */
-    jumpToCallbacks: ((arg0: Point) => void)[] = []
+    onJumpTo: ((arg0: Point) => void)[] = []
 
     private minimapHexAlpha: number = 0.5;
     private polygons: Map<number, SVGPolygonElement> = new Map();
@@ -76,9 +76,9 @@ class Minimap {
                 y: Math.round((1 - relY) * this.mapSize)
             };
             // Invoke jumpTo callbacks
-            let i = this.jumpToCallbacks.length;
+            let i = this.onJumpTo.length;
             while (i-- > 0)
-                this.jumpToCallbacks[i](target);
+                this.onJumpTo[i](target);
         });
         // Global "mouseup" callback
         const up = () => {

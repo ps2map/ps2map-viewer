@@ -56,40 +56,40 @@ var MapCamera = (function () {
     function MapCamera(mapSize, viewportHeight, viewportWidth) {
         this.maxZoom = 4.0;
         this.zoomStep = 1.5;
-        this.zoomIndex = -1;
-        this.viewHeight = viewportHeight;
-        this.viewWidth = viewportWidth;
+        this.currentZoomIndex = -1;
+        this.viewportHeight = viewportHeight;
+        this.viewportWidth = viewportWidth;
         var zoom = this.maxZoom;
-        this.zoom = [this.maxZoom];
+        this.zoomLevels = [this.maxZoom];
         var stepInverse = 1 / this.zoomStep;
         while (mapSize * zoom > Math.min(viewportHeight, viewportWidth)) {
             zoom *= stepInverse;
-            this.zoom.push(Utils.roundTo(zoom, 2));
+            this.zoomLevels.push(Utils.roundTo(zoom, 2));
         }
-        this.zoomIndex = this.zoom.length - 1;
+        this.currentZoomIndex = this.zoomLevels.length - 1;
         this.target = {
             x: mapSize * 0.5,
             y: mapSize * 0.5
         };
     }
     MapCamera.prototype.bumpZoomLevel = function (direction) {
-        var index = this.zoomIndex;
+        var newIndex = this.currentZoomIndex;
         if (direction == 0)
-            return index;
+            return newIndex;
         if (direction < 0)
-            index--;
+            newIndex--;
         else if (direction > 0)
-            index++;
-        if (index < 0)
-            index = 0;
-        else if (index >= this.zoom.length)
-            index = this.zoom.length - 1;
-        this.zoomIndex = index;
-        return this.zoom[index];
+            newIndex++;
+        if (newIndex < 0)
+            newIndex = 0;
+        else if (newIndex >= this.zoomLevels.length)
+            newIndex = this.zoomLevels.length - 1;
+        this.currentZoomIndex = newIndex;
+        return this.zoomLevels[newIndex];
     };
     MapCamera.prototype.getViewbox = function () {
-        var viewboxWidth = this.viewWidth / this.getZoom();
-        var viewboxHeight = this.viewHeight / this.getZoom();
+        var viewboxHeight = this.viewportHeight / this.getZoom();
+        var viewboxWidth = this.viewportWidth / this.getZoom();
         return {
             top: this.target.y + viewboxHeight * 0.5,
             right: this.target.x + viewboxWidth * 0.5,
@@ -98,15 +98,15 @@ var MapCamera = (function () {
         };
     };
     MapCamera.prototype.getZoom = function () {
-        return this.zoom[this.zoomIndex];
+        return this.zoomLevels[this.currentZoomIndex];
     };
     MapCamera.prototype.zoomTo = function (direction, viewX, viewY) {
         if (viewX === void 0) { viewX = 0.5; }
         if (viewY === void 0) { viewY = 0.5; }
         var oldZoom = this.getZoom();
         var newZoom = this.bumpZoomLevel(direction);
-        var pixelDeltaX = (this.viewWidth / oldZoom) - (this.viewWidth / newZoom);
-        var pixelDeltaY = (this.viewHeight / oldZoom) - (this.viewHeight / newZoom);
+        var pixelDeltaX = (this.viewportWidth / oldZoom) - (this.viewportWidth / newZoom);
+        var pixelDeltaY = (this.viewportHeight / oldZoom) - (this.viewportHeight / newZoom);
         var sideRatioX = Utils.remap(viewX, 0.0, 1.0, -0.5, 0.5);
         var sideRatioY = -Utils.remap(viewY, 0.0, 1.0, -0.5, 0.5);
         var targetX = this.target.x + pixelDeltaX * sideRatioX;
@@ -203,7 +203,7 @@ var MapRenderer = (function () {
         this.mapSize = 1024;
         this.layers = [];
         this.isPanning = false;
-        this.viewboxCallbacks = [];
+        this.onViewboxChanged = [];
         this.onZoom = Utils.rafDebounce(function (evt) {
             evt.preventDefault();
             if (_this.isPanning)
@@ -312,9 +312,9 @@ var MapRenderer = (function () {
             layer.redraw(viewbox, zoom);
             layer.setRedrawArgs(viewbox, zoom);
         }
-        i = this.viewboxCallbacks.length;
+        i = this.onViewboxChanged.length;
         while (i-- > 0)
-            this.viewboxCallbacks[i](viewbox);
+            this.onViewboxChanged[i](viewbox);
     };
     MapRenderer.prototype.constrainMapTarget = function () {
         var targetX = this.camera.target.x;
@@ -484,7 +484,7 @@ var HexLayer = (function (_super) {
     __extends(HexLayer, _super);
     function HexLayer(id, mapSize) {
         var _this = _super.call(this, id, mapSize) || this;
-        _this.polygonHoverCallbacks = [];
+        _this.onBaseHover = [];
         _this.element.classList.add("ps2map__base-hexes");
         return _this;
     }
@@ -519,9 +519,9 @@ var HexLayer = (function (_super) {
                 polygon.addEventListener("touchcancel", removeHoverFx, {
                     passive: true
                 });
-                var i = _this.polygonHoverCallbacks.length;
+                var i = _this.onBaseHover.length;
                 while (i-- > 0)
-                    _this.polygonHoverCallbacks[i](parseInt(polygon.id), polygon);
+                    _this.onBaseHover[i](parseInt(polygon.id), polygon);
                 polygon.style.stroke = "#ffffff";
             };
             polygon.addEventListener("mouseenter", addHoverFx, {
@@ -544,7 +544,7 @@ var HexLayer = (function (_super) {
 var Minimap = (function () {
     function Minimap(element, mapSize, continent) {
         var _this = this;
-        this.jumpToCallbacks = [];
+        this.onJumpTo = [];
         this.minimapHexAlpha = 0.5;
         this.polygons = new Map();
         this.mapSize = mapSize;
@@ -582,9 +582,9 @@ var Minimap = (function () {
                 x: Math.round(relX * _this.mapSize),
                 y: Math.round((1 - relY) * _this.mapSize)
             };
-            var i = _this.jumpToCallbacks.length;
+            var i = _this.onJumpTo.length;
             while (i-- > 0)
-                _this.jumpToCallbacks[i](target);
+                _this.onJumpTo[i](target);
         });
         var up = function () {
             _this.element.removeEventListener("mousemove", drag);
@@ -629,17 +629,18 @@ var Minimap = (function () {
 }());
 var HeroMap = (function () {
     function HeroMap(viewport) {
-        this.continentCode = "";
+        this.continent = undefined;
         this.controller = undefined;
         this.minimap = undefined;
-        this.continentId = 0;
         this.baseUpdateIntervalId = undefined;
-        this.baseOwnershipStore = new Map();
+        this.baseOwnershipMap = new Map();
         this.viewport = viewport;
     }
-    HeroMap.prototype.setBaseOwner = function (baseId, factionId) {
+    HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
         var _a, _b;
-        this.baseOwnershipStore.set(baseId, factionId);
+        if (this.baseOwnershipMap.get(baseId) == factionId)
+            return;
+        this.baseOwnershipMap.set(baseId, factionId);
         (_a = this.controller) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
             if (layer.id == "hexes") {
                 layer.setBaseOwner(baseId, factionId);
@@ -649,15 +650,14 @@ var HeroMap = (function () {
     };
     HeroMap.prototype.setContinent = function (continent) {
         var _this = this;
-        var _a, _b;
-        if (continent.code == this.continentCode) {
+        var _a, _b, _c;
+        if (continent.code == ((_a = this.continent) === null || _a === void 0 ? void 0 : _a.code))
             return;
-        }
-        this.continentCode = continent.code;
+        this.continent = continent;
         var mapSize = continent.map_size;
-        var i = (_a = this.minimap) === null || _a === void 0 ? void 0 : _a.element.children.length;
+        var i = (_b = this.minimap) === null || _b === void 0 ? void 0 : _b.element.children.length;
         while (i != undefined && i--)
-            (_b = this.minimap) === null || _b === void 0 ? void 0 : _b.element.children[i].remove();
+            (_c = this.minimap) === null || _c === void 0 ? void 0 : _c.element.children[i].remove();
         delete this.minimap;
         delete this.controller;
         i = this.viewport.children.length;
@@ -670,8 +670,8 @@ var HeroMap = (function () {
         if (minimapElement.tagName != "DIV")
             throw "Minimap element must be a DIV";
         this.minimap = new Minimap(minimapElement, mapSize, continent);
-        this.controller.viewboxCallbacks.push(this.minimap.setViewbox.bind(this.minimap));
-        this.minimap.jumpToCallbacks.push(this.controller.jumpTo.bind(this.controller));
+        this.controller.onViewboxChanged.push(this.minimap.setViewbox.bind(this.minimap));
+        this.minimap.onJumpTo.push(this.controller.jumpTo.bind(this.controller));
         var terrainLayer = new TerrainLayer("terrain", mapSize);
         terrainLayer.setContinent(continent.code);
         terrainLayer.updateLayer();
@@ -691,12 +691,12 @@ var HeroMap = (function () {
             namesLayer.updateLayer();
         });
         this.controller.addLayer(namesLayer);
-        hexLayer.polygonHoverCallbacks.push(namesLayer.onBaseHover.bind(namesLayer));
+        hexLayer.onBaseHover.push(namesLayer.onBaseHover.bind(namesLayer));
         var bases = [];
         Api.getBasesFromContinent(continent.id).then(function (data) { return bases = data; });
         var regionName = document.getElementById("widget_base-info_name");
         var regionType = document.getElementById("widget_base-info_type");
-        hexLayer.polygonHoverCallbacks.push(function (baseId) {
+        hexLayer.onBaseHover.push(function (baseId) {
             var i = bases.length;
             while (i-- > 0) {
                 var base = bases[i];
@@ -707,7 +707,7 @@ var HeroMap = (function () {
                 }
             }
         });
-        this.continentId = continent.id;
+        this.continent = continent;
         if (this.baseUpdateIntervalId != undefined) {
             clearInterval(this.baseUpdateIntervalId);
         }
@@ -718,24 +718,27 @@ var HeroMap = (function () {
     };
     HeroMap.prototype.updateBaseOwnership = function () {
         var _this = this;
+        var _a;
         var server_id = 13;
-        Api.getBaseOwnership(this.continentId, server_id).then(function (data) {
+        var continentId = (_a = this.continent) === null || _a === void 0 ? void 0 : _a.id;
+        if (continentId == undefined)
+            return;
+        Api.getBaseOwnership(continentId, server_id).then(function (data) {
             var i = data.length;
             while (i-- > 0)
-                _this.setBaseOwner(data[i].base_id, data[i].owning_faction_id);
+                _this.setBaseOwnership(data[i].base_id, data[i].owning_faction_id);
         });
     };
     return HeroMap;
 }());
 document.addEventListener("DOMContentLoaded", function () {
-    var dropdown = document.getElementById("continent-selector");
     var viewport = document.getElementById("hero-map");
     if (viewport == null)
         throw "Unable to locate viewport element";
     if (viewport.tagName != "DIV")
         throw "Expected viewport of type \"DIV\" (got " + viewport.tagName + ")";
     var heroMap = new HeroMap(viewport);
-    console.log("Loading available continents...");
+    var dropdown = document.getElementById("continent-selector");
     Api.getContinentList()
         .then(function (continentList) {
         continentList.sort(function (a, b) { return b.name.localeCompare(a.name); });
@@ -749,12 +752,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         heroMap.setContinent(JSON.parse(dropdown.value));
     });
-    dropdown.addEventListener("change", function (event) {
-        if (event.target == null)
-            return;
-        var continent = JSON.parse(dropdown.value);
-        console.log("Switching to " + continent.name + "...");
-        heroMap.setContinent(continent);
+    dropdown.addEventListener("change", function () {
+        heroMap.setContinent(JSON.parse(dropdown.value));
     });
 });
 var BaseNameFeature = (function () {

@@ -9,21 +9,21 @@
  * This also includes a mini-map because reasons.
  */
 class HeroMap {
-    /** Current continent ID */
-    private continentCode: string = "";
-    /** Internal map renderer wrapped by this class. */
+    /** Currently active continent for the map. */
+    private continent: Api.Continent | undefined = undefined;
+    /** Map engine instance responsible for hanlding the map display.  */
     private controller: MapRenderer | undefined = undefined;
-    /** Viewport. */
+    /** Viewport element the map is rendered into. */
     private viewport: HTMLDivElement;
 
     /** Minimap DOM container. */
     // TODO: Move minimap out of heromap
     private minimap: Minimap | undefined = undefined;
 
-    private continentId: number = 0;
     private baseUpdateIntervalId: number | undefined = undefined;
 
-    private baseOwnershipStore: Map<number, number> = new Map();
+    /** Local base ownership cache for the current continent. */
+    private baseOwnershipMap: Map<number, number> = new Map();
 
     constructor(
         viewport: HTMLDivElement
@@ -31,8 +31,10 @@ class HeroMap {
         this.viewport = viewport;
     }
 
-    setBaseOwner(baseId: number, factionId: number): void {
-        this.baseOwnershipStore.set(baseId, factionId);
+    setBaseOwnership(baseId: number, factionId: number): void {
+        if (this.baseOwnershipMap.get(baseId) == factionId)
+            return;
+        this.baseOwnershipMap.set(baseId, factionId);
         // Update map layers
         this.controller?.forEachLayer((layer) => {
             if (layer.id == "hexes") {
@@ -43,10 +45,9 @@ class HeroMap {
     }
 
     setContinent(continent: Api.Continent): void {
-        if (continent.code == this.continentCode) {
+        if (continent.code == this.continent?.code)
             return;
-        }
-        this.continentCode = continent.code;
+        this.continent = continent;
         const mapSize = continent.map_size;
 
         let i = this.minimap?.element.children.length;
@@ -69,9 +70,9 @@ class HeroMap {
             throw "Minimap element must be a DIV";
         this.minimap = new Minimap(minimapElement as HTMLDivElement,
             mapSize, continent);
-        this.controller.viewboxCallbacks.push(
+        this.controller.onViewboxChanged.push(
             this.minimap.setViewbox.bind(this.minimap));
-        this.minimap.jumpToCallbacks.push(
+        this.minimap.onJumpTo.push(
             this.controller.jumpTo.bind(this.controller));
 
         // Add map layer for terrain texture
@@ -82,6 +83,7 @@ class HeroMap {
         this.controller.addLayer(terrainLayer);
 
         // Add map layer for base hexes
+        // TODO: Move the layer loading logic to the layer itself
         const hexLayer = new HexLayer("hexes", mapSize);
         Api.getContinentOutlinesSvg(continent)
             .then((svg) => {
@@ -102,7 +104,7 @@ class HeroMap {
 
         this.controller.addLayer(namesLayer);
 
-        hexLayer.polygonHoverCallbacks.push(
+        hexLayer.onBaseHover.push(
             namesLayer.onBaseHover.bind(namesLayer));
 
         // Base info panel
@@ -110,7 +112,7 @@ class HeroMap {
         Api.getBasesFromContinent(continent.id).then((data) => bases = data);
         const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
         const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
-        hexLayer.polygonHoverCallbacks.push((baseId: number) => {
+        hexLayer.onBaseHover.push((baseId: number) => {
             let i = bases.length;
             while (i-- > 0) {
                 const base = bases[i];
@@ -122,7 +124,7 @@ class HeroMap {
             }
         });
 
-        this.continentId = continent.id;
+        this.continent = continent;
         if (this.baseUpdateIntervalId != undefined) {
             clearInterval(this.baseUpdateIntervalId);
         }
@@ -133,13 +135,16 @@ class HeroMap {
     }
 
     updateBaseOwnership(): void {
-        // TODO: Add safeguard against multiple updates at once
+        // TODO: Add safeguard against multiple updates at once in case of long-running requests
         // TODO: Add dynamic server selection
         const server_id = 13;
-        Api.getBaseOwnership(this.continentId, server_id).then((data) => {
+        const continentId = this.continent?.id;
+        if (continentId == undefined)
+            return;
+        Api.getBaseOwnership(continentId, server_id).then((data) => {
             let i = data.length;
             while (i-- > 0)
-                this.setBaseOwner(data[i].base_id, data[i].owning_faction_id);
+                this.setBaseOwnership(data[i].base_id, data[i].owning_faction_id);
         });
     }
 
