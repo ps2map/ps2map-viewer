@@ -11,7 +11,7 @@ class HeroMap {
     /** Currently active continent for the map. */
     private continent: Api.Continent | undefined = undefined;
     /** Map engine instance responsible for hanlding the map display.  */
-    private controller: MapRenderer | undefined = undefined;
+    private controller: MapRenderer;
     /** Viewport element the map is rendered into. */
     private viewport: HTMLDivElement;
 
@@ -31,18 +31,24 @@ class HeroMap {
         viewport: HTMLDivElement
     ) {
         this.viewport = viewport;
+        this.controller = new MapRenderer(this.viewport, 0);
+        this.controller.onViewboxChanged.push((viewbox) => {
+            let i = this.onViewboxChanged.length;
+            while (i-- > 0)
+                this.onViewboxChanged[i](viewbox);
+        });
     }
 
     setBaseOwnership(baseId: number, factionId: number): void {
         if (this.baseOwnershipMap.get(baseId) == factionId)
             return;
         this.baseOwnershipMap.set(baseId, factionId);
-        // Update map layers
+        // Forward base ownership change to all map layers
         this.controller?.forEachLayer((layer) => {
-            if (layer.id == "hexes") {
-                (layer as HexLayer).setBaseOwner(baseId, factionId);
-            }
-        })
+            if (layer.id == "hexes")
+                (layer as HexLayer).setBaseOwnership(baseId, factionId);
+        });
+        // Run external base ownership change callbacks
         let i = this.onBaseOwnershipChanged.length;
         while (i-- > 0)
             this.onBaseOwnershipChanged[i](baseId, factionId);
@@ -52,64 +58,46 @@ class HeroMap {
         if (continent.code == this.continent?.code)
             return;
         this.continent = continent;
-        const mapSize = continent.map_size;
 
-        let i = this.onContinentChanged.length;
-        while (i-- > 0)
-            this.onContinentChanged[i](continent);
+        // Delete all existing layers
+        this.controller.clearLayers();
+        this.controller.setMapSize(continent.map_size);
 
-        // TODO: don't recreate controller
-        delete this.controller
-        i = this.viewport.children.length;
-        while (i-- > 0)
-            this.viewport.removeChild(this.viewport.children[i]);
+        // Create terrain layer
+        const terrain = new TerrainLayer("terrain", continent.map_size);
+        terrain.setContinent(continent.code);
+        terrain.updateLayer();
+        this.controller.addLayer(terrain);
 
-        // Set up controller
-        this.controller = new MapRenderer(this.viewport, mapSize);
-        this.controller.onViewboxChanged.push((viewbox) => {
-            let i = this.onViewboxChanged.length;
-            while (i-- > 0)
-                this.onViewboxChanged[i](viewbox);
-        });
-
-        // Add map layer for terrain texture
-        const terrainLayer = new TerrainLayer("terrain", mapSize);
-        // Load continent data
-        terrainLayer.setContinent(continent.code);
-        terrainLayer.updateLayer();
-        this.controller.addLayer(terrainLayer);
-
-        // Add map layer for base hexes
+        // Create base outline layer
         // TODO: Move the layer loading logic to the layer itself
-        const hexLayer = new HexLayer("hexes", mapSize);
+        const hexes = new HexLayer("hexes", continent.map_size);
         Api.getContinentOutlinesSvg(continent)
             .then((svg) => {
                 svg.classList.add("ps2map__base-hexes__svg");
-                hexLayer.element.appendChild(svg);
-                hexLayer.applyPolygonHoverFix(svg);
+                hexes.element.appendChild(svg);
+                hexes.applyPolygonHoverFix(svg);
             })
-        this.controller.addLayer(hexLayer);
+        this.controller.addLayer(hexes);
 
-        // Add map layer for base names
-        const namesLayer = new BaseNamesLayer("names", mapSize);
-        // Load continent data
+        // Create base name layer
+        const names = new BaseNamesLayer("names", continent.map_size);
         Api.getBasesFromContinent(continent.id)
             .then((bases) => {
-                namesLayer.loadBaseInfo(bases);
-                namesLayer.updateLayer();
+                names.loadBaseInfo(bases);
+                names.updateLayer();
             });
+        this.controller.addLayer(names);
 
-        this.controller.addLayer(namesLayer);
+        hexes.onBaseHover.push(
+            names.onBaseHover.bind(names));
 
-        hexLayer.onBaseHover.push(
-            namesLayer.onBaseHover.bind(namesLayer));
-
-        // Base info panel
+        // TODO: Move base info panel to a separate component
         let bases: Api.Base[] = [];
         Api.getBasesFromContinent(continent.id).then((data) => bases = data);
         const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
         const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
-        hexLayer.onBaseHover.push((baseId: number) => {
+        hexes.onBaseHover.push((baseId: number) => {
             let i = bases.length;
             while (i-- > 0) {
                 const base = bases[i];
@@ -121,14 +109,22 @@ class HeroMap {
             }
         });
 
-        this.continent = continent;
-        if (this.baseUpdateIntervalId != undefined) {
+        // Run external continent change callbacks
+        let i = this.onContinentChanged.length;
+        while (i-- > 0)
+            this.onContinentChanged[i](continent);
+
+        // Start polling for base ownership updates
+        this.baseOwnershipMap.clear();
+        if (this.baseUpdateIntervalId != undefined)
             clearInterval(this.baseUpdateIntervalId);
-        }
-        this.updateBaseOwnership(); // Update once before interval times out
+        this.updateBaseOwnership();
         this.baseUpdateIntervalId = setInterval(() => {
             this.updateBaseOwnership();
         }, 5000);
+
+        // Reset camera to the center of the map
+        this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
     }
 
     updateBaseOwnership(): void {

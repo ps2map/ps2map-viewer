@@ -14,7 +14,7 @@ class HexLayer extends StaticLayer {
         this.element.classList.add("ps2map__base-hexes");
     }
 
-    setBaseOwner(baseId: number, factionId: number): void {
+    setBaseOwnership(baseId: number, factionId: number): void {
         const svg = this.element.firstElementChild as SVGElement | null;
         if (svg == null)
             throw "Unable to find HexLayer SVG element";

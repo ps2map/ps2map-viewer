@@ -248,6 +248,10 @@ var MapRenderer = (function () {
         }
         return undefined;
     };
+    MapRenderer.prototype.clearLayers = function () {
+        this.anchor.innerText = "";
+        this.layers = [];
+    };
     MapRenderer.prototype.forEachLayer = function (callback) {
         var i = this.layers.length;
         while (i-- > 0)
@@ -488,7 +492,7 @@ var HexLayer = (function (_super) {
         _this.element.classList.add("ps2map__base-hexes");
         return _this;
     }
-    HexLayer.prototype.setBaseOwner = function (baseId, factionId) {
+    HexLayer.prototype.setBaseOwnership = function (baseId, factionId) {
         var svg = this.element.firstElementChild;
         if (svg == null)
             throw "Unable to find HexLayer SVG element";
@@ -543,14 +547,20 @@ var HexLayer = (function (_super) {
 }(StaticLayer));
 var HeroMap = (function () {
     function HeroMap(viewport) {
+        var _this = this;
         this.continent = undefined;
-        this.controller = undefined;
         this.baseOwnershipMap = new Map();
         this.baseUpdateIntervalId = undefined;
         this.onContinentChanged = [];
         this.onBaseOwnershipChanged = [];
         this.onViewboxChanged = [];
         this.viewport = viewport;
+        this.controller = new MapRenderer(this.viewport, 0);
+        this.controller.onViewboxChanged.push(function (viewbox) {
+            var i = _this.onViewboxChanged.length;
+            while (i-- > 0)
+                _this.onViewboxChanged[i](viewbox);
+        });
     }
     HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
         var _a;
@@ -558,9 +568,8 @@ var HeroMap = (function () {
             return;
         this.baseOwnershipMap.set(baseId, factionId);
         (_a = this.controller) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
-            if (layer.id == "hexes") {
-                layer.setBaseOwner(baseId, factionId);
-            }
+            if (layer.id == "hexes")
+                layer.setBaseOwnership(baseId, factionId);
         });
         var i = this.onBaseOwnershipChanged.length;
         while (i-- > 0)
@@ -572,45 +581,33 @@ var HeroMap = (function () {
         if (continent.code == ((_a = this.continent) === null || _a === void 0 ? void 0 : _a.code))
             return;
         this.continent = continent;
-        var mapSize = continent.map_size;
-        var i = this.onContinentChanged.length;
-        while (i-- > 0)
-            this.onContinentChanged[i](continent);
-        delete this.controller;
-        i = this.viewport.children.length;
-        while (i-- > 0)
-            this.viewport.removeChild(this.viewport.children[i]);
-        this.controller = new MapRenderer(this.viewport, mapSize);
-        this.controller.onViewboxChanged.push(function (viewbox) {
-            var i = _this.onViewboxChanged.length;
-            while (i-- > 0)
-                _this.onViewboxChanged[i](viewbox);
-        });
-        var terrainLayer = new TerrainLayer("terrain", mapSize);
-        terrainLayer.setContinent(continent.code);
-        terrainLayer.updateLayer();
-        this.controller.addLayer(terrainLayer);
-        var hexLayer = new HexLayer("hexes", mapSize);
+        this.controller.clearLayers();
+        this.controller.setMapSize(continent.map_size);
+        var terrain = new TerrainLayer("terrain", continent.map_size);
+        terrain.setContinent(continent.code);
+        terrain.updateLayer();
+        this.controller.addLayer(terrain);
+        var hexes = new HexLayer("hexes", continent.map_size);
         Api.getContinentOutlinesSvg(continent)
             .then(function (svg) {
             svg.classList.add("ps2map__base-hexes__svg");
-            hexLayer.element.appendChild(svg);
-            hexLayer.applyPolygonHoverFix(svg);
+            hexes.element.appendChild(svg);
+            hexes.applyPolygonHoverFix(svg);
         });
-        this.controller.addLayer(hexLayer);
-        var namesLayer = new BaseNamesLayer("names", mapSize);
+        this.controller.addLayer(hexes);
+        var names = new BaseNamesLayer("names", continent.map_size);
         Api.getBasesFromContinent(continent.id)
             .then(function (bases) {
-            namesLayer.loadBaseInfo(bases);
-            namesLayer.updateLayer();
+            names.loadBaseInfo(bases);
+            names.updateLayer();
         });
-        this.controller.addLayer(namesLayer);
-        hexLayer.onBaseHover.push(namesLayer.onBaseHover.bind(namesLayer));
+        this.controller.addLayer(names);
+        hexes.onBaseHover.push(names.onBaseHover.bind(names));
         var bases = [];
         Api.getBasesFromContinent(continent.id).then(function (data) { return bases = data; });
         var regionName = document.getElementById("widget_base-info_name");
         var regionType = document.getElementById("widget_base-info_type");
-        hexLayer.onBaseHover.push(function (baseId) {
+        hexes.onBaseHover.push(function (baseId) {
             var i = bases.length;
             while (i-- > 0) {
                 var base = bases[i];
@@ -621,14 +618,17 @@ var HeroMap = (function () {
                 }
             }
         });
-        this.continent = continent;
-        if (this.baseUpdateIntervalId != undefined) {
+        var i = this.onContinentChanged.length;
+        while (i-- > 0)
+            this.onContinentChanged[i](continent);
+        this.baseOwnershipMap.clear();
+        if (this.baseUpdateIntervalId != undefined)
             clearInterval(this.baseUpdateIntervalId);
-        }
         this.updateBaseOwnership();
         this.baseUpdateIntervalId = setInterval(function () {
             _this.updateBaseOwnership();
         }, 5000);
+        this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
     };
     HeroMap.prototype.updateBaseOwnership = function () {
         var _this = this;
@@ -747,23 +747,16 @@ var Minimap = (function () {
     return Minimap;
 }());
 document.addEventListener("DOMContentLoaded", function () {
-    var viewport = document.getElementById("hero-map");
-    if (viewport == null)
-        throw "Unable to locate viewport element";
-    if (viewport.tagName != "DIV")
-        throw "Expected viewport of type \"DIV\" (got " + viewport.tagName + ")";
-    var heroMap = new HeroMap(viewport);
-    var minimapElement = document.getElementById("minimap");
-    if (minimapElement == null)
-        throw "Unable to locate minimap element.";
-    if (minimapElement.tagName != "DIV")
-        throw "Expected minimap of type \"DIV\" (got " + minimapElement.tagName + ")";
-    var minimap = new Minimap(minimapElement);
+    var heroMap = new HeroMap(document.getElementById("hero-map"));
+    var minimap = new Minimap(document.getElementById("minimap"));
     heroMap.onBaseOwnershipChanged.push(minimap.setBaseOwnership.bind(minimap));
     heroMap.onContinentChanged.push(minimap.setContinent.bind(minimap));
     heroMap.onViewboxChanged.push(minimap.setViewbox.bind(minimap));
     minimap.onJumpTo.push(heroMap.jumpTo.bind(heroMap));
     var dropdown = document.getElementById("continent-selector");
+    dropdown.addEventListener("change", function () {
+        heroMap.setContinent(JSON.parse(dropdown.value));
+    });
     Api.getContinentList()
         .then(function (continentList) {
         continentList.sort(function (a, b) { return b.name.localeCompare(a.name); });
@@ -775,9 +768,6 @@ document.addEventListener("DOMContentLoaded", function () {
             option.text = cont.name;
             dropdown.appendChild(option);
         }
-        heroMap.setContinent(JSON.parse(dropdown.value));
-    });
-    dropdown.addEventListener("change", function () {
         heroMap.setContinent(JSON.parse(dropdown.value));
     });
 });

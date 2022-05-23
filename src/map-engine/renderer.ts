@@ -89,6 +89,11 @@ class MapRenderer {
         return undefined;
     }
 
+    clearLayers(): void {
+        this.anchor.innerText = "";
+        this.layers = [];
+    }
+
     forEachLayer(callback: (layer: MapLayer) => void): void {
         let i = this.layers.length;
         while (i-- > 0)
