@@ -14,7 +14,8 @@ class Minimap {
     private readonly viewboxElement: HTMLDivElement;
 
     /** Size of the map used. Controls viewbox interpretation. */
-    private mapSize: number;
+    private mapSize: number = 0;
+    private baseOutlineSvg: SVGElement | undefined = undefined;
 
     /** CSS size of the minimap. */
     private readonly cssSize: number;
@@ -25,8 +26,7 @@ class Minimap {
     private minimapHexAlpha: number = 0.5;
     private polygons: Map<number, SVGPolygonElement> = new Map();
 
-    constructor(element: HTMLDivElement, mapSize: number, continent: Api.Continent) {
-        this.mapSize = mapSize;
+    constructor(element: HTMLDivElement, continent: Api.Continent | undefined = undefined) {
         // Set up DOM containers
         this.element = element;
         this.element.classList.add("ps2map__minimap");
@@ -36,24 +36,11 @@ class Minimap {
         this.viewboxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this.viewboxElement);
 
-        // Set background image
-        this.element.style.backgroundImage = `url(${Api.getMinimapImagePath(continent.code)})`;
+        // If a continent is provided, set up the minimap
+        if (continent != undefined)
+            this.setContinent(continent);
 
-        // Create base outlines
-        const hexes = document.createElement("div");
-        Api.getContinentOutlinesSvg(continent)
-            .then((svg) => {
-                hexes.appendChild(svg);
-                const polygons = svg.querySelectorAll("polygon");
-                let i = polygons.length;
-                while (i-- > 0) {
-                    const polygon = polygons[i];
-                    this.polygons.set(parseInt(polygon.id), polygon);
-                }
-            });
-        this.element.appendChild(hexes);
-
-        // Attach event listeners
+        // Attach event listener
         this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
             passive: true
         });
@@ -64,6 +51,8 @@ class Minimap {
      * @param evt Position the mouse was clicked at
      */
     private jumpToPosition(evtDown: MouseEvent): void {
+        if (this.mapSize == 0)
+            return;
         // Continuous "mousemove" callback
         const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
             // Get relative cursor position
@@ -128,6 +117,31 @@ class Minimap {
         const polygon = this.polygons.get(baseId);
         if (polygon)
             polygon.style.fill = colours[factionId];
+    }
+
+    setContinent(continent: Api.Continent): void {
+        this.mapSize = continent.map_size;
+        // Set minimap background image
+        this.element.style.backgroundImage =
+            `url(${Api.getMinimapImagePath(continent.code)})`;
+        // Create base outlines
+        Api.getContinentOutlinesSvg(continent)
+            .then((svg) => {
+                // Delete the existing hex layer, if any
+                if (this.baseOutlineSvg != undefined)
+                    this.element.removeChild(this.baseOutlineSvg);
+                // Delete any existing polygons
+                this.polygons = new Map();
+                // Add the new hex layer
+                svg.classList.add("ps2map__minimap__hexes");
+                this.baseOutlineSvg = svg;
+                this.element.appendChild(this.baseOutlineSvg);
+                // Add the polygons to the local cache
+                const polygons = svg.querySelectorAll("polygon");
+                let i = polygons.length;
+                while (i-- > 0)
+                    this.polygons.set(parseInt(polygons[i].id), polygons[i]);
+            });
     }
 
 }

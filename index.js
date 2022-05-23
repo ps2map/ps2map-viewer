@@ -541,103 +541,19 @@ var HexLayer = (function (_super) {
     };
     return HexLayer;
 }(StaticLayer));
-var Minimap = (function () {
-    function Minimap(element, mapSize, continent) {
-        var _this = this;
-        this.onJumpTo = [];
-        this.minimapHexAlpha = 0.5;
-        this.polygons = new Map();
-        this.mapSize = mapSize;
-        this.element = element;
-        this.element.classList.add("ps2map__minimap");
-        this.cssSize = this.element.clientWidth;
-        this.element.style.height = this.cssSize + "px";
-        this.viewboxElement = document.createElement("div");
-        this.viewboxElement.classList.add("ps2map__minimap__viewbox");
-        this.element.appendChild(this.viewboxElement);
-        this.element.style.backgroundImage = "url(" + Api.getMinimapImagePath(continent.code) + ")";
-        var hexes = document.createElement("div");
-        Api.getContinentOutlinesSvg(continent)
-            .then(function (svg) {
-            hexes.appendChild(svg);
-            var polygons = svg.querySelectorAll("polygon");
-            var i = polygons.length;
-            while (i-- > 0) {
-                var polygon = polygons[i];
-                _this.polygons.set(parseInt(polygon.id), polygon);
-            }
-        });
-        this.element.appendChild(hexes);
-        this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
-            passive: true
-        });
-    }
-    Minimap.prototype.jumpToPosition = function (evtDown) {
-        var _this = this;
-        var drag = Utils.rafDebounce(function (evtDrag) {
-            var rect = _this.element.getBoundingClientRect();
-            var relX = (evtDrag.clientX - rect.left) / (rect.width);
-            var relY = (evtDrag.clientY - rect.top) / (rect.height);
-            var target = {
-                x: Math.round(relX * _this.mapSize),
-                y: Math.round((1 - relY) * _this.mapSize)
-            };
-            var i = _this.onJumpTo.length;
-            while (i-- > 0)
-                _this.onJumpTo[i](target);
-        });
-        var up = function () {
-            _this.element.removeEventListener("mousemove", drag);
-            document.removeEventListener("mouseup", up);
-        };
-        document.addEventListener("mouseup", up);
-        this.element.addEventListener("mousemove", drag, {
-            passive: true
-        });
-        drag(evtDown);
-    };
-    Minimap.prototype.setViewbox = function (viewbox) {
-        var mapSize = this.mapSize;
-        var relViewbox = {
-            top: (viewbox.top + mapSize * 0.5) / mapSize,
-            left: (viewbox.left + mapSize * 0.5) / mapSize,
-            bottom: (viewbox.bottom + mapSize * 0.5) / mapSize,
-            right: (viewbox.right + mapSize * 0.5) / mapSize
-        };
-        var relHeight = relViewbox.top - relViewbox.bottom;
-        var relWidth = relViewbox.right - relViewbox.left;
-        var relLeft = relViewbox.left - 0.5;
-        var relTop = relViewbox.bottom - 0.5;
-        this.viewboxElement.style.height = this.cssSize * relHeight + "px";
-        this.viewboxElement.style.width = this.cssSize * relWidth + "px";
-        this.viewboxElement.style.left = this.cssSize * relLeft + "px";
-        this.viewboxElement.style.bottom = this.cssSize * relTop + "px";
-    };
-    Minimap.prototype.setBaseOwnership = function (baseId, factionId) {
-        var colours = {
-            0: "rgba(0, 0, 0, " + this.minimapHexAlpha + ")",
-            1: "rgba(160, 77, 183, " + this.minimapHexAlpha + ")",
-            2: "rgba(81, 123, 204, " + this.minimapHexAlpha + ")",
-            3: "rgba(226, 25, 25, " + this.minimapHexAlpha + ")",
-            4: "rgba(255, 255, 255, " + this.minimapHexAlpha + ")"
-        };
-        var polygon = this.polygons.get(baseId);
-        if (polygon)
-            polygon.style.fill = colours[factionId];
-    };
-    return Minimap;
-}());
 var HeroMap = (function () {
     function HeroMap(viewport) {
         this.continent = undefined;
         this.controller = undefined;
-        this.minimap = undefined;
-        this.baseUpdateIntervalId = undefined;
         this.baseOwnershipMap = new Map();
+        this.baseUpdateIntervalId = undefined;
+        this.onContinentChanged = [];
+        this.onBaseOwnershipChanged = [];
+        this.onViewboxChanged = [];
         this.viewport = viewport;
     }
     HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
-        var _a, _b;
+        var _a;
         if (this.baseOwnershipMap.get(baseId) == factionId)
             return;
         this.baseOwnershipMap.set(baseId, factionId);
@@ -646,32 +562,30 @@ var HeroMap = (function () {
                 layer.setBaseOwner(baseId, factionId);
             }
         });
-        (_b = this.minimap) === null || _b === void 0 ? void 0 : _b.setBaseOwnership(baseId, factionId);
+        var i = this.onBaseOwnershipChanged.length;
+        while (i-- > 0)
+            this.onBaseOwnershipChanged[i](baseId, factionId);
     };
     HeroMap.prototype.setContinent = function (continent) {
         var _this = this;
-        var _a, _b, _c;
+        var _a;
         if (continent.code == ((_a = this.continent) === null || _a === void 0 ? void 0 : _a.code))
             return;
         this.continent = continent;
         var mapSize = continent.map_size;
-        var i = (_b = this.minimap) === null || _b === void 0 ? void 0 : _b.element.children.length;
-        while (i != undefined && i--)
-            (_c = this.minimap) === null || _c === void 0 ? void 0 : _c.element.children[i].remove();
-        delete this.minimap;
+        var i = this.onContinentChanged.length;
+        while (i-- > 0)
+            this.onContinentChanged[i](continent);
         delete this.controller;
         i = this.viewport.children.length;
         while (i-- > 0)
             this.viewport.removeChild(this.viewport.children[i]);
         this.controller = new MapRenderer(this.viewport, mapSize);
-        var minimapElement = document.getElementById("minimap");
-        if (minimapElement == null)
-            throw "Unable to locate minimap element.";
-        if (minimapElement.tagName != "DIV")
-            throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement, mapSize, continent);
-        this.controller.onViewboxChanged.push(this.minimap.setViewbox.bind(this.minimap));
-        this.minimap.onJumpTo.push(this.controller.jumpTo.bind(this.controller));
+        this.controller.onViewboxChanged.push(function (viewbox) {
+            var i = _this.onViewboxChanged.length;
+            while (i-- > 0)
+                _this.onViewboxChanged[i](viewbox);
+        });
         var terrainLayer = new TerrainLayer("terrain", mapSize);
         terrainLayer.setContinent(continent.code);
         terrainLayer.updateLayer();
@@ -729,7 +643,108 @@ var HeroMap = (function () {
                 _this.setBaseOwnership(data[i].base_id, data[i].owning_faction_id);
         });
     };
+    HeroMap.prototype.jumpTo = function (point) {
+        var _a;
+        (_a = this.controller) === null || _a === void 0 ? void 0 : _a.jumpTo(point);
+    };
     return HeroMap;
+}());
+var Minimap = (function () {
+    function Minimap(element, continent) {
+        if (continent === void 0) { continent = undefined; }
+        this.mapSize = 0;
+        this.baseOutlineSvg = undefined;
+        this.onJumpTo = [];
+        this.minimapHexAlpha = 0.5;
+        this.polygons = new Map();
+        this.element = element;
+        this.element.classList.add("ps2map__minimap");
+        this.cssSize = this.element.clientWidth;
+        this.element.style.height = this.cssSize + "px";
+        this.viewboxElement = document.createElement("div");
+        this.viewboxElement.classList.add("ps2map__minimap__viewbox");
+        this.element.appendChild(this.viewboxElement);
+        if (continent != undefined)
+            this.setContinent(continent);
+        this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
+            passive: true
+        });
+    }
+    Minimap.prototype.jumpToPosition = function (evtDown) {
+        var _this = this;
+        if (this.mapSize == 0)
+            return;
+        var drag = Utils.rafDebounce(function (evtDrag) {
+            var rect = _this.element.getBoundingClientRect();
+            var relX = (evtDrag.clientX - rect.left) / (rect.width);
+            var relY = (evtDrag.clientY - rect.top) / (rect.height);
+            var target = {
+                x: Math.round(relX * _this.mapSize),
+                y: Math.round((1 - relY) * _this.mapSize)
+            };
+            var i = _this.onJumpTo.length;
+            while (i-- > 0)
+                _this.onJumpTo[i](target);
+        });
+        var up = function () {
+            _this.element.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", up);
+        };
+        document.addEventListener("mouseup", up);
+        this.element.addEventListener("mousemove", drag, {
+            passive: true
+        });
+        drag(evtDown);
+    };
+    Minimap.prototype.setViewbox = function (viewbox) {
+        var mapSize = this.mapSize;
+        var relViewbox = {
+            top: (viewbox.top + mapSize * 0.5) / mapSize,
+            left: (viewbox.left + mapSize * 0.5) / mapSize,
+            bottom: (viewbox.bottom + mapSize * 0.5) / mapSize,
+            right: (viewbox.right + mapSize * 0.5) / mapSize
+        };
+        var relHeight = relViewbox.top - relViewbox.bottom;
+        var relWidth = relViewbox.right - relViewbox.left;
+        var relLeft = relViewbox.left - 0.5;
+        var relTop = relViewbox.bottom - 0.5;
+        this.viewboxElement.style.height = this.cssSize * relHeight + "px";
+        this.viewboxElement.style.width = this.cssSize * relWidth + "px";
+        this.viewboxElement.style.left = this.cssSize * relLeft + "px";
+        this.viewboxElement.style.bottom = this.cssSize * relTop + "px";
+    };
+    Minimap.prototype.setBaseOwnership = function (baseId, factionId) {
+        var colours = {
+            0: "rgba(0, 0, 0, " + this.minimapHexAlpha + ")",
+            1: "rgba(160, 77, 183, " + this.minimapHexAlpha + ")",
+            2: "rgba(81, 123, 204, " + this.minimapHexAlpha + ")",
+            3: "rgba(226, 25, 25, " + this.minimapHexAlpha + ")",
+            4: "rgba(255, 255, 255, " + this.minimapHexAlpha + ")"
+        };
+        var polygon = this.polygons.get(baseId);
+        if (polygon)
+            polygon.style.fill = colours[factionId];
+    };
+    Minimap.prototype.setContinent = function (continent) {
+        var _this = this;
+        this.mapSize = continent.map_size;
+        this.element.style.backgroundImage =
+            "url(" + Api.getMinimapImagePath(continent.code) + ")";
+        Api.getContinentOutlinesSvg(continent)
+            .then(function (svg) {
+            if (_this.baseOutlineSvg != undefined)
+                _this.element.removeChild(_this.baseOutlineSvg);
+            _this.polygons = new Map();
+            svg.classList.add("ps2map__minimap__hexes");
+            _this.baseOutlineSvg = svg;
+            _this.element.appendChild(_this.baseOutlineSvg);
+            var polygons = svg.querySelectorAll("polygon");
+            var i = polygons.length;
+            while (i-- > 0)
+                _this.polygons.set(parseInt(polygons[i].id), polygons[i]);
+        });
+    };
+    return Minimap;
 }());
 document.addEventListener("DOMContentLoaded", function () {
     var viewport = document.getElementById("hero-map");
@@ -738,6 +753,16 @@ document.addEventListener("DOMContentLoaded", function () {
     if (viewport.tagName != "DIV")
         throw "Expected viewport of type \"DIV\" (got " + viewport.tagName + ")";
     var heroMap = new HeroMap(viewport);
+    var minimapElement = document.getElementById("minimap");
+    if (minimapElement == null)
+        throw "Unable to locate minimap element.";
+    if (minimapElement.tagName != "DIV")
+        throw "Expected minimap of type \"DIV\" (got " + minimapElement.tagName + ")";
+    var minimap = new Minimap(minimapElement);
+    heroMap.onBaseOwnershipChanged.push(minimap.setBaseOwnership.bind(minimap));
+    heroMap.onContinentChanged.push(minimap.setContinent.bind(minimap));
+    heroMap.onViewboxChanged.push(minimap.setViewbox.bind(minimap));
+    minimap.onJumpTo.push(heroMap.jumpTo.bind(heroMap));
     var dropdown = document.getElementById("continent-selector");
     Api.getContinentList()
         .then(function (continentList) {

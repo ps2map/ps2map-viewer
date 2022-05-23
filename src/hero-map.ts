@@ -1,7 +1,6 @@
 /// <reference path="./map-engine/renderer.ts" />
 /// <reference path="./api/index.ts" />
 /// <reference path="./layers/hex-layer.ts" />
-/// <reference path="./minimap.ts" />
 
 /**
  * Custom map controller for primary PlanetSide 2 continent map.
@@ -16,14 +15,17 @@ class HeroMap {
     /** Viewport element the map is rendered into. */
     private viewport: HTMLDivElement;
 
-    /** Minimap DOM container. */
-    // TODO: Move minimap out of heromap
-    private minimap: Minimap | undefined = undefined;
-
-    private baseUpdateIntervalId: number | undefined = undefined;
-
     /** Local base ownership cache for the current continent. */
     private baseOwnershipMap: Map<number, number> = new Map();
+    /** Polling timer for base ownership updates via REST API. */
+    private baseUpdateIntervalId: number | undefined = undefined;
+
+    /** Callbacks to invoke when the continent is changed. */
+    onContinentChanged: ((continent: Api.Continent) => void)[] = [];
+    /** Callbacks to invoke when a base changes ownership. */
+    onBaseOwnershipChanged: ((baseId: number, factionId: number) => void)[] = [];
+    /** Callbacks to invoke when the viewbox changes. */
+    onViewboxChanged: ((viewbox: Box) => void)[] = [];
 
     constructor(
         viewport: HTMLDivElement
@@ -41,7 +43,9 @@ class HeroMap {
                 (layer as HexLayer).setBaseOwner(baseId, factionId);
             }
         })
-        this.minimap?.setBaseOwnership(baseId, factionId);
+        let i = this.onBaseOwnershipChanged.length;
+        while (i-- > 0)
+            this.onBaseOwnershipChanged[i](baseId, factionId);
     }
 
     setContinent(continent: Api.Continent): void {
@@ -50,10 +54,11 @@ class HeroMap {
         this.continent = continent;
         const mapSize = continent.map_size;
 
-        let i = this.minimap?.element.children.length;
-        while (i != undefined && i--)
-            this.minimap?.element.children[i].remove();
-        delete this.minimap
+        let i = this.onContinentChanged.length;
+        while (i-- > 0)
+            this.onContinentChanged[i](continent);
+
+        // TODO: don't recreate controller
         delete this.controller
         i = this.viewport.children.length;
         while (i-- > 0)
@@ -61,19 +66,11 @@ class HeroMap {
 
         // Set up controller
         this.controller = new MapRenderer(this.viewport, mapSize);
-
-        // Set up minimap
-        const minimapElement = document.getElementById("minimap");
-        if (minimapElement == null)
-            throw "Unable to locate minimap element.";
-        if (minimapElement.tagName != "DIV")
-            throw "Minimap element must be a DIV";
-        this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, continent);
-        this.controller.onViewboxChanged.push(
-            this.minimap.setViewbox.bind(this.minimap));
-        this.minimap.onJumpTo.push(
-            this.controller.jumpTo.bind(this.controller));
+        this.controller.onViewboxChanged.push((viewbox) => {
+            let i = this.onViewboxChanged.length;
+            while (i-- > 0)
+                this.onViewboxChanged[i](viewbox);
+        });
 
         // Add map layer for terrain texture
         const terrainLayer = new TerrainLayer("terrain", mapSize);
@@ -146,6 +143,10 @@ class HeroMap {
             while (i-- > 0)
                 this.setBaseOwnership(data[i].base_id, data[i].owning_faction_id);
         });
+    }
+
+    jumpTo(point: Point): void {
+        this.controller?.jumpTo(point);
     }
 
 }
