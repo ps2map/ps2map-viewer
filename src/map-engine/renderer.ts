@@ -5,6 +5,13 @@
 /// <reference path="./types.ts" />
 
 /**
+ * Details for the "ps2map_viewboxchanged" custom event.
+ */
+interface ViewBoxChangedEvent {
+    viewBox: Box;
+}
+
+/**
  * Core map rendering controller.
  *
  * This class is the primary controller object for a given map instance. Add
@@ -32,9 +39,6 @@ class MapRenderer {
     private isPanning: boolean = false;
     private camera: MapCamera;
 
-    /** Additional callbacks to invoke when the map viewbox changes. */
-    onViewboxChanged: ((arg0: Box) => any)[] = [];
-
     constructor(viewport: HTMLDivElement, mapSize: number) {
         // Set up DOM containers
         this.viewport = viewport;
@@ -61,6 +65,11 @@ class MapRenderer {
         this.viewport.addEventListener("mousedown", this.mousePan.bind(this), {
             passive: true
         });
+
+        // TODO: Fix the minimap viewport positioning delay bug in a less hacky way
+        setInterval(() => {
+            this.viewport.dispatchEvent(this.buildViewBoxChangedEvent(this.camera.getViewBox()))
+        }, 0.01);
     }
 
     /**
@@ -74,7 +83,7 @@ class MapRenderer {
             throw "Map layer size must match the map renderer's.";
         this.layers.push(layer);
         this.anchor.appendChild(layer.element);
-        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
+        this.redraw(this.camera.getViewBox(), this.camera.getZoom());
     }
 
     /**
@@ -107,7 +116,7 @@ class MapRenderer {
     jumpTo(target: Point): void {
         this.camera.target = target;
         this.constrainMapTarget();
-        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
+        this.redraw(this.camera.getViewBox(), this.camera.getZoom());
     }
 
     /**
@@ -139,10 +148,10 @@ class MapRenderer {
         const view = this.viewport.getBoundingClientRect()
         const relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
         const relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
-        // Update the camera target and viewbox
+        // Update the camera target and view box
         this.camera.zoomTo(evt.deltaY, relX, relY);
         this.constrainMapTarget();
-        this.redraw(this.camera.getViewbox(), this.camera.getZoom());
+        this.redraw(this.camera.getViewBox(), this.camera.getZoom());
     });
 
     /** Event callback for mouse map panning.
@@ -169,7 +178,7 @@ class MapRenderer {
                 y: refY + deltaY / zoom
             };
             this.constrainMapTarget();
-            this.redraw(this.camera.getViewbox(), zoom);
+            this.redraw(this.camera.getViewBox(), zoom);
         });
         // Global "mouseup" callback
         const up = () => {
@@ -205,21 +214,19 @@ class MapRenderer {
 
     /**
      * Repaint the map layers and any auxiliary callbacks.
-     * @param viewbox Viewbox to dispatch
+     * @param viewBox View box to dispatch
      * @param zoom Zoom level to use
      */
-    private redraw(viewbox: Box, zoom: number): void {
+    private redraw(viewBox: Box, zoom: number): void {
         // Apply new zoom level and schedule map layer updates
         let i = this.layers.length;
         while (i-- > 0) {
             const layer = this.layers[i];
-            layer.redraw(viewbox, zoom);
-            layer.setRedrawArgs(viewbox, zoom);
+            layer.redraw(viewBox, zoom);
+            layer.setRedrawArgs(viewBox, zoom);
         }
-        // Invoke viewbox callbacks
-        i = this.onViewboxChanged.length;
-        while (i-- > 0)
-            this.onViewboxChanged[i](viewbox);
+        this.anchor.dispatchEvent(
+            this.buildViewBoxChangedEvent(viewBox));
     }
 
     /**
@@ -240,5 +247,15 @@ class MapRenderer {
             x: targetX,
             y: targetY
         };
+    }
+
+    private buildViewBoxChangedEvent(viewBox: Box): CustomEvent<ViewBoxChangedEvent> {
+        return new CustomEvent("ps2map_viewboxchanged", {
+            detail: {
+                viewBox: viewBox
+            },
+            bubbles: true,
+            cancelable: true,
+        });
     }
 }

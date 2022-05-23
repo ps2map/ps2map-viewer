@@ -83,19 +83,19 @@ class MapCamera {
     }
 
     /**
-     * Returns teh current viewbox of the camera.
-     * @returns Current viewbox object.
+     * Returns teh current viewBox of the camera.
+     * @returns Current viewBox object.
      */
-    getViewbox(): Box {
+    getViewBox(): Box {
         // Calculate the lengths covered by the viewport in map units
-        const viewboxHeight = this.viewportHeight / this.getZoom();
-        const viewboxWidth = this.viewportWidth / this.getZoom();
-        // Get viewbox coordinates
+        const viewBoxHeight = this.viewportHeight / this.getZoom();
+        const viewBoxWidth = this.viewportWidth / this.getZoom();
+        // Get viewBox coordinates
         return {
-            top: this.target.y + viewboxHeight * 0.5,
-            right: this.target.x + viewboxWidth * 0.5,
-            bottom: this.target.y - viewboxHeight * 0.5,
-            left: this.target.x - viewboxWidth * 0.5,
+            top: this.target.y + viewBoxHeight * 0.5,
+            right: this.target.x + viewBoxWidth * 0.5,
+            bottom: this.target.y - viewBoxHeight * 0.5,
+            left: this.target.x - viewBoxWidth * 0.5,
         };
     }
 

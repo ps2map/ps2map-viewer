@@ -33,14 +33,14 @@ class StaticLayer extends MapLayer {
         this.element.innerHTML = "";
     }
 
-    redraw(viewbox: Box, zoom: number): void {
-        const targetX = (viewbox.right + viewbox.left) * 0.5;
-        const targetY = (viewbox.top + viewbox.bottom) * 0.5;
+    redraw(viewBox: Box, zoom: number): void {
+        const targetX = (viewBox.right + viewBox.left) * 0.5;
+        const targetY = (viewBox.top + viewBox.bottom) * 0.5;
         // Initial offset to move the centre of the SVG to its CSS origin
         const halfMapSize = this.mapSize * 0.5;
         let offsetX = -halfMapSize;
         let offsetY = -halfMapSize;
-        // Another offset to shift the viewbox target to the origin
+        // Another offset to shift the view box target to the origin
         offsetX += (halfMapSize - targetX) * zoom;
         offsetY -= (halfMapSize - targetY) * zoom; // -1 to fix Y axis origin
         // Apply transform

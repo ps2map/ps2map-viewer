@@ -36,13 +36,13 @@ abstract class MapLayer {
     /**
      * External hook used by the map renderer to store redraw call arguments.
      * 
-     * This is used to implement the StagedUpdateLayer class and should not be
-     * called from or modified in sub classes.
-     * @param viewbox New viewbox of the client
+     * This is used to support the runDeferredLayerUpdate method and should not
+     * be called from or modified in sub classes.
+     * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    setRedrawArgs(viewbox: Box, zoom: number): void {
-        this.lastRedraw = [viewbox, zoom];
+    setRedrawArgs(viewBox: Box, zoom: number): void {
+        this.lastRedraw = [viewBox, zoom];
     }
 
     /**
@@ -68,8 +68,8 @@ abstract class MapLayer {
     private runDeferredLayerUpdate = Utils.rafDebounce(() => {
         if (this.lastRedraw == null)
             return;
-        const [viewbox, zoom] = this.lastRedraw;
-        this.deferredLayerUpdate(viewbox, zoom);
+        const [viewBox, zoom] = this.lastRedraw;
+        this.deferredLayerUpdate(viewBox, zoom);
     });
 
     /**
@@ -81,10 +81,10 @@ abstract class MapLayer {
      * Do not call `requestAnimationFrame()` as part of this method as timing
      * is the responsibility of the caller. Debouncing and other throttling
      * strategies are permitted.
-     * @param viewbox New viewbox of the client
+     * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    abstract redraw(viewbox: Box, zoom: number): void;
+    abstract redraw(viewBox: Box, zoom: number): void;
 
     /**
      * Implementation of the deferred layer update.
@@ -92,8 +92,8 @@ abstract class MapLayer {
      * This is similar to `MapLayer.redraw()`, but only runs after all zooming
      * or panning animations ended. Use this hook for expensive layer updates
      * like visibility checks or DOM updates.
-     * @param viewbox New viewbox of the client
+     * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    protected deferredLayerUpdate(viewbox: Box, zoom: number): void { }
+    protected deferredLayerUpdate(viewBox: Box, zoom: number): void { }
 }

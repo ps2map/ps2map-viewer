@@ -2,6 +2,13 @@
 /// <reference path="map-engine/types.ts" />
 
 /**
+ * Details for the "ps2map_minimapjump" custom event.
+  */
+interface MinimapJumpEvent {
+    target: Point,
+}
+
+/**
  * Controller for on-screen minimap.
  */
 class Minimap {
@@ -10,18 +17,15 @@ class Minimap {
      * Its height will be set equal to its width.
      */
     readonly element: HTMLDivElement;
-    /** Minimap viewbox frame element. */
-    private readonly viewboxElement: HTMLDivElement;
+    /** Minimap view box frame element. */
+    private readonly viewBoxElement: HTMLDivElement;
 
-    /** Size of the map used. Controls viewbox interpretation. */
+    /** Size of the map used. Controls view box interpretation. */
     private mapSize: number = 0;
     private baseOutlineSvg: SVGElement | undefined = undefined;
 
     /** CSS size of the minimap. */
     private readonly cssSize: number;
-
-    /** Callbacks invoked when the the user clicks on the minimap. */
-    onJumpTo: ((arg0: Point) => void)[] = []
 
     private minimapHexAlpha: number = 0.5;
     private polygons: Map<number, SVGPolygonElement> = new Map();
@@ -32,9 +36,9 @@ class Minimap {
         this.element.classList.add("ps2map__minimap");
         this.cssSize = this.element.clientWidth;
         this.element.style.height = `${this.cssSize}px`;
-        this.viewboxElement = document.createElement("div");
-        this.viewboxElement.classList.add("ps2map__minimap__viewbox");
-        this.element.appendChild(this.viewboxElement);
+        this.viewBoxElement = document.createElement("div");
+        this.viewBoxElement.classList.add("ps2map__minimap__viewbox");
+        this.element.appendChild(this.viewBoxElement);
 
         // If a continent is provided, set up the minimap
         if (continent != undefined)
@@ -48,7 +52,7 @@ class Minimap {
 
     /**
      * Event callback for clicking on the minimap.
-     * @param evt Position the mouse was clicked at
+     * @param evtDown Position the mouse was clicked at
      */
     private jumpToPosition(evtDown: MouseEvent): void {
         if (this.mapSize == 0)
@@ -64,10 +68,7 @@ class Minimap {
                 x: Math.round(relX * this.mapSize),
                 y: Math.round((1 - relY) * this.mapSize)
             };
-            // Invoke jumpTo callbacks
-            let i = this.onJumpTo.length;
-            while (i-- > 0)
-                this.onJumpTo[i](target);
+            this.element.dispatchEvent(this.buildMinimapJumpEvent(target));
         });
         // Global "mouseup" callback
         const up = () => {
@@ -83,25 +84,25 @@ class Minimap {
         drag(evtDown);
     }
 
-    /** Update the viewbox displayed on the minimap. */
-    setViewbox(viewbox: Box): void {
+    /** Update the viewBox displayed on the minimap. */
+    setViewBox(viewBox: Box): void {
         const mapSize = this.mapSize;
-        // Convert map-coordinate viewbox to percentages
-        const relViewbox: Box = {
-            top: (viewbox.top + mapSize * 0.5) / mapSize,
-            left: (viewbox.left + mapSize * 0.5) / mapSize,
-            bottom: (viewbox.bottom + mapSize * 0.5) / mapSize,
-            right: (viewbox.right + mapSize * 0.5) / mapSize
+        // Convert map-coordinate viewBox to percentages
+        const relViewBox: Box = {
+            top: (viewBox.top + mapSize * 0.5) / mapSize,
+            left: (viewBox.left + mapSize * 0.5) / mapSize,
+            bottom: (viewBox.bottom + mapSize * 0.5) / mapSize,
+            right: (viewBox.right + mapSize * 0.5) / mapSize
         };
-        const relHeight = relViewbox.top - relViewbox.bottom;
-        const relWidth = relViewbox.right - relViewbox.left;
-        const relLeft = relViewbox.left - 0.5;
-        const relTop = relViewbox.bottom - 0.5;
+        const relHeight = relViewBox.top - relViewBox.bottom;
+        const relWidth = relViewBox.right - relViewBox.left;
+        const relLeft = relViewBox.left - 0.5;
+        const relTop = relViewBox.bottom - 0.5;
         // Project the relative percentages onto the minimap
-        this.viewboxElement.style.height = `${this.cssSize * relHeight}px`;
-        this.viewboxElement.style.width = `${this.cssSize * relWidth}px`;
-        this.viewboxElement.style.left = `${this.cssSize * relLeft}px`;
-        this.viewboxElement.style.bottom = `${this.cssSize * relTop}px`;
+        this.viewBoxElement.style.height = `${this.cssSize * relHeight}px`;
+        this.viewBoxElement.style.width = `${this.cssSize * relWidth}px`;
+        this.viewBoxElement.style.left = `${this.cssSize * relLeft}px`;
+        this.viewBoxElement.style.bottom = `${this.cssSize * relTop}px`;
     }
 
     setBaseOwnership(baseId: number, factionId: number): void {
@@ -144,4 +145,13 @@ class Minimap {
             });
     }
 
+    private buildMinimapJumpEvent(target: Point): CustomEvent<MinimapJumpEvent> {
+        return new CustomEvent("ps2map_minimapjump", {
+            detail: {
+                target: target
+            },
+            bubbles: true,
+            cancelable: true,
+        });
+    }
 }

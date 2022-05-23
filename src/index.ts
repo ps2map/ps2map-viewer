@@ -8,10 +8,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroMap = new HeroMap(document.getElementById("hero-map") as HTMLDivElement);
     const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
 
-    heroMap.onBaseOwnershipChanged.push(minimap.setBaseOwnership.bind(minimap));
-    heroMap.onContinentChanged.push(minimap.setContinent.bind(minimap));
-    heroMap.onViewboxChanged.push(minimap.setViewbox.bind(minimap));
-    minimap.onJumpTo.push(heroMap.jumpTo.bind(heroMap));
+    document.addEventListener("ps2map_baseownershipchanged", (event) => {
+        const evt = (event as CustomEvent<BaseOwnershipChangedEvent>).detail;
+        minimap.setBaseOwnership(evt.baseId, evt.factionId);
+    }, { passive: true });
+    document.addEventListener("ps2map_continentchanged", (event) => {
+        const evt = (event as CustomEvent<ContinentChangeEvent>).detail;
+        minimap.setContinent(evt.continent);
+    }, { passive: true });
+    document.addEventListener("ps2map_viewboxchanged", (event) => {
+        const evt = (event as CustomEvent<ViewBoxChangedEvent>).detail;
+        minimap.setViewBox(evt.viewBox);
+    }, { passive: true });
+    document.addEventListener("ps2map_minimapjump", (event) => {
+        const evt = (event as CustomEvent<MinimapJumpEvent>).detail;
+        heroMap.jumpTo(evt.target);
+    }, { passive: true });
 
     const dropdown = document.getElementById("continent-selector") as HTMLSelectElement;
     dropdown.addEventListener("change", () => {

@@ -83,26 +83,26 @@ abstract class TileLayer extends MapLayer {
     protected abstract generateTilePath(pos: GridPos, lod: number): string;
 
     /**
-     * Return whether the given tile overlaps with the viewbox.
-     * @param tile Map tile to check for viewbox intersection
-     * @param viewbox Current client viewbox
+     * Return whether the given tile overlaps with the view box.
+     * @param tile Map tile to check for view box intersection
+     * @param viewBox Current client view box
      * @returns true if the tile is in view, otherwise false
      */
-    protected tileIsVisible(tile: MapTile, viewbox: Box): boolean {
-        return Utils.rectanglesIntersect(tile.box, viewbox);
+    protected tileIsVisible(tile: MapTile, viewBox: Box): boolean {
+        return Utils.rectanglesIntersect(tile.box, viewBox);
     }
 
     /**
      * Update the CSS visibility of all map tiles.
-     * @param viewbox Current viewbox to apply
+     * @param viewBox Current view box to apply
      */
-    protected updateTileVisibility(viewbox: Box): void {
+    protected updateTileVisibility(viewBox: Box): void {
         // Process all tiles to determine which ones are active
         const activeTiles: HTMLElement[] = [];
         let i = this.tiles.length;
         while (i-- > 0) {
             const tile = this.tiles[i];
-            if (this.tileIsVisible(tile, viewbox))
+            if (this.tileIsVisible(tile, viewBox))
                 activeTiles.push(tile.element);
         }
         // Load active tiles
@@ -115,18 +115,18 @@ abstract class TileLayer extends MapLayer {
 
     }
 
-    protected deferredLayerUpdate(viewbox: Box, zoom: number): void {
-        this.updateTileVisibility(viewbox);
+    protected deferredLayerUpdate(viewBox: Box, zoom: number): void {
+        this.updateTileVisibility(viewBox);
     }
 
-    redraw(viewbox: Box, zoom: number): void {
-        const targetX = (viewbox.right + viewbox.left) * 0.5;
-        const targetY = (viewbox.top + viewbox.bottom) * 0.5;
+    redraw(viewBox: Box, zoom: number): void {
+        const targetX = (viewBox.right + viewBox.left) * 0.5;
+        const targetY = (viewBox.top + viewBox.bottom) * 0.5;
         // Initial offset to move the centre of the SVG to its CSS origin
         const halfMapSize = this.mapSize * 0.5;
         let offsetX = -halfMapSize;
         let offsetY = -halfMapSize;
-        // Another offset to shift the viewbox target to the origin
+        // Another offset to shift the view box target to the origin
         offsetX += (halfMapSize - targetX) * zoom;
         offsetY -= (halfMapSize - targetY) * zoom; // -1 to fix Y axis origin
         // Apply transform

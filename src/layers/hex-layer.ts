@@ -1,13 +1,20 @@
 /// <reference path="../map-engine/static-layer.ts" />
 
 /**
- * Base outlines (aka. hexes) layer subclass.
- * 
- * This is a static layer used to interact with base hexes.
+ * Details for the "ps2map_basehover" custom event.
  */
-class HexLayer extends StaticLayer {
-    /** A list of callbacks to invoke when a base polygon is hovered. */
-    onBaseHover: ((arg0: number, arg1: SVGPolygonElement) => void)[] = [];
+interface BaseHoverEvent {
+    baseId: number;
+    element: SVGPolygonElement;
+}
+
+/**
+ * A static layer rendering base polygons for a given continent.
+ * 
+ * This will dispatch a "ps2map_basehover" event when the user mouse-overs a
+ * base polygon.
+ */
+class BasePolygonsLayer extends StaticLayer {
 
     constructor(id: string, mapSize: number) {
         super(id, mapSize);
@@ -52,12 +59,9 @@ class HexLayer extends StaticLayer {
                 polygon.addEventListener("touchcancel", removeHoverFx, {
                     passive: true
                 });
-                // Dispatch polygon hover callbacks
-                let i = this.onBaseHover.length;
-                while (i-- > 0)
-                    this.onBaseHover[i](parseInt(polygon.id), polygon);
-                // Apply hover
                 polygon.style.stroke = "#ffffff";
+                this.element.dispatchEvent(
+                    this.buildBaseHoverEvent(parseInt(polygon.id), polygon));
             };
             polygon.addEventListener("mouseenter", addHoverFx, {
                 passive: true
@@ -68,12 +72,23 @@ class HexLayer extends StaticLayer {
         });
     }
 
-    protected deferredLayerUpdate(viewbox: Box, zoom: number): void {
+    protected deferredLayerUpdate(viewBox: Box, zoom: number): void {
         const svg = this.element.firstElementChild as SVGElement | null;
         if (svg != null) {
             const strokeWith = 10 / 1.5 ** zoom;
             svg.style.setProperty(
                 "--ps2map__base-hexes__stroke-width", `${strokeWith}px`);
         }
+    }
+
+    private buildBaseHoverEvent(baseId: number, element: SVGPolygonElement): CustomEvent<BaseHoverEvent> {
+        return new CustomEvent("ps2map_basehover", {
+            detail: {
+                baseId: baseId,
+                element: element
+            },
+            bubbles: true,
+            cancelable: true,
+        });
     }
 }

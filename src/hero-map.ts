@@ -3,6 +3,21 @@
 /// <reference path="./layers/hex-layer.ts" />
 
 /**
+ * Details for the "ps2map_continentchange" custom event.
+ */
+interface ContinentChangeEvent {
+    continent: Api.Continent;
+}
+
+/**
+ * Details for the "ps2map_baseownershipchanged" custom event.
+ */
+interface BaseOwnershipChangedEvent {
+    baseId: number;
+    factionId: number;
+}
+
+/**
  * Custom map controller for primary PlanetSide 2 continent map.
  * 
  * This also includes a mini-map because reasons.
@@ -20,23 +35,11 @@ class HeroMap {
     /** Polling timer for base ownership updates via REST API. */
     private baseUpdateIntervalId: number | undefined = undefined;
 
-    /** Callbacks to invoke when the continent is changed. */
-    onContinentChanged: ((continent: Api.Continent) => void)[] = [];
-    /** Callbacks to invoke when a base changes ownership. */
-    onBaseOwnershipChanged: ((baseId: number, factionId: number) => void)[] = [];
-    /** Callbacks to invoke when the viewbox changes. */
-    onViewboxChanged: ((viewbox: Box) => void)[] = [];
-
     constructor(
         viewport: HTMLDivElement
     ) {
         this.viewport = viewport;
         this.controller = new MapRenderer(this.viewport, 0);
-        this.controller.onViewboxChanged.push((viewbox) => {
-            let i = this.onViewboxChanged.length;
-            while (i-- > 0)
-                this.onViewboxChanged[i](viewbox);
-        });
     }
 
     setBaseOwnership(baseId: number, factionId: number): void {
@@ -46,12 +49,10 @@ class HeroMap {
         // Forward base ownership change to all map layers
         this.controller?.forEachLayer((layer) => {
             if (layer.id == "hexes")
-                (layer as HexLayer).setBaseOwnership(baseId, factionId);
+                (layer as BasePolygonsLayer).setBaseOwnership(baseId, factionId);
         });
-        // Run external base ownership change callbacks
-        let i = this.onBaseOwnershipChanged.length;
-        while (i-- > 0)
-            this.onBaseOwnershipChanged[i](baseId, factionId);
+        this.viewport.dispatchEvent(
+            this.buildBaseOwnershipChangedEvent(baseId, factionId));
     }
 
     setContinent(continent: Api.Continent): void {
@@ -71,7 +72,7 @@ class HeroMap {
 
         // Create base outline layer
         // TODO: Move the layer loading logic to the layer itself
-        const hexes = new HexLayer("hexes", continent.map_size);
+        const hexes = new BasePolygonsLayer("hexes", continent.map_size);
         Api.getContinentOutlinesSvg(continent)
             .then((svg) => {
                 svg.classList.add("ps2map__base-hexes__svg");
@@ -89,30 +90,28 @@ class HeroMap {
             });
         this.controller.addLayer(names);
 
-        hexes.onBaseHover.push(
-            names.onBaseHover.bind(names));
+        hexes.element.addEventListener("ps2map_basehover", (event) => {
+            const evt = event as CustomEvent<BaseHoverEvent>;
+            names.onBaseHover(evt.detail.baseId, evt.detail.element);
+        });
 
         // TODO: Move base info panel to a separate component
         let bases: Api.Base[] = [];
         Api.getBasesFromContinent(continent.id).then((data) => bases = data);
         const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
         const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
-        hexes.onBaseHover.push((baseId: number) => {
+        hexes.element.addEventListener("ps2map_basehover", (event) => {
+            const evt = event as CustomEvent<BaseHoverEvent>;
             let i = bases.length;
             while (i-- > 0) {
                 const base = bases[i];
-                if (base.id == baseId) {
+                if (base.id == evt.detail.baseId) {
                     regionName.innerText = base.name;
                     regionType.innerText = base.type_name;
                     return;
                 }
             }
         });
-
-        // Run external continent change callbacks
-        let i = this.onContinentChanged.length;
-        while (i-- > 0)
-            this.onContinentChanged[i](continent);
 
         // Start polling for base ownership updates
         this.baseOwnershipMap.clear();
@@ -125,6 +124,9 @@ class HeroMap {
 
         // Reset camera to the center of the map
         this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
+
+        this.viewport.dispatchEvent(
+            this.buildContinentChangedEvent(continent));
     }
 
     updateBaseOwnership(): void {
@@ -145,4 +147,24 @@ class HeroMap {
         this.controller?.jumpTo(point);
     }
 
+    private buildBaseOwnershipChangedEvent(baseId: number, factionId: number): CustomEvent<BaseOwnershipChangedEvent> {
+        return new CustomEvent("ps2map_baseownershipchanged", {
+            detail: {
+                baseId: baseId,
+                factionId: factionId
+            },
+            bubbles: true,
+            cancelable: true,
+        });
+    }
+
+    private buildContinentChangedEvent(continent: Api.Continent): CustomEvent<ContinentChangeEvent> {
+        return new CustomEvent("ps2map_continentchanged", {
+            detail: {
+                continent: continent
+            },
+            bubbles: true,
+            cancelable: true,
+        });
+    }
 }

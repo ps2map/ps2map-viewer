@@ -98,7 +98,7 @@ class BaseNamesLayer extends StaticLayer {
         feat.element.innerText = feat.text;
     }
 
-    protected deferredLayerUpdate(viewbox: Box, zoom: number) {
+    protected deferredLayerUpdate(viewBox: Box, zoom: number) {
         const unzoom = 1 / zoom;
         let i = this.features.length;
         while (i-- > 0) {
