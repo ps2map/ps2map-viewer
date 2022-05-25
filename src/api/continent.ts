@@ -17,6 +17,15 @@ namespace Api {
         readonly map_size: number;
     }
 
+    export interface LatticeLink {
+        readonly base_a_id: number;
+        readonly base_b_id: number;
+        readonly map_pos_a_x: number;
+        readonly map_pos_a_y: number;
+        readonly map_pos_b_x: number;
+        readonly map_pos_b_y: number;
+    }
+
     export async function getContinentList(): Promise<Continent[]> {
         const response = await fetch(getContinentListUrl())
         // Handle HTTP errors
@@ -39,6 +48,14 @@ namespace Api {
         if (!(svg instanceof SVGElement))
             throw "Unable to load contents from map hex SVG";
         return svg;
+    }
+
+    export async function getLatticeForContinent(continent: Continent): Promise<LatticeLink[]> {
+        const response = await fetch(getLatticePath(continent.id));
+        // Handle HTTP errors
+        if (!response.ok)
+            throw new Error(response.statusText);
+        return await response.json();
     }
 
 }

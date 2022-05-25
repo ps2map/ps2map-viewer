@@ -108,3 +108,8 @@
     background-size: 100%;
     position: absolute;
 }
+
+.ps2map__lattice>svg>line {
+    stroke: #000000;
+    stroke-width: 12px;
+}

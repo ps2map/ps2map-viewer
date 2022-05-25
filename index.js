@@ -448,6 +448,10 @@ var Api;
         return Api.restEndpoint + "base/status?continent_id=" + continent_id + "&server_id=" + server_id;
     }
     Api.getBaseOwnershipUrl = getBaseOwnershipUrl;
+    function getLatticePath(continentId) {
+        return Api.restEndpoint + "lattice?continent_id=" + continentId;
+    }
+    Api.getLatticePath = getLatticePath;
 })(Api || (Api = {}));
 var Api;
 (function (Api) {
@@ -492,6 +496,23 @@ var Api;
         });
     }
     Api.getContinentOutlinesSvg = getContinentOutlinesSvg;
+    function getLatticeForContinent(continent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getLatticePath(continent.id))];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok)
+                            throw new Error(response.statusText);
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    }
+    Api.getLatticeForContinent = getLatticeForContinent;
 })(Api || (Api = {}));
 var BasePolygonsLayer = (function (_super) {
     __extends(BasePolygonsLayer, _super);
@@ -570,6 +591,7 @@ var HeroMap = (function () {
         this.controller = new MapRenderer(this.viewport, 0);
     }
     HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
+        var _this = this;
         var _a;
         if (this.baseOwnershipMap.get(baseId) == factionId)
             return;
@@ -579,6 +601,8 @@ var HeroMap = (function () {
                 layer.setBaseOwnership(baseId, factionId);
             if (layer.id == "names")
                 layer.setBaseOwnership(baseId, factionId);
+            if (layer.id == "lattice")
+                layer.updateBaseOwnership(baseId, _this.baseOwnershipMap);
         });
         this.viewport.dispatchEvent(this.buildBaseOwnershipChangedEvent(baseId, factionId));
     };
@@ -602,6 +626,9 @@ var HeroMap = (function () {
             hexes.applyPolygonHoverFix(svg);
         });
         this.controller.addLayer(hexes);
+        var lattice = new LatticeLayer("lattice", continent.map_size);
+        lattice.setContinent(continent);
+        this.controller.addLayer(lattice);
         var names = new BaseNamesLayer("names", continent.map_size);
         Api.getBasesFromContinent(continent.id)
             .then(function (bases) {
@@ -817,6 +844,74 @@ document.addEventListener("DOMContentLoaded", function () {
         heroMap.setContinent(JSON.parse(dropdown.value));
     });
 });
+var LatticeLayer = (function (_super) {
+    __extends(LatticeLayer, _super);
+    function LatticeLayer(id, mapSize) {
+        var _this = _super.call(this, id, mapSize) || this;
+        _this.latticeLinkCache = [];
+        _this.element.classList.add("ps2map__lattice");
+        return _this;
+    }
+    LatticeLayer.prototype.updateBaseOwnership = function (baseId, baseOwnershipMap) {
+        var colours = {
+            0: "rgba(0, 0, 0, 1.0)",
+            1: "rgba(120, 37, 143, 1.0)",
+            2: "rgba(41, 83, 164, 1.0)",
+            3: "rgba(186, 25, 25, 1.0)",
+            4: "rgba(50, 50, 50, 1.0)"
+        };
+        var i = this.latticeLinkCache.length;
+        while (i-- > 0) {
+            var link = this.latticeLinkCache[i];
+            if (link.base_a_id == baseId || link.base_b_id == baseId) {
+                var id = "#lattice-link-" + link.base_a_id + "-" + link.base_b_id;
+                var element = this.element.querySelector(id);
+                if (!element)
+                    continue;
+                var ownerA = baseOwnershipMap.get(link.base_a_id);
+                var ownerB = baseOwnershipMap.get(link.base_b_id);
+                if (ownerA == undefined || ownerB == undefined)
+                    continue;
+                if (ownerA == ownerB)
+                    element.style.stroke = colours[ownerA];
+                else
+                    element.style.stroke = "orange";
+            }
+        }
+    };
+    LatticeLayer.prototype.setContinent = function (continent) {
+        var _this = this;
+        console.log("LatticeLayer.setContinent", continent);
+        Api.getLatticeForContinent(continent)
+            .then(function (links) {
+            _this.latticeLinkCache = [];
+            var i = links.length;
+            while (i-- > 0)
+                _this.latticeLinkCache.push(links[i]);
+            _this.createLatticeSvg();
+        });
+    };
+    LatticeLayer.prototype.createLatticeSvg = function () {
+        var _this = this;
+        this.element.innerHTML = "";
+        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 " + this.mapSize + " " + this.mapSize);
+        this.latticeLinkCache.forEach(function (link) {
+            svg.appendChild(_this.createLatticeLink(link));
+        });
+        this.element.appendChild(svg);
+    };
+    LatticeLayer.prototype.createLatticeLink = function (link) {
+        var path = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        path.setAttribute("id", "lattice-link-" + link.base_a_id + "-" + link.base_b_id);
+        path.setAttribute("x1", (link.map_pos_a_x + this.mapSize * 0.5).toFixed());
+        path.setAttribute("y1", (-link.map_pos_a_y + this.mapSize * 0.5).toFixed());
+        path.setAttribute("x2", (link.map_pos_b_x + this.mapSize * 0.5).toFixed());
+        path.setAttribute("y2", (-link.map_pos_b_y + this.mapSize * 0.5).toFixed());
+        return path;
+    };
+    return LatticeLayer;
+}(StaticLayer));
 var BaseNameFeature = (function () {
     function BaseNameFeature(pos, id, text, element, minZoom) {
         if (minZoom === void 0) { minZoom = 0; }

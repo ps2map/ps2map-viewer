@@ -39,4 +39,8 @@ namespace Api {
         return `${restEndpoint}base/status?continent_id=${continent_id}&server_id=${server_id}`;
     }
 
+    export function getLatticePath(continentId: number): string {
+        return `${restEndpoint}lattice?continent_id=${continentId}`;
+    }
+
 }

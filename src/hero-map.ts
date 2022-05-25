@@ -52,6 +52,9 @@ class HeroMap {
                 (layer as BasePolygonsLayer).setBaseOwnership(baseId, factionId);
             if (layer.id == "names")
                 (layer as BaseNamesLayer).setBaseOwnership(baseId, factionId);
+            if (layer.id == "lattice")
+                (layer as LatticeLayer).updateBaseOwnership(
+                    baseId, this.baseOwnershipMap);
         });
         this.viewport.dispatchEvent(
             this.buildBaseOwnershipChangedEvent(baseId, factionId));
@@ -82,6 +85,11 @@ class HeroMap {
                 hexes.applyPolygonHoverFix(svg);
             })
         this.controller.addLayer(hexes);
+
+        // Create lattice layer
+        const lattice = new LatticeLayer("lattice", continent.map_size);
+        lattice.setContinent(continent);
+        this.controller.addLayer(lattice);
 
         // Create base name layer
         const names = new BaseNamesLayer("names", continent.map_size);
