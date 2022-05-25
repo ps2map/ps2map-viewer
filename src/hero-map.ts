@@ -50,6 +50,8 @@ class HeroMap {
         this.controller?.forEachLayer((layer) => {
             if (layer.id == "hexes")
                 (layer as BasePolygonsLayer).setBaseOwnership(baseId, factionId);
+            if (layer.id == "names")
+                (layer as BaseNamesLayer).setBaseOwnership(baseId, factionId);
         });
         this.viewport.dispatchEvent(
             this.buildBaseOwnershipChangedEvent(baseId, factionId));

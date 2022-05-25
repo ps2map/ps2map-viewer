@@ -44,8 +44,8 @@
        performance hit is not so bad, but we'll need to keep an eye on this as
        more layers get implemented and start loading the renderer. */
     text-shadow:
-        var(--ps2map__base-color) 0.1em 0.1em 0.2em,
-        var(--ps2map__base-color) -0.1em -0.1em 0.2em;
+        #333333 0.1em 0.1em 0.2em,
+        #333333 -0.1em -0.1em 0.2em;
 }
 
 .ps2map__base-names__icon::before {

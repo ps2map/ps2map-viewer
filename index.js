@@ -577,6 +577,8 @@ var HeroMap = (function () {
         (_a = this.controller) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
             if (layer.id == "hexes")
                 layer.setBaseOwnership(baseId, factionId);
+            if (layer.id == "names")
+                layer.setBaseOwnership(baseId, factionId);
         });
         this.viewport.dispatchEvent(this.buildBaseOwnershipChangedEvent(baseId, factionId));
     };
@@ -890,6 +892,21 @@ var BaseNamesLayer = (function (_super) {
         element.addEventListener("mouseleave", leave);
         feat.forceVisible = true;
         feat.element.innerText = feat.text;
+    };
+    BaseNamesLayer.prototype.setBaseOwnership = function (baseId, factionId) {
+        var colours = {
+            0: "rgba(0, 0, 0, 1.0)",
+            1: "rgba(120, 37, 143, 1.0)",
+            2: "rgba(41, 83, 164, 1.0)",
+            3: "rgba(186, 25, 25, 1.0)",
+            4: "rgba(50, 50, 50, 1.0)"
+        };
+        var i = this.features.length;
+        while (i-- > 0) {
+            var feat = this.features[i];
+            if (feat.id == baseId)
+                feat.element.style.setProperty("--ps2map__base-color", colours[factionId]);
+        }
     };
     BaseNamesLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
         var unzoom = 1 / zoom;
