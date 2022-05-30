@@ -597,6 +597,7 @@ var HeroMap = (function () {
         this.baseUpdateIntervalId = undefined;
         this.viewport = viewport;
         this.controller = new MapRenderer(this.viewport, 0);
+        setupToolbox(this.controller);
     }
     HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
         var _this = this;
@@ -820,8 +821,61 @@ var Minimap = (function () {
     };
     return Minimap;
 }());
+var Tool = (function () {
+    function Tool(viewport, renderer) {
+        this.map = renderer;
+        this.viewport = viewport;
+    }
+    Tool.prototype.activate = function () {
+        dispatchEvent(new CustomEvent("tool-activated", {
+            detail: {
+                tool: this
+            }
+        }));
+    };
+    Tool.prototype.deactivate = function () {
+        dispatchEvent(new CustomEvent("tool-deactivated", {
+            detail: {
+                tool: this
+            }
+        }));
+    };
+    Tool.prototype.getDisplayName = function () {
+        return "Cursor";
+    };
+    return Tool;
+}());
+var currentTool = undefined;
+var heroMap = undefined;
+function setupToolbox(map) {
+    heroMap = map;
+}
+function setTool(tool) {
+    if (tool === void 0) { tool = undefined; }
+    currentTool === null || currentTool === void 0 ? void 0 : currentTool.deactivate();
+    if (tool == undefined)
+        tool = Tool;
+    var newTool = new tool(document.getElementById("hero-map"), heroMap);
+    newTool.activate();
+    currentTool = newTool;
+    var tool_name_field = document.getElementById("toolbar_tool");
+    if (tool_name_field)
+        tool_name_field.innerText = newTool.getDisplayName();
+}
+function resetTool() {
+    setTool();
+}
+document.addEventListener("DOMContentLoaded", function () {
+    resetTool();
+});
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
+    var toolbar_cursor = document.getElementById("toolbar-cursor");
+    toolbar_cursor.addEventListener("click", function () { resetTool(); });
+    document.addEventListener("keydown", function (event) {
+        if (event.code === "Escape")
+            resetTool();
+    });
     var minimap = new Minimap(document.getElementById("minimap"));
     document.addEventListener("ps2map_baseownershipchanged", function (event) {
         var evt = event.detail;

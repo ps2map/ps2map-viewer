@@ -1,11 +1,20 @@
 /// <reference path="./api/index.ts" />
 /// <reference path="./hero-map.ts" />
 /// <reference path="./minimap.ts" />
+/// <reference path="./tools/index.ts" />
 
 /** Initialisation hook for components that need to be run on DOM load. */
 document.addEventListener("DOMContentLoaded", () => {
 
     const heroMap = new HeroMap(document.getElementById("hero-map") as HTMLDivElement);
+
+    // Set up toolbar
+    const toolbar_cursor = document.getElementById("toolbar-cursor") as HTMLInputElement;
+    toolbar_cursor.addEventListener("click", () => { resetTool(); });
+    document.addEventListener("keydown", (event) => {
+        if (event.code === "Escape") resetTool();
+    });
+
     const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
 
     document.addEventListener("ps2map_baseownershipchanged", (event) => {

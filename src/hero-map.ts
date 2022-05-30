@@ -40,6 +40,8 @@ class HeroMap {
     ) {
         this.viewport = viewport;
         this.controller = new MapRenderer(this.viewport, 0);
+        // Set up toolbox
+        setupToolbox(this.controller);
     }
 
     setBaseOwnership(baseId: number, factionId: number): void {
