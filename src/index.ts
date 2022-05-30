@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Set up toolbar
     const toolbar_cursor = document.getElementById("toolbar-cursor") as HTMLInputElement;
+    const toolbar_picker = document.getElementById("toolbar-picker") as HTMLInputElement;
     toolbar_cursor.addEventListener("click", () => { resetTool(); });
+    toolbar_picker.addEventListener("click", () => { setTool(Crosshair); });
     document.addEventListener("keydown", (event) => {
         if (event.code === "Escape") resetTool();
     });

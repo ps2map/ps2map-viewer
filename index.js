@@ -235,6 +235,12 @@ var MapRenderer = (function () {
             _this.viewport.dispatchEvent(_this.buildViewBoxChangedEvent(_this.camera.getViewBox()));
         }, 0.01);
     }
+    MapRenderer.prototype.getCamera = function () {
+        return this.camera;
+    };
+    MapRenderer.prototype.getMapSize = function () {
+        return this.mapSize;
+    };
     MapRenderer.prototype.addLayer = function (layer) {
         if (layer.mapSize != this.mapSize)
             throw "Map layer size must match the map renderer's.";
@@ -845,6 +851,42 @@ var Tool = (function () {
     };
     return Tool;
 }());
+var Crosshair = (function (_super) {
+    __extends(Crosshair, _super);
+    function Crosshair() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.callback = undefined;
+        return _this;
+    }
+    Crosshair.prototype.activate = function () {
+        _super.prototype.activate.call(this);
+        this.viewport.style.cursor = "crosshair";
+        this.callback = this.onClick.bind(this);
+        this.viewport.addEventListener("click", this.callback, { passive: true });
+    };
+    Crosshair.prototype.deactivate = function () {
+        _super.prototype.deactivate.call(this);
+        if (this.callback)
+            this.viewport.removeEventListener("click", this.callback);
+        this.viewport.style.removeProperty("cursor");
+    };
+    Crosshair.prototype.getDisplayName = function () {
+        return "Crosshair";
+    };
+    Crosshair.prototype.onClick = function (event) {
+        if (event.button !== 0)
+            return;
+        var xRel = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
+        var yRel = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
+        var viewBox = this.map.getCamera().getViewBox();
+        var viewWidth = viewBox.right - viewBox.left;
+        var viewHeight = viewBox.top - viewBox.bottom;
+        var xMap = -this.map.getMapSize() * 0.5 + viewBox.left + viewWidth * xRel;
+        var yMap = -this.map.getMapSize() * 0.5 + viewBox.bottom + viewHeight * yRel;
+        console.log("Clicked ".concat([xMap.toFixed(2), yMap.toFixed(2)]));
+    };
+    return Crosshair;
+}(Tool));
 var currentTool = undefined;
 var heroMap = undefined;
 function setupToolbox(map) {
@@ -871,7 +913,9 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
     var toolbar_cursor = document.getElementById("toolbar-cursor");
+    var toolbar_picker = document.getElementById("toolbar-picker");
     toolbar_cursor.addEventListener("click", function () { resetTool(); });
+    toolbar_picker.addEventListener("click", function () { setTool(Crosshair); });
     document.addEventListener("keydown", function (event) {
         if (event.code === "Escape")
             resetTool();

@@ -72,6 +72,14 @@ class MapRenderer {
         }, 0.01);
     }
 
+    getCamera(): MapCamera {
+        return this.camera;
+    }
+
+    getMapSize(): number {
+        return this.mapSize;
+    }
+
     /**
      * Add a new map layer to the map.
      *
