@@ -849,6 +849,14 @@ var Tool = (function () {
     Tool.prototype.getDisplayName = function () {
         return "Cursor";
     };
+    Tool.prototype.getMapPosition = function (event) {
+        var clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
+        var clickRelY = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
+        var viewBox = this.map.getCamera().getViewBox();
+        var xMap = -this.map.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
+        var yMap = -this.map.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
+        return [xMap, yMap];
+    };
     return Tool;
 }());
 var Crosshair = (function (_super) {
@@ -876,17 +884,95 @@ var Crosshair = (function (_super) {
     Crosshair.prototype.onClick = function (event) {
         if (event.button !== 0)
             return;
-        var xRel = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
-        var yRel = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
-        var viewBox = this.map.getCamera().getViewBox();
-        var viewWidth = viewBox.right - viewBox.left;
-        var viewHeight = viewBox.top - viewBox.bottom;
-        var xMap = -this.map.getMapSize() * 0.5 + viewBox.left + viewWidth * xRel;
-        var yMap = -this.map.getMapSize() * 0.5 + viewBox.bottom + viewHeight * yRel;
-        console.log("Clicked ".concat([xMap.toFixed(2), yMap.toFixed(2)]));
+        var _a = this.getMapPosition(event), x = _a[0], y = _a[1];
+        console.log("Clicked ".concat([x.toFixed(2), y.toFixed(2)]));
     };
     return Crosshair;
 }(Tool));
+var DevTools;
+(function (DevTools) {
+    var BaseMarkers = (function (_super) {
+        __extends(BaseMarkers, _super);
+        function BaseMarkers(viewport, map) {
+            var _this = _super.call(this, viewport, map) || this;
+            _this.placedBases = [];
+            _this.callback = undefined;
+            var btn = document.getElementById("export-bases");
+            if (btn)
+                btn.addEventListener("click", function () { return _this["export"](); });
+            return _this;
+        }
+        BaseMarkers.prototype.activate = function () {
+            _super.prototype.activate.call(this);
+            this.viewport.style.cursor = "crosshair";
+            this.callback = this.onClick.bind(this);
+            this.viewport.addEventListener("click", this.callback, { passive: true });
+        };
+        BaseMarkers.prototype.deactivate = function () {
+            _super.prototype.deactivate.call(this);
+            if (this.callback)
+                this.viewport.removeEventListener("click", this.callback);
+            this.viewport.style.removeProperty("cursor");
+        };
+        BaseMarkers.prototype.clear = function () {
+            this.placedBases = [];
+        };
+        BaseMarkers.prototype["export"] = function () {
+            var data = JSON.stringify(this.placedBases);
+            var blob = new Blob([data], { type: "application/json" });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = "bases.json";
+            a.click();
+        };
+        BaseMarkers.prototype.onClick = function (event) {
+            if (event.button !== 0)
+                return;
+            var pos = this.getMapPosition(event);
+            var baseIdStr = prompt("Base ID (aka. map_region_id)");
+            if (baseIdStr == null)
+                return;
+            var baseId = parseInt(baseIdStr);
+            if (isNaN(baseId))
+                return;
+            var baseName = prompt("Base name");
+            if (baseName == null)
+                return;
+            var typeIdStr = prompt("Base type ID\n\n" +
+                "1: No Man's Land\n" +
+                "2: Amp Station\n" +
+                "3: Bio Lab\n" +
+                "4: Tech Plant\n" +
+                "5: Large Outpost\n" +
+                "6: Small Outpost\n" +
+                "7: Warpgate\n" +
+                "8: Interlink\n" +
+                "9: Construction Outpost\n" +
+                "11: Containment Site\n" +
+                "12: Trident", "6");
+            if (typeIdStr == null)
+                return;
+            var typeId = parseInt(typeIdStr);
+            if (isNaN(typeId))
+                return;
+            this.placedBases.push({
+                id: baseId,
+                name: baseName,
+                map_pos: [
+                    Math.round(pos[0] * 100) / 100,
+                    Math.round(pos[1] * 100) / 100
+                ],
+                type_id: typeId
+            });
+        };
+        BaseMarkers.prototype.getDisplayName = function () {
+            return "[Dev] Place Base Markers";
+        };
+        return BaseMarkers;
+    }(Tool));
+    DevTools.BaseMarkers = BaseMarkers;
+})(DevTools || (DevTools = {}));
 var currentTool = undefined;
 var heroMap = undefined;
 function setupToolbox(map) {
@@ -914,8 +1000,10 @@ document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
     var toolbar_cursor = document.getElementById("toolbar-cursor");
     var toolbar_picker = document.getElementById("toolbar-picker");
+    var toolbar_base_markers = document.getElementById("toolbar-dev-base-markers");
     toolbar_cursor.addEventListener("click", function () { resetTool(); });
     toolbar_picker.addEventListener("click", function () { setTool(Crosshair); });
+    toolbar_base_markers.addEventListener("click", function () { setTool(DevTools.BaseMarkers); });
     document.addEventListener("keydown", function (event) {
         if (event.code === "Escape")
             resetTool();

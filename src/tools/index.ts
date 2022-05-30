@@ -1,5 +1,6 @@
 /// <reference path="./tool.ts" />
 /// <reference path="./crosshair.ts" />
+/// <reference path="./devtools/dev-base-markers.ts" />
 
 // Global variable storing the currently active tool.
 let currentTool: Tool | undefined = undefined;

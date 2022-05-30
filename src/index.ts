@@ -11,8 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Set up toolbar
     const toolbar_cursor = document.getElementById("toolbar-cursor") as HTMLInputElement;
     const toolbar_picker = document.getElementById("toolbar-picker") as HTMLInputElement;
+    const toolbar_base_markers = document.getElementById("toolbar-dev-base-markers") as HTMLInputElement;
     toolbar_cursor.addEventListener("click", () => { resetTool(); });
     toolbar_picker.addEventListener("click", () => { setTool(Crosshair); });
+    toolbar_base_markers.addEventListener("click", () => { setTool(DevTools.BaseMarkers); });
     document.addEventListener("keydown", (event) => {
         if (event.code === "Escape") resetTool();
     });
