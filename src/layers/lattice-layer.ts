@@ -43,7 +43,6 @@ class LatticeLayer extends StaticLayer {
     }
 
     setContinent(continent: Api.Continent): void {
-        console.log("LatticeLayer.setContinent", continent);
         Api.getLatticeForContinent(continent)
             .then((links) => {
                 this.latticeLinkCache = [];

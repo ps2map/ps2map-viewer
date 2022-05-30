@@ -881,7 +881,6 @@ var LatticeLayer = (function (_super) {
     };
     LatticeLayer.prototype.setContinent = function (continent) {
         var _this = this;
-        console.log("LatticeLayer.setContinent", continent);
         Api.getLatticeForContinent(continent)
             .then(function (links) {
             _this.latticeLinkCache = [];
