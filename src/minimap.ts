@@ -140,8 +140,11 @@ class Minimap {
                 // Add the polygons to the local cache
                 const polygons = svg.querySelectorAll("polygon");
                 let i = polygons.length;
-                while (i-- > 0)
+                while (i-- > 0) {
                     this.polygons.set(parseInt(polygons[i].id), polygons[i]);
+                    // Update polygon IDs to be unique
+                    polygons[i].id = this.polygonIdFromBaseId(polygons[i].id);
+                }
             });
     }
 
@@ -153,5 +156,9 @@ class Minimap {
             bubbles: true,
             cancelable: true,
         });
+    }
+
+    private polygonIdFromBaseId(baseId: number | string): string {
+        return `minimap-baseId-${baseId}`
     }
 }

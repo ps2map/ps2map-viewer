@@ -135,7 +135,7 @@ var MapLayer = (function () {
         this.element = document.createElement("div");
         this.element.id = id;
         this.element.classList.add("ps2map__layer");
-        this.element.style.height = this.element.style.width = mapSize + "px";
+        this.element.style.height = this.element.style.width = "".concat(mapSize, "px");
         this.element.addEventListener("transitionend", this.runDeferredLayerUpdate.bind(this), { passive: true });
     }
     MapLayer.prototype.setRedrawArgs = function (viewBox, zoom) {
@@ -193,7 +193,7 @@ var StaticLayer = (function (_super) {
         var offsetY = -halfMapSize;
         offsetX += (halfMapSize - targetX) * zoom;
         offsetY -= (halfMapSize - targetY) * zoom;
-        this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
+        this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
     };
     return StaticLayer;
 }(MapLayer));
@@ -223,8 +223,8 @@ var MapRenderer = (function () {
         this.camera = new MapCamera(mapSize, this.viewport.clientHeight, this.viewport.clientWidth);
         this.panOffsetX = this.viewport.clientWidth * 0.5;
         this.panOffsetY = this.viewport.clientHeight * 0.5;
-        this.anchor.style.left = this.panOffsetX + "px";
-        this.anchor.style.top = this.panOffsetY + "px";
+        this.anchor.style.left = "".concat(this.panOffsetX, "px");
+        this.anchor.style.top = "".concat(this.panOffsetY, "px");
         this.viewport.addEventListener("wheel", this.onZoom.bind(this), {
             passive: false
         });
@@ -424,32 +424,32 @@ var Api;
 (function (Api) {
     Api.restEndpoint = "http://127.0.0.1:5000/";
     function getContinentListUrl() {
-        return Api.restEndpoint + "continent";
+        return "".concat(Api.restEndpoint, "continent");
     }
     Api.getContinentListUrl = getContinentListUrl;
     function getBasesFromContinentUrl(id) {
-        return Api.restEndpoint + "base?continent_id=" + id;
+        return "".concat(Api.restEndpoint, "base?continent_id=").concat(id);
     }
     Api.getBasesFromContinentUrl = getBasesFromContinentUrl;
     function getMinimapImagePath(code) {
-        return Api.restEndpoint + "static/minimap/" + code + ".jpg";
+        return "".concat(Api.restEndpoint, "static/minimap/").concat(code, ".jpg");
     }
     Api.getMinimapImagePath = getMinimapImagePath;
     function getTerrainTilePath(code, pos, lod) {
-        var filename = code + "_tile_" + pos[0] + "_" + pos[1] + "_lod" + lod + ".jpeg";
-        return Api.restEndpoint + "static/tile/" + filename;
+        var filename = "".concat(code, "_tile_").concat(pos[0], "_").concat(pos[1], "_lod").concat(lod, ".jpeg");
+        return "".concat(Api.restEndpoint, "static/tile/").concat(filename);
     }
     Api.getTerrainTilePath = getTerrainTilePath;
     function getContinentOutlinesPath(code) {
-        return Api.restEndpoint + "static/hex/" + code + "-minimal.svg";
+        return "".concat(Api.restEndpoint, "static/hex/").concat(code, "-minimal.svg");
     }
     Api.getContinentOutlinesPath = getContinentOutlinesPath;
     function getBaseOwnershipUrl(continent_id, server_id) {
-        return Api.restEndpoint + "base/status?continent_id=" + continent_id + "&server_id=" + server_id;
+        return "".concat(Api.restEndpoint, "base/status?continent_id=").concat(continent_id, "&server_id=").concat(server_id);
     }
     Api.getBaseOwnershipUrl = getBaseOwnershipUrl;
     function getLatticePath(continentId) {
-        return Api.restEndpoint + "lattice?continent_id=" + continentId;
+        return "".concat(Api.restEndpoint, "lattice?continent_id=").concat(continentId);
     }
     Api.getLatticePath = getLatticePath;
 })(Api || (Api = {}));
@@ -525,9 +525,10 @@ var BasePolygonsLayer = (function (_super) {
         var svg = this.element.firstElementChild;
         if (svg == null)
             throw "Unable to find HexLayer SVG element";
-        var polygon = svg.querySelector("polygon[id=\"" + baseId + "\"]");
+        var id = this.baseIdToPolygonId(baseId);
+        var polygon = svg.querySelector("polygon[id=\"".concat(id, "\"]"));
         if (polygon == null)
-            throw "Unable to find base polygon with id " + baseId;
+            throw "Unable to find base polygon with id ".concat(baseId);
         var colours = {
             "0": "rgba(0, 0, 0, 1.0)",
             "1": "rgba(160, 77, 183, 1.0)",
@@ -540,6 +541,7 @@ var BasePolygonsLayer = (function (_super) {
     BasePolygonsLayer.prototype.applyPolygonHoverFix = function (svg) {
         var _this = this;
         svg.querySelectorAll("polygon").forEach(function (polygon) {
+            polygon.id = _this.baseIdToPolygonId(polygon.id);
             var addHoverFx = function () {
                 svg.appendChild(polygon);
                 var removeHoverFx = function () { return polygon.style.removeProperty("stroke"); };
@@ -553,7 +555,7 @@ var BasePolygonsLayer = (function (_super) {
                     passive: true
                 });
                 polygon.style.stroke = "#ffffff";
-                _this.element.dispatchEvent(_this.buildBaseHoverEvent(parseInt(polygon.id), polygon));
+                _this.element.dispatchEvent(_this.buildBaseHoverEvent(_this.polygonIdToBaseId(polygon.id), polygon));
             };
             polygon.addEventListener("mouseenter", addHoverFx, {
                 passive: true
@@ -567,7 +569,7 @@ var BasePolygonsLayer = (function (_super) {
         var svg = this.element.firstElementChild;
         if (svg != null) {
             var strokeWith = 10 / Math.pow(1.5, zoom);
-            svg.style.setProperty("--ps2map__base-hexes__stroke-width", strokeWith + "px");
+            svg.style.setProperty("--ps2map__base-hexes__stroke-width", "".concat(strokeWith, "px"));
         }
     };
     BasePolygonsLayer.prototype.buildBaseHoverEvent = function (baseId, element) {
@@ -579,6 +581,12 @@ var BasePolygonsLayer = (function (_super) {
             bubbles: true,
             cancelable: true
         });
+    };
+    BasePolygonsLayer.prototype.polygonIdToBaseId = function (id) {
+        return parseInt(id.substring(id.lastIndexOf("-") + 1));
+    };
+    BasePolygonsLayer.prototype.baseIdToPolygonId = function (baseId) {
+        return "base-outline-".concat(baseId);
     };
     return BasePolygonsLayer;
 }(StaticLayer));
@@ -714,7 +722,7 @@ var Minimap = (function () {
         this.element = element;
         this.element.classList.add("ps2map__minimap");
         this.cssSize = this.element.clientWidth;
-        this.element.style.height = this.cssSize + "px";
+        this.element.style.height = "".concat(this.cssSize, "px");
         this.viewBoxElement = document.createElement("div");
         this.viewBoxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this.viewBoxElement);
@@ -760,18 +768,18 @@ var Minimap = (function () {
         var relWidth = relViewBox.right - relViewBox.left;
         var relLeft = relViewBox.left - 0.5;
         var relTop = relViewBox.bottom - 0.5;
-        this.viewBoxElement.style.height = this.cssSize * relHeight + "px";
-        this.viewBoxElement.style.width = this.cssSize * relWidth + "px";
-        this.viewBoxElement.style.left = this.cssSize * relLeft + "px";
-        this.viewBoxElement.style.bottom = this.cssSize * relTop + "px";
+        this.viewBoxElement.style.height = "".concat(this.cssSize * relHeight, "px");
+        this.viewBoxElement.style.width = "".concat(this.cssSize * relWidth, "px");
+        this.viewBoxElement.style.left = "".concat(this.cssSize * relLeft, "px");
+        this.viewBoxElement.style.bottom = "".concat(this.cssSize * relTop, "px");
     };
     Minimap.prototype.setBaseOwnership = function (baseId, factionId) {
         var colours = {
-            0: "rgba(0, 0, 0, " + this.minimapHexAlpha + ")",
-            1: "rgba(160, 77, 183, " + this.minimapHexAlpha + ")",
-            2: "rgba(81, 123, 204, " + this.minimapHexAlpha + ")",
-            3: "rgba(226, 25, 25, " + this.minimapHexAlpha + ")",
-            4: "rgba(255, 255, 255, " + this.minimapHexAlpha + ")"
+            0: "rgba(0, 0, 0, ".concat(this.minimapHexAlpha, ")"),
+            1: "rgba(160, 77, 183, ".concat(this.minimapHexAlpha, ")"),
+            2: "rgba(81, 123, 204, ".concat(this.minimapHexAlpha, ")"),
+            3: "rgba(226, 25, 25, ".concat(this.minimapHexAlpha, ")"),
+            4: "rgba(255, 255, 255, ".concat(this.minimapHexAlpha, ")")
         };
         var polygon = this.polygons.get(baseId);
         if (polygon)
@@ -781,7 +789,7 @@ var Minimap = (function () {
         var _this = this;
         this.mapSize = continent.map_size;
         this.element.style.backgroundImage =
-            "url(" + Api.getMinimapImagePath(continent.code) + ")";
+            "url(".concat(Api.getMinimapImagePath(continent.code), ")");
         Api.getContinentOutlinesSvg(continent)
             .then(function (svg) {
             if (_this.baseOutlineSvg != undefined)
@@ -792,8 +800,10 @@ var Minimap = (function () {
             _this.element.appendChild(_this.baseOutlineSvg);
             var polygons = svg.querySelectorAll("polygon");
             var i = polygons.length;
-            while (i-- > 0)
+            while (i-- > 0) {
                 _this.polygons.set(parseInt(polygons[i].id), polygons[i]);
+                polygons[i].id = _this.polygonIdFromBaseId(polygons[i].id);
+            }
         });
     };
     Minimap.prototype.buildMinimapJumpEvent = function (target) {
@@ -804,6 +814,9 @@ var Minimap = (function () {
             bubbles: true,
             cancelable: true
         });
+    };
+    Minimap.prototype.polygonIdFromBaseId = function (baseId) {
+        return "minimap-baseId-".concat(baseId);
     };
     return Minimap;
 }());
@@ -864,7 +877,7 @@ var LatticeLayer = (function (_super) {
         while (i-- > 0) {
             var link = this.latticeLinkCache[i];
             if (link.base_a_id == baseId || link.base_b_id == baseId) {
-                var id = "#lattice-link-" + link.base_a_id + "-" + link.base_b_id;
+                var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
                 var element = this.element.querySelector(id);
                 if (!element)
                     continue;
@@ -894,7 +907,7 @@ var LatticeLayer = (function (_super) {
         var _this = this;
         this.element.innerHTML = "";
         var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("viewBox", "0 0 " + this.mapSize + " " + this.mapSize);
+        svg.setAttribute("viewBox", "0 0 ".concat(this.mapSize, " ").concat(this.mapSize));
         this.latticeLinkCache.forEach(function (link) {
             svg.appendChild(_this.createLatticeLink(link));
         });
@@ -902,7 +915,7 @@ var LatticeLayer = (function (_super) {
     };
     LatticeLayer.prototype.createLatticeLink = function (link) {
         var path = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        path.setAttribute("id", "lattice-link-" + link.base_a_id + "-" + link.base_b_id);
+        path.setAttribute("id", "lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id));
         path.setAttribute("x1", (link.map_pos_a_x + this.mapSize * 0.5).toFixed());
         path.setAttribute("y1", (-link.map_pos_a_y + this.mapSize * 0.5).toFixed());
         path.setAttribute("x2", (link.map_pos_b_x + this.mapSize * 0.5).toFixed());
@@ -949,12 +962,12 @@ var BaseNamesLayer = (function (_super) {
                 baseInfo.type_code == "interlink" ||
                 baseInfo.type_code == "tech-plant" ||
                 baseInfo.type_code == "trident")
-                name_1 += " " + baseInfo.type_name;
-            element.innerText = "" + name_1;
+                name_1 += " ".concat(baseInfo.type_name);
+            element.innerText = "".concat(name_1);
             element.classList.add("ps2map__base-names__icon");
-            element.style.left = this.mapSize * 0.5 + pos.x + "px";
-            element.style.bottom = this.mapSize * 0.5 + pos.y + "px";
-            element.classList.add("ps2map__base-names__icon__" + baseInfo.type_code);
+            element.style.left = "".concat(this.mapSize * 0.5 + pos.x, "px");
+            element.style.bottom = "".concat(this.mapSize * 0.5 + pos.y, "px");
+            element.classList.add("ps2map__base-names__icon__".concat(baseInfo.type_code));
             var minZoom = 0;
             if (baseInfo.type_code == "small-outpost")
                 minZoom = 0.60;
@@ -1007,8 +1020,8 @@ var BaseNamesLayer = (function (_super) {
         var i = this.features.length;
         while (i-- > 0) {
             var feat = this.features[i];
-            feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * " + unzoom + ")) " +
-                ("scale(" + unzoom + ", " + unzoom + ")"));
+            feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * ".concat(unzoom, ")) ") +
+                "scale(".concat(unzoom, ", ").concat(unzoom, ")"));
             if (!feat.forceVisible)
                 if (zoom >= feat.minZoom)
                     feat.element.innerText = feat.text;
@@ -1048,11 +1061,11 @@ var TileLayer = (function (_super) {
                     y: y
                 };
                 var tile = this.createTile(pos, gridSize);
-                tile.element.style.height = tile.element.style.width = (tileSize.toFixed() + "px");
-                tile.element.style.left = pos.x * baseSize + "px";
-                tile.element.style.bottom = pos.y * baseSize + "px";
+                tile.element.style.height = tile.element.style.width = ("".concat(tileSize.toFixed(), "px"));
+                tile.element.style.left = "".concat(pos.x * baseSize, "px");
+                tile.element.style.bottom = "".concat(pos.y * baseSize, "px");
                 var url = this.generateTilePath(pos, this.lod);
-                tile.element.style.backgroundImage = "url(" + url + ")";
+                tile.element.style.backgroundImage = "url(".concat(url, ")");
                 newTiles.push(tile);
             }
         this.tiles = newTiles;
@@ -1087,7 +1100,7 @@ var TileLayer = (function (_super) {
         var offsetY = -halfMapSize;
         offsetX += (halfMapSize - targetX) * zoom;
         offsetY -= (halfMapSize - targetY) * zoom;
-        this.element.style.transform = ("matrix(" + zoom + ", 0.0, 0.0, " + zoom + ", " + offsetX + ", " + offsetY + ")");
+        this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
     };
     return TileLayer;
 }(MapLayer));
@@ -1103,7 +1116,7 @@ var TerrainLayer = (function (_super) {
         if (this.code == code)
             return;
         this.code = code;
-        this.element.style.backgroundImage = ("url(" + Api.getMinimapImagePath(code) + ")");
+        this.element.style.backgroundImage = ("url(".concat(Api.getMinimapImagePath(code), ")"));
         var gridSize = this.mapTilesPerAxis(this.mapSize, this.lod);
         this.defineTiles(gridSize);
     };
