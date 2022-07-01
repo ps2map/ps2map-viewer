@@ -1,5 +1,6 @@
 .ps2map__minimap {
     background-size: 100%;
+    overflow: hidden;
 }
 
 .ps2map__minimap__hexes {
@@ -7,7 +8,7 @@
     width: 100%;
     position: absolute;
     pointer-events: none;
-    z-index: -1;
+    z-index: 1;
 }
 
 .ps2map__minimap__viewbox {
@@ -17,4 +18,5 @@
     border: 1px solid white;
     transition: all 100ms ease-out;
     pointer-events: none;
+    z-index: 2;
 }

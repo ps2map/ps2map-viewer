@@ -33,11 +33,11 @@ body {
 }
 
 #minimap {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 20;
-    overflow: hidden;
+    position: relative;
+    top: var(--sidebar-margin);
+    left: var(--sidebar-margin);
+    width: calc(var(--sidebar-width) - var(--sidebar-margin) * 2);
+    height: calc(var(--sidebar-width) - var(--sidebar-margin) * 2);
 }
 
 .widget {

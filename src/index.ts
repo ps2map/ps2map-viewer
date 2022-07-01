@@ -19,24 +19,24 @@ document.addEventListener("DOMContentLoaded", () => {
     //     if (event.code === "Escape") resetTool();
     // });
 
-    // const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
+    const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
 
-    // document.addEventListener("ps2map_baseownershipchanged", (event) => {
-    //     const evt = (event as CustomEvent<BaseOwnershipChangedEvent>).detail;
-    //     minimap.setBaseOwnership(evt.baseId, evt.factionId);
-    // }, { passive: true });
-    // document.addEventListener("ps2map_continentchanged", (event) => {
-    //     const evt = (event as CustomEvent<ContinentChangeEvent>).detail;
-    //     minimap.setContinent(evt.continent);
-    // }, { passive: true });
-    // document.addEventListener("ps2map_viewboxchanged", (event) => {
-    //     const evt = (event as CustomEvent<ViewBoxChangedEvent>).detail;
-    //     minimap.setViewBox(evt.viewBox);
-    // }, { passive: true });
-    // document.addEventListener("ps2map_minimapjump", (event) => {
-    //     const evt = (event as CustomEvent<MinimapJumpEvent>).detail;
-    //     heroMap.jumpTo(evt.target);
-    // }, { passive: true });
+    document.addEventListener("ps2map_baseownershipchanged", (event) => {
+        const evt = (event as CustomEvent<BaseOwnershipChangedEvent>).detail;
+        minimap.setBaseOwnership(evt.baseId, evt.factionId);
+    }, { passive: true });
+    document.addEventListener("ps2map_continentchanged", (event) => {
+        const evt = (event as CustomEvent<ContinentChangeEvent>).detail;
+        minimap.setContinent(evt.continent);
+    }, { passive: true });
+    document.addEventListener("ps2map_viewboxchanged", (event) => {
+        const evt = (event as CustomEvent<ViewBoxChangedEvent>).detail;
+        minimap.setViewBox(evt.viewBox);
+    }, { passive: true });
+    document.addEventListener("ps2map_minimapjump", (event) => {
+        const evt = (event as CustomEvent<MinimapJumpEvent>).detail;
+        heroMap.jumpTo(evt.target);
+    }, { passive: true });
 
     // const dropdown = document.getElementById("continent-selector") as HTMLSelectElement;
     // dropdown.addEventListener("change", () => {

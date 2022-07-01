@@ -981,6 +981,23 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
+    var minimap = new Minimap(document.getElementById("minimap"));
+    document.addEventListener("ps2map_baseownershipchanged", function (event) {
+        var evt = event.detail;
+        minimap.setBaseOwnership(evt.baseId, evt.factionId);
+    }, { passive: true });
+    document.addEventListener("ps2map_continentchanged", function (event) {
+        var evt = event.detail;
+        minimap.setContinent(evt.continent);
+    }, { passive: true });
+    document.addEventListener("ps2map_viewboxchanged", function (event) {
+        var evt = event.detail;
+        minimap.setViewBox(evt.viewBox);
+    }, { passive: true });
+    document.addEventListener("ps2map_minimapjump", function (event) {
+        var evt = event.detail;
+        heroMap.jumpTo(evt.target);
+    }, { passive: true });
     Api.getContinentList().then(function (continentList) {
         heroMap.setContinent(continentList[0]);
     });
