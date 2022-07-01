@@ -128,13 +128,7 @@ class HeroMap {
         // });
 
         // Start polling for base ownership updates
-        this.baseOwnershipMap.clear();
-        if (this.baseUpdateIntervalId != undefined)
-            clearInterval(this.baseUpdateIntervalId);
-        this.updateBaseOwnership();
-        this.baseUpdateIntervalId = setInterval(() => {
-            this.updateBaseOwnership();
-        }, 5000);
+        this.startMapStatePolling();
 
         // Reset camera to the center of the map
         this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
@@ -149,13 +143,7 @@ class HeroMap {
         this.server = server;
 
         // Restart map state polling loop
-        this.baseOwnershipMap.clear();
-        if (this.baseUpdateIntervalId != undefined)
-            clearInterval(this.baseUpdateIntervalId);
-        this.updateBaseOwnership();
-        this.baseUpdateIntervalId = setInterval(() => {
-            this.updateBaseOwnership();
-        }, 5000);
+        this.startMapStatePolling();
     }
 
     updateBaseOwnership(): void {
@@ -173,6 +161,16 @@ class HeroMap {
 
     jumpTo(point: Point): void {
         this.controller?.jumpTo(point);
+    }
+
+    private startMapStatePolling() {
+        this.baseOwnershipMap.clear();
+        if (this.baseUpdateIntervalId != undefined)
+            clearInterval(this.baseUpdateIntervalId);
+        this.updateBaseOwnership();
+        this.baseUpdateIntervalId = setInterval(() => {
+            this.updateBaseOwnership();
+        }, 5000);
     }
 
     private buildBaseOwnershipChangedEvent(baseId: number, factionId: number): CustomEvent<BaseOwnershipChangedEvent> {

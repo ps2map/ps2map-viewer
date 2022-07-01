@@ -627,7 +627,6 @@ var HeroMap = (function () {
         this.viewport.dispatchEvent(this.buildBaseOwnershipChangedEvent(baseId, factionId));
     };
     HeroMap.prototype.setContinent = function (continent) {
-        var _this = this;
         var _a;
         if (continent.code == ((_a = this.continent) === null || _a === void 0 ? void 0 : _a.code))
             return;
@@ -660,29 +659,16 @@ var HeroMap = (function () {
             var evt = event;
             names.onBaseHover(evt.detail.baseId, evt.detail.element);
         });
-        this.baseOwnershipMap.clear();
-        if (this.baseUpdateIntervalId != undefined)
-            clearInterval(this.baseUpdateIntervalId);
-        this.updateBaseOwnership();
-        this.baseUpdateIntervalId = setInterval(function () {
-            _this.updateBaseOwnership();
-        }, 5000);
+        this.startMapStatePolling();
         this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
         this.viewport.dispatchEvent(this.buildContinentChangedEvent(continent));
     };
     HeroMap.prototype.setServer = function (server) {
-        var _this = this;
         var _a;
         if (server.id == ((_a = this.server) === null || _a === void 0 ? void 0 : _a.id))
             return;
         this.server = server;
-        this.baseOwnershipMap.clear();
-        if (this.baseUpdateIntervalId != undefined)
-            clearInterval(this.baseUpdateIntervalId);
-        this.updateBaseOwnership();
-        this.baseUpdateIntervalId = setInterval(function () {
-            _this.updateBaseOwnership();
-        }, 5000);
+        this.startMapStatePolling();
     };
     HeroMap.prototype.updateBaseOwnership = function () {
         var _this = this;
@@ -700,6 +686,16 @@ var HeroMap = (function () {
     HeroMap.prototype.jumpTo = function (point) {
         var _a;
         (_a = this.controller) === null || _a === void 0 ? void 0 : _a.jumpTo(point);
+    };
+    HeroMap.prototype.startMapStatePolling = function () {
+        var _this = this;
+        this.baseOwnershipMap.clear();
+        if (this.baseUpdateIntervalId != undefined)
+            clearInterval(this.baseUpdateIntervalId);
+        this.updateBaseOwnership();
+        this.baseUpdateIntervalId = setInterval(function () {
+            _this.updateBaseOwnership();
+        }, 5000);
     };
     HeroMap.prototype.buildBaseOwnershipChangedEvent = function (baseId, factionId) {
         return new CustomEvent("ps2map_baseownershipchanged", {
