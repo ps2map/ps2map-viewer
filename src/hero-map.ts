@@ -25,6 +25,8 @@ interface BaseOwnershipChangedEvent {
 class HeroMap {
     /** Currently active continent for the map. */
     private continent: Api.Continent | undefined = undefined;
+    /** Currently active server for live map state. */
+    private server: Api.Server | undefined = undefined;
     /** Map engine instance responsible for hanlding the map display.  */
     private controller: MapRenderer;
     /** Viewport element the map is rendered into. */
@@ -141,12 +143,26 @@ class HeroMap {
             this.buildContinentChangedEvent(continent));
     }
 
+    setServer(server: Api.Server): void {
+        if (server.id == this.server?.id)
+            return;
+        this.server = server;
+
+        // Restart map state polling loop
+        this.baseOwnershipMap.clear();
+        if (this.baseUpdateIntervalId != undefined)
+            clearInterval(this.baseUpdateIntervalId);
+        this.updateBaseOwnership();
+        this.baseUpdateIntervalId = setInterval(() => {
+            this.updateBaseOwnership();
+        }, 5000);
+    }
+
     updateBaseOwnership(): void {
         // TODO: Add safeguard against multiple updates at once in case of long-running requests
-        // TODO: Add dynamic server selection
-        const server_id = 13;
+        const server_id = this.server?.id;
         const continentId = this.continent?.id;
-        if (continentId == undefined)
+        if (server_id == undefined || continentId == undefined)
             return;
         Api.getBaseOwnership(continentId, server_id).then((data) => {
             let i = data.length;

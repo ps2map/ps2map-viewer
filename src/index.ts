@@ -26,6 +26,25 @@ document.addEventListener("DOMContentLoaded", () => {
         heroMap.jumpTo(evt.target);
     }, { passive: true });
 
+    // Load server list
+    const server_picker = document.getElementById("server-picker") as HTMLSelectElement;
+    server_picker.addEventListener("change", () => {
+        const server = JSON.parse(server_picker.value);
+        heroMap.setServer(server);
+    });
+    Api.getServerList().then((servers) => {
+        servers.sort((a, b) => b.name.localeCompare(a.name));
+        let i = servers.length;
+        while (i-- > 0) {
+            const server = servers[i];
+            const option = document.createElement("option");
+            option.value = JSON.stringify(server);
+            option.text = server.name;
+            server_picker.appendChild(option);
+        }
+        heroMap.setServer(JSON.parse(continent_picker.value));
+    })
+
     // Load continent list
     const continent_picker = document.getElementById("continent-picker") as HTMLSelectElement;
     continent_picker.addEventListener("change", () => {

@@ -35,8 +35,8 @@ body {
 #map-switcher {
     position: absolute;
     display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     left: calc(var(--sidebar-width));
     top: 0;
     width: 200px;

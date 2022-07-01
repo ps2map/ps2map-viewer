@@ -433,6 +433,10 @@ var Api;
         return "".concat(Api.restEndpoint, "continent");
     }
     Api.getContinentListUrl = getContinentListUrl;
+    function getServerListUrl() {
+        return "".concat(Api.restEndpoint, "server");
+    }
+    Api.getServerListUrl = getServerListUrl;
     function getBasesFromContinentUrl(id) {
         return "".concat(Api.restEndpoint, "base?continent_id=").concat(id);
     }
@@ -599,6 +603,7 @@ var BasePolygonsLayer = (function (_super) {
 var HeroMap = (function () {
     function HeroMap(viewport) {
         this.continent = undefined;
+        this.server = undefined;
         this.baseOwnershipMap = new Map();
         this.baseUpdateIntervalId = undefined;
         this.viewport = viewport;
@@ -665,12 +670,26 @@ var HeroMap = (function () {
         this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
         this.viewport.dispatchEvent(this.buildContinentChangedEvent(continent));
     };
-    HeroMap.prototype.updateBaseOwnership = function () {
+    HeroMap.prototype.setServer = function (server) {
         var _this = this;
         var _a;
-        var server_id = 13;
-        var continentId = (_a = this.continent) === null || _a === void 0 ? void 0 : _a.id;
-        if (continentId == undefined)
+        if (server.id == ((_a = this.server) === null || _a === void 0 ? void 0 : _a.id))
+            return;
+        this.server = server;
+        this.baseOwnershipMap.clear();
+        if (this.baseUpdateIntervalId != undefined)
+            clearInterval(this.baseUpdateIntervalId);
+        this.updateBaseOwnership();
+        this.baseUpdateIntervalId = setInterval(function () {
+            _this.updateBaseOwnership();
+        }, 5000);
+    };
+    HeroMap.prototype.updateBaseOwnership = function () {
+        var _this = this;
+        var _a, _b;
+        var server_id = (_a = this.server) === null || _a === void 0 ? void 0 : _a.id;
+        var continentId = (_b = this.continent) === null || _b === void 0 ? void 0 : _b.id;
+        if (server_id == undefined || continentId == undefined)
             return;
         Api.getBaseOwnership(continentId, server_id).then(function (data) {
             var i = data.length;
@@ -1028,6 +1047,23 @@ document.addEventListener("DOMContentLoaded", function () {
         var evt = event.detail;
         heroMap.jumpTo(evt.target);
     }, { passive: true });
+    var server_picker = document.getElementById("server-picker");
+    server_picker.addEventListener("change", function () {
+        var server = JSON.parse(server_picker.value);
+        heroMap.setServer(server);
+    });
+    Api.getServerList().then(function (servers) {
+        servers.sort(function (a, b) { return b.name.localeCompare(a.name); });
+        var i = servers.length;
+        while (i-- > 0) {
+            var server = servers[i];
+            var option = document.createElement("option");
+            option.value = JSON.stringify(server);
+            option.text = server.name;
+            server_picker.appendChild(option);
+        }
+        heroMap.setServer(JSON.parse(continent_picker.value));
+    });
     var continent_picker = document.getElementById("continent-picker");
     continent_picker.addEventListener("change", function () {
         var cont = JSON.parse(continent_picker.value);
@@ -1046,6 +1082,26 @@ document.addEventListener("DOMContentLoaded", function () {
         heroMap.setContinent(JSON.parse(continent_picker.value));
     });
 });
+var Api;
+(function (Api) {
+    function getServerList() {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getServerListUrl())];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok)
+                            throw new Error(response.statusText);
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    }
+    Api.getServerList = getServerList;
+})(Api || (Api = {}));
 var LatticeLayer = (function (_super) {
     __extends(LatticeLayer, _super);
     function LatticeLayer(id, mapSize) {

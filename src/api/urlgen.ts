@@ -11,6 +11,10 @@ namespace Api {
         return `${restEndpoint}continent`;
     }
 
+    export function getServerListUrl(): string {
+        return `${restEndpoint}server`;
+    }
+
     export function getBasesFromContinentUrl(id: number): string {
         return `${restEndpoint}base?continent_id=${id}`;
     }
