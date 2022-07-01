@@ -18,8 +18,12 @@ class Crosshair extends Tool {
         this.viewport.style.removeProperty("cursor");
     }
 
-    getDisplayName(): string {
+    static getDisplayName(): string {
         return "Crosshair";
+    }
+
+    static getId(): string {
+        return "crosshair";
     }
 
     private onClick(event: MouseEvent): void {

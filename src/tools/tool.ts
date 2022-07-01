@@ -24,8 +24,12 @@ class Tool {
         }));
     }
 
-    getDisplayName(): string {
+    static getDisplayName(): string {
         return "Cursor";
+    }
+
+    static getId(): string {
+        return "cursor";
     }
 
     protected getMapPosition(event: MouseEvent): [number, number] {

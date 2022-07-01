@@ -95,8 +95,12 @@ namespace DevTools {
             });
         }
 
-        getDisplayName(): string {
+        static getDisplayName(): string {
             return "[Dev] Place Base Markers";
+        }
+
+        static getId(): string {
+            return "base-markers";
         }
     }
 }

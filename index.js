@@ -830,8 +830,11 @@ var Tool = (function () {
             }
         }));
     };
-    Tool.prototype.getDisplayName = function () {
+    Tool.getDisplayName = function () {
         return "Cursor";
+    };
+    Tool.getId = function () {
+        return "cursor";
     };
     Tool.prototype.getMapPosition = function (event) {
         var clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
@@ -862,8 +865,11 @@ var Crosshair = (function (_super) {
             this.viewport.removeEventListener("click", this.callback);
         this.viewport.style.removeProperty("cursor");
     };
-    Crosshair.prototype.getDisplayName = function () {
+    Crosshair.getDisplayName = function () {
         return "Crosshair";
+    };
+    Crosshair.getId = function () {
+        return "crosshair";
     };
     Crosshair.prototype.onClick = function (event) {
         if (event.button !== 0)
@@ -950,8 +956,11 @@ var DevTools;
                 type_id: typeId
             });
         };
-        BaseMarkers.prototype.getDisplayName = function () {
+        BaseMarkers.getDisplayName = function () {
             return "[Dev] Place Base Markers";
+        };
+        BaseMarkers.getId = function () {
+            return "base-markers";
         };
         return BaseMarkers;
     }(Tool));
