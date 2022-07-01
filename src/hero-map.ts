@@ -52,13 +52,17 @@ class HeroMap {
         this.baseOwnershipMap.set(baseId, factionId);
         // Forward base ownership change to all map layers
         this.controller?.forEachLayer((layer) => {
-            if (layer.id == "hexes")
-                (layer as BasePolygonsLayer).setBaseOwnership(baseId, factionId);
-            if (layer.id == "names")
-                (layer as BaseNamesLayer).setBaseOwnership(baseId, factionId);
-            if (layer.id == "lattice")
-                (layer as LatticeLayer).updateBaseOwnership(
-                    baseId, this.baseOwnershipMap);
+            switch (layer.id) {
+                case "hexes":
+                    (layer as BasePolygonsLayer).setBaseOwnership(baseId, factionId);
+                    break;
+                case "names":
+                    (layer as BaseNamesLayer).setBaseOwnership(baseId, factionId);
+                    break;
+                case "lattice":
+                    (layer as LatticeLayer).updateBaseOwnership(baseId, this.baseOwnershipMap);
+                    break;
+            }
         });
         this.viewport.dispatchEvent(
             this.buildBaseOwnershipChangedEvent(baseId, factionId));

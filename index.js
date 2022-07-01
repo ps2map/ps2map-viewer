@@ -617,12 +617,17 @@ var HeroMap = (function () {
             return;
         this.baseOwnershipMap.set(baseId, factionId);
         (_a = this.controller) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
-            if (layer.id == "hexes")
-                layer.setBaseOwnership(baseId, factionId);
-            if (layer.id == "names")
-                layer.setBaseOwnership(baseId, factionId);
-            if (layer.id == "lattice")
-                layer.updateBaseOwnership(baseId, _this.baseOwnershipMap);
+            switch (layer.id) {
+                case "hexes":
+                    layer.setBaseOwnership(baseId, factionId);
+                    break;
+                case "names":
+                    layer.setBaseOwnership(baseId, factionId);
+                    break;
+                case "lattice":
+                    layer.updateBaseOwnership(baseId, _this.baseOwnershipMap);
+                    break;
+            }
         });
         this.viewport.dispatchEvent(this.buildBaseOwnershipChangedEvent(baseId, factionId));
     };
