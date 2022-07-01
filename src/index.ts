@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
             option.text = server.name;
             server_picker.appendChild(option);
         }
-        heroMap.setServer(JSON.parse(continent_picker.value));
+        heroMap.setServer(JSON.parse(server_picker.value));
     })
 
     // Load continent list

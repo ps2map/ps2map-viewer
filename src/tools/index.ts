@@ -1,14 +1,15 @@
 /// <reference path="./tool.ts" />
+/// <reference path="./info.ts" />
 /// <reference path="./crosshair.ts" />
 /// <reference path="./devtools/dev-base-markers.ts" />
 
 // Global variable storing the currently active tool.
 let currentTool: Tool | undefined = undefined;
 
-let heroMap: MapRenderer | undefined = undefined;
-const available_tools = [Tool, Crosshair, DevTools.BaseMarkers];
+let heroMap: HeroMap | undefined = undefined;
+const available_tools = [Tool, BaseInfo, Crosshair, DevTools.BaseMarkers];
 
-function setupToolbox(map: MapRenderer): void {
+function setupToolbox(map: HeroMap): void {
     heroMap = map;
 }
 
@@ -16,7 +17,7 @@ function setTool(tool: typeof Tool | undefined = undefined): void {
     currentTool?.deactivate()
     if (tool == undefined)
         tool = Tool; // Use default
-    const newTool = new tool(document.getElementById("hero-map") as HTMLDivElement, (heroMap as MapRenderer));
+    const newTool = new tool(document.getElementById("hero-map") as HTMLDivElement, (heroMap as HeroMap));
     newTool.activate()
     currentTool = newTool;
     document.querySelectorAll(".toolbar__button").forEach((btn) => {

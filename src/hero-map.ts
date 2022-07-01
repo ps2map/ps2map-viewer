@@ -43,7 +43,7 @@ class HeroMap {
         this.viewport = viewport;
         this.controller = new MapRenderer(this.viewport, 0);
         // Set up toolbox
-        setupToolbox(this.controller);
+        setupToolbox(this);
     }
 
     setBaseOwnership(baseId: number, factionId: number): void {
@@ -66,6 +66,18 @@ class HeroMap {
         });
         this.viewport.dispatchEvent(
             this.buildBaseOwnershipChangedEvent(baseId, factionId));
+    }
+
+    getRenderer(): MapRenderer {
+        return this.controller;
+    }
+
+    getContinent(): Api.Continent | undefined {
+        return this.continent;
+    }
+
+    getServer(): Api.Server | undefined {
+        return this.server;
     }
 
     setContinent(continent: Api.Continent): void {
@@ -112,24 +124,6 @@ class HeroMap {
             const evt = event as CustomEvent<BaseHoverEvent>;
             names.onBaseHover(evt.detail.baseId, evt.detail.element);
         });
-
-        // TODO: Move base info panel to a separate component
-        // let bases: Api.Base[] = [];
-        // Api.getBasesFromContinent(continent.id).then((data) => bases = data);
-        // const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
-        // const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
-        // hexes.element.addEventListener("ps2map_basehover", (event) => {
-        //     const evt = event as CustomEvent<BaseHoverEvent>;
-        //     let i = bases.length;
-        //     while (i-- > 0) {
-        //         const base = bases[i];
-        //         if (base.id == evt.detail.baseId) {
-        //             regionName.innerText = base.name;
-        //             regionType.innerText = base.type_name;
-        //             return;
-        //         }
-        //     }
-        // });
 
         // Start polling for base ownership updates
         this.startMapStatePolling();
