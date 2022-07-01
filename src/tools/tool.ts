@@ -2,10 +2,12 @@
 class Tool {
     readonly map: HeroMap;
     readonly viewport: HTMLDivElement
+    protected tool_panel: HTMLDivElement;
 
     constructor(viewport: HTMLDivElement, map: HeroMap) {
         this.map = map;
         this.viewport = viewport;
+        this.tool_panel = document.getElementById("tool-panel") as HTMLDivElement;
     }
 
     activate(): void {
@@ -22,6 +24,7 @@ class Tool {
                 tool: this,
             }
         }));
+        this.tool_panel.innerHTML = "";
     }
 
     static getDisplayName(): string {

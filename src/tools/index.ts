@@ -1,5 +1,5 @@
 /// <reference path="./tool.ts" />
-/// <reference path="./info.ts" />
+/// <reference path="./base-info.ts" />
 /// <reference path="./crosshair.ts" />
 /// <reference path="./devtools/dev-base-markers.ts" />
 
@@ -15,8 +15,8 @@ function setupToolbox(map: HeroMap): void {
 
 function setTool(tool: typeof Tool | undefined = undefined): void {
     currentTool?.deactivate()
-    if (tool == undefined)
-        tool = Tool; // Use default
+    if (tool == undefined || currentTool instanceof tool)
+        tool = Tool;  // Deselect
     const newTool = new tool(document.getElementById("hero-map") as HTMLDivElement, (heroMap as HeroMap));
     newTool.activate()
     currentTool = newTool;

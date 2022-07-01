@@ -844,6 +844,7 @@ var Tool = (function () {
     function Tool(viewport, map) {
         this.map = map;
         this.viewport = viewport;
+        this.tool_panel = document.getElementById("tool-panel");
     }
     Tool.prototype.activate = function () {
         dispatchEvent(new CustomEvent("tool-activated", {
@@ -858,6 +859,7 @@ var Tool = (function () {
                 tool: this
             }
         }));
+        this.tool_panel.innerHTML = "";
     };
     Tool.getDisplayName = function () {
         return "None";
@@ -897,6 +899,9 @@ var BaseInfo = (function (_super) {
         Api.getBasesFromContinent(continent.id).then(function (bases) {
             _this.bases = new Map(bases.map(function (base) { return [base.id, base]; }));
         });
+        var parent = this.tool_panel;
+        if (parent)
+            parent.style.display = "block";
     };
     BaseInfo.prototype.deactivate = function () {
         _super.prototype.deactivate.call(this);
@@ -904,12 +909,15 @@ var BaseInfo = (function (_super) {
             var hex_layer = this.map.getRenderer().getLayer("hexes");
             hex_layer.element.removeEventListener("ps2map_basehover", this.callback);
         }
+        var parent = this.tool_panel;
+        if (parent)
+            parent.removeAttribute("style");
     };
     BaseInfo.getDisplayName = function () {
-        return "Info";
+        return "Base Info";
     };
     BaseInfo.getId = function () {
-        return "info";
+        return "base-info";
     };
     BaseInfo.prototype.onHover = function (event) {
         if (event.type !== "ps2map_basehover")
@@ -919,7 +927,24 @@ var BaseInfo = (function (_super) {
         var base_info = this.bases.get(base);
         if (base_info == undefined)
             return;
-        console.log("Hovering over ".concat(base_info.name));
+        this.tool_panel.innerHTML = "";
+        var name = document.createElement("span");
+        name.classList.add("ps2map__tool__base-info__name");
+        name.textContent = base_info.name;
+        this.tool_panel.appendChild(name);
+        var type_icon = document.createElement("img");
+        type_icon.classList.add("ps2map__tool__base-info__type-icon");
+        type_icon.src = "img/icons/".concat(base_info.type_code, ".svg");
+        this.tool_panel.appendChild(type_icon);
+        var type = document.createElement("span");
+        type.classList.add("ps2map__tool__base-info__type");
+        type.textContent = base_info.type_name;
+        this.tool_panel.appendChild(type);
+        var resource_icon = document.createElement("img");
+        resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
+        resource_icon.src = "img/icons/".concat(base_info.resource_code, ".svg");
+        resource_icon.alt = base_info.resource_name || "";
+        this.tool_panel.appendChild(resource_icon);
     };
     return BaseInfo;
 }(Tool));
@@ -1052,7 +1077,7 @@ function setupToolbox(map) {
 function setTool(tool) {
     if (tool === void 0) { tool = undefined; }
     currentTool === null || currentTool === void 0 ? void 0 : currentTool.deactivate();
-    if (tool == undefined)
+    if (tool == undefined || currentTool instanceof tool)
         tool = Tool;
     var newTool = new tool(document.getElementById("hero-map"), heroMap);
     newTool.activate();
