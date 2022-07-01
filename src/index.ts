@@ -26,28 +26,22 @@ document.addEventListener("DOMContentLoaded", () => {
         heroMap.jumpTo(evt.target);
     }, { passive: true });
 
-    // const dropdown = document.getElementById("continent-selector") as HTMLSelectElement;
-    // dropdown.addEventListener("change", () => {
-    Api.getContinentList().then(
-        (continentList) => {
-            heroMap.setContinent(continentList[0]);
+    // Load continent list
+    const continent_picker = document.getElementById("continent-picker") as HTMLSelectElement;
+    continent_picker.addEventListener("change", () => {
+        const cont = JSON.parse(continent_picker.value);
+        heroMap.setContinent(cont);
+    });
+    Api.getContinentList().then((continents) => {
+        continents.sort((a, b) => b.name.localeCompare(a.name));
+        let i = continents.length;
+        while (i-- > 0) {
+            const cont = continents[i];
+            const option = document.createElement("option");
+            option.value = JSON.stringify(cont);
+            option.text = cont.name;
+            continent_picker.appendChild(option);
         }
-    )
-    // });
-
-    // TODO: Create loading screen or similar waiting UI
-    // Api.getContinentList()
-    //     .then((continentList) => {
-    //         continentList.sort((a, b) => b.name.localeCompare(a.name))
-    //         let i = continentList.length;
-    //         while (i-- > 0) {
-    //             const cont = continentList[i];
-    //             const option = document.createElement("option");
-    //             option.value = JSON.stringify(cont);
-    //             option.text = cont.name;
-    //             dropdown.appendChild(option);
-    //         }
-    //         // TODO: Load last selected continent rather than the first one
-    //         heroMap.setContinent(JSON.parse(dropdown.value));
-    //     });
+        heroMap.setContinent(JSON.parse(continent_picker.value));
+    });
 });

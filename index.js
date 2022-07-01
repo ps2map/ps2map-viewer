@@ -1028,8 +1028,22 @@ document.addEventListener("DOMContentLoaded", function () {
         var evt = event.detail;
         heroMap.jumpTo(evt.target);
     }, { passive: true });
-    Api.getContinentList().then(function (continentList) {
-        heroMap.setContinent(continentList[0]);
+    var continent_picker = document.getElementById("continent-picker");
+    continent_picker.addEventListener("change", function () {
+        var cont = JSON.parse(continent_picker.value);
+        heroMap.setContinent(cont);
+    });
+    Api.getContinentList().then(function (continents) {
+        continents.sort(function (a, b) { return b.name.localeCompare(a.name); });
+        var i = continents.length;
+        while (i-- > 0) {
+            var cont = continents[i];
+            var option = document.createElement("option");
+            option.value = JSON.stringify(cont);
+            option.text = cont.name;
+            continent_picker.appendChild(option);
+        }
+        heroMap.setContinent(JSON.parse(continent_picker.value));
     });
 });
 var LatticeLayer = (function (_super) {

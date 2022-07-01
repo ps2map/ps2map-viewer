@@ -32,6 +32,36 @@ body {
     height: 100%;
 }
 
+#map-switcher {
+    position: absolute;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    left: calc(var(--sidebar-width));
+    top: 0;
+    width: 200px;
+    padding: 10px 10px 10px 0px;
+    z-index: 1;
+
+    background-color: green;
+}
+
+.map_switcher__label {
+    grid-column: 1;
+}
+
+.map_switcher__dropdown {
+    grid-column: 2;
+}
+
+.map_switcher__row1 {
+    grid-row: 1;
+}
+
+.map_switcher__row2 {
+    grid-row: 2;
+}
+
 .sidebar__widget {
     position: relative;
     top: var(--sidebar-margin);
@@ -49,14 +79,9 @@ body {
 }
 
 #toolbar {
-    height: 100px;
     margin-top: 10px;
 
     background-color: darkgoldenrod;
-}
-
-#toolbar>div {
-    background-color: blue;
 }
 
 .toolbar__button {
