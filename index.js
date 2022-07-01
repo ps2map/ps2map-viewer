@@ -655,22 +655,6 @@ var HeroMap = (function () {
             var evt = event;
             names.onBaseHover(evt.detail.baseId, evt.detail.element);
         });
-        var bases = [];
-        Api.getBasesFromContinent(continent.id).then(function (data) { return bases = data; });
-        var regionName = document.getElementById("widget_base-info_name");
-        var regionType = document.getElementById("widget_base-info_type");
-        hexes.element.addEventListener("ps2map_basehover", function (event) {
-            var evt = event;
-            var i = bases.length;
-            while (i-- > 0) {
-                var base = bases[i];
-                if (base.id == evt.detail.baseId) {
-                    regionName.innerText = base.name;
-                    regionType.innerText = base.type_name;
-                    return;
-                }
-            }
-        });
         this.baseOwnershipMap.clear();
         if (this.baseUpdateIntervalId != undefined)
             clearInterval(this.baseUpdateIntervalId);
@@ -994,53 +978,11 @@ function resetTool() {
     setTool();
 }
 document.addEventListener("DOMContentLoaded", function () {
-    resetTool();
 });
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
-    var toolbar_cursor = document.getElementById("toolbar-cursor");
-    var toolbar_picker = document.getElementById("toolbar-picker");
-    var toolbar_base_markers = document.getElementById("toolbar-dev-base-markers");
-    toolbar_cursor.addEventListener("click", function () { resetTool(); });
-    toolbar_picker.addEventListener("click", function () { setTool(Crosshair); });
-    toolbar_base_markers.addEventListener("click", function () { setTool(DevTools.BaseMarkers); });
-    document.addEventListener("keydown", function (event) {
-        if (event.code === "Escape")
-            resetTool();
-    });
-    var minimap = new Minimap(document.getElementById("minimap"));
-    document.addEventListener("ps2map_baseownershipchanged", function (event) {
-        var evt = event.detail;
-        minimap.setBaseOwnership(evt.baseId, evt.factionId);
-    }, { passive: true });
-    document.addEventListener("ps2map_continentchanged", function (event) {
-        var evt = event.detail;
-        minimap.setContinent(evt.continent);
-    }, { passive: true });
-    document.addEventListener("ps2map_viewboxchanged", function (event) {
-        var evt = event.detail;
-        minimap.setViewBox(evt.viewBox);
-    }, { passive: true });
-    document.addEventListener("ps2map_minimapjump", function (event) {
-        var evt = event.detail;
-        heroMap.jumpTo(evt.target);
-    }, { passive: true });
-    var dropdown = document.getElementById("continent-selector");
-    dropdown.addEventListener("change", function () {
-        heroMap.setContinent(JSON.parse(dropdown.value));
-    });
-    Api.getContinentList()
-        .then(function (continentList) {
-        continentList.sort(function (a, b) { return b.name.localeCompare(a.name); });
-        var i = continentList.length;
-        while (i-- > 0) {
-            var cont = continentList[i];
-            var option = document.createElement("option");
-            option.value = JSON.stringify(cont);
-            option.text = cont.name;
-            dropdown.appendChild(option);
-        }
-        heroMap.setContinent(JSON.parse(dropdown.value));
+    Api.getContinentList().then(function (continentList) {
+        heroMap.setContinent(continentList[0]);
     });
 });
 var LatticeLayer = (function (_super) {

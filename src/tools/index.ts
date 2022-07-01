@@ -29,5 +29,5 @@ function resetTool(): void {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    resetTool();
+    // resetTool();
 });

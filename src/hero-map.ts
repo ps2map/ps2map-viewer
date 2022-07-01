@@ -108,22 +108,22 @@ class HeroMap {
         });
 
         // TODO: Move base info panel to a separate component
-        let bases: Api.Base[] = [];
-        Api.getBasesFromContinent(continent.id).then((data) => bases = data);
-        const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
-        const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
-        hexes.element.addEventListener("ps2map_basehover", (event) => {
-            const evt = event as CustomEvent<BaseHoverEvent>;
-            let i = bases.length;
-            while (i-- > 0) {
-                const base = bases[i];
-                if (base.id == evt.detail.baseId) {
-                    regionName.innerText = base.name;
-                    regionType.innerText = base.type_name;
-                    return;
-                }
-            }
-        });
+        // let bases: Api.Base[] = [];
+        // Api.getBasesFromContinent(continent.id).then((data) => bases = data);
+        // const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
+        // const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
+        // hexes.element.addEventListener("ps2map_basehover", (event) => {
+        //     const evt = event as CustomEvent<BaseHoverEvent>;
+        //     let i = bases.length;
+        //     while (i-- > 0) {
+        //         const base = bases[i];
+        //         if (base.id == evt.detail.baseId) {
+        //             regionName.innerText = base.name;
+        //             regionType.innerText = base.type_name;
+        //             return;
+        //         }
+        //     }
+        // });
 
         // Start polling for base ownership updates
         this.baseOwnershipMap.clear();

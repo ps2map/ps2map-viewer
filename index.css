@@ -6,15 +6,30 @@ html {
 }
 
 body {
+    --sidebar-width: 300px;
+    --sidebar-margin: 10px;
+    /* Fill the entire screen */
     margin: 0;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+#sidebar {
+    position: absolute;
+    left: 0;
+    height: 100%;
+    width: var(--sidebar-width);
+
+    background-color: orange;
 }
 
 #hero-map {
-    position: relative;
-    margin-top: 5vh;
-    margin-left: 5vw;
-    height: 90vh;
-    width: 90vw;
+    position: absolute;
+    left: var(--sidebar-width);
+    right: 0px;
+    height: 100%;
 }
 
 #minimap {
