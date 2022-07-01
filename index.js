@@ -968,6 +968,7 @@ var DevTools;
 })(DevTools || (DevTools = {}));
 var currentTool = undefined;
 var heroMap = undefined;
+var available_tools = [Tool, Crosshair, DevTools.BaseMarkers];
 function setupToolbox(map) {
     heroMap = map;
 }
@@ -979,14 +980,34 @@ function setTool(tool) {
     var newTool = new tool(document.getElementById("hero-map"), heroMap);
     newTool.activate();
     currentTool = newTool;
-    var tool_name_field = document.getElementById("toolbar_tool");
-    if (tool_name_field)
-        tool_name_field.innerText = newTool.getDisplayName();
+    document.querySelectorAll(".toolbar__button").forEach(function (btn) {
+        if (btn.id == "tool-".concat(tool === null || tool === void 0 ? void 0 : tool.getId()))
+            btn.classList.add("toolbar__button__active");
+        else
+            btn.classList.remove("toolbar__button__active");
+    });
 }
 function resetTool() {
     setTool();
 }
 document.addEventListener("DOMContentLoaded", function () {
+    var toolbar_container = document.getElementById("toolbar-container");
+    toolbar_container.innerHTML = "";
+    available_tools.forEach(function (tool) {
+        var btn = document.createElement("input");
+        btn.type = "button";
+        btn.value = tool.getDisplayName();
+        btn.classList.add("toolbar__button");
+        btn.id = "tool-".concat(tool.getId());
+        btn.addEventListener("click", function () {
+            setTool(tool);
+        });
+        toolbar_container.appendChild(btn);
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key == "Escape")
+            resetTool();
+    });
 });
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
