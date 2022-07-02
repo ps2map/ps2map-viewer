@@ -964,14 +964,18 @@ var Crosshair = (function (_super) {
     Crosshair.prototype.activate = function () {
         _super.prototype.activate.call(this);
         this.viewport.style.cursor = "crosshair";
-        this.callback = this.onClick.bind(this);
-        this.viewport.addEventListener("click", this.callback, { passive: true });
+        this.callback = this.onMove.bind(this);
+        this.viewport.addEventListener("mousemove", this.callback, { passive: true });
+        this.setupToolPanel();
     };
     Crosshair.prototype.deactivate = function () {
         _super.prototype.deactivate.call(this);
         if (this.callback)
             this.viewport.removeEventListener("click", this.callback);
         this.viewport.style.removeProperty("cursor");
+        var parent = this.tool_panel;
+        if (parent)
+            parent.removeAttribute("style");
     };
     Crosshair.getDisplayName = function () {
         return "Crosshair";
@@ -979,11 +983,40 @@ var Crosshair = (function (_super) {
     Crosshair.getId = function () {
         return "crosshair";
     };
-    Crosshair.prototype.onClick = function (event) {
-        if (event.button !== 0)
+    Crosshair.prototype.setupToolPanel = function () {
+        var parent = this.tool_panel;
+        if (!parent)
             return;
+        parent.style.display = "grid";
+        parent.style.gridTemplateColumns = "1fr 1fr";
+        parent.style.gridTemplateRows = "1fr 1fr";
+        var x_label = document.createElement("span");
+        x_label.classList.add("ps2map__tool__crosshair__label");
+        x_label.textContent = "X";
+        parent.appendChild(x_label);
+        var x_value = document.createElement("span");
+        x_value.id = "tool-crosshair_x";
+        x_value.classList.add("ps2map__tool__crosshair__value");
+        parent.appendChild(x_value);
+        var y_label = document.createElement("span");
+        y_label.classList.add("ps2map__tool__crosshair__label");
+        y_label.textContent = "Y";
+        parent.appendChild(y_label);
+        var y_value = document.createElement("span");
+        y_value.id = "tool-crosshair_y";
+        y_value.classList.add("ps2map__tool__crosshair__value");
+        parent.appendChild(y_value);
+        this.updateToolPanel(0, 0);
+    };
+    Crosshair.prototype.updateToolPanel = function (x, y) {
+        var x_value = document.getElementById("tool-crosshair_x");
+        x_value.textContent = x.toFixed(2);
+        var y_value = document.getElementById("tool-crosshair_y");
+        y_value.textContent = y.toFixed(2);
+    };
+    Crosshair.prototype.onMove = function (event) {
         var _a = this.getMapPosition(event), x = _a[0], y = _a[1];
-        console.log("Clicked ".concat([x.toFixed(2), y.toFixed(2)]));
+        this.updateToolPanel(x, y);
     };
     return Crosshair;
 }(Tool));
