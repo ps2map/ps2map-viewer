@@ -131,6 +131,14 @@ body {
 }
 
 .ps2map__tool__base-info__resource-icon {
-    display: block;
-    margin-top: 10px;
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+}
+
+.ps2map__tool__base-info__resource-text {
+    display: inline-block;
+    height: 24px;
+    vertical-align: top;
+    margin-left: 5px;
 }

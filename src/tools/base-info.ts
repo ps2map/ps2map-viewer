@@ -70,11 +70,18 @@ class BaseInfo extends Tool {
         type.textContent = base_info.type_name;
         this.tool_panel.appendChild(type);
 
-        const resource_icon = document.createElement("img");
-        resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
-        resource_icon.src = `img/icons/${base_info.resource_code}.svg`;
-        resource_icon.alt = base_info.resource_name || "";
-        this.tool_panel.appendChild(resource_icon);
+        if (base_info.resource_code != undefined) {
+            this.tool_panel.appendChild(document.createElement("br"));
 
+            const resource_icon = document.createElement("img");
+            resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
+            resource_icon.src = `img/icons/${base_info.resource_code}.png`;
+            this.tool_panel.appendChild(resource_icon);
+
+            const resource_text = document.createElement("span");
+            resource_text.classList.add("ps2map__tool__base-info__resource-text");
+            resource_text.textContent = `${base_info.resource_capture_amount} ${base_info.resource_name} (${base_info.resource_control_amount.toFixed(1)}/min)`;
+            this.tool_panel.appendChild(resource_text);
+        }
     }
 }

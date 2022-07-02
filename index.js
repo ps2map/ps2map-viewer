@@ -940,11 +940,17 @@ var BaseInfo = (function (_super) {
         type.classList.add("ps2map__tool__base-info__type");
         type.textContent = base_info.type_name;
         this.tool_panel.appendChild(type);
-        var resource_icon = document.createElement("img");
-        resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
-        resource_icon.src = "img/icons/".concat(base_info.resource_code, ".svg");
-        resource_icon.alt = base_info.resource_name || "";
-        this.tool_panel.appendChild(resource_icon);
+        if (base_info.resource_code != undefined) {
+            this.tool_panel.appendChild(document.createElement("br"));
+            var resource_icon = document.createElement("img");
+            resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
+            resource_icon.src = "img/icons/".concat(base_info.resource_code, ".png");
+            this.tool_panel.appendChild(resource_icon);
+            var resource_text = document.createElement("span");
+            resource_text.classList.add("ps2map__tool__base-info__resource-text");
+            resource_text.textContent = "".concat(base_info.resource_capture_amount, " ").concat(base_info.resource_name, " (").concat(base_info.resource_control_amount.toFixed(1), "/min)");
+            this.tool_panel.appendChild(resource_text);
+        }
     };
     return BaseInfo;
 }(Tool));
