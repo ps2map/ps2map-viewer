@@ -21,8 +21,7 @@ body {
     left: 0;
     height: 100%;
     width: var(--sidebar-width);
-
-    background-color: orange;
+    background-color: #333333;
 }
 
 #hero-map {
@@ -42,8 +41,7 @@ body {
     width: 200px;
     padding: 10px 10px 10px 0px;
     z-index: 1;
-
-    background-color: green;
+    background-color: #333333;
 }
 
 .map_switcher__label {
@@ -80,8 +78,6 @@ body {
 
 #toolbar {
     margin-top: 10px;
-
-    background-color: darkgoldenrod;
 }
 
 .toolbar__button {
