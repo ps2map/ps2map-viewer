@@ -433,6 +433,10 @@ var Api;
         return "".concat(Api.restEndpoint, "continent");
     }
     Api.getContinentListUrl = getContinentListUrl;
+    function getServerListUrl() {
+        return "".concat(Api.restEndpoint, "server");
+    }
+    Api.getServerListUrl = getServerListUrl;
     function getBasesFromContinentUrl(id) {
         return "".concat(Api.restEndpoint, "base?continent_id=").concat(id);
     }
@@ -599,11 +603,12 @@ var BasePolygonsLayer = (function (_super) {
 var HeroMap = (function () {
     function HeroMap(viewport) {
         this.continent = undefined;
+        this.server = undefined;
         this.baseOwnershipMap = new Map();
         this.baseUpdateIntervalId = undefined;
         this.viewport = viewport;
         this.controller = new MapRenderer(this.viewport, 0);
-        setupToolbox(this.controller);
+        setupToolbox(this);
     }
     HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
         var _this = this;
@@ -612,17 +617,30 @@ var HeroMap = (function () {
             return;
         this.baseOwnershipMap.set(baseId, factionId);
         (_a = this.controller) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
-            if (layer.id == "hexes")
-                layer.setBaseOwnership(baseId, factionId);
-            if (layer.id == "names")
-                layer.setBaseOwnership(baseId, factionId);
-            if (layer.id == "lattice")
-                layer.updateBaseOwnership(baseId, _this.baseOwnershipMap);
+            switch (layer.id) {
+                case "hexes":
+                    layer.setBaseOwnership(baseId, factionId);
+                    break;
+                case "names":
+                    layer.setBaseOwnership(baseId, factionId);
+                    break;
+                case "lattice":
+                    layer.updateBaseOwnership(baseId, _this.baseOwnershipMap);
+                    break;
+            }
         });
         this.viewport.dispatchEvent(this.buildBaseOwnershipChangedEvent(baseId, factionId));
     };
+    HeroMap.prototype.getRenderer = function () {
+        return this.controller;
+    };
+    HeroMap.prototype.getContinent = function () {
+        return this.continent;
+    };
+    HeroMap.prototype.getServer = function () {
+        return this.server;
+    };
     HeroMap.prototype.setContinent = function (continent) {
-        var _this = this;
         var _a;
         if (continent.code == ((_a = this.continent) === null || _a === void 0 ? void 0 : _a.code))
             return;
@@ -655,38 +673,23 @@ var HeroMap = (function () {
             var evt = event;
             names.onBaseHover(evt.detail.baseId, evt.detail.element);
         });
-        var bases = [];
-        Api.getBasesFromContinent(continent.id).then(function (data) { return bases = data; });
-        var regionName = document.getElementById("widget_base-info_name");
-        var regionType = document.getElementById("widget_base-info_type");
-        hexes.element.addEventListener("ps2map_basehover", function (event) {
-            var evt = event;
-            var i = bases.length;
-            while (i-- > 0) {
-                var base = bases[i];
-                if (base.id == evt.detail.baseId) {
-                    regionName.innerText = base.name;
-                    regionType.innerText = base.type_name;
-                    return;
-                }
-            }
-        });
-        this.baseOwnershipMap.clear();
-        if (this.baseUpdateIntervalId != undefined)
-            clearInterval(this.baseUpdateIntervalId);
-        this.updateBaseOwnership();
-        this.baseUpdateIntervalId = setInterval(function () {
-            _this.updateBaseOwnership();
-        }, 5000);
+        this.startMapStatePolling();
         this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
         this.viewport.dispatchEvent(this.buildContinentChangedEvent(continent));
     };
+    HeroMap.prototype.setServer = function (server) {
+        var _a;
+        if (server.id == ((_a = this.server) === null || _a === void 0 ? void 0 : _a.id))
+            return;
+        this.server = server;
+        this.startMapStatePolling();
+    };
     HeroMap.prototype.updateBaseOwnership = function () {
         var _this = this;
-        var _a;
-        var server_id = 13;
-        var continentId = (_a = this.continent) === null || _a === void 0 ? void 0 : _a.id;
-        if (continentId == undefined)
+        var _a, _b;
+        var server_id = (_a = this.server) === null || _a === void 0 ? void 0 : _a.id;
+        var continentId = (_b = this.continent) === null || _b === void 0 ? void 0 : _b.id;
+        if (server_id == undefined || continentId == undefined)
             return;
         Api.getBaseOwnership(continentId, server_id).then(function (data) {
             var i = data.length;
@@ -697,6 +700,16 @@ var HeroMap = (function () {
     HeroMap.prototype.jumpTo = function (point) {
         var _a;
         (_a = this.controller) === null || _a === void 0 ? void 0 : _a.jumpTo(point);
+    };
+    HeroMap.prototype.startMapStatePolling = function () {
+        var _this = this;
+        this.baseOwnershipMap.clear();
+        if (this.baseUpdateIntervalId != undefined)
+            clearInterval(this.baseUpdateIntervalId);
+        this.updateBaseOwnership();
+        this.baseUpdateIntervalId = setInterval(function () {
+            _this.updateBaseOwnership();
+        }, 5000);
     };
     HeroMap.prototype.buildBaseOwnershipChangedEvent = function (baseId, factionId) {
         return new CustomEvent("ps2map_baseownershipchanged", {
@@ -828,9 +841,10 @@ var Minimap = (function () {
     return Minimap;
 }());
 var Tool = (function () {
-    function Tool(viewport, renderer) {
-        this.map = renderer;
+    function Tool(viewport, map) {
+        this.map = map;
         this.viewport = viewport;
+        this.tool_panel = document.getElementById("tool-panel");
     }
     Tool.prototype.activate = function () {
         dispatchEvent(new CustomEvent("tool-activated", {
@@ -845,20 +859,101 @@ var Tool = (function () {
                 tool: this
             }
         }));
+        this.tool_panel.innerHTML = "";
     };
-    Tool.prototype.getDisplayName = function () {
-        return "Cursor";
+    Tool.getDisplayName = function () {
+        return "None";
+    };
+    Tool.getId = function () {
+        return "default";
     };
     Tool.prototype.getMapPosition = function (event) {
         var clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
         var clickRelY = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
-        var viewBox = this.map.getCamera().getViewBox();
-        var xMap = -this.map.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
-        var yMap = -this.map.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
+        var renderer = this.map.getRenderer();
+        var viewBox = renderer.getCamera().getViewBox();
+        var xMap = -renderer.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
+        var yMap = -renderer.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
         return [xMap, yMap];
     };
     return Tool;
 }());
+var BaseInfo = (function (_super) {
+    __extends(BaseInfo, _super);
+    function BaseInfo() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.callback = undefined;
+        _this.bases = new Map();
+        return _this;
+    }
+    BaseInfo.prototype.activate = function () {
+        var _this = this;
+        _super.prototype.activate.call(this);
+        this.callback = this.onHover.bind(this);
+        var hex_layer = this.map.getRenderer().getLayer("hexes");
+        hex_layer.element.addEventListener("ps2map_basehover", this.callback);
+        this.bases = new Map();
+        var continent = this.map.getContinent();
+        if (continent == undefined)
+            return;
+        Api.getBasesFromContinent(continent.id).then(function (bases) {
+            _this.bases = new Map(bases.map(function (base) { return [base.id, base]; }));
+        });
+        var parent = this.tool_panel;
+        if (parent)
+            parent.style.display = "block";
+    };
+    BaseInfo.prototype.deactivate = function () {
+        _super.prototype.deactivate.call(this);
+        if (this.callback) {
+            var hex_layer = this.map.getRenderer().getLayer("hexes");
+            hex_layer.element.removeEventListener("ps2map_basehover", this.callback);
+        }
+        var parent = this.tool_panel;
+        if (parent)
+            parent.removeAttribute("style");
+    };
+    BaseInfo.getDisplayName = function () {
+        return "Base Info";
+    };
+    BaseInfo.getId = function () {
+        return "base-info";
+    };
+    BaseInfo.prototype.onHover = function (event) {
+        if (event.type !== "ps2map_basehover")
+            return;
+        var evt = event;
+        var base = evt.detail.baseId;
+        var base_info = this.bases.get(base);
+        if (base_info == undefined)
+            return;
+        this.tool_panel.innerHTML = "";
+        var name = document.createElement("span");
+        name.classList.add("ps2map__tool__base-info__name");
+        name.textContent = base_info.name;
+        this.tool_panel.appendChild(name);
+        var type_icon = document.createElement("img");
+        type_icon.classList.add("ps2map__tool__base-info__type-icon");
+        type_icon.src = "img/icons/".concat(base_info.type_code, ".svg");
+        this.tool_panel.appendChild(type_icon);
+        var type = document.createElement("span");
+        type.classList.add("ps2map__tool__base-info__type");
+        type.textContent = base_info.type_name;
+        this.tool_panel.appendChild(type);
+        if (base_info.resource_code != undefined) {
+            this.tool_panel.appendChild(document.createElement("br"));
+            var resource_icon = document.createElement("img");
+            resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
+            resource_icon.src = "img/icons/".concat(base_info.resource_code, ".png");
+            this.tool_panel.appendChild(resource_icon);
+            var resource_text = document.createElement("span");
+            resource_text.classList.add("ps2map__tool__base-info__resource-text");
+            resource_text.textContent = "".concat(base_info.resource_capture_amount, " ").concat(base_info.resource_name, " (").concat(base_info.resource_control_amount.toFixed(1), "/min)");
+            this.tool_panel.appendChild(resource_text);
+        }
+    };
+    return BaseInfo;
+}(Tool));
 var Crosshair = (function (_super) {
     __extends(Crosshair, _super);
     function Crosshair() {
@@ -869,23 +964,59 @@ var Crosshair = (function (_super) {
     Crosshair.prototype.activate = function () {
         _super.prototype.activate.call(this);
         this.viewport.style.cursor = "crosshair";
-        this.callback = this.onClick.bind(this);
-        this.viewport.addEventListener("click", this.callback, { passive: true });
+        this.callback = this.onMove.bind(this);
+        this.viewport.addEventListener("mousemove", this.callback, { passive: true });
+        this.setupToolPanel();
     };
     Crosshair.prototype.deactivate = function () {
         _super.prototype.deactivate.call(this);
         if (this.callback)
             this.viewport.removeEventListener("click", this.callback);
         this.viewport.style.removeProperty("cursor");
+        var parent = this.tool_panel;
+        if (parent)
+            parent.removeAttribute("style");
     };
-    Crosshair.prototype.getDisplayName = function () {
+    Crosshair.getDisplayName = function () {
         return "Crosshair";
     };
-    Crosshair.prototype.onClick = function (event) {
-        if (event.button !== 0)
+    Crosshair.getId = function () {
+        return "crosshair";
+    };
+    Crosshair.prototype.setupToolPanel = function () {
+        var parent = this.tool_panel;
+        if (!parent)
             return;
+        parent.style.display = "grid";
+        parent.style.gridTemplateColumns = "1fr 1fr";
+        parent.style.gridTemplateRows = "1fr 1fr";
+        var x_label = document.createElement("span");
+        x_label.classList.add("ps2map__tool__crosshair__label");
+        x_label.textContent = "X";
+        parent.appendChild(x_label);
+        var x_value = document.createElement("span");
+        x_value.id = "tool-crosshair_x";
+        x_value.classList.add("ps2map__tool__crosshair__value");
+        parent.appendChild(x_value);
+        var y_label = document.createElement("span");
+        y_label.classList.add("ps2map__tool__crosshair__label");
+        y_label.textContent = "Y";
+        parent.appendChild(y_label);
+        var y_value = document.createElement("span");
+        y_value.id = "tool-crosshair_y";
+        y_value.classList.add("ps2map__tool__crosshair__value");
+        parent.appendChild(y_value);
+        this.updateToolPanel(0, 0);
+    };
+    Crosshair.prototype.updateToolPanel = function (x, y) {
+        var x_value = document.getElementById("tool-crosshair_x");
+        x_value.textContent = x.toFixed(2);
+        var y_value = document.getElementById("tool-crosshair_y");
+        y_value.textContent = y.toFixed(2);
+    };
+    Crosshair.prototype.onMove = function (event) {
         var _a = this.getMapPosition(event), x = _a[0], y = _a[1];
-        console.log("Clicked ".concat([x.toFixed(2), y.toFixed(2)]));
+        this.updateToolPanel(x, y);
     };
     return Crosshair;
 }(Tool));
@@ -966,8 +1097,11 @@ var DevTools;
                 type_id: typeId
             });
         };
-        BaseMarkers.prototype.getDisplayName = function () {
+        BaseMarkers.getDisplayName = function () {
             return "[Dev] Place Base Markers";
+        };
+        BaseMarkers.getId = function () {
+            return "base-markers";
         };
         return BaseMarkers;
     }(Tool));
@@ -975,39 +1109,49 @@ var DevTools;
 })(DevTools || (DevTools = {}));
 var currentTool = undefined;
 var heroMap = undefined;
+var available_tools = [Tool, BaseInfo, Crosshair, DevTools.BaseMarkers];
 function setupToolbox(map) {
     heroMap = map;
 }
 function setTool(tool) {
     if (tool === void 0) { tool = undefined; }
     currentTool === null || currentTool === void 0 ? void 0 : currentTool.deactivate();
-    if (tool == undefined)
+    if (tool == undefined || currentTool instanceof tool)
         tool = Tool;
     var newTool = new tool(document.getElementById("hero-map"), heroMap);
     newTool.activate();
     currentTool = newTool;
-    var tool_name_field = document.getElementById("toolbar_tool");
-    if (tool_name_field)
-        tool_name_field.innerText = newTool.getDisplayName();
+    document.querySelectorAll(".toolbar__button").forEach(function (btn) {
+        if (btn.id == "tool-".concat(tool === null || tool === void 0 ? void 0 : tool.getId()))
+            btn.classList.add("toolbar__button__active");
+        else
+            btn.classList.remove("toolbar__button__active");
+    });
 }
 function resetTool() {
     setTool();
 }
 document.addEventListener("DOMContentLoaded", function () {
-    resetTool();
+    var toolbar_container = document.getElementById("toolbar-container");
+    toolbar_container.innerHTML = "";
+    available_tools.forEach(function (tool) {
+        var btn = document.createElement("input");
+        btn.type = "button";
+        btn.value = tool.getDisplayName();
+        btn.classList.add("toolbar__button");
+        btn.id = "tool-".concat(tool.getId());
+        btn.addEventListener("click", function () {
+            setTool(tool);
+        });
+        toolbar_container.appendChild(btn);
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key == "Escape")
+            resetTool();
+    });
 });
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
-    var toolbar_cursor = document.getElementById("toolbar-cursor");
-    var toolbar_picker = document.getElementById("toolbar-picker");
-    var toolbar_base_markers = document.getElementById("toolbar-dev-base-markers");
-    toolbar_cursor.addEventListener("click", function () { resetTool(); });
-    toolbar_picker.addEventListener("click", function () { setTool(Crosshair); });
-    toolbar_base_markers.addEventListener("click", function () { setTool(DevTools.BaseMarkers); });
-    document.addEventListener("keydown", function (event) {
-        if (event.code === "Escape")
-            resetTool();
-    });
     var minimap = new Minimap(document.getElementById("minimap"));
     document.addEventListener("ps2map_baseownershipchanged", function (event) {
         var evt = event.detail;
@@ -1025,24 +1169,61 @@ document.addEventListener("DOMContentLoaded", function () {
         var evt = event.detail;
         heroMap.jumpTo(evt.target);
     }, { passive: true });
-    var dropdown = document.getElementById("continent-selector");
-    dropdown.addEventListener("change", function () {
-        heroMap.setContinent(JSON.parse(dropdown.value));
+    var server_picker = document.getElementById("server-picker");
+    server_picker.addEventListener("change", function () {
+        var server = JSON.parse(server_picker.value);
+        heroMap.setServer(server);
     });
-    Api.getContinentList()
-        .then(function (continentList) {
-        continentList.sort(function (a, b) { return b.name.localeCompare(a.name); });
-        var i = continentList.length;
+    Api.getServerList().then(function (servers) {
+        servers.sort(function (a, b) { return b.name.localeCompare(a.name); });
+        var i = servers.length;
         while (i-- > 0) {
-            var cont = continentList[i];
+            var server = servers[i];
+            var option = document.createElement("option");
+            option.value = JSON.stringify(server);
+            option.text = server.name;
+            server_picker.appendChild(option);
+        }
+        heroMap.setServer(JSON.parse(server_picker.value));
+    });
+    var continent_picker = document.getElementById("continent-picker");
+    continent_picker.addEventListener("change", function () {
+        var cont = JSON.parse(continent_picker.value);
+        heroMap.setContinent(cont);
+    });
+    Api.getContinentList().then(function (continents) {
+        continents.sort(function (a, b) { return b.name.localeCompare(a.name); });
+        var i = continents.length;
+        while (i-- > 0) {
+            var cont = continents[i];
             var option = document.createElement("option");
             option.value = JSON.stringify(cont);
             option.text = cont.name;
-            dropdown.appendChild(option);
+            continent_picker.appendChild(option);
         }
-        heroMap.setContinent(JSON.parse(dropdown.value));
+        heroMap.setContinent(JSON.parse(continent_picker.value));
     });
 });
+var Api;
+(function (Api) {
+    function getServerList() {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getServerListUrl())];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok)
+                            throw new Error(response.statusText);
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    }
+    Api.getServerList = getServerList;
+})(Api || (Api = {}));
 var LatticeLayer = (function (_super) {
     __extends(LatticeLayer, _super);
     function LatticeLayer(id, mapSize) {

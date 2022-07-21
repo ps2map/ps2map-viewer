@@ -1,11 +1,13 @@
 
 class Tool {
-    readonly map: MapRenderer;
+    readonly map: HeroMap;
     readonly viewport: HTMLDivElement
+    protected tool_panel: HTMLDivElement;
 
-    constructor(viewport: HTMLDivElement, renderer: MapRenderer) {
-        this.map = renderer;
+    constructor(viewport: HTMLDivElement, map: HeroMap) {
+        this.map = map;
         this.viewport = viewport;
+        this.tool_panel = document.getElementById("tool-panel") as HTMLDivElement;
     }
 
     activate(): void {
@@ -22,18 +24,24 @@ class Tool {
                 tool: this,
             }
         }));
+        this.tool_panel.innerHTML = "";
     }
 
-    getDisplayName(): string {
-        return "Cursor";
+    static getDisplayName(): string {
+        return "None";
+    }
+
+    static getId(): string {
+        return "default";
     }
 
     protected getMapPosition(event: MouseEvent): [number, number] {
         const clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
         const clickRelY = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
-        const viewBox = this.map.getCamera().getViewBox();
-        const xMap = -this.map.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
-        const yMap = -this.map.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
+        const renderer = this.map.getRenderer();
+        const viewBox = renderer.getCamera().getViewBox();
+        const xMap = -renderer.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
+        const yMap = -renderer.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
         return [xMap, yMap];
     }
 }

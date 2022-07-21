@@ -16,8 +16,9 @@ namespace DevTools {
         // Reference to bound version of onClick
         private callback: ((arg0: MouseEvent) => void) | undefined = undefined;
 
-        constructor(viewport: HTMLDivElement, map: MapRenderer) {
+        constructor(viewport: HTMLDivElement, map: HeroMap) {
             super(viewport, map);
+            // TODO: Restore export button functionality
             const btn = document.getElementById("export-bases") as HTMLInputElement;
             if (btn)
                 btn.addEventListener("click", () => this.export());
@@ -95,8 +96,12 @@ namespace DevTools {
             });
         }
 
-        getDisplayName(): string {
+        static getDisplayName(): string {
             return "[Dev] Place Base Markers";
+        }
+
+        static getId(): string {
+            return "base-markers";
         }
     }
 }
