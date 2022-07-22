@@ -2,21 +2,21 @@
 
 class Crosshair extends Tool {
 
-    private callback: ((arg0: MouseEvent) => void) | undefined = undefined;
+    private _callback: ((arg0: MouseEvent) => void) | undefined = undefined;
 
     activate(): void {
         super.activate();
         this.viewport.style.cursor = "crosshair";
-        this.callback = this.onMove.bind(this);
-        this.viewport.addEventListener("mousemove", this.callback, { passive: true });
+        this._callback = this._onMove.bind(this);
+        this.viewport.addEventListener("mousemove", this._callback, { passive: true });
 
-        this.setupToolPanel();
+        this._setupToolPanel();
     }
 
     deactivate(): void {
         super.deactivate();
-        if (this.callback)
-            this.viewport.removeEventListener("click", this.callback);
+        if (this._callback)
+            this.viewport.removeEventListener("click", this._callback);
         this.viewport.style.removeProperty("cursor");
         const parent = this.tool_panel;
         if (parent)
@@ -31,7 +31,7 @@ class Crosshair extends Tool {
         return "crosshair";
     }
 
-    private setupToolPanel(): void {
+    private _setupToolPanel(): void {
         const parent = this.tool_panel;
         if (!parent)
             return;
@@ -60,10 +60,10 @@ class Crosshair extends Tool {
         y_value.classList.add("ps2map__tool__crosshair__value");
         parent.appendChild(y_value);
 
-        this.updateToolPanel(0, 0);
+        this._updateToolPanel(0, 0);
     }
 
-    private updateToolPanel(x: number, y: number): void {
+    private _updateToolPanel(x: number, y: number): void {
         const x_value = document.getElementById("tool-crosshair_x") as HTMLSpanElement;
         x_value.textContent = x.toFixed(2);
 
@@ -71,9 +71,9 @@ class Crosshair extends Tool {
         y_value.textContent = y.toFixed(2);
     }
 
-    private onMove(event: MouseEvent): void {
+    private _onMove(event: MouseEvent): void {
         const [x, y] = this.getMapPosition(event);
 
-        this.updateToolPanel(x, y);
+        this._updateToolPanel(x, y);
     }
 }

@@ -5,7 +5,7 @@
  */
 class TerrainLayer extends TileLayer {
     /** Internal identifier for the current tileset. */
-    private code: string = "";
+    private _code: string = "";
 
     constructor(id: string, mapSize: number) {
         super(id, mapSize, 3);
@@ -27,14 +27,14 @@ class TerrainLayer extends TileLayer {
      * @param code 
      */
     setContinent(code: string): void {
-        if (this.code == code)
+        if (this._code == code)
             return;
-        this.code = code;
+        this._code = code;
         // Add low-res background buffer for antialiasing and preloading
         this.element.style.backgroundImage = (
             `url(${Api.getMinimapImagePath(code)})`);
         // Generate grid
-        const gridSize = this.mapTilesPerAxis(this.mapSize, this.lod);
+        const gridSize = this._mapTilesPerAxis(this.mapSize, this.lod);
         this.defineTiles(gridSize);
     }
 
@@ -43,7 +43,7 @@ class TerrainLayer extends TileLayer {
      * @param zoom Zoom level to use for calculation
      * @returns Tile LOD for this zoom level
      */
-    private calculateLod(zoom: number): number {
+    private _calculateLod(zoom: number): number {
         // Compensate for custom DPI scaling (avoids blur on high DPI screens)
         const adjustedZoom = zoom * devicePixelRatio;
         if (adjustedZoom < 0.125)
@@ -75,7 +75,7 @@ class TerrainLayer extends TileLayer {
      * @param value Tile grid coordinate to convert
      * @returns String version of the coordinate
      */
-    private formatTileCoordinate(value: number): string {
+    private _formatTileCoordinate(value: number): string {
         const negative = value < 0;
         let coord = Math.abs(value).toFixed();
         if (coord.length < 3)
@@ -86,11 +86,11 @@ class TerrainLayer extends TileLayer {
     }
 
     protected generateTilePath(pos: GridPos, lod: number): string {
-        const [tileX, tileY] = this.gridPosToTilePos(pos, lod);
+        const [tileX, tileY] = this._gridPosToTilePos(pos, lod);
         const tilePos: [string, string] = [
-            this.formatTileCoordinate(tileX),
-            this.formatTileCoordinate(tileY)];
-        return Api.getTerrainTilePath(this.code, tilePos, lod);
+            this._formatTileCoordinate(tileX),
+            this._formatTileCoordinate(tileY)];
+        return Api.getTerrainTilePath(this._code, tilePos, lod);
     }
 
     /**
@@ -99,9 +99,9 @@ class TerrainLayer extends TileLayer {
      * @param lod Current level of detail
      * @returns Grid position in tile grid coordinates
      */
-    private gridPosToTilePos(pos: GridPos, lod: number): [number, number] {
-        const min = this.mapGridLimits(this.mapSize, lod)[0];
-        const stepSize = this.mapStepSize(this.mapSize, lod);
+    private _gridPosToTilePos(pos: GridPos, lod: number): [number, number] {
+        const min = this._mapGridLimits(this.mapSize, lod)[0];
+        const stepSize = this._mapStepSize(this.mapSize, lod);
         return [min + (stepSize * pos.x), min + (stepSize * pos.y)];
     }
 
@@ -111,7 +111,7 @@ class TerrainLayer extends TileLayer {
      * @param lod Map level of detail
      * @returns Map tile grid step size
      */
-    private mapStepSize(mapSize: number, lod: number): number {
+    private _mapStepSize(mapSize: number, lod: number): number {
         if (lod == 0)
             // Base case for all map sizes
             return 4;
@@ -131,7 +131,7 @@ class TerrainLayer extends TileLayer {
      * @param lod Map level of detail
      * @returns Number of tiles in the map grud (both axes)
      */
-    private mapTileCount(mapSize: number, lod: number): number {
+    private _mapTileCount(mapSize: number, lod: number): number {
         return Math.ceil(4 ** (Math.floor(Math.log2(mapSize)) - 8 - lod));
     }
 
@@ -141,8 +141,8 @@ class TerrainLayer extends TileLayer {
      * @param lod Map level of detail
      * @returns Number of tiles per axis
      */
-    private mapTilesPerAxis(mapSize: number, lod: number): number {
-        return Math.floor(Math.sqrt(this.mapTileCount(mapSize, lod)))
+    private _mapTilesPerAxis(mapSize: number, lod: number): number {
+        return Math.floor(Math.sqrt(this._mapTileCount(mapSize, lod)))
     }
 
     /**
@@ -153,10 +153,10 @@ class TerrainLayer extends TileLayer {
      * @param lod Map level of detail
      * @returns Map tile grid limits (min/max, the same for both axes)
      */
-    private mapGridLimits(mapSize: number, lod: number): [number, number] {
-        const stepSize = this.mapStepSize(mapSize, lod);
+    private _mapGridLimits(mapSize: number, lod: number): [number, number] {
+        const stepSize = this._mapStepSize(mapSize, lod);
         // Calculate the number of map tiles along one axis of the map
-        const tilesPerAxis = this.mapTilesPerAxis(mapSize, lod);
+        const tilesPerAxis = this._mapTilesPerAxis(mapSize, lod);
         const halfSize = stepSize * Math.floor(tilesPerAxis / 2);
         if (halfSize <= 0)
             return [-stepSize, -stepSize];
@@ -165,11 +165,11 @@ class TerrainLayer extends TileLayer {
 
     protected deferredLayerUpdate(viewBox: Box, zoom: number): void {
         // Calculate appropriate LOD for the new zoom level
-        const newLod = this.calculateLod(zoom);
+        const newLod = this._calculateLod(zoom);
         // Update tiles for new LOD if required
         if (newLod != this.lod) {
             this.lod = newLod;
-            this.defineTiles(this.mapTilesPerAxis(this.mapSize, newLod));
+            this.defineTiles(this._mapTilesPerAxis(this.mapSize, newLod));
         }
         // Update visibility of tiles
         this.updateTileVisibility(viewBox);

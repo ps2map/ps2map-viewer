@@ -36,13 +36,13 @@ class BaseNamesLayer extends StaticLayer {
         return Api.getBasesFromContinent(continent.id)
             .then((bases: Api.Base[]) => {
                 console.log(bases);
-                layer.loadBaseInfo(bases);
+                layer._loadBaseInfo(bases);
                 layer.updateLayer();
                 return layer;
             });
     }
 
-    private loadBaseInfo(bases: Api.Base[]): void {
+    private _loadBaseInfo(bases: Api.Base[]): void {
         const features: BaseNameFeature[] = [];
         let i = bases.length;
         while (i-- > 0) {

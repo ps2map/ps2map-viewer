@@ -95,7 +95,7 @@ class HeroMap {
                 this._continent = continent;
 
                 // Start polling for base ownership updates
-                this.startMapStatePolling();
+                this._startMapStatePolling();
 
                 this.renderer.viewport.dispatchEvent(
                     Events.continentChangedFactory(continent));
@@ -108,7 +108,7 @@ class HeroMap {
         this._server = server;
 
         // Restart map state polling loop
-        this.startMapStatePolling();
+        this._startMapStatePolling();
     }
 
     updateBaseOwnership(): void {
@@ -129,7 +129,7 @@ class HeroMap {
         this.renderer?.jumpTo(point);
     }
 
-    private startMapStatePolling() {
+    private _startMapStatePolling() {
         this._baseOwnershipMap.clear();
         if (this._baseUpdateIntervalId != undefined)
             clearInterval(this._baseUpdateIntervalId);

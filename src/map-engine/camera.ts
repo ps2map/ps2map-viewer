@@ -12,23 +12,23 @@ class MapCamera {
     // Constants
 
     /** Maximum zoom level (400%, i.e. 4 CSS pixels per map pixel). */
-    private readonly maxZoom: number = 4.0
+    private readonly _maxZoom: number = 4.0
     /** Zoom level step size (logarithmic scaling factor when zooming). */
-    private readonly zoomStep: number = 1.5;
+    private readonly _zoomStep: number = 1.5;
 
     // Derived and cached attributes
 
     /** Precalculated zoom levels available for the given map size. */
-    private zoomLevels: number[];
+    private _zoomLevels: number[];
 
     /** Cache for viewport height and width. */
-    private viewportHeight: number;
-    private viewportWidth: number;
+    private _viewportHeight: number;
+    private _viewportWidth: number;
 
     // Camera state
 
     /** Current zoom level index within the `zoom` array. */
-    private currentZoomIndex: number = -1;
+    private _currentZoomIndex: number = -1;
     /**
      * Current target of the camera.
      * 
@@ -37,18 +37,18 @@ class MapCamera {
     target: Point;
 
     constructor(mapSize: number, viewportHeight: number, viewportWidth: number) {
-        this.viewportHeight = viewportHeight;
-        this.viewportWidth = viewportWidth;
+        this._viewportHeight = viewportHeight;
+        this._viewportWidth = viewportWidth;
         // Calculate zoom factors
-        let zoom = this.maxZoom;
-        this.zoomLevels = [this.maxZoom];
-        const stepInverse = 1 / this.zoomStep;
+        let zoom = this._maxZoom;
+        this._zoomLevels = [this._maxZoom];
+        const stepInverse = 1 / this._zoomStep;
         while (mapSize * zoom > Math.min(viewportHeight, viewportWidth)) {
             zoom *= stepInverse;
-            this.zoomLevels.push(Utils.roundTo(zoom, 2));
+            this._zoomLevels.push(Utils.roundTo(zoom, 2));
         }
         // Initial zoom level
-        this.currentZoomIndex = this.zoomLevels.length - 1;
+        this._currentZoomIndex = this._zoomLevels.length - 1;
         // Initial camera position
         this.target = {
             x: mapSize * 0.5,
@@ -64,7 +64,7 @@ class MapCamera {
      * @returns New zoom level
      */
     bumpZoomLevel(direction: number): number {
-        let newIndex = this.currentZoomIndex;
+        let newIndex = this._currentZoomIndex;
         // Bump zoom level
         if (direction == 0)
             return newIndex;
@@ -75,11 +75,11 @@ class MapCamera {
         // Limit zoom range
         if (newIndex < 0)
             newIndex = 0;
-        else if (newIndex >= this.zoomLevels.length)
-            newIndex = this.zoomLevels.length - 1;
+        else if (newIndex >= this._zoomLevels.length)
+            newIndex = this._zoomLevels.length - 1;
         // Update zoom level
-        this.currentZoomIndex = newIndex;
-        return this.zoomLevels[newIndex];
+        this._currentZoomIndex = newIndex;
+        return this._zoomLevels[newIndex];
     }
 
     /**
@@ -88,8 +88,8 @@ class MapCamera {
      */
     getViewBox(): Box {
         // Calculate the lengths covered by the viewport in map units
-        const viewBoxHeight = this.viewportHeight / this.getZoom();
-        const viewBoxWidth = this.viewportWidth / this.getZoom();
+        const viewBoxHeight = this._viewportHeight / this.getZoom();
+        const viewBoxWidth = this._viewportWidth / this.getZoom();
         // Get viewBox coordinates
         return {
             top: this.target.y + viewBoxHeight * 0.5,
@@ -104,7 +104,7 @@ class MapCamera {
      * @returns Current map scaling factor.
      */
     getZoom(): number {
-        return this.zoomLevels[this.currentZoomIndex];
+        return this._zoomLevels[this._currentZoomIndex];
     }
 
     /**
@@ -124,8 +124,8 @@ class MapCamera {
         const oldZoom = this.getZoom()
         const newZoom = this.bumpZoomLevel(direction)
 
-        const pixelDeltaX = (this.viewportWidth / oldZoom) - (this.viewportWidth / newZoom);
-        const pixelDeltaY = (this.viewportHeight / oldZoom) - (this.viewportHeight / newZoom);
+        const pixelDeltaX = (this._viewportWidth / oldZoom) - (this._viewportWidth / newZoom);
+        const pixelDeltaY = (this._viewportHeight / oldZoom) - (this._viewportHeight / newZoom);
 
         // Depending on where the cursor is in the 0-1 camera view space, the
         // pixel delta must be distributed between the two sides of the viewport

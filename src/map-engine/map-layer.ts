@@ -18,7 +18,7 @@ abstract class MapLayer {
     protected isVisible: boolean = true;
 
     /** Internal cache for deferred layer updates. */
-    private lastRedraw: [Box, number] | null = null;
+    private _lastRedraw: [Box, number] | null = null;
 
     constructor(id: string, mapSize: number) {
         this.id = id;
@@ -30,7 +30,7 @@ abstract class MapLayer {
         this.element.style.height = this.element.style.width = `${mapSize}px`;
         // Add event listener for deferred updates
         this.element.addEventListener(
-            "transitionend", this.runDeferredLayerUpdate.bind(this), { passive: true });
+            "transitionend", this._runDeferredLayerUpdate.bind(this), { passive: true });
     }
 
     /**
@@ -42,7 +42,7 @@ abstract class MapLayer {
      * @param zoom New zoom level
      */
     setRedrawArgs(viewBox: Box, zoom: number): void {
-        this.lastRedraw = [viewBox, zoom];
+        this._lastRedraw = [viewBox, zoom];
     }
 
     /**
@@ -65,10 +65,10 @@ abstract class MapLayer {
     }
 
     /** Wrapper to run deferred layer updates from event listeners. */
-    private runDeferredLayerUpdate = Utils.rafDebounce(() => {
-        if (this.lastRedraw == null)
+    private _runDeferredLayerUpdate = Utils.rafDebounce(() => {
+        if (this._lastRedraw == null)
             return;
-        const [viewBox, zoom] = this.lastRedraw;
+        const [viewBox, zoom] = this._lastRedraw;
         this.deferredLayerUpdate(viewBox, zoom);
     });
 

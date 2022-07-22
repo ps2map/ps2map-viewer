@@ -249,26 +249,26 @@ var Utils;
 })(Utils || (Utils = {}));
 var MapCamera = (function () {
     function MapCamera(mapSize, viewportHeight, viewportWidth) {
-        this.maxZoom = 4.0;
-        this.zoomStep = 1.5;
-        this.currentZoomIndex = -1;
-        this.viewportHeight = viewportHeight;
-        this.viewportWidth = viewportWidth;
-        var zoom = this.maxZoom;
-        this.zoomLevels = [this.maxZoom];
-        var stepInverse = 1 / this.zoomStep;
+        this._maxZoom = 4.0;
+        this._zoomStep = 1.5;
+        this._currentZoomIndex = -1;
+        this._viewportHeight = viewportHeight;
+        this._viewportWidth = viewportWidth;
+        var zoom = this._maxZoom;
+        this._zoomLevels = [this._maxZoom];
+        var stepInverse = 1 / this._zoomStep;
         while (mapSize * zoom > Math.min(viewportHeight, viewportWidth)) {
             zoom *= stepInverse;
-            this.zoomLevels.push(Utils.roundTo(zoom, 2));
+            this._zoomLevels.push(Utils.roundTo(zoom, 2));
         }
-        this.currentZoomIndex = this.zoomLevels.length - 1;
+        this._currentZoomIndex = this._zoomLevels.length - 1;
         this.target = {
             x: mapSize * 0.5,
             y: mapSize * 0.5
         };
     }
     MapCamera.prototype.bumpZoomLevel = function (direction) {
-        var newIndex = this.currentZoomIndex;
+        var newIndex = this._currentZoomIndex;
         if (direction == 0)
             return newIndex;
         if (direction < 0)
@@ -277,14 +277,14 @@ var MapCamera = (function () {
             newIndex++;
         if (newIndex < 0)
             newIndex = 0;
-        else if (newIndex >= this.zoomLevels.length)
-            newIndex = this.zoomLevels.length - 1;
-        this.currentZoomIndex = newIndex;
-        return this.zoomLevels[newIndex];
+        else if (newIndex >= this._zoomLevels.length)
+            newIndex = this._zoomLevels.length - 1;
+        this._currentZoomIndex = newIndex;
+        return this._zoomLevels[newIndex];
     };
     MapCamera.prototype.getViewBox = function () {
-        var viewBoxHeight = this.viewportHeight / this.getZoom();
-        var viewBoxWidth = this.viewportWidth / this.getZoom();
+        var viewBoxHeight = this._viewportHeight / this.getZoom();
+        var viewBoxWidth = this._viewportWidth / this.getZoom();
         return {
             top: this.target.y + viewBoxHeight * 0.5,
             right: this.target.x + viewBoxWidth * 0.5,
@@ -293,15 +293,15 @@ var MapCamera = (function () {
         };
     };
     MapCamera.prototype.getZoom = function () {
-        return this.zoomLevels[this.currentZoomIndex];
+        return this._zoomLevels[this._currentZoomIndex];
     };
     MapCamera.prototype.zoomTo = function (direction, viewX, viewY) {
         if (viewX === void 0) { viewX = 0.5; }
         if (viewY === void 0) { viewY = 0.5; }
         var oldZoom = this.getZoom();
         var newZoom = this.bumpZoomLevel(direction);
-        var pixelDeltaX = (this.viewportWidth / oldZoom) - (this.viewportWidth / newZoom);
-        var pixelDeltaY = (this.viewportHeight / oldZoom) - (this.viewportHeight / newZoom);
+        var pixelDeltaX = (this._viewportWidth / oldZoom) - (this._viewportWidth / newZoom);
+        var pixelDeltaY = (this._viewportHeight / oldZoom) - (this._viewportHeight / newZoom);
         var sideRatioX = Utils.remap(viewX, 0.0, 1.0, -0.5, 0.5);
         var sideRatioY = -Utils.remap(viewY, 0.0, 1.0, -0.5, 0.5);
         var targetX = this.target.x + pixelDeltaX * sideRatioX;
@@ -318,11 +318,11 @@ var MapLayer = (function () {
     function MapLayer(id, mapSize) {
         var _this = this;
         this.isVisible = true;
-        this.lastRedraw = null;
-        this.runDeferredLayerUpdate = Utils.rafDebounce(function () {
-            if (_this.lastRedraw == null)
+        this._lastRedraw = null;
+        this._runDeferredLayerUpdate = Utils.rafDebounce(function () {
+            if (_this._lastRedraw == null)
                 return;
-            var _a = _this.lastRedraw, viewBox = _a[0], zoom = _a[1];
+            var _a = _this._lastRedraw, viewBox = _a[0], zoom = _a[1];
             _this.deferredLayerUpdate(viewBox, zoom);
         });
         this.id = id;
@@ -331,10 +331,10 @@ var MapLayer = (function () {
         this.element.id = id;
         this.element.classList.add("ps2map__layer");
         this.element.style.height = this.element.style.width = "".concat(mapSize, "px");
-        this.element.addEventListener("transitionend", this.runDeferredLayerUpdate.bind(this), { passive: true });
+        this.element.addEventListener("transitionend", this._runDeferredLayerUpdate.bind(this), { passive: true });
     }
     MapLayer.prototype.setRedrawArgs = function (viewBox, zoom) {
-        this.lastRedraw = [viewBox, zoom];
+        this._lastRedraw = [viewBox, zoom];
     };
     MapLayer.prototype.setVisibility = function (visible) {
         if (this.isVisible == visible)
@@ -395,56 +395,56 @@ var StaticLayer = (function (_super) {
 var MapRenderer = (function () {
     function MapRenderer(viewport, mapSize) {
         var _this = this;
-        this.mapSize = 1024;
-        this.layers = [];
-        this.isPanning = false;
-        this.onZoom = Utils.rafDebounce(function (evt) {
+        this._mapSize = 1024;
+        this._layers = [];
+        this._isPanning = false;
+        this._onZoom = Utils.rafDebounce(function (evt) {
             evt.preventDefault();
-            if (_this.isPanning)
+            if (_this._isPanning)
                 return;
             var view = _this.viewport.getBoundingClientRect();
             var relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
             var relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
-            _this.camera.zoomTo(evt.deltaY, relX, relY);
-            _this.constrainMapTarget();
-            _this.redraw(_this.camera.getViewBox(), _this.camera.getZoom());
+            _this._camera.zoomTo(evt.deltaY, relX, relY);
+            _this._constrainMapTarget();
+            _this._redraw(_this._camera.getViewBox(), _this._camera.getZoom());
         });
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
-        this.anchor = document.createElement("div");
-        this.anchor.classList.add("ps2map__anchor");
-        this.viewport.appendChild(this.anchor);
+        this._anchor = document.createElement("div");
+        this._anchor.classList.add("ps2map__anchor");
+        this.viewport.appendChild(this._anchor);
         this.setMapSize(mapSize);
-        this.camera = new MapCamera(mapSize, this.viewport.clientHeight, this.viewport.clientWidth);
-        this.panOffsetX = this.viewport.clientWidth * 0.5;
-        this.panOffsetY = this.viewport.clientHeight * 0.5;
-        this.anchor.style.left = "".concat(this.panOffsetX, "px");
-        this.anchor.style.top = "".concat(this.panOffsetY, "px");
-        this.viewport.addEventListener("wheel", this.onZoom.bind(this), {
+        this._camera = new MapCamera(mapSize, this.viewport.clientHeight, this.viewport.clientWidth);
+        this._panOffsetX = this.viewport.clientWidth * 0.5;
+        this._panOffsetY = this.viewport.clientHeight * 0.5;
+        this._anchor.style.left = "".concat(this._panOffsetX, "px");
+        this._anchor.style.top = "".concat(this._panOffsetY, "px");
+        this.viewport.addEventListener("wheel", this._onZoom.bind(this), {
             passive: false
         });
-        this.viewport.addEventListener("mousedown", this.mousePan.bind(this), {
+        this.viewport.addEventListener("mousedown", this._mousePan.bind(this), {
             passive: true
         });
         setInterval(function () {
-            _this.viewport.dispatchEvent(_this.buildViewBoxChangedEvent(_this.camera.getViewBox()));
+            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this._camera.getViewBox()));
         }, 0.01);
     }
     MapRenderer.prototype.getCamera = function () {
-        return this.camera;
+        return this._camera;
     };
     MapRenderer.prototype.getMapSize = function () {
-        return this.mapSize;
+        return this._mapSize;
     };
     MapRenderer.prototype.addLayer = function (layer) {
-        if (layer.mapSize != this.mapSize)
+        if (layer.mapSize != this._mapSize)
             throw "Map layer size must match the map renderer's.";
-        this.layers.push(layer);
-        this.anchor.appendChild(layer.element);
-        this.redraw(this.camera.getViewBox(), this.camera.getZoom());
+        this._layers.push(layer);
+        this._anchor.appendChild(layer.element);
+        this._redraw(this._camera.getViewBox(), this._camera.getZoom());
     };
     MapRenderer.prototype.getLayer = function (id) {
-        for (var _i = 0, _a = this.layers; _i < _a.length; _i++) {
+        for (var _i = 0, _a = this._layers; _i < _a.length; _i++) {
             var layer = _a[_i];
             if (layer.id == id)
                 return layer;
@@ -452,47 +452,47 @@ var MapRenderer = (function () {
         return undefined;
     };
     MapRenderer.prototype.clearLayers = function () {
-        this.anchor.innerText = "";
-        this.layers = [];
+        this._anchor.innerText = "";
+        this._layers = [];
     };
     MapRenderer.prototype.forEachLayer = function (callback) {
-        var i = this.layers.length;
+        var i = this._layers.length;
         while (i-- > 0)
-            callback(this.layers[i]);
+            callback(this._layers[i]);
     };
     MapRenderer.prototype.jumpTo = function (target) {
-        this.camera.target = target;
-        this.constrainMapTarget();
-        this.redraw(this.camera.getViewBox(), this.camera.getZoom());
+        this._camera.target = target;
+        this._constrainMapTarget();
+        this._redraw(this._camera.getViewBox(), this._camera.getZoom());
     };
     MapRenderer.prototype.setMapSize = function (value) {
-        if (this.layers.length > 0)
+        if (this._layers.length > 0)
             throw "Remove all map layers before changing map size.";
-        this.mapSize = value;
-        this.camera = new MapCamera(value, this.viewport.clientHeight, this.viewport.clientWidth);
+        this._mapSize = value;
+        this._camera = new MapCamera(value, this.viewport.clientHeight, this.viewport.clientWidth);
     };
-    MapRenderer.prototype.mousePan = function (evtDown) {
+    MapRenderer.prototype._mousePan = function (evtDown) {
         var _this = this;
         if (evtDown.button == 2)
             return;
-        this.setPanLock(true);
-        var refX = this.camera.target.x;
-        var refY = this.camera.target.y;
-        var zoom = this.camera.getZoom();
+        this._setPanLock(true);
+        var refX = this._camera.target.x;
+        var refY = this._camera.target.y;
+        var zoom = this._camera.getZoom();
         var startX = evtDown.clientX;
         var startY = evtDown.clientY;
         var drag = Utils.rafDebounce(function (evtDrag) {
             var deltaX = evtDrag.clientX - startX;
             var deltaY = evtDrag.clientY - startY;
-            _this.camera.target = {
+            _this._camera.target = {
                 x: refX - deltaX / zoom,
                 y: refY + deltaY / zoom
             };
-            _this.constrainMapTarget();
-            _this.redraw(_this.camera.getViewBox(), zoom);
+            _this._constrainMapTarget();
+            _this._redraw(_this._camera.getViewBox(), zoom);
         });
         var up = function () {
-            _this.setPanLock(false);
+            _this._setPanLock(false);
             _this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
         };
@@ -501,43 +501,43 @@ var MapRenderer = (function () {
             passive: true
         });
     };
-    MapRenderer.prototype.setPanLock = function (locked) {
-        this.isPanning = locked;
-        var i = this.layers.length;
+    MapRenderer.prototype._setPanLock = function (locked) {
+        this._isPanning = locked;
+        var i = this._layers.length;
         while (i-- > 0) {
-            var element = this.layers[i].element;
+            var element = this._layers[i].element;
             if (locked)
                 element.style.transition = "transform 0ms ease-out";
             else
                 element.style.removeProperty("transition");
         }
     };
-    MapRenderer.prototype.redraw = function (viewBox, zoom) {
-        var i = this.layers.length;
+    MapRenderer.prototype._redraw = function (viewBox, zoom) {
+        var i = this._layers.length;
         while (i-- > 0) {
-            var layer = this.layers[i];
+            var layer = this._layers[i];
             layer.redraw(viewBox, zoom);
             layer.setRedrawArgs(viewBox, zoom);
         }
-        this.anchor.dispatchEvent(this.buildViewBoxChangedEvent(viewBox));
+        this._anchor.dispatchEvent(this._buildViewBoxChangedEvent(viewBox));
     };
-    MapRenderer.prototype.constrainMapTarget = function () {
-        var targetX = this.camera.target.x;
-        var targetY = this.camera.target.y;
+    MapRenderer.prototype._constrainMapTarget = function () {
+        var targetX = this._camera.target.x;
+        var targetY = this._camera.target.y;
         if (targetX < 0)
             targetX = 0;
-        if (targetX > this.mapSize)
-            targetX = this.mapSize;
+        if (targetX > this._mapSize)
+            targetX = this._mapSize;
         if (targetY < 0)
             targetY = 0;
-        if (targetY > this.mapSize)
-            targetY = this.mapSize;
-        this.camera.target = {
+        if (targetY > this._mapSize)
+            targetY = this._mapSize;
+        this._camera.target = {
             x: targetX,
             y: targetY
         };
     };
-    MapRenderer.prototype.buildViewBoxChangedEvent = function (viewBox) {
+    MapRenderer.prototype._buildViewBoxChangedEvent = function (viewBox) {
         return new CustomEvent("ps2map_viewboxchanged", {
             detail: {
                 viewBox: viewBox
@@ -574,7 +574,7 @@ var BasePolygonsLayer = (function (_super) {
         var svg = this.element.firstElementChild;
         if (svg == null)
             throw "Unable to find HexLayer SVG element";
-        var id = this.baseIdToPolygonId(baseId);
+        var id = this._baseIdToPolygonId(baseId);
         var polygon = svg.querySelector("polygon[id=\"".concat(id, "\"]"));
         if (polygon == null)
             throw "Unable to find base polygon with id ".concat(baseId);
@@ -590,7 +590,7 @@ var BasePolygonsLayer = (function (_super) {
     BasePolygonsLayer.prototype.applyPolygonHoverFix = function (svg) {
         var _this = this;
         svg.querySelectorAll("polygon").forEach(function (polygon) {
-            polygon.id = _this.baseIdToPolygonId(polygon.id);
+            polygon.id = _this._baseIdToPolygonId(polygon.id);
             var addHoverFx = function () {
                 svg.appendChild(polygon);
                 var removeHoverFx = function () { return polygon.style.removeProperty("stroke"); };
@@ -604,7 +604,7 @@ var BasePolygonsLayer = (function (_super) {
                     passive: true
                 });
                 polygon.style.stroke = "#ffffff";
-                _this.element.dispatchEvent(_this.buildBaseHoverEvent(_this.polygonIdToBaseId(polygon.id), polygon));
+                _this.element.dispatchEvent(_this._buildBaseHoverEvent(_this._polygonIdToBaseId(polygon.id), polygon));
             };
             polygon.addEventListener("mouseenter", addHoverFx, {
                 passive: true
@@ -621,7 +621,7 @@ var BasePolygonsLayer = (function (_super) {
             svg.style.setProperty("--ps2map__base-hexes__stroke-width", "".concat(strokeWith, "px"));
         }
     };
-    BasePolygonsLayer.prototype.buildBaseHoverEvent = function (baseId, element) {
+    BasePolygonsLayer.prototype._buildBaseHoverEvent = function (baseId, element) {
         return new CustomEvent("ps2map_basehover", {
             detail: {
                 baseId: baseId,
@@ -631,10 +631,10 @@ var BasePolygonsLayer = (function (_super) {
             cancelable: true
         });
     };
-    BasePolygonsLayer.prototype.polygonIdToBaseId = function (id) {
+    BasePolygonsLayer.prototype._polygonIdToBaseId = function (id) {
         return parseInt(id.substring(id.lastIndexOf("-") + 1));
     };
-    BasePolygonsLayer.prototype.baseIdToPolygonId = function (baseId) {
+    BasePolygonsLayer.prototype._baseIdToPolygonId = function (baseId) {
         return "base-outline-".concat(baseId);
     };
     return BasePolygonsLayer;
@@ -699,7 +699,7 @@ var HeroMap = (function () {
                                     names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
                                 });
                                 _this._continent = continent;
-                                _this.startMapStatePolling();
+                                _this._startMapStatePolling();
                                 _this.renderer.viewport.dispatchEvent(Events.continentChangedFactory(continent));
                             })];
                     case 1:
@@ -716,7 +716,7 @@ var HeroMap = (function () {
                 if (server.id == ((_a = this._server) === null || _a === void 0 ? void 0 : _a.id))
                     return [2];
                 this._server = server;
-                this.startMapStatePolling();
+                this._startMapStatePolling();
                 return [2];
             });
         });
@@ -738,7 +738,7 @@ var HeroMap = (function () {
         var _a;
         (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.jumpTo(point);
     };
-    HeroMap.prototype.startMapStatePolling = function () {
+    HeroMap.prototype._startMapStatePolling = function () {
         var _this = this;
         this._baseOwnershipMap.clear();
         if (this._baseUpdateIntervalId != undefined)
@@ -753,36 +753,36 @@ var HeroMap = (function () {
 var Minimap = (function () {
     function Minimap(element, continent) {
         if (continent === void 0) { continent = undefined; }
-        this.mapSize = 0;
-        this.baseOutlineSvg = undefined;
-        this.minimapHexAlpha = 0.5;
-        this.polygons = new Map();
+        this._mapSize = 0;
+        this._baseOutlineSvg = undefined;
+        this._minimapHexAlpha = 0.5;
+        this._polygons = new Map();
         this.element = element;
         this.element.classList.add("ps2map__minimap");
-        this.cssSize = this.element.clientWidth;
-        this.element.style.height = "".concat(this.cssSize, "px");
-        this.viewBoxElement = document.createElement("div");
-        this.viewBoxElement.classList.add("ps2map__minimap__viewbox");
-        this.element.appendChild(this.viewBoxElement);
+        this._cssSize = this.element.clientWidth;
+        this.element.style.height = "".concat(this._cssSize, "px");
+        this._viewBoxElement = document.createElement("div");
+        this._viewBoxElement.classList.add("ps2map__minimap__viewbox");
+        this.element.appendChild(this._viewBoxElement);
         if (continent != undefined)
             this.setContinent(continent);
-        this.element.addEventListener("mousedown", this.jumpToPosition.bind(this), {
+        this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), {
             passive: true
         });
     }
-    Minimap.prototype.jumpToPosition = function (evtDown) {
+    Minimap.prototype._jumpToPosition = function (evtDown) {
         var _this = this;
-        if (this.mapSize == 0)
+        if (this._mapSize == 0)
             return;
         var drag = Utils.rafDebounce(function (evtDrag) {
             var rect = _this.element.getBoundingClientRect();
             var relX = (evtDrag.clientX - rect.left) / (rect.width);
             var relY = (evtDrag.clientY - rect.top) / (rect.height);
             var target = {
-                x: Math.round(relX * _this.mapSize),
-                y: Math.round((1 - relY) * _this.mapSize)
+                x: Math.round(relX * _this._mapSize),
+                y: Math.round((1 - relY) * _this._mapSize)
             };
-            _this.element.dispatchEvent(_this.buildMinimapJumpEvent(target));
+            _this.element.dispatchEvent(_this._buildMinimapJumpEvent(target));
         });
         var up = function () {
             _this.element.removeEventListener("mousemove", drag);
@@ -795,7 +795,7 @@ var Minimap = (function () {
         drag(evtDown);
     };
     Minimap.prototype.setViewBox = function (viewBox) {
-        var mapSize = this.mapSize;
+        var mapSize = this._mapSize;
         var relViewBox = {
             top: (viewBox.top + mapSize * 0.5) / mapSize,
             left: (viewBox.left + mapSize * 0.5) / mapSize,
@@ -806,45 +806,45 @@ var Minimap = (function () {
         var relWidth = relViewBox.right - relViewBox.left;
         var relLeft = relViewBox.left - 0.5;
         var relTop = relViewBox.bottom - 0.5;
-        this.viewBoxElement.style.height = "".concat(this.cssSize * relHeight, "px");
-        this.viewBoxElement.style.width = "".concat(this.cssSize * relWidth, "px");
-        this.viewBoxElement.style.left = "".concat(this.cssSize * relLeft, "px");
-        this.viewBoxElement.style.bottom = "".concat(this.cssSize * relTop, "px");
+        this._viewBoxElement.style.height = "".concat(this._cssSize * relHeight, "px");
+        this._viewBoxElement.style.width = "".concat(this._cssSize * relWidth, "px");
+        this._viewBoxElement.style.left = "".concat(this._cssSize * relLeft, "px");
+        this._viewBoxElement.style.bottom = "".concat(this._cssSize * relTop, "px");
     };
     Minimap.prototype.setBaseOwnership = function (baseId, factionId) {
         var colours = {
-            0: "rgba(0, 0, 0, ".concat(this.minimapHexAlpha, ")"),
-            1: "rgba(160, 77, 183, ".concat(this.minimapHexAlpha, ")"),
-            2: "rgba(81, 123, 204, ".concat(this.minimapHexAlpha, ")"),
-            3: "rgba(226, 25, 25, ".concat(this.minimapHexAlpha, ")"),
-            4: "rgba(255, 255, 255, ".concat(this.minimapHexAlpha, ")")
+            0: "rgba(0, 0, 0, ".concat(this._minimapHexAlpha, ")"),
+            1: "rgba(160, 77, 183, ".concat(this._minimapHexAlpha, ")"),
+            2: "rgba(81, 123, 204, ".concat(this._minimapHexAlpha, ")"),
+            3: "rgba(226, 25, 25, ".concat(this._minimapHexAlpha, ")"),
+            4: "rgba(255, 255, 255, ".concat(this._minimapHexAlpha, ")")
         };
-        var polygon = this.polygons.get(baseId);
+        var polygon = this._polygons.get(baseId);
         if (polygon)
             polygon.style.fill = colours[factionId];
     };
     Minimap.prototype.setContinent = function (continent) {
         var _this = this;
-        this.mapSize = continent.map_size;
+        this._mapSize = continent.map_size;
         this.element.style.backgroundImage =
             "url(".concat(Api.getMinimapImagePath(continent.code), ")");
         Api.getContinentOutlinesSvg(continent)
             .then(function (svg) {
-            if (_this.baseOutlineSvg != undefined)
-                _this.element.removeChild(_this.baseOutlineSvg);
-            _this.polygons = new Map();
+            if (_this._baseOutlineSvg != undefined)
+                _this.element.removeChild(_this._baseOutlineSvg);
+            _this._polygons = new Map();
             svg.classList.add("ps2map__minimap__hexes");
-            _this.baseOutlineSvg = svg;
-            _this.element.appendChild(_this.baseOutlineSvg);
+            _this._baseOutlineSvg = svg;
+            _this.element.appendChild(_this._baseOutlineSvg);
             var polygons = svg.querySelectorAll("polygon");
             var i = polygons.length;
             while (i-- > 0) {
-                _this.polygons.set(parseInt(polygons[i].id), polygons[i]);
-                polygons[i].id = _this.polygonIdFromBaseId(polygons[i].id);
+                _this._polygons.set(parseInt(polygons[i].id), polygons[i]);
+                polygons[i].id = _this._polygonIdFromBaseId(polygons[i].id);
             }
         });
     };
-    Minimap.prototype.buildMinimapJumpEvent = function (target) {
+    Minimap.prototype._buildMinimapJumpEvent = function (target) {
         return new CustomEvent("ps2map_minimapjump", {
             detail: {
                 target: target
@@ -853,7 +853,7 @@ var Minimap = (function () {
             cancelable: true
         });
     };
-    Minimap.prototype.polygonIdFromBaseId = function (baseId) {
+    Minimap.prototype._polygonIdFromBaseId = function (baseId) {
         return "minimap-baseId-".concat(baseId);
     };
     return Minimap;
@@ -900,22 +900,22 @@ var BaseInfo = (function (_super) {
     __extends(BaseInfo, _super);
     function BaseInfo() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.callback = undefined;
-        _this.bases = new Map();
+        _this._callback = undefined;
+        _this._bases = new Map();
         return _this;
     }
     BaseInfo.prototype.activate = function () {
         var _this = this;
         _super.prototype.activate.call(this);
-        this.callback = this.onHover.bind(this);
+        this._callback = this._onHover.bind(this);
         var hex_layer = this.map.renderer.getLayer("hexes");
-        hex_layer.element.addEventListener("ps2map_basehover", this.callback);
-        this.bases = new Map();
+        hex_layer.element.addEventListener("ps2map_basehover", this._callback);
+        this._bases = new Map();
         var continent = this.map.continent();
         if (continent == undefined)
             return;
         Api.getBasesFromContinent(continent.id).then(function (bases) {
-            _this.bases = new Map(bases.map(function (base) { return [base.id, base]; }));
+            _this._bases = new Map(bases.map(function (base) { return [base.id, base]; }));
         });
         var parent = this.tool_panel;
         if (parent)
@@ -923,9 +923,9 @@ var BaseInfo = (function (_super) {
     };
     BaseInfo.prototype.deactivate = function () {
         _super.prototype.deactivate.call(this);
-        if (this.callback) {
+        if (this._callback) {
             var hex_layer = this.map.renderer.getLayer("hexes");
-            hex_layer.element.removeEventListener("ps2map_basehover", this.callback);
+            hex_layer.element.removeEventListener("ps2map_basehover", this._callback);
         }
         var parent = this.tool_panel;
         if (parent)
@@ -937,12 +937,12 @@ var BaseInfo = (function (_super) {
     BaseInfo.getId = function () {
         return "base-info";
     };
-    BaseInfo.prototype.onHover = function (event) {
+    BaseInfo.prototype._onHover = function (event) {
         if (event.type !== "ps2map_basehover")
             return;
         var evt = event;
         var base = evt.detail.baseId;
-        var base_info = this.bases.get(base);
+        var base_info = this._bases.get(base);
         if (base_info == undefined)
             return;
         this.tool_panel.innerHTML = "";
@@ -976,20 +976,20 @@ var Crosshair = (function (_super) {
     __extends(Crosshair, _super);
     function Crosshair() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.callback = undefined;
+        _this._callback = undefined;
         return _this;
     }
     Crosshair.prototype.activate = function () {
         _super.prototype.activate.call(this);
         this.viewport.style.cursor = "crosshair";
-        this.callback = this.onMove.bind(this);
-        this.viewport.addEventListener("mousemove", this.callback, { passive: true });
-        this.setupToolPanel();
+        this._callback = this._onMove.bind(this);
+        this.viewport.addEventListener("mousemove", this._callback, { passive: true });
+        this._setupToolPanel();
     };
     Crosshair.prototype.deactivate = function () {
         _super.prototype.deactivate.call(this);
-        if (this.callback)
-            this.viewport.removeEventListener("click", this.callback);
+        if (this._callback)
+            this.viewport.removeEventListener("click", this._callback);
         this.viewport.style.removeProperty("cursor");
         var parent = this.tool_panel;
         if (parent)
@@ -1001,7 +1001,7 @@ var Crosshair = (function (_super) {
     Crosshair.getId = function () {
         return "crosshair";
     };
-    Crosshair.prototype.setupToolPanel = function () {
+    Crosshair.prototype._setupToolPanel = function () {
         var parent = this.tool_panel;
         if (!parent)
             return;
@@ -1024,17 +1024,17 @@ var Crosshair = (function (_super) {
         y_value.id = "tool-crosshair_y";
         y_value.classList.add("ps2map__tool__crosshair__value");
         parent.appendChild(y_value);
-        this.updateToolPanel(0, 0);
+        this._updateToolPanel(0, 0);
     };
-    Crosshair.prototype.updateToolPanel = function (x, y) {
+    Crosshair.prototype._updateToolPanel = function (x, y) {
         var x_value = document.getElementById("tool-crosshair_x");
         x_value.textContent = x.toFixed(2);
         var y_value = document.getElementById("tool-crosshair_y");
         y_value.textContent = y.toFixed(2);
     };
-    Crosshair.prototype.onMove = function (event) {
+    Crosshair.prototype._onMove = function (event) {
         var _a = this.getMapPosition(event), x = _a[0], y = _a[1];
-        this.updateToolPanel(x, y);
+        this._updateToolPanel(x, y);
     };
     return Crosshair;
 }(Tool));
@@ -1044,8 +1044,8 @@ var DevTools;
         __extends(BaseMarkers, _super);
         function BaseMarkers(viewport, map) {
             var _this = _super.call(this, viewport, map) || this;
-            _this.placedBases = [];
-            _this.callback = undefined;
+            _this._placedBases = [];
+            _this._callback = undefined;
             var btn = document.getElementById("export-bases");
             if (btn)
                 btn.addEventListener("click", function () { return _this["export"](); });
@@ -1054,20 +1054,20 @@ var DevTools;
         BaseMarkers.prototype.activate = function () {
             _super.prototype.activate.call(this);
             this.viewport.style.cursor = "crosshair";
-            this.callback = this.onClick.bind(this);
-            this.viewport.addEventListener("click", this.callback, { passive: true });
+            this._callback = this._onClick.bind(this);
+            this.viewport.addEventListener("click", this._callback, { passive: true });
         };
         BaseMarkers.prototype.deactivate = function () {
             _super.prototype.deactivate.call(this);
-            if (this.callback)
-                this.viewport.removeEventListener("click", this.callback);
+            if (this._callback)
+                this.viewport.removeEventListener("click", this._callback);
             this.viewport.style.removeProperty("cursor");
         };
         BaseMarkers.prototype.clear = function () {
-            this.placedBases = [];
+            this._placedBases = [];
         };
         BaseMarkers.prototype["export"] = function () {
-            var data = JSON.stringify(this.placedBases);
+            var data = JSON.stringify(this._placedBases);
             var blob = new Blob([data], { type: "application/json" });
             var url = URL.createObjectURL(blob);
             var a = document.createElement("a");
@@ -1075,7 +1075,7 @@ var DevTools;
             a.download = "bases.json";
             a.click();
         };
-        BaseMarkers.prototype.onClick = function (event) {
+        BaseMarkers.prototype._onClick = function (event) {
             if (event.button !== 0)
                 return;
             var pos = this.getMapPosition(event);
@@ -1105,7 +1105,7 @@ var DevTools;
             var typeId = parseInt(typeIdStr);
             if (isNaN(typeId))
                 return;
-            this.placedBases.push({
+            this._placedBases.push({
                 id: baseId,
                 name: baseName,
                 map_pos: [
@@ -1247,7 +1247,7 @@ var LatticeLayer = (function (_super) {
     __extends(LatticeLayer, _super);
     function LatticeLayer(id, mapSize) {
         var _this = _super.call(this, id, mapSize) || this;
-        _this.latticeLinkCache = [];
+        _this._latticeLinkCache = [];
         _this.element.classList.add("ps2map__lattice");
         return _this;
     }
@@ -1264,11 +1264,11 @@ var LatticeLayer = (function (_super) {
                 });
                 return [2, Api.getLatticeForContinent(continent)
                         .then(function (links) {
-                        layer.latticeLinkCache = [];
+                        layer._latticeLinkCache = [];
                         var i = links.length;
                         while (i-- > 0)
-                            layer.latticeLinkCache.push(links[i]);
-                        layer.createLatticeSvg();
+                            layer._latticeLinkCache.push(links[i]);
+                        layer._createLatticeSvg();
                         return layer;
                     })];
             });
@@ -1282,9 +1282,9 @@ var LatticeLayer = (function (_super) {
             3: "rgba(186, 25, 25, 1.0)",
             4: "rgba(50, 50, 50, 1.0)"
         };
-        var i = this.latticeLinkCache.length;
+        var i = this._latticeLinkCache.length;
         while (i-- > 0) {
-            var link = this.latticeLinkCache[i];
+            var link = this._latticeLinkCache[i];
             if (link.base_a_id == baseId || link.base_b_id == baseId) {
                 var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
                 var element = this.element.querySelector(id);
@@ -1301,17 +1301,17 @@ var LatticeLayer = (function (_super) {
             }
         }
     };
-    LatticeLayer.prototype.createLatticeSvg = function () {
+    LatticeLayer.prototype._createLatticeSvg = function () {
         var _this = this;
         this.element.innerHTML = "";
         var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("viewBox", "0 0 ".concat(this.mapSize, " ").concat(this.mapSize));
-        this.latticeLinkCache.forEach(function (link) {
-            svg.appendChild(_this.createLatticeLink(link));
+        this._latticeLinkCache.forEach(function (link) {
+            svg.appendChild(_this._createLatticeLink(link));
         });
         this.element.appendChild(svg);
     };
-    LatticeLayer.prototype.createLatticeLink = function (link) {
+    LatticeLayer.prototype._createLatticeLink = function (link) {
         var path = document.createElementNS("http://www.w3.org/2000/svg", "line");
         path.setAttribute("id", "lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id));
         path.setAttribute("x1", (link.map_pos_a_x + this.mapSize * 0.5).toFixed());
@@ -1350,14 +1350,14 @@ var BaseNamesLayer = (function (_super) {
                 return [2, Api.getBasesFromContinent(continent.id)
                         .then(function (bases) {
                         console.log(bases);
-                        layer.loadBaseInfo(bases);
+                        layer._loadBaseInfo(bases);
                         layer.updateLayer();
                         return layer;
                     })];
             });
         });
     };
-    BaseNamesLayer.prototype.loadBaseInfo = function (bases) {
+    BaseNamesLayer.prototype._loadBaseInfo = function (bases) {
         var features = [];
         var i = bases.length;
         while (i-- > 0) {
@@ -1521,7 +1521,7 @@ var TerrainLayer = (function (_super) {
     __extends(TerrainLayer, _super);
     function TerrainLayer(id, mapSize) {
         var _this = _super.call(this, id, mapSize, 3) || this;
-        _this.code = "";
+        _this._code = "";
         _this.element.classList.add("ps2map__terrain");
         return _this;
     }
@@ -1537,14 +1537,14 @@ var TerrainLayer = (function (_super) {
         });
     };
     TerrainLayer.prototype.setContinent = function (code) {
-        if (this.code == code)
+        if (this._code == code)
             return;
-        this.code = code;
+        this._code = code;
         this.element.style.backgroundImage = ("url(".concat(Api.getMinimapImagePath(code), ")"));
-        var gridSize = this.mapTilesPerAxis(this.mapSize, this.lod);
+        var gridSize = this._mapTilesPerAxis(this.mapSize, this.lod);
         this.defineTiles(gridSize);
     };
-    TerrainLayer.prototype.calculateLod = function (zoom) {
+    TerrainLayer.prototype._calculateLod = function (zoom) {
         var adjustedZoom = zoom * devicePixelRatio;
         if (adjustedZoom < 0.125)
             return 3;
@@ -1566,7 +1566,7 @@ var TerrainLayer = (function (_super) {
         element.classList.add("ps2map__terrain__tile");
         return new MapTile(box, element, pos);
     };
-    TerrainLayer.prototype.formatTileCoordinate = function (value) {
+    TerrainLayer.prototype._formatTileCoordinate = function (value) {
         var negative = value < 0;
         var coord = Math.abs(value).toFixed();
         if (coord.length < 3)
@@ -1576,19 +1576,19 @@ var TerrainLayer = (function (_super) {
         return coord;
     };
     TerrainLayer.prototype.generateTilePath = function (pos, lod) {
-        var _a = this.gridPosToTilePos(pos, lod), tileX = _a[0], tileY = _a[1];
+        var _a = this._gridPosToTilePos(pos, lod), tileX = _a[0], tileY = _a[1];
         var tilePos = [
-            this.formatTileCoordinate(tileX),
-            this.formatTileCoordinate(tileY)
+            this._formatTileCoordinate(tileX),
+            this._formatTileCoordinate(tileY)
         ];
-        return Api.getTerrainTilePath(this.code, tilePos, lod);
+        return Api.getTerrainTilePath(this._code, tilePos, lod);
     };
-    TerrainLayer.prototype.gridPosToTilePos = function (pos, lod) {
-        var min = this.mapGridLimits(this.mapSize, lod)[0];
-        var stepSize = this.mapStepSize(this.mapSize, lod);
+    TerrainLayer.prototype._gridPosToTilePos = function (pos, lod) {
+        var min = this._mapGridLimits(this.mapSize, lod)[0];
+        var stepSize = this._mapStepSize(this.mapSize, lod);
         return [min + (stepSize * pos.x), min + (stepSize * pos.y)];
     };
-    TerrainLayer.prototype.mapStepSize = function (mapSize, lod) {
+    TerrainLayer.prototype._mapStepSize = function (mapSize, lod) {
         if (lod == 0)
             return 4;
         if (lod == 1 || mapSize <= 1024)
@@ -1597,25 +1597,25 @@ var TerrainLayer = (function (_super) {
             return 16;
         return 32;
     };
-    TerrainLayer.prototype.mapTileCount = function (mapSize, lod) {
+    TerrainLayer.prototype._mapTileCount = function (mapSize, lod) {
         return Math.ceil(Math.pow(4, (Math.floor(Math.log2(mapSize)) - 8 - lod)));
     };
-    TerrainLayer.prototype.mapTilesPerAxis = function (mapSize, lod) {
-        return Math.floor(Math.sqrt(this.mapTileCount(mapSize, lod)));
+    TerrainLayer.prototype._mapTilesPerAxis = function (mapSize, lod) {
+        return Math.floor(Math.sqrt(this._mapTileCount(mapSize, lod)));
     };
-    TerrainLayer.prototype.mapGridLimits = function (mapSize, lod) {
-        var stepSize = this.mapStepSize(mapSize, lod);
-        var tilesPerAxis = this.mapTilesPerAxis(mapSize, lod);
+    TerrainLayer.prototype._mapGridLimits = function (mapSize, lod) {
+        var stepSize = this._mapStepSize(mapSize, lod);
+        var tilesPerAxis = this._mapTilesPerAxis(mapSize, lod);
         var halfSize = stepSize * Math.floor(tilesPerAxis / 2);
         if (halfSize <= 0)
             return [-stepSize, -stepSize];
         return [-halfSize, halfSize - stepSize];
     };
     TerrainLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
-        var newLod = this.calculateLod(zoom);
+        var newLod = this._calculateLod(zoom);
         if (newLod != this.lod) {
             this.lod = newLod;
-            this.defineTiles(this.mapTilesPerAxis(this.mapSize, newLod));
+            this.defineTiles(this._mapTilesPerAxis(this.mapSize, newLod));
         }
         this.updateTileVisibility(viewBox);
     };

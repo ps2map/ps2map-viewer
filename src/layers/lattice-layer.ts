@@ -6,7 +6,7 @@
  */
 class LatticeLayer extends StaticLayer {
 
-    private latticeLinkCache: Api.LatticeLink[] = [];
+    private _latticeLinkCache: Api.LatticeLink[] = [];
 
     constructor(id: string, mapSize: number) {
         super(id, mapSize);
@@ -24,11 +24,11 @@ class LatticeLayer extends StaticLayer {
         });
         return Api.getLatticeForContinent(continent)
             .then((links) => {
-                layer.latticeLinkCache = [];
+                layer._latticeLinkCache = [];
                 let i = links.length;
                 while (i-- > 0)
-                    layer.latticeLinkCache.push(links[i])
-                layer.createLatticeSvg();
+                    layer._latticeLinkCache.push(links[i])
+                layer._createLatticeSvg();
                 return layer;
             });
     }
@@ -42,9 +42,9 @@ class LatticeLayer extends StaticLayer {
             4: "rgba(50, 50, 50, 1.0)",
         }
 
-        let i = this.latticeLinkCache.length;
+        let i = this._latticeLinkCache.length;
         while (i-- > 0) {
-            const link = this.latticeLinkCache[i];
+            const link = this._latticeLinkCache[i];
             if (link.base_a_id == baseId || link.base_b_id == baseId) {
                 const id = `#lattice-link-${link.base_a_id}-${link.base_b_id}`;
                 const element = this.element.querySelector(id) as SVGLineElement | null;
@@ -62,19 +62,19 @@ class LatticeLayer extends StaticLayer {
         }
     }
 
-    private createLatticeSvg(): void {
+    private _createLatticeSvg(): void {
         this.element.innerHTML = "";
         const svg = document.createElementNS(
             "http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("viewBox", `0 0 ${this.mapSize} ${this.mapSize}`);
 
-        this.latticeLinkCache.forEach((link) => {
-            svg.appendChild(this.createLatticeLink(link));
+        this._latticeLinkCache.forEach((link) => {
+            svg.appendChild(this._createLatticeLink(link));
         });
         this.element.appendChild(svg);
     }
 
-    private createLatticeLink(link: Api.LatticeLink): SVGElement {
+    private _createLatticeLink(link: Api.LatticeLink): SVGElement {
         const path = document.createElementNS(
             "http://www.w3.org/2000/svg", "line");
         path.setAttribute("id", `lattice-link-${link.base_a_id}-${link.base_b_id}`);

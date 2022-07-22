@@ -2,22 +2,22 @@
 
 class BaseInfo extends Tool {
 
-    private callback: ((arg0: Event) => void) | undefined = undefined;
-    private bases: Map<number, Api.Base> = new Map();
+    private _callback: ((arg0: Event) => void) | undefined = undefined;
+    private _bases: Map<number, Api.Base> = new Map();
 
     activate(): void {
         super.activate();
-        this.callback = this.onHover.bind(this);
+        this._callback = this._onHover.bind(this);
         const hex_layer = this.map.renderer.getLayer("hexes") as MapLayer;
-        hex_layer.element.addEventListener("ps2map_basehover", this.callback);
+        hex_layer.element.addEventListener("ps2map_basehover", this._callback);
 
-        this.bases = new Map();
+        this._bases = new Map();
         const continent = this.map.continent();
         if (continent == undefined)
             return;
         Api.getBasesFromContinent(continent.id).then(
             (bases) => {
-                this.bases = new Map(bases.map((base) => [base.id, base]));
+                this._bases = new Map(bases.map((base) => [base.id, base]));
             }
         );
         const parent = this.tool_panel;
@@ -27,9 +27,9 @@ class BaseInfo extends Tool {
 
     deactivate(): void {
         super.deactivate();
-        if (this.callback) {
+        if (this._callback) {
             const hex_layer = this.map.renderer.getLayer("hexes") as MapLayer;
-            hex_layer.element.removeEventListener("ps2map_basehover", this.callback);
+            hex_layer.element.removeEventListener("ps2map_basehover", this._callback);
         }
         const parent = this.tool_panel;
         if (parent)
@@ -44,13 +44,13 @@ class BaseInfo extends Tool {
         return "base-info";
     }
 
-    private onHover(event: Event): void {
+    private _onHover(event: Event): void {
         if (event.type !== "ps2map_basehover")
             return;
         const evt = event as CustomEvent<BaseHoverEvent>;
 
         const base = evt.detail.baseId;
-        const base_info = this.bases.get(base);
+        const base_info = this._bases.get(base);
         if (base_info == undefined)
             return;
 

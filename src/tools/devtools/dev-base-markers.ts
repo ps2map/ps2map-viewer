@@ -11,10 +11,10 @@ namespace DevTools {
 
     export class BaseMarkers extends Tool {
 
-        private placedBases: BaseInput[] = [];
+        private _placedBases: BaseInput[] = [];
 
         // Reference to bound version of onClick
-        private callback: ((arg0: MouseEvent) => void) | undefined = undefined;
+        private _callback: ((arg0: MouseEvent) => void) | undefined = undefined;
 
         constructor(viewport: HTMLDivElement, map: HeroMap) {
             super(viewport, map);
@@ -27,23 +27,23 @@ namespace DevTools {
         activate(): void {
             super.activate();
             this.viewport.style.cursor = "crosshair";
-            this.callback = this.onClick.bind(this);
-            this.viewport.addEventListener("click", this.callback, { passive: true });
+            this._callback = this._onClick.bind(this);
+            this.viewport.addEventListener("click", this._callback, { passive: true });
         }
 
         deactivate(): void {
             super.deactivate();
-            if (this.callback)
-                this.viewport.removeEventListener("click", this.callback);
+            if (this._callback)
+                this.viewport.removeEventListener("click", this._callback);
             this.viewport.style.removeProperty("cursor");
         }
 
         clear(): void {
-            this.placedBases = [];
+            this._placedBases = [];
         }
 
         export(): void {
-            const data = JSON.stringify(this.placedBases);
+            const data = JSON.stringify(this._placedBases);
             const blob = new Blob([data], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -52,7 +52,7 @@ namespace DevTools {
             a.click();
         }
 
-        private onClick(event: MouseEvent): void {
+        private _onClick(event: MouseEvent): void {
             // Only react on LMB
             if (event.button !== 0)
                 return;
@@ -85,7 +85,7 @@ namespace DevTools {
             const typeId = parseInt(typeIdStr);
             if (isNaN(typeId))
                 return;
-            this.placedBases.push({
+            this._placedBases.push({
                 id: baseId,
                 name: baseName,
                 map_pos: [
