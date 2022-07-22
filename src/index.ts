@@ -1,6 +1,7 @@
 /// <reference path="./api/index.ts" />
 /// <reference path="./hero-map.ts" />
 /// <reference path="./minimap.ts" />
+/// <reference path="./tools/index.ts" />
 
 /** Initialisation hook for components that need to be run on DOM load. */
 document.addEventListener("DOMContentLoaded", () => {
@@ -25,24 +26,41 @@ document.addEventListener("DOMContentLoaded", () => {
         heroMap.jumpTo(evt.target);
     }, { passive: true });
 
-    const dropdown = document.getElementById("continent-selector") as HTMLSelectElement;
-    dropdown.addEventListener("change", () => {
-        heroMap.setContinent(JSON.parse(dropdown.value));
+    // Load server list
+    const server_picker = document.getElementById("server-picker") as HTMLSelectElement;
+    server_picker.addEventListener("change", () => {
+        const server = JSON.parse(server_picker.value);
+        heroMap.setServer(server);
     });
+    Api.getServerList().then((servers) => {
+        servers.sort((a, b) => b.name.localeCompare(a.name));
+        let i = servers.length;
+        while (i-- > 0) {
+            const server = servers[i];
+            const option = document.createElement("option");
+            option.value = JSON.stringify(server);
+            option.text = server.name;
+            server_picker.appendChild(option);
+        }
+        heroMap.setServer(JSON.parse(server_picker.value));
+    })
 
-    // TODO: Create loading screen or similar waiting UI
-    Api.getContinentList()
-        .then((continentList) => {
-            continentList.sort((a, b) => b.name.localeCompare(a.name))
-            let i = continentList.length;
-            while (i-- > 0) {
-                const cont = continentList[i];
-                const option = document.createElement("option");
-                option.value = JSON.stringify(cont);
-                option.text = cont.name;
-                dropdown.appendChild(option);
-            }
-            // TODO: Load last selected continent rather than the first one
-            heroMap.setContinent(JSON.parse(dropdown.value));
-        });
+    // Load continent list
+    const continent_picker = document.getElementById("continent-picker") as HTMLSelectElement;
+    continent_picker.addEventListener("change", () => {
+        const cont = JSON.parse(continent_picker.value);
+        heroMap.setContinent(cont);
+    });
+    Api.getContinentList().then((continents) => {
+        continents.sort((a, b) => b.name.localeCompare(a.name));
+        let i = continents.length;
+        while (i-- > 0) {
+            const cont = continents[i];
+            const option = document.createElement("option");
+            option.value = JSON.stringify(cont);
+            option.text = cont.name;
+            continent_picker.appendChild(option);
+        }
+        heroMap.setContinent(JSON.parse(continent_picker.value));
+    });
 });

@@ -6,27 +6,34 @@
     <meta name="description" content="Interactive online world map and population tracker for PlanetSide 2." />
     <meta name="viewport" content="width=device-width" />
     <title>PS2 Map Viewer - Dev</title>
-    <link rel="stylesheet" href="index.css" />
-    <link rel="stylesheet" href="minimap.css" />
-    <link rel="stylesheet" href="ps2-map.css" />
-    <script src="index.js"></script>
+    <link rel="stylesheet" href="./index.css" />
+    <link rel="stylesheet" href="./minimap.css" />
+    <link rel="stylesheet" href="./ps2-map.css" />
+    <script src="./index.js"></script>
 </head>
 
 <body>
-    <div class="widget" id="continent-selector-frame">
-        <label for="continent-selector">Continent:</label>
-        <select name="continents" id="continent-selector"></select>
+    <div id="sidebar">
+        <div id="minimap" class="sidebar__widget"></div>
+        <div id="toolbar" class="sidebar__widget">
+            <span class="sidebar__widget__label">Tools</span>
+            <div id="toolbar-container"></div>
+        </div>
+        <div id="map-switcher">
+            <span class="map_switcher__label map_switcher__row1">Server:</span>
+            <select id="server-picker" class="map_switcher__dropdown map_switcher__row1" title="Server Dropdown">
+                <!-- To be populated upon load -->
+            </select>
+            <span class="map_switcher__label map_switcher__row2">Continent:</span>
+            <select id="continent-picker" class="map_switcher__dropdown map_switcher__row2" title="Continent Dropdown">
+                <!-- To be populated upon load -->
+            </select>
+        </div>
     </div>
-
     <div id="hero-map"></div>
 
-    <!-- Minimap -->
-    <div class="widget" id="minimap"></div>
-    <!-- Base Info -->
-    <aside class="widget" id="widget_base-info">
-        <h1>Region</h1>
-        <span id="widget_base-info_name">TI Alloys, Inc.</span>
-        <span id="widget_base-info_type">Small Outpost</span>
+    <aside id="tool-panel">
+        <!-- Populated dynamically based on the current tool -->
     </aside>
 </body>
 
