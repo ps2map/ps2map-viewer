@@ -1,4 +1,199 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+var Api;
+(function (Api) {
+    function getBasesFromContinent(id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getBasesFromContinentUrl(id))];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok)
+                            throw new Error(response.statusText);
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    }
+    Api.getBasesFromContinent = getBasesFromContinent;
+    function getBaseOwnership(continent_id, server_id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getBaseOwnershipUrl(continent_id, server_id))];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok)
+                            throw new Error(response.statusText);
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    }
+    Api.getBaseOwnership = getBaseOwnership;
+})(Api || (Api = {}));
+var Api;
+(function (Api) {
+    Api.restEndpoint = "http://127.0.0.1:5000/";
+    function getContinentListUrl() {
+        return "".concat(Api.restEndpoint, "continent");
+    }
+    Api.getContinentListUrl = getContinentListUrl;
+    function getServerListUrl() {
+        return "".concat(Api.restEndpoint, "server");
+    }
+    Api.getServerListUrl = getServerListUrl;
+    function getBasesFromContinentUrl(id) {
+        return "".concat(Api.restEndpoint, "base?continent_id=").concat(id);
+    }
+    Api.getBasesFromContinentUrl = getBasesFromContinentUrl;
+    function getMinimapImagePath(code) {
+        return "".concat(Api.restEndpoint, "static/minimap/").concat(code, ".jpg");
+    }
+    Api.getMinimapImagePath = getMinimapImagePath;
+    function getTerrainTilePath(code, pos, lod) {
+        var filename = "".concat(code, "_tile_").concat(pos[0], "_").concat(pos[1], "_lod").concat(lod, ".jpeg");
+        return "".concat(Api.restEndpoint, "static/tile/").concat(filename);
+    }
+    Api.getTerrainTilePath = getTerrainTilePath;
+    function getContinentOutlinesPath(code) {
+        return "".concat(Api.restEndpoint, "static/hex/").concat(code, "-minimal.svg");
+    }
+    Api.getContinentOutlinesPath = getContinentOutlinesPath;
+    function getBaseOwnershipUrl(continent_id, server_id) {
+        return "".concat(Api.restEndpoint, "base/status?continent_id=").concat(continent_id, "&server_id=").concat(server_id);
+    }
+    Api.getBaseOwnershipUrl = getBaseOwnershipUrl;
+    function getLatticePath(continentId) {
+        return "".concat(Api.restEndpoint, "lattice?continent_id=").concat(continentId);
+    }
+    Api.getLatticePath = getLatticePath;
+})(Api || (Api = {}));
+var Api;
+(function (Api) {
+    function getContinentList() {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getContinentListUrl())];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok)
+                            throw new Error(response.statusText);
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    }
+    Api.getContinentList = getContinentList;
+    function getContinentOutlinesSvg(continent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response, payload, factory, svg;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getContinentOutlinesPath(continent.code))];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok)
+                            throw new Error(response.statusText);
+                        return [4, response.text()];
+                    case 2:
+                        payload = _a.sent();
+                        factory = document.createElement("template");
+                        factory.innerHTML = payload;
+                        svg = factory.content.firstElementChild;
+                        if (!(svg instanceof SVGElement))
+                            throw "Unable to load contents from map hex SVG";
+                        return [2, svg];
+                }
+            });
+        });
+    }
+    Api.getContinentOutlinesSvg = getContinentOutlinesSvg;
+    function getLatticeForContinent(continent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetch(Api.getLatticePath(continent.id))];
+                    case 1:
+                        response = _a.sent();
+                        if (!response.ok)
+                            throw new Error(response.statusText);
+                        return [4, response.json()];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    }
+    Api.getLatticeForContinent = getLatticeForContinent;
+})(Api || (Api = {}));
+var Events;
+(function (Events) {
+    function continentChangedFactory(continent) {
+        return new CustomEvent("ps2map_continentchanged", {
+            detail: {
+                continent: continent
+            },
+            bubbles: true,
+            cancelable: true
+        });
+    }
+    Events.continentChangedFactory = continentChangedFactory;
+    function baseOwnershipChangedFactory(baseId, factionId) {
+        return new CustomEvent("ps2map_baseownershipchanged", {
+            detail: {
+                baseId: baseId,
+                factionId: factionId
+            },
+            bubbles: true,
+            cancelable: true
+        });
+    }
+    Events.baseOwnershipChangedFactory = baseOwnershipChangedFactory;
+})(Events || (Events = {}));
 var Utils;
 (function (Utils) {
     function clamp(value, min, max) {
@@ -353,177 +548,6 @@ var MapRenderer = (function () {
     };
     return MapRenderer;
 }());
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-var Api;
-(function (Api) {
-    function getBasesFromContinent(id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getBasesFromContinentUrl(id))];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
-        });
-    }
-    Api.getBasesFromContinent = getBasesFromContinent;
-    function getBaseOwnership(continent_id, server_id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getBaseOwnershipUrl(continent_id, server_id))];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
-        });
-    }
-    Api.getBaseOwnership = getBaseOwnership;
-})(Api || (Api = {}));
-var Api;
-(function (Api) {
-    Api.restEndpoint = "http://127.0.0.1:5000/";
-    function getContinentListUrl() {
-        return "".concat(Api.restEndpoint, "continent");
-    }
-    Api.getContinentListUrl = getContinentListUrl;
-    function getServerListUrl() {
-        return "".concat(Api.restEndpoint, "server");
-    }
-    Api.getServerListUrl = getServerListUrl;
-    function getBasesFromContinentUrl(id) {
-        return "".concat(Api.restEndpoint, "base?continent_id=").concat(id);
-    }
-    Api.getBasesFromContinentUrl = getBasesFromContinentUrl;
-    function getMinimapImagePath(code) {
-        return "".concat(Api.restEndpoint, "static/minimap/").concat(code, ".jpg");
-    }
-    Api.getMinimapImagePath = getMinimapImagePath;
-    function getTerrainTilePath(code, pos, lod) {
-        var filename = "".concat(code, "_tile_").concat(pos[0], "_").concat(pos[1], "_lod").concat(lod, ".jpeg");
-        return "".concat(Api.restEndpoint, "static/tile/").concat(filename);
-    }
-    Api.getTerrainTilePath = getTerrainTilePath;
-    function getContinentOutlinesPath(code) {
-        return "".concat(Api.restEndpoint, "static/hex/").concat(code, "-minimal.svg");
-    }
-    Api.getContinentOutlinesPath = getContinentOutlinesPath;
-    function getBaseOwnershipUrl(continent_id, server_id) {
-        return "".concat(Api.restEndpoint, "base/status?continent_id=").concat(continent_id, "&server_id=").concat(server_id);
-    }
-    Api.getBaseOwnershipUrl = getBaseOwnershipUrl;
-    function getLatticePath(continentId) {
-        return "".concat(Api.restEndpoint, "lattice?continent_id=").concat(continentId);
-    }
-    Api.getLatticePath = getLatticePath;
-})(Api || (Api = {}));
-var Api;
-(function (Api) {
-    function getContinentList() {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getContinentListUrl())];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
-        });
-    }
-    Api.getContinentList = getContinentList;
-    function getContinentOutlinesSvg(continent) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response, payload, factory, svg;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getContinentOutlinesPath(continent.code))];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.text()];
-                    case 2:
-                        payload = _a.sent();
-                        factory = document.createElement("template");
-                        factory.innerHTML = payload;
-                        svg = factory.content.firstElementChild;
-                        if (!(svg instanceof SVGElement))
-                            throw "Unable to load contents from map hex SVG";
-                        return [2, svg];
-                }
-            });
-        });
-    }
-    Api.getContinentOutlinesSvg = getContinentOutlinesSvg;
-    function getLatticeForContinent(continent) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getLatticePath(continent.id))];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
-        });
-    }
-    Api.getLatticeForContinent = getLatticeForContinent;
-})(Api || (Api = {}));
 var BasePolygonsLayer = (function (_super) {
     __extends(BasePolygonsLayer, _super);
     function BasePolygonsLayer(id, mapSize) {
@@ -629,7 +653,7 @@ var HeroMap = (function () {
                     break;
             }
         });
-        this.viewport.dispatchEvent(this.buildBaseOwnershipChangedEvent(baseId, factionId));
+        this.viewport.dispatchEvent(Events.baseOwnershipChangedFactory(baseId, factionId));
     };
     HeroMap.prototype.getRenderer = function () {
         return this.controller;
@@ -681,7 +705,7 @@ var HeroMap = (function () {
         });
         this.startMapStatePolling();
         this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
-        this.viewport.dispatchEvent(this.buildContinentChangedEvent(continent));
+        this.viewport.dispatchEvent(Events.continentChangedFactory(continent));
     };
     HeroMap.prototype.setServer = function (server) {
         var _a;
@@ -716,25 +740,6 @@ var HeroMap = (function () {
         this.baseUpdateIntervalId = setInterval(function () {
             _this.updateBaseOwnership();
         }, 5000);
-    };
-    HeroMap.prototype.buildBaseOwnershipChangedEvent = function (baseId, factionId) {
-        return new CustomEvent("ps2map_baseownershipchanged", {
-            detail: {
-                baseId: baseId,
-                factionId: factionId
-            },
-            bubbles: true,
-            cancelable: true
-        });
-    };
-    HeroMap.prototype.buildContinentChangedEvent = function (continent) {
-        return new CustomEvent("ps2map_continentchanged", {
-            detail: {
-                continent: continent
-            },
-            bubbles: true,
-            cancelable: true
-        });
     };
     return HeroMap;
 }());

@@ -2,6 +2,7 @@
 /// <reference path="./hero-map.ts" />
 /// <reference path="./minimap.ts" />
 /// <reference path="./tools/index.ts" />
+/// <reference path="./events.ts" />
 
 /** Initialisation hook for components that need to be run on DOM load. */
 document.addEventListener("DOMContentLoaded", () => {
@@ -10,11 +11,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
 
     document.addEventListener("ps2map_baseownershipchanged", (event) => {
-        const evt = (event as CustomEvent<BaseOwnershipChangedEvent>).detail;
+        const evt = (event as CustomEvent<Events.BaseOwnershipChanged>).detail;
         minimap.setBaseOwnership(evt.baseId, evt.factionId);
     }, { passive: true });
     document.addEventListener("ps2map_continentchanged", (event) => {
-        const evt = (event as CustomEvent<ContinentChangeEvent>).detail;
+        const evt = (event as CustomEvent<Events.ContinentChanged>).detail;
         minimap.setContinent(evt.continent);
     }, { passive: true });
     document.addEventListener("ps2map_viewboxchanged", (event) => {

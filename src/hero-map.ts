@@ -1,21 +1,7 @@
 /// <reference path="./map-engine/renderer.ts" />
 /// <reference path="./api/index.ts" />
 /// <reference path="./layers/hex-layer.ts" />
-
-/**
- * Details for the "ps2map_continentchange" custom event.
- */
-interface ContinentChangeEvent {
-    continent: Api.Continent;
-}
-
-/**
- * Details for the "ps2map_baseownershipchanged" custom event.
- */
-interface BaseOwnershipChangedEvent {
-    baseId: number;
-    factionId: number;
-}
+/// <reference path="./events.ts" />
 
 /**
  * Custom map controller for primary PlanetSide 2 continent map.
@@ -65,7 +51,7 @@ class HeroMap {
             }
         });
         this.viewport.dispatchEvent(
-            this.buildBaseOwnershipChangedEvent(baseId, factionId));
+            Events.baseOwnershipChangedFactory(baseId, factionId));
     }
 
     getRenderer(): MapRenderer {
@@ -111,7 +97,7 @@ class HeroMap {
         lattice.setContinent(continent);
         this.controller.addLayer(lattice);
         lattice.element.addEventListener("ps2map_baseownershipchanged", (event) => {
-            const evt = event as CustomEvent<BaseOwnershipChangedEvent>;
+            const evt = event as CustomEvent<Events.BaseOwnershipChanged>;
             const map = new Map();
             map.set(evt.detail.baseId, evt.detail.factionId);
             lattice.updateBaseOwnership(evt.detail.baseId, map);
@@ -138,7 +124,7 @@ class HeroMap {
         this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
 
         this.viewport.dispatchEvent(
-            this.buildContinentChangedEvent(continent));
+            Events.continentChangedFactory(continent));
     }
 
     setServer(server: Api.Server): void {
@@ -177,24 +163,4 @@ class HeroMap {
         }, 5000);
     }
 
-    private buildBaseOwnershipChangedEvent(baseId: number, factionId: number): CustomEvent<BaseOwnershipChangedEvent> {
-        return new CustomEvent("ps2map_baseownershipchanged", {
-            detail: {
-                baseId: baseId,
-                factionId: factionId
-            },
-            bubbles: true,
-            cancelable: true,
-        });
-    }
-
-    private buildContinentChangedEvent(continent: Api.Continent): CustomEvent<ContinentChangeEvent> {
-        return new CustomEvent("ps2map_continentchanged", {
-            detail: {
-                continent: continent
-            },
-            bubbles: true,
-            cancelable: true,
-        });
-    }
 }
