@@ -69,56 +69,35 @@ class HeroMap {
         this.renderer.clearLayers();
         this.renderer.setMapSize(continent.map_size);
 
-        // Create terrain layer
-        const terrain = new TerrainLayer("terrain", continent.map_size);
-        terrain.setContinent(continent.code);
-        terrain.updateLayer();
-        this.renderer.addLayer(terrain);
+        const terrain = TerrainLayer.factory(continent, "terrain");
+        const hexes = BasePolygonsLayer.factory(continent, "hexes");
+        const lattice = LatticeLayer.factory(continent, "lattice");
+        const names = BaseNamesLayer.factory(continent, "names");
 
-        // Create base outline layer
-        // TODO: Move the layer loading logic to the layer itself
-        const hexes = new BasePolygonsLayer("hexes", continent.map_size);
-        Api.getContinentOutlinesSvg(continent)
-            .then((svg) => {
-                svg.classList.add("ps2map__base-hexes__svg");
-                hexes.element.appendChild(svg);
-                hexes.applyPolygonHoverFix(svg);
+        await Promise.all([terrain, hexes, lattice, names]).then(
+            (layers) => {
+                // Add all layers
+                layers.forEach((layer) => { this.renderer.addLayer(layer); });
+                // Update all layers
+                layers.forEach((layer) => { layer.updateLayer(); });
+
+                // TODO: This feels out of place
+                const hexes_layer = this.renderer.getLayer("hexes")! as BasePolygonsLayer;
+                const names_layer = this.renderer.getLayer("names")! as BaseNamesLayer;
+                hexes_layer.element.addEventListener("ps2map_basehover", (event) => {
+                    const evt = event as CustomEvent<BaseHoverEvent>;
+                    names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
+                });
+
+                // Start polling for base ownership updates
+                this.startMapStatePolling();
+
+                // Reset camera to the center of the map
+                this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
+
+                this.renderer.viewport.dispatchEvent(
+                    Events.continentChangedFactory(continent));
             });
-        this.renderer.addLayer(hexes);
-
-        // Create lattice layer
-        const lattice = new LatticeLayer("lattice", continent.map_size);
-        lattice.setContinent(continent);
-        this.renderer.addLayer(lattice);
-        lattice.element.addEventListener("ps2map_baseownershipchanged", (event) => {
-            const evt = event as CustomEvent<Events.BaseOwnershipChanged>;
-            const map = new Map();
-            map.set(evt.detail.baseId, evt.detail.factionId);
-            lattice.updateBaseOwnership(evt.detail.baseId, map);
-        });
-
-        // Create base name layer
-        // TODO: Move the layer loading logic to the layer itself
-        const names = new BaseNamesLayer("names", continent.map_size);
-        Api.getBasesFromContinent(continent.id)
-            .then((bases) => {
-                names.loadBaseInfo(bases);
-                names.updateLayer();
-            });
-        this.renderer.addLayer(names);
-        hexes.element.addEventListener("ps2map_basehover", (event) => {
-            const evt = event as CustomEvent<BaseHoverEvent>;
-            names.onBaseHover(evt.detail.baseId, evt.detail.element);
-        });
-
-        // Start polling for base ownership updates
-        this.startMapStatePolling();
-
-        // Reset camera to the center of the map
-        this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
-
-        this.renderer.viewport.dispatchEvent(
-            Events.continentChangedFactory(continent));
     }
 
     async switchServer(server: Api.Server): Promise<void> {

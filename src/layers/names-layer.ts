@@ -31,7 +31,18 @@ class BaseNameFeature {
 class BaseNamesLayer extends StaticLayer {
     features: BaseNameFeature[] = []
 
-    loadBaseInfo(bases: Api.Base[]): void {
+    static async factory(continent: Api.Continent, id: string): Promise<BaseNamesLayer> {
+        const layer = new BaseNamesLayer(id, continent.map_size);
+        return Api.getBasesFromContinent(continent.id)
+            .then((bases: Api.Base[]) => {
+                console.log(bases);
+                layer.loadBaseInfo(bases);
+                layer.updateLayer();
+                return layer;
+            });
+    }
+
+    private loadBaseInfo(bases: Api.Base[]): void {
         const features: BaseNameFeature[] = [];
         let i = bases.length;
         while (i-- > 0) {

@@ -13,6 +13,26 @@ class LatticeLayer extends StaticLayer {
         this.element.classList.add("ps2map__lattice");
     }
 
+    static async factory(continent: Api.Continent, id: string): Promise<LatticeLayer> {
+        const layer = new LatticeLayer(id, continent.map_size);
+        // TODO: This eventlistener feels out of place
+        layer.element.addEventListener("ps2map_baseownershipchanged", (event) => {
+            const evt = event as CustomEvent<Events.BaseOwnershipChanged>;
+            const map = new Map();
+            map.set(evt.detail.baseId, evt.detail.factionId);
+            layer.updateBaseOwnership(evt.detail.baseId, map);
+        });
+        return Api.getLatticeForContinent(continent)
+            .then((links) => {
+                layer.latticeLinkCache = [];
+                let i = links.length;
+                while (i-- > 0)
+                    layer.latticeLinkCache.push(links[i])
+                layer.createLatticeSvg();
+                return layer;
+            });
+    }
+
     updateBaseOwnership(baseId: number, baseOwnershipMap: Map<number, number>): void {
         const colours: any = {
             0: "rgba(0, 0, 0, 1.0)",
@@ -40,17 +60,6 @@ class LatticeLayer extends StaticLayer {
                     element.style.stroke = "orange";
             }
         }
-    }
-
-    setContinent(continent: Api.Continent): void {
-        Api.getLatticeForContinent(continent)
-            .then((links) => {
-                this.latticeLinkCache = [];
-                let i = links.length;
-                while (i-- > 0)
-                    this.latticeLinkCache.push(links[i])
-                this.createLatticeSvg();
-            });
     }
 
     private createLatticeSvg(): void {

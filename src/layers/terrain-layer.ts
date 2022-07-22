@@ -12,6 +12,13 @@ class TerrainLayer extends TileLayer {
         this.element.classList.add("ps2map__terrain");
     }
 
+    static async factory(continent: Api.Continent, id: string): Promise<TerrainLayer> {
+        const layer = new TerrainLayer(id, continent.map_size);
+        layer.setContinent(continent.code);
+        layer.updateLayer();
+        return layer;
+    }
+
     /**
      * Update the current continent.
      * 

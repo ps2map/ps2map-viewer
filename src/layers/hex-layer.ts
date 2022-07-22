@@ -21,6 +21,17 @@ class BasePolygonsLayer extends StaticLayer {
         this.element.classList.add("ps2map__base-hexes");
     }
 
+    static async factory(continent: Api.Continent, id: string): Promise<BasePolygonsLayer> {
+        const layer = new BasePolygonsLayer(id, continent.map_size);
+        return Api.getContinentOutlinesSvg(continent)
+            .then((svg) => {
+                svg.classList.add("ps2map__base-hexes__svg");
+                layer.element.appendChild(svg);
+                layer.applyPolygonHoverFix(svg);
+                return layer;
+            });
+    }
+
     setBaseOwnership(baseId: number, factionId: number): void {
         const svg = this.element.firstElementChild as SVGElement | null;
         if (svg == null)

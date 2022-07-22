@@ -555,6 +555,21 @@ var BasePolygonsLayer = (function (_super) {
         _this.element.classList.add("ps2map__base-hexes");
         return _this;
     }
+    BasePolygonsLayer.factory = function (continent, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var layer;
+            return __generator(this, function (_a) {
+                layer = new BasePolygonsLayer(id, continent.map_size);
+                return [2, Api.getContinentOutlinesSvg(continent)
+                        .then(function (svg) {
+                        svg.classList.add("ps2map__base-hexes__svg");
+                        layer.element.appendChild(svg);
+                        layer.applyPolygonHoverFix(svg);
+                        return layer;
+                    })];
+            });
+        });
+    };
     BasePolygonsLayer.prototype.setBaseOwnership = function (baseId, factionId) {
         var svg = this.element.firstElementChild;
         if (svg == null)
@@ -659,48 +674,36 @@ var HeroMap = (function () {
         var _a;
         return __awaiter(this, void 0, void 0, function () {
             var terrain, hexes, lattice, names;
+            var _this = this;
             return __generator(this, function (_b) {
-                if (continent.code == ((_a = this._continent) === null || _a === void 0 ? void 0 : _a.code))
-                    return [2];
-                this._continent = continent;
-                this.renderer.clearLayers();
-                this.renderer.setMapSize(continent.map_size);
-                terrain = new TerrainLayer("terrain", continent.map_size);
-                terrain.setContinent(continent.code);
-                terrain.updateLayer();
-                this.renderer.addLayer(terrain);
-                hexes = new BasePolygonsLayer("hexes", continent.map_size);
-                Api.getContinentOutlinesSvg(continent)
-                    .then(function (svg) {
-                    svg.classList.add("ps2map__base-hexes__svg");
-                    hexes.element.appendChild(svg);
-                    hexes.applyPolygonHoverFix(svg);
-                });
-                this.renderer.addLayer(hexes);
-                lattice = new LatticeLayer("lattice", continent.map_size);
-                lattice.setContinent(continent);
-                this.renderer.addLayer(lattice);
-                lattice.element.addEventListener("ps2map_baseownershipchanged", function (event) {
-                    var evt = event;
-                    var map = new Map();
-                    map.set(evt.detail.baseId, evt.detail.factionId);
-                    lattice.updateBaseOwnership(evt.detail.baseId, map);
-                });
-                names = new BaseNamesLayer("names", continent.map_size);
-                Api.getBasesFromContinent(continent.id)
-                    .then(function (bases) {
-                    names.loadBaseInfo(bases);
-                    names.updateLayer();
-                });
-                this.renderer.addLayer(names);
-                hexes.element.addEventListener("ps2map_basehover", function (event) {
-                    var evt = event;
-                    names.onBaseHover(evt.detail.baseId, evt.detail.element);
-                });
-                this.startMapStatePolling();
-                this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
-                this.renderer.viewport.dispatchEvent(Events.continentChangedFactory(continent));
-                return [2];
+                switch (_b.label) {
+                    case 0:
+                        if (continent.code == ((_a = this._continent) === null || _a === void 0 ? void 0 : _a.code))
+                            return [2];
+                        this._continent = continent;
+                        this.renderer.clearLayers();
+                        this.renderer.setMapSize(continent.map_size);
+                        terrain = TerrainLayer.factory(continent, "terrain");
+                        hexes = BasePolygonsLayer.factory(continent, "hexes");
+                        lattice = LatticeLayer.factory(continent, "lattice");
+                        names = BaseNamesLayer.factory(continent, "names");
+                        return [4, Promise.all([terrain, hexes, lattice, names]).then(function (layers) {
+                                layers.forEach(function (layer) { _this.renderer.addLayer(layer); });
+                                layers.forEach(function (layer) { layer.updateLayer(); });
+                                var hexes_layer = _this.renderer.getLayer("hexes");
+                                var names_layer = _this.renderer.getLayer("names");
+                                hexes_layer.element.addEventListener("ps2map_basehover", function (event) {
+                                    var evt = event;
+                                    names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
+                                });
+                                _this.startMapStatePolling();
+                                _this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
+                                _this.renderer.viewport.dispatchEvent(Events.continentChangedFactory(continent));
+                            })];
+                    case 1:
+                        _b.sent();
+                        return [2];
+                }
             });
         });
     };
@@ -1246,6 +1249,29 @@ var LatticeLayer = (function (_super) {
         _this.element.classList.add("ps2map__lattice");
         return _this;
     }
+    LatticeLayer.factory = function (continent, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var layer;
+            return __generator(this, function (_a) {
+                layer = new LatticeLayer(id, continent.map_size);
+                layer.element.addEventListener("ps2map_baseownershipchanged", function (event) {
+                    var evt = event;
+                    var map = new Map();
+                    map.set(evt.detail.baseId, evt.detail.factionId);
+                    layer.updateBaseOwnership(evt.detail.baseId, map);
+                });
+                return [2, Api.getLatticeForContinent(continent)
+                        .then(function (links) {
+                        layer.latticeLinkCache = [];
+                        var i = links.length;
+                        while (i-- > 0)
+                            layer.latticeLinkCache.push(links[i]);
+                        layer.createLatticeSvg();
+                        return layer;
+                    })];
+            });
+        });
+    };
     LatticeLayer.prototype.updateBaseOwnership = function (baseId, baseOwnershipMap) {
         var colours = {
             0: "rgba(0, 0, 0, 1.0)",
@@ -1272,17 +1298,6 @@ var LatticeLayer = (function (_super) {
                     element.style.stroke = "orange";
             }
         }
-    };
-    LatticeLayer.prototype.setContinent = function (continent) {
-        var _this = this;
-        Api.getLatticeForContinent(continent)
-            .then(function (links) {
-            _this.latticeLinkCache = [];
-            var i = links.length;
-            while (i-- > 0)
-                _this.latticeLinkCache.push(links[i]);
-            _this.createLatticeSvg();
-        });
     };
     LatticeLayer.prototype.createLatticeSvg = function () {
         var _this = this;
@@ -1325,6 +1340,21 @@ var BaseNamesLayer = (function (_super) {
         _this.features = [];
         return _this;
     }
+    BaseNamesLayer.factory = function (continent, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var layer;
+            return __generator(this, function (_a) {
+                layer = new BaseNamesLayer(id, continent.map_size);
+                return [2, Api.getBasesFromContinent(continent.id)
+                        .then(function (bases) {
+                        console.log(bases);
+                        layer.loadBaseInfo(bases);
+                        layer.updateLayer();
+                        return layer;
+                    })];
+            });
+        });
+    };
     BaseNamesLayer.prototype.loadBaseInfo = function (bases) {
         var features = [];
         var i = bases.length;
@@ -1493,6 +1523,17 @@ var TerrainLayer = (function (_super) {
         _this.element.classList.add("ps2map__terrain");
         return _this;
     }
+    TerrainLayer.factory = function (continent, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var layer;
+            return __generator(this, function (_a) {
+                layer = new TerrainLayer(id, continent.map_size);
+                layer.setContinent(continent.code);
+                layer.updateLayer();
+                return [2, layer];
+            });
+        });
+    };
     TerrainLayer.prototype.setContinent = function (code) {
         if (this.code == code)
             return;
