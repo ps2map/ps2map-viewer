@@ -29,7 +29,6 @@ class HeroMap {
 
     constructor(viewport: HTMLDivElement) {
         this.renderer = new MapRenderer(viewport, 0);
-        setupToolbox(this);
     }
 
     // Properties & getters/setters

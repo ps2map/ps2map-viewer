@@ -631,7 +631,6 @@ var HeroMap = (function () {
         this._baseOwnershipMap = new Map();
         this._baseUpdateIntervalId = undefined;
         this.renderer = new MapRenderer(viewport, 0);
-        setupToolbox(this);
     }
     HeroMap.prototype.continent = function () {
         return this._continent;
@@ -1160,6 +1159,7 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
     var minimap = new Minimap(document.getElementById("minimap"));
+    setupToolbox(heroMap);
     document.addEventListener("ps2map_baseownershipchanged", function (event) {
         var evt = event.detail;
         minimap.setBaseOwnership(evt.baseId, evt.factionId);

@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroMap = new HeroMap(document.getElementById("hero-map") as HTMLDivElement);
     const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
 
+    // Set up toolbox
+    setupToolbox(heroMap);
+
     document.addEventListener("ps2map_baseownershipchanged", (event) => {
         const evt = (event as CustomEvent<Events.BaseOwnershipChanged>).detail;
         minimap.setBaseOwnership(evt.baseId, evt.factionId);
