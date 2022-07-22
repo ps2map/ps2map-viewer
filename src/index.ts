@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const server_picker = document.getElementById("server-picker") as HTMLSelectElement;
     server_picker.addEventListener("change", () => {
         const server = JSON.parse(server_picker.value);
-        heroMap.setServer(server);
+        heroMap.switchServer(server);
     });
     Api.getServerList().then((servers) => {
         servers.sort((a, b) => b.name.localeCompare(a.name));
@@ -46,14 +46,14 @@ document.addEventListener("DOMContentLoaded", () => {
             option.text = server.name;
             server_picker.appendChild(option);
         }
-        heroMap.setServer(JSON.parse(server_picker.value));
+        heroMap.switchServer(JSON.parse(server_picker.value));
     })
 
     // Load continent list
     const continent_picker = document.getElementById("continent-picker") as HTMLSelectElement;
     continent_picker.addEventListener("change", () => {
         const cont = JSON.parse(continent_picker.value);
-        heroMap.setContinent(cont);
+        heroMap.switchContinent(cont);
     });
     Api.getContinentList().then((continents) => {
         continents.sort((a, b) => b.name.localeCompare(a.name));
@@ -65,6 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
             option.text = cont.name;
             continent_picker.appendChild(option);
         }
-        heroMap.setContinent(JSON.parse(continent_picker.value));
+        heroMap.switchContinent(JSON.parse(continent_picker.value));
     });
 });

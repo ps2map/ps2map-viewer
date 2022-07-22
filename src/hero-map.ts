@@ -33,13 +33,9 @@ class HeroMap {
 
     // Properties & getters/setters
 
-    continent(): Api.Continent {
-        return this._continent!;
-    }
+    continent(): Api.Continent { return this._continent!; }
 
-    server(): Api.Server {
-        return this._server!;
-    }
+    server(): Api.Server { return this._server!; }
 
     // TODO: Why is this public
     setBaseOwnership(baseId: number, factionId: number): void {
@@ -64,7 +60,7 @@ class HeroMap {
             Events.baseOwnershipChangedFactory(baseId, factionId));
     }
 
-    setContinent(continent: Api.Continent): void {
+    async switchContinent(continent: Api.Continent): Promise<void> {
         if (continent.code == this._continent?.code)
             return;
         this._continent = continent;
@@ -125,7 +121,7 @@ class HeroMap {
             Events.continentChangedFactory(continent));
     }
 
-    setServer(server: Api.Server): void {
+    async switchServer(server: Api.Server): Promise<void> {
         if (server.id == this._server?.id)
             return;
         this._server = server;

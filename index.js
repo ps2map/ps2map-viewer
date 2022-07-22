@@ -632,12 +632,8 @@ var HeroMap = (function () {
         this._baseUpdateIntervalId = undefined;
         this.renderer = new MapRenderer(viewport, 0);
     }
-    HeroMap.prototype.continent = function () {
-        return this._continent;
-    };
-    HeroMap.prototype.server = function () {
-        return this._server;
-    };
+    HeroMap.prototype.continent = function () { return this._continent; };
+    HeroMap.prototype.server = function () { return this._server; };
     HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
         var _this = this;
         var _a;
@@ -659,55 +655,66 @@ var HeroMap = (function () {
         });
         this.renderer.viewport.dispatchEvent(Events.baseOwnershipChangedFactory(baseId, factionId));
     };
-    HeroMap.prototype.setContinent = function (continent) {
+    HeroMap.prototype.switchContinent = function (continent) {
         var _a;
-        if (continent.code == ((_a = this._continent) === null || _a === void 0 ? void 0 : _a.code))
-            return;
-        this._continent = continent;
-        this.renderer.clearLayers();
-        this.renderer.setMapSize(continent.map_size);
-        var terrain = new TerrainLayer("terrain", continent.map_size);
-        terrain.setContinent(continent.code);
-        terrain.updateLayer();
-        this.renderer.addLayer(terrain);
-        var hexes = new BasePolygonsLayer("hexes", continent.map_size);
-        Api.getContinentOutlinesSvg(continent)
-            .then(function (svg) {
-            svg.classList.add("ps2map__base-hexes__svg");
-            hexes.element.appendChild(svg);
-            hexes.applyPolygonHoverFix(svg);
+        return __awaiter(this, void 0, void 0, function () {
+            var terrain, hexes, lattice, names;
+            return __generator(this, function (_b) {
+                if (continent.code == ((_a = this._continent) === null || _a === void 0 ? void 0 : _a.code))
+                    return [2];
+                this._continent = continent;
+                this.renderer.clearLayers();
+                this.renderer.setMapSize(continent.map_size);
+                terrain = new TerrainLayer("terrain", continent.map_size);
+                terrain.setContinent(continent.code);
+                terrain.updateLayer();
+                this.renderer.addLayer(terrain);
+                hexes = new BasePolygonsLayer("hexes", continent.map_size);
+                Api.getContinentOutlinesSvg(continent)
+                    .then(function (svg) {
+                    svg.classList.add("ps2map__base-hexes__svg");
+                    hexes.element.appendChild(svg);
+                    hexes.applyPolygonHoverFix(svg);
+                });
+                this.renderer.addLayer(hexes);
+                lattice = new LatticeLayer("lattice", continent.map_size);
+                lattice.setContinent(continent);
+                this.renderer.addLayer(lattice);
+                lattice.element.addEventListener("ps2map_baseownershipchanged", function (event) {
+                    var evt = event;
+                    var map = new Map();
+                    map.set(evt.detail.baseId, evt.detail.factionId);
+                    lattice.updateBaseOwnership(evt.detail.baseId, map);
+                });
+                names = new BaseNamesLayer("names", continent.map_size);
+                Api.getBasesFromContinent(continent.id)
+                    .then(function (bases) {
+                    names.loadBaseInfo(bases);
+                    names.updateLayer();
+                });
+                this.renderer.addLayer(names);
+                hexes.element.addEventListener("ps2map_basehover", function (event) {
+                    var evt = event;
+                    names.onBaseHover(evt.detail.baseId, evt.detail.element);
+                });
+                this.startMapStatePolling();
+                this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
+                this.renderer.viewport.dispatchEvent(Events.continentChangedFactory(continent));
+                return [2];
+            });
         });
-        this.renderer.addLayer(hexes);
-        var lattice = new LatticeLayer("lattice", continent.map_size);
-        lattice.setContinent(continent);
-        this.renderer.addLayer(lattice);
-        lattice.element.addEventListener("ps2map_baseownershipchanged", function (event) {
-            var evt = event;
-            var map = new Map();
-            map.set(evt.detail.baseId, evt.detail.factionId);
-            lattice.updateBaseOwnership(evt.detail.baseId, map);
-        });
-        var names = new BaseNamesLayer("names", continent.map_size);
-        Api.getBasesFromContinent(continent.id)
-            .then(function (bases) {
-            names.loadBaseInfo(bases);
-            names.updateLayer();
-        });
-        this.renderer.addLayer(names);
-        hexes.element.addEventListener("ps2map_basehover", function (event) {
-            var evt = event;
-            names.onBaseHover(evt.detail.baseId, evt.detail.element);
-        });
-        this.startMapStatePolling();
-        this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
-        this.renderer.viewport.dispatchEvent(Events.continentChangedFactory(continent));
     };
-    HeroMap.prototype.setServer = function (server) {
+    HeroMap.prototype.switchServer = function (server) {
         var _a;
-        if (server.id == ((_a = this._server) === null || _a === void 0 ? void 0 : _a.id))
-            return;
-        this._server = server;
-        this.startMapStatePolling();
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_b) {
+                if (server.id == ((_a = this._server) === null || _a === void 0 ? void 0 : _a.id))
+                    return [2];
+                this._server = server;
+                this.startMapStatePolling();
+                return [2];
+            });
+        });
     };
     HeroMap.prototype.updateBaseOwnership = function () {
         var _this = this;
@@ -1179,7 +1186,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var server_picker = document.getElementById("server-picker");
     server_picker.addEventListener("change", function () {
         var server = JSON.parse(server_picker.value);
-        heroMap.setServer(server);
+        heroMap.switchServer(server);
     });
     Api.getServerList().then(function (servers) {
         servers.sort(function (a, b) { return b.name.localeCompare(a.name); });
@@ -1191,12 +1198,12 @@ document.addEventListener("DOMContentLoaded", function () {
             option.text = server.name;
             server_picker.appendChild(option);
         }
-        heroMap.setServer(JSON.parse(server_picker.value));
+        heroMap.switchServer(JSON.parse(server_picker.value));
     });
     var continent_picker = document.getElementById("continent-picker");
     continent_picker.addEventListener("change", function () {
         var cont = JSON.parse(continent_picker.value);
-        heroMap.setContinent(cont);
+        heroMap.switchContinent(cont);
     });
     Api.getContinentList().then(function (continents) {
         continents.sort(function (a, b) { return b.name.localeCompare(a.name); });
@@ -1208,7 +1215,7 @@ document.addEventListener("DOMContentLoaded", function () {
             option.text = cont.name;
             continent_picker.appendChild(option);
         }
-        heroMap.setContinent(JSON.parse(continent_picker.value));
+        heroMap.switchContinent(JSON.parse(continent_picker.value));
     });
 });
 var Api;
