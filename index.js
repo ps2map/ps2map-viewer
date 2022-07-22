@@ -662,6 +662,12 @@ var HeroMap = (function () {
         var lattice = new LatticeLayer("lattice", continent.map_size);
         lattice.setContinent(continent);
         this.controller.addLayer(lattice);
+        lattice.element.addEventListener("ps2map_baseownershipchanged", function (event) {
+            var evt = event;
+            var map = new Map();
+            map.set(evt.detail.baseId, evt.detail.factionId);
+            lattice.updateBaseOwnership(evt.detail.baseId, map);
+        });
         var names = new BaseNamesLayer("names", continent.map_size);
         Api.getBasesFromContinent(continent.id)
             .then(function (bases) {

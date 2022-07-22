@@ -103,15 +103,22 @@ class HeroMap {
                 svg.classList.add("ps2map__base-hexes__svg");
                 hexes.element.appendChild(svg);
                 hexes.applyPolygonHoverFix(svg);
-            })
+            });
         this.controller.addLayer(hexes);
 
         // Create lattice layer
         const lattice = new LatticeLayer("lattice", continent.map_size);
         lattice.setContinent(continent);
         this.controller.addLayer(lattice);
+        lattice.element.addEventListener("ps2map_baseownershipchanged", (event) => {
+            const evt = event as CustomEvent<BaseOwnershipChangedEvent>;
+            const map = new Map();
+            map.set(evt.detail.baseId, evt.detail.factionId);
+            lattice.updateBaseOwnership(evt.detail.baseId, map);
+        });
 
         // Create base name layer
+        // TODO: Move the layer loading logic to the layer itself
         const names = new BaseNamesLayer("names", continent.map_size);
         Api.getBasesFromContinent(continent.id)
             .then((bases) => {
@@ -119,7 +126,6 @@ class HeroMap {
                 names.updateLayer();
             });
         this.controller.addLayer(names);
-
         hexes.element.addEventListener("ps2map_basehover", (event) => {
             const evt = event as CustomEvent<BaseHoverEvent>;
             names.onBaseHover(evt.detail.baseId, evt.detail.element);
