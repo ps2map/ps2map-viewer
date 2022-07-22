@@ -37,7 +37,7 @@ class HeroMap {
 
     server(): Api.Server { return this._server!; }
 
-    // TODO: Why is this public
+    // TODO: Move this to the layer class or an internal helper, not a global method
     setBaseOwnership(baseId: number, factionId: number): void {
         if (this._baseOwnershipMap.get(baseId) == factionId)
             return;
@@ -63,12 +63,8 @@ class HeroMap {
     async switchContinent(continent: Api.Continent): Promise<void> {
         if (continent.code == this._continent?.code)
             return;
-        this._continent = continent;
 
-        // Delete all existing layers
-        this.renderer.clearLayers();
-        this.renderer.setMapSize(continent.map_size);
-
+        // Create layers for the new target continent
         const terrain = TerrainLayer.factory(continent, "terrain");
         const hexes = BasePolygonsLayer.factory(continent, "hexes");
         const lattice = LatticeLayer.factory(continent, "lattice");
@@ -76,10 +72,16 @@ class HeroMap {
 
         await Promise.all([terrain, hexes, lattice, names]).then(
             (layers) => {
-                // Add all layers
-                layers.forEach((layer) => { this.renderer.addLayer(layer); });
-                // Update all layers
-                layers.forEach((layer) => { layer.updateLayer(); });
+                // Delete old layers
+                this.renderer.clearLayers();
+                // Update map size (required for camera)
+                this.renderer.setMapSize(continent.map_size);
+                this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
+                // Add new layers and force a redraw
+                layers.forEach((layer) => {
+                    this.renderer.addLayer(layer);
+                    layer.updateLayer();
+                });
 
                 // TODO: This feels out of place
                 const hexes_layer = this.renderer.getLayer("hexes")! as BasePolygonsLayer;
@@ -89,11 +91,11 @@ class HeroMap {
                     names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
                 });
 
+                // Update the current continent
+                this._continent = continent;
+
                 // Start polling for base ownership updates
                 this.startMapStatePolling();
-
-                // Reset camera to the center of the map
-                this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
 
                 this.renderer.viewport.dispatchEvent(
                     Events.continentChangedFactory(continent));
@@ -120,6 +122,7 @@ class HeroMap {
             while (i-- > 0)
                 this.setBaseOwnership(data[i].base_id, data[i].owning_faction_id);
         });
+        // TODO: Batch updates to reduce event spam
     }
 
     jumpTo(point: Point): void {

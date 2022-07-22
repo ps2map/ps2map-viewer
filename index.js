@@ -680,24 +680,26 @@ var HeroMap = (function () {
                     case 0:
                         if (continent.code == ((_a = this._continent) === null || _a === void 0 ? void 0 : _a.code))
                             return [2];
-                        this._continent = continent;
-                        this.renderer.clearLayers();
-                        this.renderer.setMapSize(continent.map_size);
                         terrain = TerrainLayer.factory(continent, "terrain");
                         hexes = BasePolygonsLayer.factory(continent, "hexes");
                         lattice = LatticeLayer.factory(continent, "lattice");
                         names = BaseNamesLayer.factory(continent, "names");
                         return [4, Promise.all([terrain, hexes, lattice, names]).then(function (layers) {
-                                layers.forEach(function (layer) { _this.renderer.addLayer(layer); });
-                                layers.forEach(function (layer) { layer.updateLayer(); });
+                                _this.renderer.clearLayers();
+                                _this.renderer.setMapSize(continent.map_size);
+                                _this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
+                                layers.forEach(function (layer) {
+                                    _this.renderer.addLayer(layer);
+                                    layer.updateLayer();
+                                });
                                 var hexes_layer = _this.renderer.getLayer("hexes");
                                 var names_layer = _this.renderer.getLayer("names");
                                 hexes_layer.element.addEventListener("ps2map_basehover", function (event) {
                                     var evt = event;
                                     names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
                                 });
+                                _this._continent = continent;
                                 _this.startMapStatePolling();
-                                _this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
                                 _this.renderer.viewport.dispatchEvent(Events.continentChangedFactory(continent));
                             })];
                     case 1:
