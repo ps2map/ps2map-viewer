@@ -899,7 +899,7 @@ var BaseInfo = (function (_super) {
         var hex_layer = this.map.renderer.getLayer("hexes");
         hex_layer.element.addEventListener("ps2map_basehover", this.callback);
         this.bases = new Map();
-        var continent = this.map.getContinent();
+        var continent = this.map.continent();
         if (continent == undefined)
             return;
         Api.getBasesFromContinent(continent.id).then(function (bases) {

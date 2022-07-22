@@ -12,7 +12,7 @@ class BaseInfo extends Tool {
         hex_layer.element.addEventListener("ps2map_basehover", this.callback);
 
         this.bases = new Map();
-        const continent = this.map.getContinent();
+        const continent = this.map.continent();
         if (continent == undefined)
             return;
         Api.getBasesFromContinent(continent.id).then(
