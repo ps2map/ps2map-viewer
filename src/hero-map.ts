@@ -9,35 +9,46 @@
  * This also includes a mini-map because reasons.
  */
 class HeroMap {
-    /** Currently active continent for the map. */
-    private continent: Api.Continent | undefined = undefined;
-    /** Currently active server for live map state. */
-    private server: Api.Server | undefined = undefined;
-    /** Map engine instance responsible for hanlding the map display.  */
-    private controller: MapRenderer;
-    /** Viewport element the map is rendered into. */
-    private viewport: HTMLDivElement;
+
+    /** Internal map renderer and input handler. */
+    readonly renderer: MapRenderer;
+
+    // Semi-persistent state (require map reload on change)
+
+    /** Active continent. */
+    private _continent: Api.Continent | undefined = undefined;
+    /** Active game server. */
+    private _server: Api.Server | undefined = undefined;
+
+    // Dynamic state (changeable on the fly)
 
     /** Local base ownership cache for the current continent. */
-    private baseOwnershipMap: Map<number, number> = new Map();
+    private _baseOwnershipMap: Map<number, number> = new Map();
     /** Polling timer for base ownership updates via REST API. */
-    private baseUpdateIntervalId: number | undefined = undefined;
+    private _baseUpdateIntervalId: number | undefined = undefined;
 
-    constructor(
-        viewport: HTMLDivElement
-    ) {
-        this.viewport = viewport;
-        this.controller = new MapRenderer(this.viewport, 0);
-        // Set up toolbox
+    constructor(viewport: HTMLDivElement) {
+        this.renderer = new MapRenderer(viewport, 0);
         setupToolbox(this);
     }
 
+    // Properties & getters/setters
+
+    continent(): Api.Continent {
+        return this._continent!;
+    }
+
+    server(): Api.Server {
+        return this._server!;
+    }
+
+    // TODO: Why is this public
     setBaseOwnership(baseId: number, factionId: number): void {
-        if (this.baseOwnershipMap.get(baseId) == factionId)
+        if (this._baseOwnershipMap.get(baseId) == factionId)
             return;
-        this.baseOwnershipMap.set(baseId, factionId);
+        this._baseOwnershipMap.set(baseId, factionId);
         // Forward base ownership change to all map layers
-        this.controller?.forEachLayer((layer) => {
+        this.renderer?.forEachLayer((layer) => {
             switch (layer.id) {
                 case "hexes":
                     (layer as BasePolygonsLayer).setBaseOwnership(baseId, factionId);
@@ -46,40 +57,28 @@ class HeroMap {
                     (layer as BaseNamesLayer).setBaseOwnership(baseId, factionId);
                     break;
                 case "lattice":
-                    (layer as LatticeLayer).updateBaseOwnership(baseId, this.baseOwnershipMap);
+                    (layer as LatticeLayer).updateBaseOwnership(baseId, this._baseOwnershipMap);
                     break;
             }
         });
-        this.viewport.dispatchEvent(
+        this.renderer.viewport.dispatchEvent(
             Events.baseOwnershipChangedFactory(baseId, factionId));
     }
 
-    getRenderer(): MapRenderer {
-        return this.controller;
-    }
-
-    getContinent(): Api.Continent | undefined {
-        return this.continent;
-    }
-
-    getServer(): Api.Server | undefined {
-        return this.server;
-    }
-
     setContinent(continent: Api.Continent): void {
-        if (continent.code == this.continent?.code)
+        if (continent.code == this._continent?.code)
             return;
-        this.continent = continent;
+        this._continent = continent;
 
         // Delete all existing layers
-        this.controller.clearLayers();
-        this.controller.setMapSize(continent.map_size);
+        this.renderer.clearLayers();
+        this.renderer.setMapSize(continent.map_size);
 
         // Create terrain layer
         const terrain = new TerrainLayer("terrain", continent.map_size);
         terrain.setContinent(continent.code);
         terrain.updateLayer();
-        this.controller.addLayer(terrain);
+        this.renderer.addLayer(terrain);
 
         // Create base outline layer
         // TODO: Move the layer loading logic to the layer itself
@@ -90,12 +89,12 @@ class HeroMap {
                 hexes.element.appendChild(svg);
                 hexes.applyPolygonHoverFix(svg);
             });
-        this.controller.addLayer(hexes);
+        this.renderer.addLayer(hexes);
 
         // Create lattice layer
         const lattice = new LatticeLayer("lattice", continent.map_size);
         lattice.setContinent(continent);
-        this.controller.addLayer(lattice);
+        this.renderer.addLayer(lattice);
         lattice.element.addEventListener("ps2map_baseownershipchanged", (event) => {
             const evt = event as CustomEvent<Events.BaseOwnershipChanged>;
             const map = new Map();
@@ -111,7 +110,7 @@ class HeroMap {
                 names.loadBaseInfo(bases);
                 names.updateLayer();
             });
-        this.controller.addLayer(names);
+        this.renderer.addLayer(names);
         hexes.element.addEventListener("ps2map_basehover", (event) => {
             const evt = event as CustomEvent<BaseHoverEvent>;
             names.onBaseHover(evt.detail.baseId, evt.detail.element);
@@ -123,14 +122,14 @@ class HeroMap {
         // Reset camera to the center of the map
         this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
 
-        this.viewport.dispatchEvent(
+        this.renderer.viewport.dispatchEvent(
             Events.continentChangedFactory(continent));
     }
 
     setServer(server: Api.Server): void {
-        if (server.id == this.server?.id)
+        if (server.id == this._server?.id)
             return;
-        this.server = server;
+        this._server = server;
 
         // Restart map state polling loop
         this.startMapStatePolling();
@@ -138,8 +137,8 @@ class HeroMap {
 
     updateBaseOwnership(): void {
         // TODO: Add safeguard against multiple updates at once in case of long-running requests
-        const server_id = this.server?.id;
-        const continentId = this.continent?.id;
+        const server_id = this._server?.id;
+        const continentId = this._continent?.id;
         if (server_id == undefined || continentId == undefined)
             return;
         Api.getBaseOwnership(continentId, server_id).then((data) => {
@@ -150,15 +149,15 @@ class HeroMap {
     }
 
     jumpTo(point: Point): void {
-        this.controller?.jumpTo(point);
+        this.renderer?.jumpTo(point);
     }
 
     private startMapStatePolling() {
-        this.baseOwnershipMap.clear();
-        if (this.baseUpdateIntervalId != undefined)
-            clearInterval(this.baseUpdateIntervalId);
+        this._baseOwnershipMap.clear();
+        if (this._baseUpdateIntervalId != undefined)
+            clearInterval(this._baseUpdateIntervalId);
         this.updateBaseOwnership();
-        this.baseUpdateIntervalId = setInterval(() => {
+        this._baseUpdateIntervalId = setInterval(() => {
             this.updateBaseOwnership();
         }, 5000);
     }

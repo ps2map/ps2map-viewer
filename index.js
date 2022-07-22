@@ -626,21 +626,26 @@ var BasePolygonsLayer = (function (_super) {
 }(StaticLayer));
 var HeroMap = (function () {
     function HeroMap(viewport) {
-        this.continent = undefined;
-        this.server = undefined;
-        this.baseOwnershipMap = new Map();
-        this.baseUpdateIntervalId = undefined;
-        this.viewport = viewport;
-        this.controller = new MapRenderer(this.viewport, 0);
+        this._continent = undefined;
+        this._server = undefined;
+        this._baseOwnershipMap = new Map();
+        this._baseUpdateIntervalId = undefined;
+        this.renderer = new MapRenderer(viewport, 0);
         setupToolbox(this);
     }
+    HeroMap.prototype.continent = function () {
+        return this._continent;
+    };
+    HeroMap.prototype.server = function () {
+        return this._server;
+    };
     HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
         var _this = this;
         var _a;
-        if (this.baseOwnershipMap.get(baseId) == factionId)
+        if (this._baseOwnershipMap.get(baseId) == factionId)
             return;
-        this.baseOwnershipMap.set(baseId, factionId);
-        (_a = this.controller) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
+        this._baseOwnershipMap.set(baseId, factionId);
+        (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
             switch (layer.id) {
                 case "hexes":
                     layer.setBaseOwnership(baseId, factionId);
@@ -649,32 +654,23 @@ var HeroMap = (function () {
                     layer.setBaseOwnership(baseId, factionId);
                     break;
                 case "lattice":
-                    layer.updateBaseOwnership(baseId, _this.baseOwnershipMap);
+                    layer.updateBaseOwnership(baseId, _this._baseOwnershipMap);
                     break;
             }
         });
-        this.viewport.dispatchEvent(Events.baseOwnershipChangedFactory(baseId, factionId));
-    };
-    HeroMap.prototype.getRenderer = function () {
-        return this.controller;
-    };
-    HeroMap.prototype.getContinent = function () {
-        return this.continent;
-    };
-    HeroMap.prototype.getServer = function () {
-        return this.server;
+        this.renderer.viewport.dispatchEvent(Events.baseOwnershipChangedFactory(baseId, factionId));
     };
     HeroMap.prototype.setContinent = function (continent) {
         var _a;
-        if (continent.code == ((_a = this.continent) === null || _a === void 0 ? void 0 : _a.code))
+        if (continent.code == ((_a = this._continent) === null || _a === void 0 ? void 0 : _a.code))
             return;
-        this.continent = continent;
-        this.controller.clearLayers();
-        this.controller.setMapSize(continent.map_size);
+        this._continent = continent;
+        this.renderer.clearLayers();
+        this.renderer.setMapSize(continent.map_size);
         var terrain = new TerrainLayer("terrain", continent.map_size);
         terrain.setContinent(continent.code);
         terrain.updateLayer();
-        this.controller.addLayer(terrain);
+        this.renderer.addLayer(terrain);
         var hexes = new BasePolygonsLayer("hexes", continent.map_size);
         Api.getContinentOutlinesSvg(continent)
             .then(function (svg) {
@@ -682,10 +678,10 @@ var HeroMap = (function () {
             hexes.element.appendChild(svg);
             hexes.applyPolygonHoverFix(svg);
         });
-        this.controller.addLayer(hexes);
+        this.renderer.addLayer(hexes);
         var lattice = new LatticeLayer("lattice", continent.map_size);
         lattice.setContinent(continent);
-        this.controller.addLayer(lattice);
+        this.renderer.addLayer(lattice);
         lattice.element.addEventListener("ps2map_baseownershipchanged", function (event) {
             var evt = event;
             var map = new Map();
@@ -698,27 +694,27 @@ var HeroMap = (function () {
             names.loadBaseInfo(bases);
             names.updateLayer();
         });
-        this.controller.addLayer(names);
+        this.renderer.addLayer(names);
         hexes.element.addEventListener("ps2map_basehover", function (event) {
             var evt = event;
             names.onBaseHover(evt.detail.baseId, evt.detail.element);
         });
         this.startMapStatePolling();
         this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
-        this.viewport.dispatchEvent(Events.continentChangedFactory(continent));
+        this.renderer.viewport.dispatchEvent(Events.continentChangedFactory(continent));
     };
     HeroMap.prototype.setServer = function (server) {
         var _a;
-        if (server.id == ((_a = this.server) === null || _a === void 0 ? void 0 : _a.id))
+        if (server.id == ((_a = this._server) === null || _a === void 0 ? void 0 : _a.id))
             return;
-        this.server = server;
+        this._server = server;
         this.startMapStatePolling();
     };
     HeroMap.prototype.updateBaseOwnership = function () {
         var _this = this;
         var _a, _b;
-        var server_id = (_a = this.server) === null || _a === void 0 ? void 0 : _a.id;
-        var continentId = (_b = this.continent) === null || _b === void 0 ? void 0 : _b.id;
+        var server_id = (_a = this._server) === null || _a === void 0 ? void 0 : _a.id;
+        var continentId = (_b = this._continent) === null || _b === void 0 ? void 0 : _b.id;
         if (server_id == undefined || continentId == undefined)
             return;
         Api.getBaseOwnership(continentId, server_id).then(function (data) {
@@ -729,15 +725,15 @@ var HeroMap = (function () {
     };
     HeroMap.prototype.jumpTo = function (point) {
         var _a;
-        (_a = this.controller) === null || _a === void 0 ? void 0 : _a.jumpTo(point);
+        (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.jumpTo(point);
     };
     HeroMap.prototype.startMapStatePolling = function () {
         var _this = this;
-        this.baseOwnershipMap.clear();
-        if (this.baseUpdateIntervalId != undefined)
-            clearInterval(this.baseUpdateIntervalId);
+        this._baseOwnershipMap.clear();
+        if (this._baseUpdateIntervalId != undefined)
+            clearInterval(this._baseUpdateIntervalId);
         this.updateBaseOwnership();
-        this.baseUpdateIntervalId = setInterval(function () {
+        this._baseUpdateIntervalId = setInterval(function () {
             _this.updateBaseOwnership();
         }, 5000);
     };
@@ -881,7 +877,7 @@ var Tool = (function () {
     Tool.prototype.getMapPosition = function (event) {
         var clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
         var clickRelY = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
-        var renderer = this.map.getRenderer();
+        var renderer = this.map.renderer;
         var viewBox = renderer.getCamera().getViewBox();
         var xMap = -renderer.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
         var yMap = -renderer.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
@@ -901,7 +897,7 @@ var BaseInfo = (function (_super) {
         var _this = this;
         _super.prototype.activate.call(this);
         this.callback = this.onHover.bind(this);
-        var hex_layer = this.map.getRenderer().getLayer("hexes");
+        var hex_layer = this.map.renderer.getLayer("hexes");
         hex_layer.element.addEventListener("ps2map_basehover", this.callback);
         this.bases = new Map();
         var continent = this.map.getContinent();
@@ -917,7 +913,7 @@ var BaseInfo = (function (_super) {
     BaseInfo.prototype.deactivate = function () {
         _super.prototype.deactivate.call(this);
         if (this.callback) {
-            var hex_layer = this.map.getRenderer().getLayer("hexes");
+            var hex_layer = this.map.renderer.getLayer("hexes");
             hex_layer.element.removeEventListener("ps2map_basehover", this.callback);
         }
         var parent = this.tool_panel;

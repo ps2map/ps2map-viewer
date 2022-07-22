@@ -8,7 +8,7 @@ class BaseInfo extends Tool {
     activate(): void {
         super.activate();
         this.callback = this.onHover.bind(this);
-        const hex_layer = this.map.getRenderer().getLayer("hexes") as MapLayer;
+        const hex_layer = this.map.renderer.getLayer("hexes") as MapLayer;
         hex_layer.element.addEventListener("ps2map_basehover", this.callback);
 
         this.bases = new Map();
@@ -28,7 +28,7 @@ class BaseInfo extends Tool {
     deactivate(): void {
         super.deactivate();
         if (this.callback) {
-            const hex_layer = this.map.getRenderer().getLayer("hexes") as MapLayer;
+            const hex_layer = this.map.renderer.getLayer("hexes") as MapLayer;
             hex_layer.element.removeEventListener("ps2map_basehover", this.callback);
         }
         const parent = this.tool_panel;
