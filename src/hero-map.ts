@@ -100,33 +100,43 @@ class HeroMap {
         this._startMapStatePolling();
     }
 
+    private async _timeout<T>(promise: Promise<T>, timeout: number): Promise<T | undefined> {
+        const timeoutPromise = new Promise<undefined>(
+            (resolve) => setTimeout(() => resolve(undefined), timeout));
+        return Promise.race([timeoutPromise, promise]);
+    }
+
     private _pollBaseOwnership(): void {
         const serverId = this._server?.id;
         const continentId = this._continent?.id;
         if (serverId == undefined || continentId == undefined)
             return;
 
-        // TODO: Use a timeout to prevent the promise from taking forever
-        const poll = Api.getBaseOwnership(continentId, serverId);
-        poll.then((data) => {
-            // Create a copy of the map to avoid mutating the original
-            const baseOwnershipMap = new Map(this._baseOwnershipMap);
-            let i = data.length;
-            while (i-- > 0) {
-                const baseId = data[i].base_id;
-                const factionId = data[i].owning_faction_id;
+        this._timeout(Api.getBaseOwnership(continentId, serverId), 5000)
+            .then((data) => {
+                if (data == undefined) {
+                    console.warn('Base ownership poll timed out')
+                    return;
+                }
 
-                // If the base has not changed, remove the key
-                if (baseOwnershipMap.get(baseId) == factionId)
-                    baseOwnershipMap.delete(baseId);
-                // Otherwise, update the key with the new value
-                else
-                    baseOwnershipMap.set(baseId, factionId);
-            }
-            this.updateBaseOwnership(baseOwnershipMap);
-            this.renderer.viewport.dispatchEvent(
-                Events.baseOwnershipChangedFactory(baseOwnershipMap));
-        });
+                // Create a copy of the map to avoid mutating the original
+                const baseOwnershipMap = new Map(this._baseOwnershipMap);
+                let i = data.length;
+                while (i-- > 0) {
+                    const baseId = data[i].base_id;
+                    const factionId = data[i].owning_faction_id;
+
+                    // If the base has not changed, remove the key
+                    if (baseOwnershipMap.get(baseId) == factionId)
+                        baseOwnershipMap.delete(baseId);
+                    // Otherwise, update the key with the new value
+                    else
+                        baseOwnershipMap.set(baseId, factionId);
+                }
+                this.updateBaseOwnership(baseOwnershipMap);
+                this.renderer.viewport.dispatchEvent(
+                    Events.baseOwnershipChangedFactory(baseOwnershipMap));
+            });
     }
 
     jumpTo(point: Point): void {

@@ -1085,6 +1085,15 @@ var HeroMap = (function () {
             });
         });
     };
+    HeroMap.prototype._timeout = function (promise, timeout) {
+        return __awaiter(this, void 0, void 0, function () {
+            var timeoutPromise;
+            return __generator(this, function (_a) {
+                timeoutPromise = new Promise(function (resolve) { return setTimeout(function () { return resolve(undefined); }, timeout); });
+                return [2, Promise.race([timeoutPromise, promise])];
+            });
+        });
+    };
     HeroMap.prototype._pollBaseOwnership = function () {
         var _this = this;
         var _a, _b;
@@ -1092,8 +1101,12 @@ var HeroMap = (function () {
         var continentId = (_b = this._continent) === null || _b === void 0 ? void 0 : _b.id;
         if (serverId == undefined || continentId == undefined)
             return;
-        var poll = Api.getBaseOwnership(continentId, serverId);
-        poll.then(function (data) {
+        this._timeout(Api.getBaseOwnership(continentId, serverId), 5000)
+            .then(function (data) {
+            if (data == undefined) {
+                console.warn('Base ownership poll timed out');
+                return;
+            }
             var baseOwnershipMap = new Map(_this._baseOwnershipMap);
             var i = data.length;
             while (i-- > 0) {
