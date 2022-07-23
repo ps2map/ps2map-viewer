@@ -1,10 +1,11 @@
 /// <reference path="../api/index.ts" />
 /// <reference path="../map-engine/static-layer.ts" />
+/// <reference path="./base.ts" />
 
 /**
  * A static layer rendering lattice links for a given continent.
  */
-class LatticeLayer extends StaticLayer {
+class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
 
     private _latticeLinkCache: Api.LatticeLink[] = [];
 
@@ -31,6 +32,10 @@ class LatticeLayer extends StaticLayer {
                 layer._createLatticeSvg();
                 return layer;
             });
+    }
+
+    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+        // TODO: Migrate
     }
 
     setBaseOwnership(baseId: number, baseOwnershipMap: Map<number, number>): void {

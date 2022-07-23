@@ -539,6 +539,12 @@ var MapRenderer = (function () {
     };
     return MapRenderer;
 }());
+var SupportsBaseOwnership = (function () {
+    function SupportsBaseOwnership() {
+    }
+    return SupportsBaseOwnership;
+}());
+;
 var BasePolygonsLayer = (function (_super) {
     __extends(BasePolygonsLayer, _super);
     function BasePolygonsLayer(id, mapSize) {
@@ -560,6 +566,8 @@ var BasePolygonsLayer = (function (_super) {
                     })];
             });
         });
+    };
+    BasePolygonsLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
     };
     BasePolygonsLayer.prototype.setBaseOwnership = function (baseId, factionId) {
         var svg = this.element.firstElementChild;
@@ -661,6 +669,8 @@ var LatticeLayer = (function (_super) {
             });
         });
     };
+    LatticeLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+    };
     LatticeLayer.prototype.setBaseOwnership = function (baseId, baseOwnershipMap) {
         var colours = {
             0: "rgba(0, 0, 0, 1.0)",
@@ -743,6 +753,8 @@ var BaseNamesLayer = (function (_super) {
                     })];
             });
         });
+    };
+    BaseNamesLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
     };
     BaseNamesLayer.prototype._loadBaseInfo = function (bases) {
         var features = [];
@@ -1018,6 +1030,16 @@ var HeroMap = (function () {
     }
     HeroMap.prototype.continent = function () { return this._continent; };
     HeroMap.prototype.server = function () { return this._server; };
+    HeroMap.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+        var _a;
+        function supportsBaseOwnership(object) {
+            return "updateBaseOwnership" in object;
+        }
+        (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
+            if (supportsBaseOwnership(layer))
+                layer.updateBaseOwnership(baseOwnershipMap);
+        });
+    };
     HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
         var _this = this;
         var _a;
@@ -1612,9 +1634,3 @@ var Api;
     }
     Api.getServerList = getServerList;
 })(Api || (Api = {}));
-var SupportsBaseOwnership = (function () {
-    function SupportsBaseOwnership() {
-    }
-    return SupportsBaseOwnership;
-}());
-;

@@ -37,6 +37,18 @@ class HeroMap {
 
     server(): Api.Server { return this._server!; }
 
+    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+        /** Helper function for filtering dynamic layers from static ones */
+        function supportsBaseOwnership(object: any): object is SupportsBaseOwnership {
+            return "updateBaseOwnership" in object;
+        }
+
+        this.renderer?.forEachLayer((layer) => {
+            if (supportsBaseOwnership(layer))
+                layer.updateBaseOwnership(baseOwnershipMap);
+        });
+    }
+
     // TODO: Move this to the layer class or an internal helper, not a global method
     setBaseOwnership(baseId: number, factionId: number): void {
         if (this._baseOwnershipMap.get(baseId) == factionId)

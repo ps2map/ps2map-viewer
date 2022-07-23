@@ -1,4 +1,5 @@
 /// <reference path="../map-engine/static-layer.ts" />
+/// <reference path="./base.ts" />
 
 class BaseNameFeature {
     /** HTML element associated with the feature. */
@@ -28,7 +29,7 @@ class BaseNameFeature {
 
 
 /** Base name and icon layer subclass. */
-class BaseNamesLayer extends StaticLayer {
+class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
     features: BaseNameFeature[] = []
 
     static async factory(continent: Api.Continent, id: string): Promise<BaseNamesLayer> {
@@ -40,6 +41,10 @@ class BaseNamesLayer extends StaticLayer {
                 layer.updateLayer();
                 return layer;
             });
+    }
+
+    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+        // TODO: Migrate
     }
 
     private _loadBaseInfo(bases: Api.Base[]): void {

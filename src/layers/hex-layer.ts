@@ -1,4 +1,5 @@
 /// <reference path="../map-engine/static-layer.ts" />
+/// <reference path="./base.ts" />
 
 /**
  * Details for the "ps2map_basehover" custom event.
@@ -14,7 +15,7 @@ interface BaseHoverEvent {
  * This will dispatch a "ps2map_basehover" event when the user mouse-overs a
  * base polygon.
  */
-class BasePolygonsLayer extends StaticLayer {
+class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     constructor(id: string, mapSize: number) {
         super(id, mapSize);
@@ -30,6 +31,10 @@ class BasePolygonsLayer extends StaticLayer {
                 layer.applyPolygonHoverFix(svg);
                 return layer;
             });
+    }
+
+    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+        // TODO: Migrate
     }
 
     setBaseOwnership(baseId: number, factionId: number): void {
