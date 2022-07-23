@@ -34,17 +34,9 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
     }
 
     updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-        // TODO: Migrate
-    }
-
-    setBaseOwnership(baseId: number, factionId: number): void {
         const svg = this.element.firstElementChild as SVGElement | null;
         if (svg == null)
             throw "Unable to find HexLayer SVG element";
-        const id = this._baseIdToPolygonId(baseId);
-        const polygon = svg.querySelector(`polygon[id="${id}"]`) as SVGPolygonElement | null;
-        if (polygon == null)
-            throw `Unable to find base polygon with id ${baseId}`;
 
         const colours: any = {
             "0": "rgba(0, 0, 0, 1.0)",
@@ -53,7 +45,13 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
             "3": "rgba(226, 25, 25, 1.0)",
             "4": "rgba(255, 255, 255, 1.0)",
         }
-        polygon.style.fill = colours[factionId.toFixed()];
+
+        svg.querySelectorAll("polygon").forEach((polygon) => {
+            const baseId = this._polygonIdToBaseId(polygon.id);
+            const factionId = baseOwnershipMap.get(baseId);
+            if (factionId != undefined)
+                polygon.style.fill = colours[factionId.toFixed()];
+        });
     }
 
     // TODO: Make private

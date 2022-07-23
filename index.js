@@ -568,15 +568,10 @@ var BasePolygonsLayer = (function (_super) {
         });
     };
     BasePolygonsLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
-    };
-    BasePolygonsLayer.prototype.setBaseOwnership = function (baseId, factionId) {
+        var _this = this;
         var svg = this.element.firstElementChild;
         if (svg == null)
             throw "Unable to find HexLayer SVG element";
-        var id = this._baseIdToPolygonId(baseId);
-        var polygon = svg.querySelector("polygon[id=\"".concat(id, "\"]"));
-        if (polygon == null)
-            throw "Unable to find base polygon with id ".concat(baseId);
         var colours = {
             "0": "rgba(0, 0, 0, 1.0)",
             "1": "rgba(160, 77, 183, 1.0)",
@@ -584,7 +579,12 @@ var BasePolygonsLayer = (function (_super) {
             "3": "rgba(226, 25, 25, 1.0)",
             "4": "rgba(255, 255, 255, 1.0)"
         };
-        polygon.style.fill = colours[factionId.toFixed()];
+        svg.querySelectorAll("polygon").forEach(function (polygon) {
+            var baseId = _this._polygonIdToBaseId(polygon.id);
+            var factionId = baseOwnershipMap.get(baseId);
+            if (factionId != undefined)
+                polygon.style.fill = colours[factionId.toFixed()];
+        });
     };
     BasePolygonsLayer.prototype.applyPolygonHoverFix = function (svg) {
         var _this = this;
@@ -1048,9 +1048,6 @@ var HeroMap = (function () {
         this._baseOwnershipMap.set(baseId, factionId);
         (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
             switch (layer.id) {
-                case "hexes":
-                    layer.setBaseOwnership(baseId, factionId);
-                    break;
                 case "names":
                     layer.setBaseOwnership(baseId, factionId);
                     break;
@@ -1120,7 +1117,12 @@ var HeroMap = (function () {
         if (server_id == undefined || continentId == undefined)
             return;
         Api.getBaseOwnership(continentId, server_id).then(function (data) {
+            var baseOwnershipMap = new Map();
             var i = data.length;
+            while (i-- > 0)
+                baseOwnershipMap.set(data[i].base_id, data[i].owning_faction_id);
+            _this.updateBaseOwnership(baseOwnershipMap);
+            i = data.length;
             while (i-- > 0)
                 _this.setBaseOwnership(data[i].base_id, data[i].owning_faction_id);
         });

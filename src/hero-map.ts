@@ -57,9 +57,6 @@ class HeroMap {
         // Forward base ownership change to all map layers
         this.renderer?.forEachLayer((layer) => {
             switch (layer.id) {
-                case "hexes":
-                    (layer as BasePolygonsLayer).setBaseOwnership(baseId, factionId);
-                    break;
                 case "names":
                     (layer as BaseNamesLayer).setBaseOwnership(baseId, factionId);
                     break;
@@ -130,7 +127,14 @@ class HeroMap {
         if (server_id == undefined || continentId == undefined)
             return;
         Api.getBaseOwnership(continentId, server_id).then((data) => {
+            const baseOwnershipMap = new Map<number, number>();
             let i = data.length;
+            while (i-- > 0)
+                baseOwnershipMap.set(data[i].base_id, data[i].owning_faction_id);
+            this.updateBaseOwnership(baseOwnershipMap);
+
+            // TODO: Remove old setBaseOwnesrhip hook
+            i = data.length;
             while (i-- > 0)
                 this.setBaseOwnership(data[i].base_id, data[i].owning_faction_id);
         });
