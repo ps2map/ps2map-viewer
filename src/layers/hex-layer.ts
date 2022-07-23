@@ -39,11 +39,11 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
             throw "Unable to find HexLayer SVG element";
 
         const colours: any = {
-            "0": "rgba(0, 0, 0, 1.0)",
-            "1": "rgba(160, 77, 183, 1.0)",
-            "2": "rgba(81, 123, 204, 1.0)",
-            "3": "rgba(226, 25, 25, 1.0)",
-            "4": "rgba(255, 255, 255, 1.0)",
+            0: "rgba(0, 0, 0, 1.0)",
+            1: "rgba(160, 77, 183, 1.0)",
+            2: "rgba(81, 123, 204, 1.0)",
+            3: "rgba(226, 25, 25, 1.0)",
+            4: "rgba(255, 255, 255, 1.0)",
         }
 
         svg.querySelectorAll("polygon").forEach((polygon) => {

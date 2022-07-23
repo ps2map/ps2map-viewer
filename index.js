@@ -573,11 +573,11 @@ var BasePolygonsLayer = (function (_super) {
         if (svg == null)
             throw "Unable to find HexLayer SVG element";
         var colours = {
-            "0": "rgba(0, 0, 0, 1.0)",
-            "1": "rgba(160, 77, 183, 1.0)",
-            "2": "rgba(81, 123, 204, 1.0)",
-            "3": "rgba(226, 25, 25, 1.0)",
-            "4": "rgba(255, 255, 255, 1.0)"
+            0: "rgba(0, 0, 0, 1.0)",
+            1: "rgba(160, 77, 183, 1.0)",
+            2: "rgba(81, 123, 204, 1.0)",
+            3: "rgba(226, 25, 25, 1.0)",
+            4: "rgba(255, 255, 255, 1.0)"
         };
         svg.querySelectorAll("polygon").forEach(function (polygon) {
             var baseId = _this._polygonIdToBaseId(polygon.id);
@@ -655,7 +655,7 @@ var LatticeLayer = (function (_super) {
                     var evt = event;
                     var map = new Map();
                     map.set(evt.detail.baseId, evt.detail.factionId);
-                    layer.setBaseOwnership(evt.detail.baseId, map);
+                    layer.updateBaseOwnership(map);
                 });
                 return [2, Api.getLatticeForContinent(continent)
                         .then(function (links) {
@@ -670,8 +670,6 @@ var LatticeLayer = (function (_super) {
         });
     };
     LatticeLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
-    };
-    LatticeLayer.prototype.setBaseOwnership = function (baseId, baseOwnershipMap) {
         var colours = {
             0: "rgba(0, 0, 0, 1.0)",
             1: "rgba(120, 37, 143, 1.0)",
@@ -682,20 +680,20 @@ var LatticeLayer = (function (_super) {
         var i = this._latticeLinkCache.length;
         while (i-- > 0) {
             var link = this._latticeLinkCache[i];
-            if (link.base_a_id == baseId || link.base_b_id == baseId) {
-                var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
-                var element = this.element.querySelector(id);
-                if (!element)
-                    continue;
-                var ownerA = baseOwnershipMap.get(link.base_a_id);
-                var ownerB = baseOwnershipMap.get(link.base_b_id);
-                if (ownerA == undefined || ownerB == undefined)
-                    continue;
-                if (ownerA == ownerB)
-                    element.style.stroke = colours[ownerA];
-                else
-                    element.style.stroke = "orange";
-            }
+            var ownerA = baseOwnershipMap.get(link.base_a_id);
+            var ownerB = baseOwnershipMap.get(link.base_b_id);
+            if (ownerA == undefined || ownerB == undefined)
+                continue;
+            var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
+            var element = this.element.querySelector(id);
+            if (!element)
+                continue;
+            if (ownerA == ownerB)
+                element.style.stroke = colours[ownerA];
+            else if (ownerA == 0 || ownerB == 0)
+                element.style.stroke = "rgba(0, 0, 0, 0.5)";
+            else
+                element.style.stroke = "orange";
         }
     };
     LatticeLayer.prototype._createLatticeSvg = function () {
@@ -755,11 +753,11 @@ var BaseNamesLayer = (function (_super) {
     };
     BaseNamesLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
         var colours = {
-            "0": "rgba(0, 0, 0, 1.0)",
-            "1": "rgba(120, 37, 143, 1.0)",
-            "2": "rgba(41, 83, 164, 1.0)",
-            "3": "rgba(186, 25, 25, 1.0)",
-            "4": "rgba(50, 50, 50, 1.0)"
+            0: "rgba(0, 0, 0, 1.0)",
+            1: "rgba(120, 37, 143, 1.0)",
+            2: "rgba(41, 83, 164, 1.0)",
+            3: "rgba(186, 25, 25, 1.0)",
+            4: "rgba(50, 50, 50, 1.0)"
         };
         var i = this.features.length;
         while (i-- > 0) {
@@ -1039,18 +1037,9 @@ var HeroMap = (function () {
         });
     };
     HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
-        var _this = this;
-        var _a;
         if (this._baseOwnershipMap.get(baseId) == factionId)
             return;
         this._baseOwnershipMap.set(baseId, factionId);
-        (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
-            switch (layer.id) {
-                case "lattice":
-                    layer.setBaseOwnership(baseId, _this._baseOwnershipMap);
-                    break;
-            }
-        });
         this.renderer.viewport.dispatchEvent(Events.baseOwnershipChangedFactory(baseId, factionId));
     };
     HeroMap.prototype.switchContinent = function (continent) {

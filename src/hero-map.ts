@@ -49,19 +49,13 @@ class HeroMap {
         });
     }
 
-    // TODO: Move this to the layer class or an internal helper, not a global method
     setBaseOwnership(baseId: number, factionId: number): void {
         if (this._baseOwnershipMap.get(baseId) == factionId)
             return;
         this._baseOwnershipMap.set(baseId, factionId);
-        // Forward base ownership change to all map layers
-        this.renderer?.forEachLayer((layer) => {
-            switch (layer.id) {
-                case "lattice":
-                    (layer as LatticeLayer).setBaseOwnership(baseId, this._baseOwnershipMap);
-                    break;
-            }
-        });
+
+        // TODO: Remove old setBaseOwnesrhip hook
+
         this.renderer.viewport.dispatchEvent(
             Events.baseOwnershipChangedFactory(baseId, factionId));
     }

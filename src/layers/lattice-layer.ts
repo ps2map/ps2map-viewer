@@ -21,7 +21,7 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
             const evt = event as CustomEvent<Events.BaseOwnershipChanged>;
             const map = new Map();
             map.set(evt.detail.baseId, evt.detail.factionId);
-            layer.setBaseOwnership(evt.detail.baseId, map);
+            layer.updateBaseOwnership(map);
         });
         return Api.getLatticeForContinent(continent)
             .then((links) => {
@@ -35,10 +35,7 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
     }
 
     updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-        // TODO: Migrate
-    }
 
-    setBaseOwnership(baseId: number, baseOwnershipMap: Map<number, number>): void {
         const colours: any = {
             0: "rgba(0, 0, 0, 1.0)",
             1: "rgba(120, 37, 143, 1.0)",
@@ -50,21 +47,25 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
         let i = this._latticeLinkCache.length;
         while (i-- > 0) {
             const link = this._latticeLinkCache[i];
-            if (link.base_a_id == baseId || link.base_b_id == baseId) {
-                const id = `#lattice-link-${link.base_a_id}-${link.base_b_id}`;
-                const element = this.element.querySelector(id) as SVGLineElement | null;
-                if (!element)
-                    continue;
-                const ownerA = baseOwnershipMap.get(link.base_a_id);
-                const ownerB = baseOwnershipMap.get(link.base_b_id);
-                if (ownerA == undefined || ownerB == undefined)
-                    continue;
-                if (ownerA == ownerB)
-                    element.style.stroke = colours[ownerA];
-                else
-                    element.style.stroke = "orange";
-            }
+
+            const ownerA = baseOwnershipMap.get(link.base_a_id);
+            const ownerB = baseOwnershipMap.get(link.base_b_id);
+            if (ownerA == undefined || ownerB == undefined)
+                continue;
+
+            const id = `#lattice-link-${link.base_a_id}-${link.base_b_id}`;
+            const element = this.element.querySelector(id) as SVGLineElement | null;
+            if (!element)
+                continue;
+
+            if (ownerA == ownerB)
+                element.style.stroke = colours[ownerA];
+            else if (ownerA == 0 || ownerB == 0)
+                element.style.stroke = "rgba(0, 0, 0, 0.5)";
+            else
+                element.style.stroke = "orange";
         }
+
     }
 
     private _createLatticeSvg(): void {
