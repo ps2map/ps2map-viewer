@@ -703,7 +703,7 @@ var LatticeLayer = (function (_super) {
     LatticeLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
         var _this = this;
         var colours = {
-            0: "rgba(0, 0, 0, 1.0)",
+            0: "rgba(0, 0, 0, 0.25)",
             1: "rgba(120, 37, 143, 1.0)",
             2: "rgba(41, 83, 164, 1.0)",
             3: "rgba(186, 25, 25, 1.0)",
