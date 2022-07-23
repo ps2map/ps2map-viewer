@@ -170,29 +170,6 @@ var Api;
     }
     Api.getLatticeForContinent = getLatticeForContinent;
 })(Api || (Api = {}));
-var Events;
-(function (Events) {
-    function continentChangedFactory(continent) {
-        return new CustomEvent("ps2map_continentchanged", {
-            detail: {
-                continent: continent
-            },
-            bubbles: true,
-            cancelable: true
-        });
-    }
-    Events.continentChangedFactory = continentChangedFactory;
-    function baseOwnershipChangedFactory(ownership) {
-        return new CustomEvent("ps2map_baseownershipchanged", {
-            detail: {
-                ownership: ownership
-            },
-            bubbles: true,
-            cancelable: true
-        });
-    }
-    Events.baseOwnershipChangedFactory = baseOwnershipChangedFactory;
-})(Events || (Events = {}));
 var GameData = (function () {
     function GameData() {
         this._continents = [];
@@ -1112,7 +1089,6 @@ var HeroMap = (function () {
                                 });
                                 _this._continent = continent;
                                 _this._startMapStatePolling();
-                                _this.renderer.viewport.dispatchEvent(Events.continentChangedFactory(continent));
                             })];
                     case 1:
                         _b.sent();
@@ -1166,7 +1142,6 @@ var HeroMap = (function () {
                     baseOwnershipMap.set(baseId, factionId);
             }
             StateManager.dispatch("map/baseCaptured", baseOwnershipMap);
-            _this.renderer.viewport.dispatchEvent(Events.baseOwnershipChangedFactory(baseOwnershipMap));
         });
     };
     HeroMap.prototype.jumpTo = function (point) {

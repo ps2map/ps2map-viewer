@@ -85,9 +85,6 @@ class HeroMap {
 
                 // Start polling for base ownership updates
                 this._startMapStatePolling();
-
-                this.renderer.viewport.dispatchEvent(
-                    Events.continentChangedFactory(continent));
             });
     }
 
@@ -134,8 +131,6 @@ class HeroMap {
                         baseOwnershipMap.set(baseId, factionId);
                 }
                 StateManager.dispatch("map/baseCaptured", baseOwnershipMap);
-                this.renderer.viewport.dispatchEvent(
-                    Events.baseOwnershipChangedFactory(baseOwnershipMap));
             });
     }
 
