@@ -57,9 +57,6 @@ class HeroMap {
         // Forward base ownership change to all map layers
         this.renderer?.forEachLayer((layer) => {
             switch (layer.id) {
-                case "names":
-                    (layer as BaseNamesLayer).setBaseOwnership(baseId, factionId);
-                    break;
                 case "lattice":
                     (layer as LatticeLayer).setBaseOwnership(baseId, this._baseOwnershipMap);
                     break;

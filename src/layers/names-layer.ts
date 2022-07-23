@@ -36,7 +36,6 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         const layer = new BaseNamesLayer(id, continent.map_size);
         return Api.getBasesFromContinent(continent.id)
             .then((bases: Api.Base[]) => {
-                console.log(bases);
                 layer._loadBaseInfo(bases);
                 layer.updateLayer();
                 return layer;
@@ -44,7 +43,23 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
     }
 
     updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-        // TODO: Migrate
+
+        const colours: any = {
+            "0": "rgba(0, 0, 0, 1.0)",
+            "1": "rgba(120, 37, 143, 1.0)",
+            "2": "rgba(41, 83, 164, 1.0)",
+            "3": "rgba(186, 25, 25, 1.0)",
+            "4": "rgba(50, 50, 50, 1.0)",
+        }
+
+        let i = this.features.length;
+        while (i-- > 0) {
+            const feat = this.features[i];
+            const factionId = baseOwnershipMap.get(feat.id);
+            if (factionId != undefined)
+                feat.element.style.setProperty(
+                    "--ps2map__base-color", colours[factionId]);
+        }
     }
 
     private _loadBaseInfo(bases: Api.Base[]): void {
@@ -112,29 +127,6 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         element.addEventListener("mouseleave", leave);
         feat.forceVisible = true;
         feat.element.innerText = feat.text;
-    }
-
-    /**
-     * Callback invoked when a base changes ownership.
-     * @param baseId ID of the base that changed ownership
-     * @param factionId Faction ID of the new owner
-     */
-    setBaseOwnership(baseId: number, factionId: number): void {
-
-        const colours: any = {
-            0: "rgba(0, 0, 0, 1.0)",
-            1: "rgba(120, 37, 143, 1.0)",
-            2: "rgba(41, 83, 164, 1.0)",
-            3: "rgba(186, 25, 25, 1.0)",
-            4: "rgba(50, 50, 50, 1.0)",
-        }
-
-        let i = this.features.length;
-        while (i-- > 0) {
-            const feat = this.features[i];
-            if (feat.id == baseId)
-                feat.element.style.setProperty("--ps2map__base-color", colours[factionId]);
-        }
     }
 
     protected deferredLayerUpdate(viewBox: Box, zoom: number) {
