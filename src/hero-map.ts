@@ -72,14 +72,6 @@ class HeroMap {
                     layer.updateLayer();
                 });
 
-                // TODO: This feels out of place
-                const hexes_layer = this.renderer.getLayer("hexes")! as BasePolygonsLayer;
-                const names_layer = this.renderer.getLayer("names")! as BaseNamesLayer;
-                hexes_layer.element.addEventListener("ps2map_basehover", (event) => {
-                    const evt = event as CustomEvent<BaseHoverEvent>;
-                    names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
-                });
-
                 // Update the current continent
                 this._continent = continent;
 

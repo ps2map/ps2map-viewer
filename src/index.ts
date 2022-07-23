@@ -27,6 +27,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Set up toolbox
     setupToolbox(heroMap);
 
+    // Hook up base hover event
+    heroMap.renderer.viewport.addEventListener("ps2map_basehover", (event) => {
+        const names_layer = heroMap.renderer.getLayer("names")! as BaseNamesLayer;
+        const evt = event as CustomEvent<BaseHoverEvent>;
+        names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
+    });
+
     // Set up minimap
     document.addEventListener("ps2map_viewboxchanged", (event) => {
         const evt = (event as CustomEvent<ViewBoxChangedEvent>).detail;

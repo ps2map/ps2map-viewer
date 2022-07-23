@@ -675,10 +675,6 @@ var LatticeLayer = (function (_super) {
             var layer;
             return __generator(this, function (_a) {
                 layer = new LatticeLayer(id, continent.map_size);
-                layer.element.addEventListener("ps2map_baseownershipchanged", function (event) {
-                    var evt = event;
-                    layer.updateBaseOwnership(evt.detail.ownership);
-                });
                 return [2, Api.getLatticeForContinent(continent)
                         .then(function (links) {
                         layer._links = [];
@@ -1080,12 +1076,6 @@ var HeroMap = (function () {
                                 layers.forEach(function (layer) {
                                     _this.renderer.addLayer(layer);
                                     layer.updateLayer();
-                                });
-                                var hexes_layer = _this.renderer.getLayer("hexes");
-                                var names_layer = _this.renderer.getLayer("names");
-                                hexes_layer.element.addEventListener("ps2map_basehover", function (event) {
-                                    var evt = event;
-                                    names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
                                 });
                                 _this._continent = continent;
                                 _this._startMapStatePolling();
@@ -1611,6 +1601,11 @@ document.addEventListener("DOMContentLoaded", function () {
         heroMap.switchServer(state.user.server);
     });
     setupToolbox(heroMap);
+    heroMap.renderer.viewport.addEventListener("ps2map_basehover", function (event) {
+        var names_layer = heroMap.renderer.getLayer("names");
+        var evt = event;
+        names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
+    });
     document.addEventListener("ps2map_viewboxchanged", function (event) {
         var evt = event.detail;
         minimap.updateViewbox(evt.viewBox);

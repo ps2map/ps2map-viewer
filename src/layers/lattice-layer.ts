@@ -16,12 +16,6 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
 
     static async factory(continent: Api.Continent, id: string): Promise<LatticeLayer> {
         const layer = new LatticeLayer(id, continent.map_size);
-
-        layer.element.addEventListener("ps2map_baseownershipchanged", (event) => {
-            const evt = event as CustomEvent<Events.BaseOwnershipChanged>;
-            layer.updateBaseOwnership(evt.detail.ownership);
-        });
-
         return Api.getLatticeForContinent(continent)
             .then((links) => {
                 layer._links = [];
