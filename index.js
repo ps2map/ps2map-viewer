@@ -561,7 +561,7 @@ var BasePolygonsLayer = (function (_super) {
                         .then(function (svg) {
                         svg.classList.add("ps2map__base-hexes__svg");
                         layer.element.appendChild(svg);
-                        layer.applyPolygonHoverFix(svg);
+                        layer._applyPolygonHoverFix(svg);
                         return layer;
                     })];
             });
@@ -586,7 +586,7 @@ var BasePolygonsLayer = (function (_super) {
                 polygon.style.fill = colours[factionId.toFixed()];
         });
     };
-    BasePolygonsLayer.prototype.applyPolygonHoverFix = function (svg) {
+    BasePolygonsLayer.prototype._applyPolygonHoverFix = function (svg) {
         var _this = this;
         svg.querySelectorAll("polygon").forEach(function (polygon) {
             polygon.id = _this._baseIdToPolygonId(polygon.id);

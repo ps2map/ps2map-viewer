@@ -28,7 +28,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
             .then((svg) => {
                 svg.classList.add("ps2map__base-hexes__svg");
                 layer.element.appendChild(svg);
-                layer.applyPolygonHoverFix(svg);
+                layer._applyPolygonHoverFix(svg);
                 return layer;
             });
     }
@@ -54,8 +54,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
         });
     }
 
-    // TODO: Make private
-    applyPolygonHoverFix(svg: SVGElement): void {
+    private _applyPolygonHoverFix(svg: SVGElement): void {
         svg.querySelectorAll("polygon").forEach((polygon) => {
             // Make polygon ID unique
             polygon.id = this._baseIdToPolygonId(polygon.id);
