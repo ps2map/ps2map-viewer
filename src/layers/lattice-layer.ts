@@ -87,8 +87,7 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
             "http://www.w3.org/2000/svg", "line");
         path.setAttribute("id", `lattice-link-${link.base_a_id}-${link.base_b_id}`);
 
-        // TODO: Lattice links are still stored with the game's inverted y-axis
-        // in the database, hence the inversion here - to be rectified.
+        // Game and database use inverted Y coordinates
         path.setAttribute("x1", (link.map_pos_a_x + this.mapSize * 0.5).toFixed());
         path.setAttribute("y1", (-link.map_pos_a_y + this.mapSize * 0.5).toFixed());
         path.setAttribute("x2", (link.map_pos_b_x + this.mapSize * 0.5).toFixed());
