@@ -174,9 +174,13 @@ var GameData = (function () {
     function GameData() {
         this._continents = [];
         this._servers = [];
+        this._bases = [];
     }
     GameData.prototype.continents = function () { return this._continents; };
     GameData.prototype.servers = function () { return this._servers; };
+    GameData.prototype.getBase = function (id) {
+        return this._bases.find(function (b) { return b.id == id; });
+    };
     GameData.load = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -209,6 +213,15 @@ var GameData = (function () {
                     instance._servers = servers;
                     _this._instance = instance;
                     _this._loaded = true;
+                    return instance;
+                }).then(function (instance) {
+                    instance._continents.forEach(function (c) {
+                        Api.getBasesFromContinent(c.id)
+                            .then(function (bases) {
+                            var _a;
+                            (_a = instance._bases).push.apply(_a, bases);
+                        });
+                    });
                     return instance;
                 });
                 return [2, loading];
@@ -1705,7 +1718,8 @@ var State;
 (function (State) {
     State.defaultUserState = {
         server: undefined,
-        continent: undefined
+        continent: undefined,
+        hoveredBase: undefined
     };
     function userReducer(state, action, data) {
         switch (action) {
@@ -1713,6 +1727,8 @@ var State;
                 return __assign(__assign({}, state), { server: data });
             case "user/continentChanged":
                 return __assign(__assign({}, state), { continent: data });
+            case "user/baseHovered":
+                return __assign(__assign({}, state), { hoveredBase: data });
             default:
                 return state;
         }

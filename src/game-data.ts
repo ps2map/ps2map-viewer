@@ -14,10 +14,12 @@ class GameData {
     // Game data fields
     private _continents: Api.Continent[];
     private _servers: Api.Server[];
+    private _bases: Api.Base[];
 
     private constructor() {
         this._continents = [];
         this._servers = [];
+        this._bases = [];
     }
 
     // Getters
@@ -25,6 +27,10 @@ class GameData {
     public continents(): Api.Continent[] { return this._continents; }
 
     public servers(): Api.Server[] { return this._servers; }
+
+    public getBase(id: number): Api.Base | undefined {
+        return this._bases.find(b => b.id == id);
+    }
 
     /**
      * Loads the game data from the API.
@@ -60,6 +66,14 @@ class GameData {
                 instance._servers = servers;
                 this._instance = instance;
                 this._loaded = true;
+                return instance;
+            }).then((instance) => {
+                instance._continents.forEach(c => {
+                    Api.getBasesFromContinent(c.id)
+                        .then(bases => {
+                            instance._bases.push(...bases);
+                        });
+                });
                 return instance;
             });
         return loading;
