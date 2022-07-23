@@ -1321,8 +1321,7 @@ var BaseInfo = (function (_super) {
         var _this = this;
         _super.prototype.activate.call(this);
         this._callback = this._onHover.bind(this);
-        var hex_layer = this.map.renderer.getLayer("hexes");
-        hex_layer.element.addEventListener("ps2map_basehover", this._callback);
+        StateManager.subscribe("user/baseHovered", this._callback);
         this._bases = new Map();
         var continent = this.map.continent();
         if (continent == undefined)
@@ -1336,10 +1335,8 @@ var BaseInfo = (function (_super) {
     };
     BaseInfo.prototype.deactivate = function () {
         _super.prototype.deactivate.call(this);
-        if (this._callback) {
-            var hex_layer = this.map.renderer.getLayer("hexes");
-            hex_layer.element.removeEventListener("ps2map_basehover", this._callback);
-        }
+        if (this._callback)
+            StateManager.unsubscribe("user/baseHovered", this._callback);
         var parent = this.tool_panel;
         if (parent)
             parent.removeAttribute("style");
@@ -1351,35 +1348,31 @@ var BaseInfo = (function (_super) {
         return "base-info";
     };
     BaseInfo.prototype._onHover = function (event) {
-        if (event.type !== "ps2map_basehover")
-            return;
-        var evt = event;
-        var base = evt.detail.baseId;
-        var base_info = this._bases.get(base);
-        if (base_info == undefined)
+        var base = event.user.hoveredBase;
+        if (base == undefined)
             return;
         this.tool_panel.innerHTML = "";
         var name = document.createElement("span");
         name.classList.add("ps2map__tool__base-info__name");
-        name.textContent = base_info.name;
+        name.textContent = base.name;
         this.tool_panel.appendChild(name);
         var type_icon = document.createElement("img");
         type_icon.classList.add("ps2map__tool__base-info__type-icon");
-        type_icon.src = "img/icons/".concat(base_info.type_code, ".svg");
+        type_icon.src = "img/icons/".concat(base.type_code, ".svg");
         this.tool_panel.appendChild(type_icon);
         var type = document.createElement("span");
         type.classList.add("ps2map__tool__base-info__type");
-        type.textContent = base_info.type_name;
+        type.textContent = base.type_name;
         this.tool_panel.appendChild(type);
-        if (base_info.resource_code != undefined) {
+        if (base.resource_code != undefined) {
             this.tool_panel.appendChild(document.createElement("br"));
             var resource_icon = document.createElement("img");
             resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
-            resource_icon.src = "img/icons/".concat(base_info.resource_code, ".png");
+            resource_icon.src = "img/icons/".concat(base.resource_code, ".png");
             this.tool_panel.appendChild(resource_icon);
             var resource_text = document.createElement("span");
             resource_text.classList.add("ps2map__tool__base-info__resource-text");
-            resource_text.textContent = "".concat(base_info.resource_capture_amount, " ").concat(base_info.resource_name, " (").concat(base_info.resource_control_amount.toFixed(1), "/min)");
+            resource_text.textContent = "".concat(base.resource_capture_amount, " ").concat(base.resource_name, " (").concat(base.resource_control_amount.toFixed(1), "/min)");
             this.tool_panel.appendChild(resource_text);
         }
     };
@@ -1763,6 +1756,15 @@ var StateManager = (function () {
         if (!subscriptions)
             this._subscriptions.set(action, subscriptions = []);
         subscriptions.push(callback);
+    };
+    StateManager.unsubscribe = function (action, callback) {
+        var subscriptions = this._subscriptions.get(action);
+        if (!subscriptions)
+            return;
+        var index = subscriptions.indexOf(callback);
+        if (index < 0)
+            return;
+        subscriptions.splice(index, 1);
     };
     StateManager.getState = function () {
         return this._state;

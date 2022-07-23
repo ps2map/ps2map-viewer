@@ -28,6 +28,16 @@ class StateManager {
         subscriptions.push(callback);
     }
 
+    static unsubscribe(action: string, callback: (state: State.AppState) => void): void {
+        const subscriptions = this._subscriptions.get(action);
+        if (!subscriptions)
+            return;
+        const index = subscriptions.indexOf(callback);
+        if (index < 0)
+            return;
+        subscriptions.splice(index, 1);
+    }
+
     static getState(): State.AppState {
         return this._state;
     }

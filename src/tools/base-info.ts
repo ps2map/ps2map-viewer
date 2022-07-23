@@ -2,14 +2,13 @@
 
 class BaseInfo extends Tool {
 
-    private _callback: ((arg0: Event) => void) | undefined = undefined;
+    private _callback: ((arg0: State.AppState) => void) | undefined = undefined;
     private _bases: Map<number, Api.Base> = new Map();
 
     activate(): void {
         super.activate();
         this._callback = this._onHover.bind(this);
-        const hex_layer = this.map.renderer.getLayer("hexes") as MapLayer;
-        hex_layer.element.addEventListener("ps2map_basehover", this._callback);
+        StateManager.subscribe("user/baseHovered", this._callback);
 
         this._bases = new Map();
         const continent = this.map.continent();
@@ -27,10 +26,8 @@ class BaseInfo extends Tool {
 
     deactivate(): void {
         super.deactivate();
-        if (this._callback) {
-            const hex_layer = this.map.renderer.getLayer("hexes") as MapLayer;
-            hex_layer.element.removeEventListener("ps2map_basehover", this._callback);
-        }
+        if (this._callback)
+            StateManager.unsubscribe("user/baseHovered", this._callback);
         const parent = this.tool_panel;
         if (parent)
             parent.removeAttribute("style");
@@ -44,43 +41,38 @@ class BaseInfo extends Tool {
         return "base-info";
     }
 
-    private _onHover(event: Event): void {
-        if (event.type !== "ps2map_basehover")
-            return;
-        const evt = event as CustomEvent<BaseHoverEvent>;
-
-        const base = evt.detail.baseId;
-        const base_info = this._bases.get(base);
-        if (base_info == undefined)
+    private _onHover(event: State.AppState): void {
+        const base = event.user.hoveredBase;
+        if (base == undefined)
             return;
 
         this.tool_panel.innerHTML = "";
         const name = document.createElement("span");
         name.classList.add("ps2map__tool__base-info__name");
-        name.textContent = base_info.name;
+        name.textContent = base.name;
         this.tool_panel.appendChild(name);
 
         const type_icon = document.createElement("img");
         type_icon.classList.add("ps2map__tool__base-info__type-icon");
-        type_icon.src = `img/icons/${base_info.type_code}.svg`;
+        type_icon.src = `img/icons/${base.type_code}.svg`;
         this.tool_panel.appendChild(type_icon);
 
         const type = document.createElement("span");
         type.classList.add("ps2map__tool__base-info__type");
-        type.textContent = base_info.type_name;
+        type.textContent = base.type_name;
         this.tool_panel.appendChild(type);
 
-        if (base_info.resource_code != undefined) {
+        if (base.resource_code != undefined) {
             this.tool_panel.appendChild(document.createElement("br"));
 
             const resource_icon = document.createElement("img");
             resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
-            resource_icon.src = `img/icons/${base_info.resource_code}.png`;
+            resource_icon.src = `img/icons/${base.resource_code}.png`;
             this.tool_panel.appendChild(resource_icon);
 
             const resource_text = document.createElement("span");
             resource_text.classList.add("ps2map__tool__base-info__resource-text");
-            resource_text.textContent = `${base_info.resource_capture_amount} ${base_info.resource_name} (${base_info.resource_control_amount.toFixed(1)}/min)`;
+            resource_text.textContent = `${base.resource_capture_amount} ${base.resource_name} (${base.resource_control_amount.toFixed(1)}/min)`;
             this.tool_panel.appendChild(resource_text);
         }
     }
