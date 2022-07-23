@@ -193,6 +193,54 @@ var Events;
     }
     Events.baseOwnershipChangedFactory = baseOwnershipChangedFactory;
 })(Events || (Events = {}));
+var GameData = (function () {
+    function GameData() {
+        this._continents = [];
+        this._servers = [];
+    }
+    GameData.prototype.continents = function () { return this._continents; };
+    GameData.prototype.servers = function () { return this._servers; };
+    GameData.load = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                if (this._loaded)
+                    return [2, this._instance];
+                if (this._loading)
+                    return [2, this._loading];
+                this._loading = this._loadInternal();
+                return [2, this._loading];
+            });
+        });
+    };
+    GameData.getInstance = function () {
+        if (!this._loaded)
+            throw new Error("Game data not loaded");
+        return this._instance;
+    };
+    GameData._loadInternal = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var continents, servers, loading;
+            var _this = this;
+            return __generator(this, function (_a) {
+                continents = Api.getContinentList();
+                servers = Api.getServerList();
+                loading = Promise.all([continents, servers])
+                    .then(function (_a) {
+                    var continents = _a[0], servers = _a[1];
+                    var instance = new GameData();
+                    instance._continents = continents;
+                    instance._servers = servers;
+                    _this._instance = instance;
+                    _this._loaded = true;
+                    return instance;
+                });
+                return [2, loading];
+            });
+        });
+    };
+    GameData._loaded = false;
+    return GameData;
+}());
 var Utils;
 (function (Utils) {
     function clamp(value, min, max) {
@@ -1562,6 +1610,15 @@ document.addEventListener("DOMContentLoaded", function () {
             resetTool();
     });
 });
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
     var minimap = new Minimap(document.getElementById("minimap"));
@@ -1582,39 +1639,49 @@ document.addEventListener("DOMContentLoaded", function () {
         var evt = event.detail;
         heroMap.jumpTo(evt.target);
     }, { passive: true });
+    function serverById(id) {
+        var server = GameData.getInstance().servers().find(function (s) { return s.id == id; });
+        if (!server)
+            throw new Error("Server with id ".concat(id, " not found."));
+        return server;
+    }
+    function continentById(id) {
+        var continent = GameData.getInstance().continents().find(function (c) { return c.id == id; });
+        if (!continent)
+            throw new Error("Continent with id ".concat(id, " not found."));
+        return continent;
+    }
     var server_picker = document.getElementById("server-picker");
     server_picker.addEventListener("change", function () {
-        var server = JSON.parse(server_picker.value);
-        heroMap.switchServer(server);
+        heroMap.switchServer(serverById(server_picker.value));
     });
-    Api.getServerList().then(function (servers) {
+    var continent_picker = document.getElementById("continent-picker");
+    continent_picker.addEventListener("change", function () {
+        heroMap.switchContinent(continentById(continent_picker.value));
+    });
+    GameData.load().then(function (gameData) {
+        var servers = __spreadArray([], gameData.servers(), true);
+        var continents = __spreadArray([], gameData.continents(), true);
         servers.sort(function (a, b) { return b.name.localeCompare(a.name); });
         var i = servers.length;
         while (i-- > 0) {
             var server = servers[i];
             var option = document.createElement("option");
-            option.value = JSON.stringify(server);
+            option.value = server.id.toString();
             option.text = server.name;
             server_picker.appendChild(option);
         }
-        heroMap.switchServer(JSON.parse(server_picker.value));
-    });
-    var continent_picker = document.getElementById("continent-picker");
-    continent_picker.addEventListener("change", function () {
-        var cont = JSON.parse(continent_picker.value);
-        heroMap.switchContinent(cont);
-    });
-    Api.getContinentList().then(function (continents) {
         continents.sort(function (a, b) { return b.name.localeCompare(a.name); });
-        var i = continents.length;
+        i = continents.length;
         while (i-- > 0) {
             var cont = continents[i];
             var option = document.createElement("option");
-            option.value = JSON.stringify(cont);
+            option.value = cont.id.toString();
             option.text = cont.name;
             continent_picker.appendChild(option);
         }
-        heroMap.switchContinent(JSON.parse(continent_picker.value));
+        heroMap.switchServer(serverById(server_picker.value));
+        heroMap.switchContinent(continentById(continent_picker.value));
     });
 });
 var Api;

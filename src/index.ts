@@ -31,41 +31,57 @@ document.addEventListener("DOMContentLoaded", () => {
         heroMap.jumpTo(evt.target);
     }, { passive: true });
 
-    // Load server list
+    function serverById(id: number | string): Api.Server {
+        const server = GameData.getInstance().servers().find(s => s.id == id);
+        if (!server)
+            throw new Error(`Server with id ${id} not found.`);
+        return server;
+    }
+
+    function continentById(id: number | string): Api.Continent {
+        const continent = GameData.getInstance().continents().find(c => c.id == id);
+        if (!continent)
+            throw new Error(`Continent with id ${id} not found.`);
+        return continent;
+    }
+
     const server_picker = document.getElementById("server-picker") as HTMLSelectElement;
     server_picker.addEventListener("change", () => {
-        const server = JSON.parse(server_picker.value);
-        heroMap.switchServer(server);
+        heroMap.switchServer(serverById(server_picker.value));
     });
-    Api.getServerList().then((servers) => {
+    const continent_picker = document.getElementById("continent-picker") as HTMLSelectElement;
+    continent_picker.addEventListener("change", () => {
+        heroMap.switchContinent(continentById(continent_picker.value));
+    });
+
+    // Load game data
+    GameData.load().then((gameData) => {
+        const servers = [...gameData.servers()];
+        const continents = [...gameData.continents()];
+        // Populate server picker
         servers.sort((a, b) => b.name.localeCompare(a.name));
         let i = servers.length;
         while (i-- > 0) {
             const server = servers[i];
             const option = document.createElement("option");
-            option.value = JSON.stringify(server);
+            option.value = server.id.toString();
+            // option.value = JSON.stringify(server);
             option.text = server.name;
             server_picker.appendChild(option);
         }
-        heroMap.switchServer(JSON.parse(server_picker.value));
-    })
-
-    // Load continent list
-    const continent_picker = document.getElementById("continent-picker") as HTMLSelectElement;
-    continent_picker.addEventListener("change", () => {
-        const cont = JSON.parse(continent_picker.value);
-        heroMap.switchContinent(cont);
-    });
-    Api.getContinentList().then((continents) => {
+        // Populate continent picker
         continents.sort((a, b) => b.name.localeCompare(a.name));
-        let i = continents.length;
+        i = continents.length;
         while (i-- > 0) {
             const cont = continents[i];
             const option = document.createElement("option");
-            option.value = JSON.stringify(cont);
+            option.value = cont.id.toString();
+            // option.value = JSON.stringify(cont);
             option.text = cont.name;
             continent_picker.appendChild(option);
         }
-        heroMap.switchContinent(JSON.parse(continent_picker.value));
+        // Set default server and continent
+        heroMap.switchServer(serverById(server_picker.value));
+        heroMap.switchContinent(continentById(continent_picker.value));
     });
 });
