@@ -182,10 +182,10 @@ var Events;
         });
     }
     Events.continentChangedFactory = continentChangedFactory;
-    function baseOwnershipChangedFactory(baseId, factionId) {
+    function baseOwnershipChangedFactory(ownership) {
         return new CustomEvent("ps2map_baseownershipchanged", {
             detail: {
-                ownership: new Map([[baseId, factionId]])
+                ownership: ownership
             },
             bubbles: true,
             cancelable: true
@@ -1034,12 +1034,6 @@ var HeroMap = (function () {
                 layer.updateBaseOwnership(baseOwnershipMap);
         });
     };
-    HeroMap.prototype.setBaseOwnership = function (baseId, factionId) {
-        if (this._baseOwnershipMap.get(baseId) == factionId)
-            return;
-        this._baseOwnershipMap.set(baseId, factionId);
-        this.renderer.viewport.dispatchEvent(Events.baseOwnershipChangedFactory(baseId, factionId));
-    };
     HeroMap.prototype.switchContinent = function (continent) {
         var _a;
         return __awaiter(this, void 0, void 0, function () {
@@ -1094,19 +1088,24 @@ var HeroMap = (function () {
     HeroMap.prototype._pollBaseOwnership = function () {
         var _this = this;
         var _a, _b;
-        var server_id = (_a = this._server) === null || _a === void 0 ? void 0 : _a.id;
+        var serverId = (_a = this._server) === null || _a === void 0 ? void 0 : _a.id;
         var continentId = (_b = this._continent) === null || _b === void 0 ? void 0 : _b.id;
-        if (server_id == undefined || continentId == undefined)
+        if (serverId == undefined || continentId == undefined)
             return;
-        Api.getBaseOwnership(continentId, server_id).then(function (data) {
-            var baseOwnershipMap = new Map();
+        var poll = Api.getBaseOwnership(continentId, serverId);
+        poll.then(function (data) {
+            var baseOwnershipMap = new Map(_this._baseOwnershipMap);
             var i = data.length;
-            while (i-- > 0)
-                baseOwnershipMap.set(data[i].base_id, data[i].owning_faction_id);
+            while (i-- > 0) {
+                var baseId = data[i].base_id;
+                var factionId = data[i].owning_faction_id;
+                if (baseOwnershipMap.get(baseId) == factionId)
+                    baseOwnershipMap["delete"](baseId);
+                else
+                    baseOwnershipMap.set(baseId, factionId);
+            }
             _this.updateBaseOwnership(baseOwnershipMap);
-            i = data.length;
-            while (i-- > 0)
-                _this.setBaseOwnership(data[i].base_id, data[i].owning_faction_id);
+            _this.renderer.viewport.dispatchEvent(Events.baseOwnershipChangedFactory(baseOwnershipMap));
         });
     };
     HeroMap.prototype.jumpTo = function (point) {
