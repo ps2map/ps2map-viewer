@@ -133,7 +133,7 @@ class HeroMap {
                     else
                         baseOwnershipMap.set(baseId, factionId);
                 }
-                this.updateBaseOwnership(baseOwnershipMap);
+                StateManager.dispatch("map/baseCaptured", baseOwnershipMap);
                 this.renderer.viewport.dispatchEvent(
                     Events.baseOwnershipChangedFactory(baseOwnershipMap));
             });

@@ -10,18 +10,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroMap = new HeroMap(document.getElementById("hero-map") as HTMLDivElement);
     const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
 
+    StateManager.subscribe("map/baseCaptured", (state) => {
+        heroMap.updateBaseOwnership(state.map.baseOwnership);
+        minimap.updateBaseOwnership(state.map.baseOwnership);
+    });
+    StateManager.subscribe("user/continentChanged", (state) => {
+        heroMap.switchContinent(state.user.continent!);
+        heroMap.updateBaseOwnership(state.map.baseOwnership);
+        minimap.switchContinent(state.user.continent!);
+        minimap.updateBaseOwnership(state.map.baseOwnership);
+    });
+    StateManager.subscribe("user/serverChanged", (state) => {
+        heroMap.switchServer(state.user.server!);
+    });
+
     // Set up toolbox
     setupToolbox(heroMap);
 
     // Set up minimap
-    document.addEventListener("ps2map_baseownershipchanged", (event) => {
-        const evt = (event as CustomEvent<Events.BaseOwnershipChanged>).detail;
-        minimap.updateBaseOwnership(evt.ownership);
-    }, { passive: true });
-    document.addEventListener("ps2map_continentchanged", (event) => {
-        const evt = (event as CustomEvent<Events.ContinentChanged>).detail;
-        minimap.switchContinent(evt.continent);
-    }, { passive: true });
     document.addEventListener("ps2map_viewboxchanged", (event) => {
         const evt = (event as CustomEvent<ViewBoxChangedEvent>).detail;
         minimap.updateViewbox(evt.viewBox);
@@ -31,27 +37,21 @@ document.addEventListener("DOMContentLoaded", () => {
         heroMap.jumpTo(evt.target);
     }, { passive: true });
 
-    function serverById(id: number | string): Api.Server {
-        const server = GameData.getInstance().servers().find(s => s.id == id);
-        if (!server)
-            throw new Error(`Server with id ${id} not found.`);
-        return server;
-    }
-
-    function continentById(id: number | string): Api.Continent {
-        const continent = GameData.getInstance().continents().find(c => c.id == id);
-        if (!continent)
-            throw new Error(`Continent with id ${id} not found.`);
-        return continent;
-    }
-
     const server_picker = document.getElementById("server-picker") as HTMLSelectElement;
     server_picker.addEventListener("change", () => {
-        heroMap.switchServer(serverById(server_picker.value));
+        const server = GameData.getInstance().servers()
+            .find(s => s.id == parseInt(server_picker.value));
+        if (!server)
+            throw new Error(`No server found with id ${server_picker.value}`);
+        StateManager.dispatch("user/serverChanged", server);
     });
     const continent_picker = document.getElementById("continent-picker") as HTMLSelectElement;
     continent_picker.addEventListener("change", () => {
-        heroMap.switchContinent(continentById(continent_picker.value));
+        const continent = GameData.getInstance().continents()
+            .find(c => c.id == parseInt(continent_picker.value));
+        if (!continent)
+            throw new Error(`No continent found with id ${continent_picker.value}`);
+        StateManager.dispatch("user/continentChanged", continent);
     });
 
     // Load game data
@@ -65,7 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const server = servers[i];
             const option = document.createElement("option");
             option.value = server.id.toString();
-            // option.value = JSON.stringify(server);
             option.text = server.name;
             server_picker.appendChild(option);
         }
@@ -76,12 +75,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const cont = continents[i];
             const option = document.createElement("option");
             option.value = cont.id.toString();
-            // option.value = JSON.stringify(cont);
             option.text = cont.name;
             continent_picker.appendChild(option);
         }
         // Set default server and continent
-        heroMap.switchServer(serverById(server_picker.value));
-        heroMap.switchContinent(continentById(continent_picker.value));
+        StateManager.dispatch("user/serverChanged", servers[servers.length - 1]);
+        StateManager.dispatch("user/continentChanged", continents[continents.length - 1]);
     });
 });

@@ -1165,7 +1165,7 @@ var HeroMap = (function () {
                 else
                     baseOwnershipMap.set(baseId, factionId);
             }
-            _this.updateBaseOwnership(baseOwnershipMap);
+            StateManager.dispatch("map/baseCaptured", baseOwnershipMap);
             _this.renderer.viewport.dispatchEvent(Events.baseOwnershipChangedFactory(baseOwnershipMap));
         });
     };
@@ -1622,15 +1622,20 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
     var minimap = new Minimap(document.getElementById("minimap"));
+    StateManager.subscribe("map/baseCaptured", function (state) {
+        heroMap.updateBaseOwnership(state.map.baseOwnership);
+        minimap.updateBaseOwnership(state.map.baseOwnership);
+    });
+    StateManager.subscribe("user/continentChanged", function (state) {
+        heroMap.switchContinent(state.user.continent);
+        heroMap.updateBaseOwnership(state.map.baseOwnership);
+        minimap.switchContinent(state.user.continent);
+        minimap.updateBaseOwnership(state.map.baseOwnership);
+    });
+    StateManager.subscribe("user/serverChanged", function (state) {
+        heroMap.switchServer(state.user.server);
+    });
     setupToolbox(heroMap);
-    document.addEventListener("ps2map_baseownershipchanged", function (event) {
-        var evt = event.detail;
-        minimap.updateBaseOwnership(evt.ownership);
-    }, { passive: true });
-    document.addEventListener("ps2map_continentchanged", function (event) {
-        var evt = event.detail;
-        minimap.switchContinent(evt.continent);
-    }, { passive: true });
     document.addEventListener("ps2map_viewboxchanged", function (event) {
         var evt = event.detail;
         minimap.updateViewbox(evt.viewBox);
@@ -1639,25 +1644,21 @@ document.addEventListener("DOMContentLoaded", function () {
         var evt = event.detail;
         heroMap.jumpTo(evt.target);
     }, { passive: true });
-    function serverById(id) {
-        var server = GameData.getInstance().servers().find(function (s) { return s.id == id; });
-        if (!server)
-            throw new Error("Server with id ".concat(id, " not found."));
-        return server;
-    }
-    function continentById(id) {
-        var continent = GameData.getInstance().continents().find(function (c) { return c.id == id; });
-        if (!continent)
-            throw new Error("Continent with id ".concat(id, " not found."));
-        return continent;
-    }
     var server_picker = document.getElementById("server-picker");
     server_picker.addEventListener("change", function () {
-        heroMap.switchServer(serverById(server_picker.value));
+        var server = GameData.getInstance().servers()
+            .find(function (s) { return s.id == parseInt(server_picker.value); });
+        if (!server)
+            throw new Error("No server found with id ".concat(server_picker.value));
+        StateManager.dispatch("user/serverChanged", server);
     });
     var continent_picker = document.getElementById("continent-picker");
     continent_picker.addEventListener("change", function () {
-        heroMap.switchContinent(continentById(continent_picker.value));
+        var continent = GameData.getInstance().continents()
+            .find(function (c) { return c.id == parseInt(continent_picker.value); });
+        if (!continent)
+            throw new Error("No continent found with id ".concat(continent_picker.value));
+        StateManager.dispatch("user/continentChanged", continent);
     });
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
@@ -1680,8 +1681,8 @@ document.addEventListener("DOMContentLoaded", function () {
             option.text = cont.name;
             continent_picker.appendChild(option);
         }
-        heroMap.switchServer(serverById(server_picker.value));
-        heroMap.switchContinent(continentById(continent_picker.value));
+        StateManager.dispatch("user/serverChanged", servers[servers.length - 1]);
+        StateManager.dispatch("user/continentChanged", continents[continents.length - 1]);
     });
 });
 var Api;
@@ -1704,3 +1705,91 @@ var Api;
     }
     Api.getServerList = getServerList;
 })(Api || (Api = {}));
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var State;
+(function (State) {
+    State.defaultMapState = {
+        baseOwnership: new Map()
+    };
+    function mapReducer(state, action, data) {
+        switch (action) {
+            case "map/baseCaptured":
+                return __assign(__assign({}, state), { baseOwnership: data });
+            default:
+                return state;
+        }
+    }
+    State.mapReducer = mapReducer;
+})(State || (State = {}));
+var State;
+(function (State) {
+    State.defaultUserState = {
+        server: undefined,
+        continent: undefined
+    };
+    function userReducer(state, action, data) {
+        switch (action) {
+            case "user/serverChanged":
+                return __assign(__assign({}, state), { server: data });
+            case "user/continentChanged":
+                return __assign(__assign({}, state), { continent: data });
+            default:
+                return state;
+        }
+    }
+    State.userReducer = userReducer;
+})(State || (State = {}));
+var State;
+(function (State) {
+    function appReducer(state, action, data) {
+        return {
+            map: State.mapReducer(state.map, action, data),
+            user: State.userReducer(state.user, action, data)
+        };
+    }
+    State.appReducer = appReducer;
+})(State || (State = {}));
+var StateManager = (function () {
+    function StateManager() {
+    }
+    StateManager.dispatch = function (action, data) {
+        var _this = this;
+        var newState = this._update(action, data);
+        if (newState === this._state) {
+            console.warn("StateManager: dispatch: no change for action \"".concat(action, "\""));
+            return;
+        }
+        this._state = newState;
+        var subscriptions = this._subscriptions.get(action);
+        if (subscriptions)
+            subscriptions.forEach(function (callback) { return callback(_this._state); });
+    };
+    StateManager.subscribe = function (action, callback) {
+        var subscriptions = this._subscriptions.get(action);
+        if (!subscriptions)
+            this._subscriptions.set(action, subscriptions = []);
+        subscriptions.push(callback);
+    };
+    StateManager.getState = function () {
+        return this._state;
+    };
+    StateManager._update = function (action, data) {
+        return State.appReducer(this._state, action, data);
+    };
+    StateManager._state = {
+        map: State.defaultMapState,
+        user: State.defaultUserState
+    };
+    StateManager._subscriptions = new Map();
+    return StateManager;
+}());
