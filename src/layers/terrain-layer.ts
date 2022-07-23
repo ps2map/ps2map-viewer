@@ -14,7 +14,7 @@ class TerrainLayer extends TileLayer {
 
     static async factory(continent: Api.Continent, id: string): Promise<TerrainLayer> {
         const layer = new TerrainLayer(id, continent.map_size);
-        layer.setContinent(continent.code);
+        layer._setContinent(continent.code);
         layer.updateLayer();
         return layer;
     }
@@ -26,7 +26,7 @@ class TerrainLayer extends TileLayer {
      * recreated at the current zoom level.
      * @param code 
      */
-    setContinent(code: string): void {
+    private _setContinent(code: string): void {
         if (this._code == code)
             return;
         this._code = code;

@@ -1521,13 +1521,13 @@ var TerrainLayer = (function (_super) {
             var layer;
             return __generator(this, function (_a) {
                 layer = new TerrainLayer(id, continent.map_size);
-                layer.setContinent(continent.code);
+                layer._setContinent(continent.code);
                 layer.updateLayer();
                 return [2, layer];
             });
         });
     };
-    TerrainLayer.prototype.setContinent = function (code) {
+    TerrainLayer.prototype._setContinent = function (code) {
         if (this._code == code)
             return;
         this._code = code;
