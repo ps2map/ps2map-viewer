@@ -12,27 +12,6 @@ class StaticLayer extends MapLayer {
         super(id, mapSize);
     }
 
-    /**
-     * Add a new child to the layer.
-     * @param element Element to add
-     */
-    addChild(element: Node): void {
-        this.element.appendChild(element);
-    }
-
-    /**
-     * Remove a child from the layer.
-     * @param element Element to remove
-     */
-    removeChild(element: HTMLElement): void {
-        this.element.removeChild(element);
-    }
-
-    /** Remove all children from the layer. */
-    clearChildren(): void {
-        this.element.innerHTML = "";
-    }
-
     redraw(viewBox: Box, zoom: number): void {
         const targetX = (viewBox.right + viewBox.left) * 0.5;
         const targetY = (viewBox.top + viewBox.bottom) * 0.5;

@@ -371,15 +371,6 @@ var StaticLayer = (function (_super) {
     function StaticLayer(id, mapSize) {
         return _super.call(this, id, mapSize) || this;
     }
-    StaticLayer.prototype.addChild = function (element) {
-        this.element.appendChild(element);
-    };
-    StaticLayer.prototype.removeChild = function (element) {
-        this.element.removeChild(element);
-    };
-    StaticLayer.prototype.clearChildren = function () {
-        this.element.innerHTML = "";
-    };
     StaticLayer.prototype.redraw = function (viewBox, zoom) {
         var targetX = (viewBox.right + viewBox.left) * 0.5;
         var targetY = (viewBox.top + viewBox.bottom) * 0.5;
