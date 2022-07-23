@@ -833,27 +833,20 @@ var BaseNamesLayer = (function (_super) {
         }
         this.features = features;
     };
-    BaseNamesLayer.prototype.onBaseHover = function (baseId, element) {
-        var feat = null;
+    BaseNamesLayer.prototype.setHoveredBase = function (base) {
         var i = this.features.length;
-        while (i-- > 0)
-            if (this.features[i].id == baseId)
-                feat = this.features[i];
-        if (feat == null)
-            return;
-        var leave = function () {
-            if (feat == null)
-                throw "feature was unset";
-            element.removeEventListener("mouseleave", leave);
-            feat.forceVisible = false;
-            if (feat.visible)
+        while (i-- > 0) {
+            var feat = this.features[i];
+            if (this.features[i].id == (base === null || base === void 0 ? void 0 : base.id)) {
+                feat.forceVisible = true;
                 feat.element.innerText = feat.text;
-            else
-                feat.element.innerText = "";
-        };
-        element.addEventListener("mouseleave", leave);
-        feat.forceVisible = true;
-        feat.element.innerText = feat.text;
+            }
+            else {
+                feat.forceVisible = false;
+                if (!feat.visible)
+                    feat.element.innerText = "";
+            }
+        }
     };
     BaseNamesLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
         var unzoom = 1 / zoom;
@@ -1613,11 +1606,16 @@ document.addEventListener("DOMContentLoaded", function () {
     StateManager.subscribe("user/serverChanged", function (state) {
         heroMap.switchServer(state.user.server);
     });
+    StateManager.subscribe("user/baseHovered", function (state) {
+        var names = heroMap.renderer.getLayer("names");
+        names.setHoveredBase(state.user.hoveredBase);
+    });
     setupToolbox(heroMap);
     heroMap.renderer.viewport.addEventListener("ps2map_basehover", function (event) {
-        var names_layer = heroMap.renderer.getLayer("names");
-        var evt = event;
-        names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
+        var evt = event.detail;
+        var base = GameData.getInstance().getBase(evt.baseId);
+        if (base)
+            StateManager.dispatch("user/baseHovered", base);
     });
     document.addEventListener("ps2map_viewboxchanged", function (event) {
         var evt = event.detail;

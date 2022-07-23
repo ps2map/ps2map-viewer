@@ -23,15 +23,20 @@ document.addEventListener("DOMContentLoaded", () => {
     StateManager.subscribe("user/serverChanged", (state) => {
         heroMap.switchServer(state.user.server!);
     });
+    StateManager.subscribe("user/baseHovered", (state) => {
+        const names = heroMap.renderer.getLayer("names") as BaseNamesLayer;
+        names.setHoveredBase(state.user.hoveredBase);
+    });
 
     // Set up toolbox
     setupToolbox(heroMap);
 
     // Hook up base hover event
     heroMap.renderer.viewport.addEventListener("ps2map_basehover", (event) => {
-        const names_layer = heroMap.renderer.getLayer("names")! as BaseNamesLayer;
-        const evt = event as CustomEvent<BaseHoverEvent>;
-        names_layer.onBaseHover(evt.detail.baseId, evt.detail.element);
+        const evt = (event as CustomEvent<BaseHoverEvent>).detail;
+        const base = GameData.getInstance().getBase(evt.baseId);
+        if (base)
+            StateManager.dispatch("user/baseHovered", base);
     });
 
     // Set up minimap

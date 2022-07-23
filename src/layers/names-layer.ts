@@ -102,29 +102,21 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
      * Callback invoked when hovering over base hexes.
      * 
      * This displays the name of the current base regardless of zoom level.
-     * @param baseId ID of the base that was highlighted
-     * @param element SVG polygon of the highlighted base.
      */
-    onBaseHover(baseId: number, element: SVGPolygonElement): void {
-        let feat: BaseNameFeature | null = null;
+    setHoveredBase(base: Api.Base | undefined): void {
         let i = this.features.length;
-        while (i-- > 0)
-            if (this.features[i].id == baseId)
-                feat = this.features[i];
-        if (feat == null)
-            return;
-        const leave = () => {
-            if (feat == null) throw "feature was unset";
-            element.removeEventListener("mouseleave", leave);
-            feat.forceVisible = false;
-            if (feat.visible)
+        while (i-- > 0) {
+            const feat = this.features[i];
+            if (this.features[i].id == base?.id) {
+                feat.forceVisible = true;
                 feat.element.innerText = feat.text;
-            else
-                feat.element.innerText = "";
+            }
+            else {
+                feat.forceVisible = false;
+                if (!feat.visible)
+                    feat.element.innerText = "";
+            }
         }
-        element.addEventListener("mouseleave", leave);
-        feat.forceVisible = true;
-        feat.element.innerText = feat.text;
     }
 
     protected deferredLayerUpdate(viewBox: Box, zoom: number) {
