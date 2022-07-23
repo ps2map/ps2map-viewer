@@ -7,7 +7,7 @@
  */
 class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
 
-    private _latticeLinkCache: Api.LatticeLink[] = [];
+    private _links: Api.LatticeLink[] = [];
 
     constructor(id: string, mapSize: number) {
         super(id, mapSize);
@@ -24,10 +24,10 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
 
         return Api.getLatticeForContinent(continent)
             .then((links) => {
-                layer._latticeLinkCache = [];
+                layer._links = [];
                 let i = links.length;
                 while (i-- > 0)
-                    layer._latticeLinkCache.push(links[i])
+                    layer._links.push(links[i])
                 layer._createLatticeSvg();
                 return layer;
             });
@@ -41,30 +41,33 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
             2: "rgba(41, 83, 164, 1.0)",
             3: "rgba(186, 25, 25, 1.0)",
             4: "rgba(50, 50, 50, 1.0)",
-        }
+        };
 
-        let i = this._latticeLinkCache.length;
-        while (i-- > 0) {
-            const link = this._latticeLinkCache[i];
+        baseOwnershipMap.forEach((owner, baseId) => {
+            const links = this._links.filter(
+                l => l.base_a_id === baseId || l.base_b_id === baseId);
+            links.forEach((link) => {
+                // Get ownership for both bases
+                const ownerA = baseOwnershipMap.get(link.base_a_id);
+                const ownerB = baseOwnershipMap.get(link.base_b_id);
+                if (ownerA == undefined || ownerB == undefined)
+                    return;
 
-            const ownerA = baseOwnershipMap.get(link.base_a_id);
-            const ownerB = baseOwnershipMap.get(link.base_b_id);
-            if (ownerA == undefined || ownerB == undefined)
-                continue;
+                // Retrieve the SVG element of the link
+                const id = `#lattice-link-${link.base_a_id}-${link.base_b_id}`;
+                const element = this.element.querySelector(id) as SVGLineElement | null;
+                if (element == null)
+                    return;
 
-            const id = `#lattice-link-${link.base_a_id}-${link.base_b_id}`;
-            const element = this.element.querySelector(id) as SVGLineElement | null;
-            if (!element)
-                continue;
-
-            if (ownerA == ownerB)
-                element.style.stroke = colours[ownerA];
-            else if (ownerA == 0 || ownerB == 0)
-                element.style.stroke = "rgba(0, 0, 0, 0.5)";
-            else
-                element.style.stroke = "orange";
-        }
-
+                // Set the stroke colour
+                if (ownerA == ownerB)
+                    element.style.stroke = colours[ownerA];
+                else if (ownerA == 0 || ownerB == 0)
+                    element.style.stroke = colours[0];
+                else
+                    element.style.stroke = "orange";
+            });
+        });
     }
 
     private _createLatticeSvg(): void {
@@ -73,7 +76,7 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
             "http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("viewBox", `0 0 ${this.mapSize} ${this.mapSize}`);
 
-        this._latticeLinkCache.forEach((link) => {
+        this._links.forEach((link) => {
             svg.appendChild(this._createLatticeLink(link));
         });
         this.element.appendChild(svg);

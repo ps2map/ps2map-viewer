@@ -52,14 +52,12 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
             4: "rgba(50, 50, 50, 1.0)",
         }
 
-        let i = this.features.length;
-        while (i-- > 0) {
-            const feat = this.features[i];
-            const factionId = baseOwnershipMap.get(feat.id);
-            if (factionId != undefined)
+        baseOwnershipMap.forEach((owner, baseId) => {
+            const feat = this.features.find(f => f.id == baseId);
+            if (feat != undefined)
                 feat.element.style.setProperty(
-                    "--ps2map__base-color", colours[factionId]);
-        }
+                    "--ps2map__base-color", colours[owner]);
+        });
     }
 
     private _loadBaseInfo(bases: Api.Base[]): void {

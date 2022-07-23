@@ -50,6 +50,8 @@ class HeroMap {
     }
 
     setBaseOwnership(baseId: number, factionId: number): void {
+        // TODO: Remove this hook or use it to debounce polls and only
+        // forward delta
         if (this._baseOwnershipMap.get(baseId) == factionId)
             return;
         this._baseOwnershipMap.set(baseId, factionId);

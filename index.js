@@ -578,11 +578,11 @@ var BasePolygonsLayer = (function (_super) {
             3: "rgba(226, 25, 25, 1.0)",
             4: "rgba(255, 255, 255, 1.0)"
         };
-        svg.querySelectorAll("polygon").forEach(function (polygon) {
-            var baseId = _this._polygonIdToBaseId(polygon.id);
-            var factionId = baseOwnershipMap.get(baseId);
-            if (factionId != undefined)
-                polygon.style.fill = colours[factionId.toFixed()];
+        baseOwnershipMap.forEach(function (owner, baseId) {
+            var polygon = svg.querySelector("#".concat(_this._baseIdToPolygonId(baseId)));
+            if (polygon == null)
+                throw "Unable to find polygon for base ".concat(baseId);
+            polygon.style.fill = colours[owner];
         });
     };
     BasePolygonsLayer.prototype._applyPolygonHoverFix = function (svg) {
@@ -641,7 +641,7 @@ var LatticeLayer = (function (_super) {
     __extends(LatticeLayer, _super);
     function LatticeLayer(id, mapSize) {
         var _this = _super.call(this, id, mapSize) || this;
-        _this._latticeLinkCache = [];
+        _this._links = [];
         _this.element.classList.add("ps2map__lattice");
         return _this;
     }
@@ -656,10 +656,10 @@ var LatticeLayer = (function (_super) {
                 });
                 return [2, Api.getLatticeForContinent(continent)
                         .then(function (links) {
-                        layer._latticeLinkCache = [];
+                        layer._links = [];
                         var i = links.length;
                         while (i-- > 0)
-                            layer._latticeLinkCache.push(links[i]);
+                            layer._links.push(links[i]);
                         layer._createLatticeSvg();
                         return layer;
                     })];
@@ -667,6 +667,7 @@ var LatticeLayer = (function (_super) {
         });
     };
     LatticeLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+        var _this = this;
         var colours = {
             0: "rgba(0, 0, 0, 1.0)",
             1: "rgba(120, 37, 143, 1.0)",
@@ -674,31 +675,32 @@ var LatticeLayer = (function (_super) {
             3: "rgba(186, 25, 25, 1.0)",
             4: "rgba(50, 50, 50, 1.0)"
         };
-        var i = this._latticeLinkCache.length;
-        while (i-- > 0) {
-            var link = this._latticeLinkCache[i];
-            var ownerA = baseOwnershipMap.get(link.base_a_id);
-            var ownerB = baseOwnershipMap.get(link.base_b_id);
-            if (ownerA == undefined || ownerB == undefined)
-                continue;
-            var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
-            var element = this.element.querySelector(id);
-            if (!element)
-                continue;
-            if (ownerA == ownerB)
-                element.style.stroke = colours[ownerA];
-            else if (ownerA == 0 || ownerB == 0)
-                element.style.stroke = "rgba(0, 0, 0, 0.5)";
-            else
-                element.style.stroke = "orange";
-        }
+        baseOwnershipMap.forEach(function (owner, baseId) {
+            var links = _this._links.filter(function (l) { return l.base_a_id === baseId || l.base_b_id === baseId; });
+            links.forEach(function (link) {
+                var ownerA = baseOwnershipMap.get(link.base_a_id);
+                var ownerB = baseOwnershipMap.get(link.base_b_id);
+                if (ownerA == undefined || ownerB == undefined)
+                    return;
+                var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
+                var element = _this.element.querySelector(id);
+                if (element == null)
+                    return;
+                if (ownerA == ownerB)
+                    element.style.stroke = colours[ownerA];
+                else if (ownerA == 0 || ownerB == 0)
+                    element.style.stroke = colours[0];
+                else
+                    element.style.stroke = "orange";
+            });
+        });
     };
     LatticeLayer.prototype._createLatticeSvg = function () {
         var _this = this;
         this.element.innerHTML = "";
         var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("viewBox", "0 0 ".concat(this.mapSize, " ").concat(this.mapSize));
-        this._latticeLinkCache.forEach(function (link) {
+        this._links.forEach(function (link) {
             svg.appendChild(_this._createLatticeLink(link));
         });
         this.element.appendChild(svg);
@@ -749,6 +751,7 @@ var BaseNamesLayer = (function (_super) {
         });
     };
     BaseNamesLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+        var _this = this;
         var colours = {
             0: "rgba(0, 0, 0, 1.0)",
             1: "rgba(120, 37, 143, 1.0)",
@@ -756,13 +759,11 @@ var BaseNamesLayer = (function (_super) {
             3: "rgba(186, 25, 25, 1.0)",
             4: "rgba(50, 50, 50, 1.0)"
         };
-        var i = this.features.length;
-        while (i-- > 0) {
-            var feat = this.features[i];
-            var factionId = baseOwnershipMap.get(feat.id);
-            if (factionId != undefined)
-                feat.element.style.setProperty("--ps2map__base-color", colours[factionId]);
-        }
+        baseOwnershipMap.forEach(function (owner, baseId) {
+            var feat = _this.features.find(function (f) { return f.id == baseId; });
+            if (feat != undefined)
+                feat.element.style.setProperty("--ps2map__base-color", colours[owner]);
+        });
     };
     BaseNamesLayer.prototype._loadBaseInfo = function (bases) {
         var features = [];

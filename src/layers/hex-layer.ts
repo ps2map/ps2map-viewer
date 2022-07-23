@@ -46,11 +46,12 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
             4: "rgba(255, 255, 255, 1.0)",
         }
 
-        svg.querySelectorAll("polygon").forEach((polygon) => {
-            const baseId = this._polygonIdToBaseId(polygon.id);
-            const factionId = baseOwnershipMap.get(baseId);
-            if (factionId != undefined)
-                polygon.style.fill = colours[factionId.toFixed()];
+        baseOwnershipMap.forEach((owner, baseId) => {
+            const polygon = svg.querySelector(
+                `#${this._baseIdToPolygonId(baseId)}`) as SVGPolygonElement | null;
+            if (polygon == null)
+                throw `Unable to find polygon for base ${baseId}`;
+            polygon.style.fill = colours[owner];
         });
     }
 
