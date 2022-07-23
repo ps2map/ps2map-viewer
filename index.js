@@ -185,8 +185,7 @@ var Events;
     function baseOwnershipChangedFactory(baseId, factionId) {
         return new CustomEvent("ps2map_baseownershipchanged", {
             detail: {
-                baseId: baseId,
-                factionId: factionId
+                ownership: new Map([[baseId, factionId]])
             },
             bubbles: true,
             cancelable: true
@@ -653,9 +652,7 @@ var LatticeLayer = (function (_super) {
                 layer = new LatticeLayer(id, continent.map_size);
                 layer.element.addEventListener("ps2map_baseownershipchanged", function (event) {
                     var evt = event;
-                    var map = new Map();
-                    map.set(evt.detail.baseId, evt.detail.factionId);
-                    layer.updateBaseOwnership(map);
+                    layer.updateBaseOwnership(evt.detail.ownership);
                 });
                 return [2, Api.getLatticeForContinent(continent)
                         .then(function (links) {
@@ -1188,7 +1185,8 @@ var Minimap = (function () {
         this._viewBoxElement.style.left = "".concat(this._cssSize * relLeft, "px");
         this._viewBoxElement.style.bottom = "".concat(this._cssSize * relTop, "px");
     };
-    Minimap.prototype.setBaseOwnership = function (baseId, factionId) {
+    Minimap.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+        var _this = this;
         var colours = {
             0: "rgba(0, 0, 0, ".concat(this._minimapHexAlpha, ")"),
             1: "rgba(160, 77, 183, ".concat(this._minimapHexAlpha, ")"),
@@ -1196,9 +1194,11 @@ var Minimap = (function () {
             3: "rgba(226, 25, 25, ".concat(this._minimapHexAlpha, ")"),
             4: "rgba(255, 255, 255, ".concat(this._minimapHexAlpha, ")")
         };
-        var polygon = this._polygons.get(baseId);
-        if (polygon)
-            polygon.style.fill = colours[factionId];
+        baseOwnershipMap.forEach(function (factionId, baseId) {
+            var polygon = _this._polygons.get(baseId);
+            if (polygon != undefined)
+                polygon.style.fill = colours[factionId];
+        });
     };
     Minimap.prototype.setContinent = function (continent) {
         var _this = this;
@@ -1551,7 +1551,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setupToolbox(heroMap);
     document.addEventListener("ps2map_baseownershipchanged", function (event) {
         var evt = event.detail;
-        minimap.setBaseOwnership(evt.baseId, evt.factionId);
+        minimap.updateBaseOwnership(evt.ownership);
     }, { passive: true });
     document.addEventListener("ps2map_continentchanged", function (event) {
         var evt = event.detail;

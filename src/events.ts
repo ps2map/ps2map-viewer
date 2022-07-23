@@ -25,8 +25,7 @@ namespace Events {
      * Details for the "ps2map_baseownershipchanged" custom event.
      */
     export interface BaseOwnershipChanged {
-        baseId: number;
-        factionId: number;
+        ownership: Map<number, number>;
     }
 
     export function baseOwnershipChangedFactory(
@@ -35,8 +34,7 @@ namespace Events {
     ): CustomEvent<BaseOwnershipChanged> {
         return new CustomEvent("ps2map_baseownershipchanged", {
             detail: {
-                baseId: baseId,
-                factionId: factionId
+                ownership: new Map([[baseId, factionId]])
             },
             bubbles: true,
             cancelable: true,

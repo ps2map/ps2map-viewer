@@ -105,7 +105,8 @@ class Minimap {
         this._viewBoxElement.style.bottom = `${this._cssSize * relTop}px`;
     }
 
-    setBaseOwnership(baseId: number, factionId: number): void {
+    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+
         // TODO: Read faction colours from CSS variables/user config
         const colours: any = {
             0: `rgba(0, 0, 0, ${this._minimapHexAlpha})`,
@@ -113,13 +114,16 @@ class Minimap {
             2: `rgba(81, 123, 204, ${this._minimapHexAlpha})`,
             3: `rgba(226, 25, 25, ${this._minimapHexAlpha})`,
             4: `rgba(255, 255, 255, ${this._minimapHexAlpha})`,
-        }
+        };
 
-        const polygon = this._polygons.get(baseId);
-        if (polygon)
-            polygon.style.fill = colours[factionId];
+        baseOwnershipMap.forEach((factionId, baseId) => {
+            const polygon = this._polygons.get(baseId);
+            if (polygon != undefined)
+                polygon.style.fill = colours[factionId];
+        });
     }
 
+    // TODO: Move to async factory
     setContinent(continent: Api.Continent): void {
         this._mapSize = continent.map_size;
         // Set minimap background image

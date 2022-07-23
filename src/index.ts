@@ -13,9 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Set up toolbox
     setupToolbox(heroMap);
 
+    // Set up minimap
     document.addEventListener("ps2map_baseownershipchanged", (event) => {
         const evt = (event as CustomEvent<Events.BaseOwnershipChanged>).detail;
-        minimap.setBaseOwnership(evt.baseId, evt.factionId);
+        minimap.updateBaseOwnership(evt.ownership);
     }, { passive: true });
     document.addEventListener("ps2map_continentchanged", (event) => {
         const evt = (event as CustomEvent<Events.ContinentChanged>).detail;
