@@ -1,6 +1,6 @@
 /// <reference path="./map-engine/renderer.ts" />
 /// <reference path="./api/index.ts" />
-/// <reference path="./layers/hex-layer.ts" />
+/// <reference path="./layers/index.ts" />
 /// <reference path="./events.ts" />
 
 /**
@@ -52,7 +52,7 @@ class HeroMap {
                     (layer as BaseNamesLayer).setBaseOwnership(baseId, factionId);
                     break;
                 case "lattice":
-                    (layer as LatticeLayer).updateBaseOwnership(baseId, this._baseOwnershipMap);
+                    (layer as LatticeLayer).setBaseOwnership(baseId, this._baseOwnershipMap);
                     break;
             }
         });
@@ -111,7 +111,7 @@ class HeroMap {
         this._startMapStatePolling();
     }
 
-    updateBaseOwnership(): void {
+    private _pollBaseOwnership(): void {
         // TODO: Add safeguard against multiple updates at once in case of long-running requests
         const server_id = this._server?.id;
         const continentId = this._continent?.id;
@@ -133,9 +133,9 @@ class HeroMap {
         this._baseOwnershipMap.clear();
         if (this._baseUpdateIntervalId != undefined)
             clearInterval(this._baseUpdateIntervalId);
-        this.updateBaseOwnership();
+        this._pollBaseOwnership();
         this._baseUpdateIntervalId = setInterval(() => {
-            this.updateBaseOwnership();
+            this._pollBaseOwnership();
         }, 5000);
     }
 

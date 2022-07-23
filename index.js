@@ -630,6 +630,384 @@ var BasePolygonsLayer = (function (_super) {
     };
     return BasePolygonsLayer;
 }(StaticLayer));
+var LatticeLayer = (function (_super) {
+    __extends(LatticeLayer, _super);
+    function LatticeLayer(id, mapSize) {
+        var _this = _super.call(this, id, mapSize) || this;
+        _this._latticeLinkCache = [];
+        _this.element.classList.add("ps2map__lattice");
+        return _this;
+    }
+    LatticeLayer.factory = function (continent, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var layer;
+            return __generator(this, function (_a) {
+                layer = new LatticeLayer(id, continent.map_size);
+                layer.element.addEventListener("ps2map_baseownershipchanged", function (event) {
+                    var evt = event;
+                    var map = new Map();
+                    map.set(evt.detail.baseId, evt.detail.factionId);
+                    layer.setBaseOwnership(evt.detail.baseId, map);
+                });
+                return [2, Api.getLatticeForContinent(continent)
+                        .then(function (links) {
+                        layer._latticeLinkCache = [];
+                        var i = links.length;
+                        while (i-- > 0)
+                            layer._latticeLinkCache.push(links[i]);
+                        layer._createLatticeSvg();
+                        return layer;
+                    })];
+            });
+        });
+    };
+    LatticeLayer.prototype.setBaseOwnership = function (baseId, baseOwnershipMap) {
+        var colours = {
+            0: "rgba(0, 0, 0, 1.0)",
+            1: "rgba(120, 37, 143, 1.0)",
+            2: "rgba(41, 83, 164, 1.0)",
+            3: "rgba(186, 25, 25, 1.0)",
+            4: "rgba(50, 50, 50, 1.0)"
+        };
+        var i = this._latticeLinkCache.length;
+        while (i-- > 0) {
+            var link = this._latticeLinkCache[i];
+            if (link.base_a_id == baseId || link.base_b_id == baseId) {
+                var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
+                var element = this.element.querySelector(id);
+                if (!element)
+                    continue;
+                var ownerA = baseOwnershipMap.get(link.base_a_id);
+                var ownerB = baseOwnershipMap.get(link.base_b_id);
+                if (ownerA == undefined || ownerB == undefined)
+                    continue;
+                if (ownerA == ownerB)
+                    element.style.stroke = colours[ownerA];
+                else
+                    element.style.stroke = "orange";
+            }
+        }
+    };
+    LatticeLayer.prototype._createLatticeSvg = function () {
+        var _this = this;
+        this.element.innerHTML = "";
+        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 ".concat(this.mapSize, " ").concat(this.mapSize));
+        this._latticeLinkCache.forEach(function (link) {
+            svg.appendChild(_this._createLatticeLink(link));
+        });
+        this.element.appendChild(svg);
+    };
+    LatticeLayer.prototype._createLatticeLink = function (link) {
+        var path = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        path.setAttribute("id", "lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id));
+        path.setAttribute("x1", (link.map_pos_a_x + this.mapSize * 0.5).toFixed());
+        path.setAttribute("y1", (-link.map_pos_a_y + this.mapSize * 0.5).toFixed());
+        path.setAttribute("x2", (link.map_pos_b_x + this.mapSize * 0.5).toFixed());
+        path.setAttribute("y2", (-link.map_pos_b_y + this.mapSize * 0.5).toFixed());
+        return path;
+    };
+    return LatticeLayer;
+}(StaticLayer));
+var BaseNameFeature = (function () {
+    function BaseNameFeature(pos, id, text, element, minZoom) {
+        if (minZoom === void 0) { minZoom = 0; }
+        this.visible = true;
+        this.forceVisible = false;
+        this.element = element;
+        this.id = id;
+        this.text = text;
+        this.pos = pos;
+        this.minZoom = minZoom;
+    }
+    return BaseNameFeature;
+}());
+var BaseNamesLayer = (function (_super) {
+    __extends(BaseNamesLayer, _super);
+    function BaseNamesLayer() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.features = [];
+        return _this;
+    }
+    BaseNamesLayer.factory = function (continent, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var layer;
+            return __generator(this, function (_a) {
+                layer = new BaseNamesLayer(id, continent.map_size);
+                return [2, Api.getBasesFromContinent(continent.id)
+                        .then(function (bases) {
+                        console.log(bases);
+                        layer._loadBaseInfo(bases);
+                        layer.updateLayer();
+                        return layer;
+                    })];
+            });
+        });
+    };
+    BaseNamesLayer.prototype._loadBaseInfo = function (bases) {
+        var features = [];
+        var i = bases.length;
+        while (i-- > 0) {
+            var baseInfo = bases[i];
+            if (baseInfo.type_code == "no-mans-land")
+                continue;
+            var pos = {
+                x: baseInfo.map_pos[0],
+                y: baseInfo.map_pos[1]
+            };
+            var element = document.createElement("div");
+            var name_1 = baseInfo.name;
+            if (baseInfo.type_code == "amp-station" ||
+                baseInfo.type_code == "bio-lab" ||
+                baseInfo.type_code == "interlink" ||
+                baseInfo.type_code == "tech-plant" ||
+                baseInfo.type_code == "trident")
+                name_1 += " ".concat(baseInfo.type_name);
+            element.innerText = "".concat(name_1);
+            element.classList.add("ps2map__base-names__icon");
+            element.style.left = "".concat(this.mapSize * 0.5 + pos.x, "px");
+            element.style.bottom = "".concat(this.mapSize * 0.5 + pos.y, "px");
+            element.classList.add("ps2map__base-names__icon__".concat(baseInfo.type_code));
+            var minZoom = 0;
+            if (baseInfo.type_code == "small-outpost")
+                minZoom = 0.60;
+            if (baseInfo.type_code == "large-outpost")
+                minZoom = 0.45;
+            features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
+            this.element.appendChild(element);
+        }
+        this.features = features;
+    };
+    BaseNamesLayer.prototype.onBaseHover = function (baseId, element) {
+        var feat = null;
+        var i = this.features.length;
+        while (i-- > 0)
+            if (this.features[i].id == baseId)
+                feat = this.features[i];
+        if (feat == null)
+            return;
+        var leave = function () {
+            if (feat == null)
+                throw "feature was unset";
+            element.removeEventListener("mouseleave", leave);
+            feat.forceVisible = false;
+            if (feat.visible)
+                feat.element.innerText = feat.text;
+            else
+                feat.element.innerText = "";
+        };
+        element.addEventListener("mouseleave", leave);
+        feat.forceVisible = true;
+        feat.element.innerText = feat.text;
+    };
+    BaseNamesLayer.prototype.setBaseOwnership = function (baseId, factionId) {
+        var colours = {
+            0: "rgba(0, 0, 0, 1.0)",
+            1: "rgba(120, 37, 143, 1.0)",
+            2: "rgba(41, 83, 164, 1.0)",
+            3: "rgba(186, 25, 25, 1.0)",
+            4: "rgba(50, 50, 50, 1.0)"
+        };
+        var i = this.features.length;
+        while (i-- > 0) {
+            var feat = this.features[i];
+            if (feat.id == baseId)
+                feat.element.style.setProperty("--ps2map__base-color", colours[factionId]);
+        }
+    };
+    BaseNamesLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
+        var unzoom = 1 / zoom;
+        var i = this.features.length;
+        while (i-- > 0) {
+            var feat = this.features[i];
+            feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * ".concat(unzoom, ")) ") +
+                "scale(".concat(unzoom, ", ").concat(unzoom, ")"));
+            if (!feat.forceVisible)
+                if (zoom >= feat.minZoom)
+                    feat.element.innerText = feat.text;
+                else
+                    feat.element.innerText = "";
+            feat.visible = zoom >= feat.minZoom;
+        }
+    };
+    return BaseNamesLayer;
+}(StaticLayer));
+var MapTile = (function () {
+    function MapTile(box, element, gridPos) {
+        this.visible = true;
+        this.box = box;
+        this.element = element;
+        this.gridPos = gridPos;
+    }
+    return MapTile;
+}());
+var TileLayer = (function (_super) {
+    __extends(TileLayer, _super);
+    function TileLayer(id, mapSize, initialLod) {
+        var _this = _super.call(this, id, mapSize) || this;
+        _this.tiles = [];
+        _this.lod = initialLod;
+        return _this;
+    }
+    TileLayer.prototype.defineTiles = function (gridSize) {
+        var newTiles = [];
+        var tileSize = this.mapSize / gridSize;
+        var baseSize = this.mapSize / gridSize;
+        var y = gridSize;
+        while (y-- > 0)
+            for (var x = 0; x < gridSize; x++) {
+                var pos = {
+                    x: x,
+                    y: y
+                };
+                var tile = this.createTile(pos, gridSize);
+                tile.element.style.height = tile.element.style.width = ("".concat(tileSize.toFixed(), "px"));
+                tile.element.style.left = "".concat(pos.x * baseSize, "px");
+                tile.element.style.bottom = "".concat(pos.y * baseSize, "px");
+                var url = this.generateTilePath(pos, this.lod);
+                tile.element.style.backgroundImage = "url(".concat(url, ")");
+                newTiles.push(tile);
+            }
+        this.tiles = newTiles;
+    };
+    TileLayer.prototype.tileIsVisible = function (tile, viewBox) {
+        return Utils.rectanglesIntersect(tile.box, viewBox);
+    };
+    TileLayer.prototype.updateTileVisibility = function (viewBox) {
+        var _this = this;
+        var activeTiles = [];
+        var i = this.tiles.length;
+        while (i-- > 0) {
+            var tile = this.tiles[i];
+            if (this.tileIsVisible(tile, viewBox))
+                activeTiles.push(tile.element);
+        }
+        requestAnimationFrame(function () {
+            _this.element.innerHTML = "";
+            i = activeTiles.length;
+            while (i-- > 0)
+                _this.element.append(activeTiles[i]);
+        });
+    };
+    TileLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
+        this.updateTileVisibility(viewBox);
+    };
+    TileLayer.prototype.redraw = function (viewBox, zoom) {
+        var targetX = (viewBox.right + viewBox.left) * 0.5;
+        var targetY = (viewBox.top + viewBox.bottom) * 0.5;
+        var halfMapSize = this.mapSize * 0.5;
+        var offsetX = -halfMapSize;
+        var offsetY = -halfMapSize;
+        offsetX += (halfMapSize - targetX) * zoom;
+        offsetY -= (halfMapSize - targetY) * zoom;
+        this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
+    };
+    return TileLayer;
+}(MapLayer));
+var TerrainLayer = (function (_super) {
+    __extends(TerrainLayer, _super);
+    function TerrainLayer(id, mapSize) {
+        var _this = _super.call(this, id, mapSize, 3) || this;
+        _this._code = "";
+        _this.element.classList.add("ps2map__terrain");
+        return _this;
+    }
+    TerrainLayer.factory = function (continent, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var layer;
+            return __generator(this, function (_a) {
+                layer = new TerrainLayer(id, continent.map_size);
+                layer._setContinent(continent.code);
+                layer.updateLayer();
+                return [2, layer];
+            });
+        });
+    };
+    TerrainLayer.prototype._setContinent = function (code) {
+        if (this._code == code)
+            return;
+        this._code = code;
+        this.element.style.backgroundImage = ("url(".concat(Api.getMinimapImagePath(code), ")"));
+        var gridSize = this._mapTilesPerAxis(this.mapSize, this.lod);
+        this.defineTiles(gridSize);
+    };
+    TerrainLayer.prototype._calculateLod = function (zoom) {
+        var adjustedZoom = zoom * devicePixelRatio;
+        if (adjustedZoom < 0.125)
+            return 3;
+        if (adjustedZoom < 0.25)
+            return 2;
+        if (adjustedZoom < 0.5)
+            return 1;
+        return 0;
+    };
+    TerrainLayer.prototype.createTile = function (pos, gridSize) {
+        var mapStep = this.mapSize / gridSize;
+        var box = {
+            left: mapStep * pos.x,
+            right: mapStep * (pos.x + 1),
+            top: mapStep * (pos.y + 1),
+            bottom: mapStep * pos.y
+        };
+        var element = document.createElement("div");
+        element.classList.add("ps2map__terrain__tile");
+        return new MapTile(box, element, pos);
+    };
+    TerrainLayer.prototype._formatTileCoordinate = function (value) {
+        var negative = value < 0;
+        var coord = Math.abs(value).toFixed();
+        if (coord.length < 3)
+            coord = ("00" + coord).slice(-3);
+        if (negative)
+            coord = "-" + coord.slice(1);
+        return coord;
+    };
+    TerrainLayer.prototype.generateTilePath = function (pos, lod) {
+        var _a = this._gridPosToTilePos(pos, lod), tileX = _a[0], tileY = _a[1];
+        var tilePos = [
+            this._formatTileCoordinate(tileX),
+            this._formatTileCoordinate(tileY)
+        ];
+        return Api.getTerrainTilePath(this._code, tilePos, lod);
+    };
+    TerrainLayer.prototype._gridPosToTilePos = function (pos, lod) {
+        var min = this._mapGridLimits(this.mapSize, lod)[0];
+        var stepSize = this._mapStepSize(this.mapSize, lod);
+        return [min + (stepSize * pos.x), min + (stepSize * pos.y)];
+    };
+    TerrainLayer.prototype._mapStepSize = function (mapSize, lod) {
+        if (lod == 0)
+            return 4;
+        if (lod == 1 || mapSize <= 1024)
+            return 8;
+        if (lod == 2 || mapSize <= 2048)
+            return 16;
+        return 32;
+    };
+    TerrainLayer.prototype._mapTileCount = function (mapSize, lod) {
+        return Math.ceil(Math.pow(4, (Math.floor(Math.log2(mapSize)) - 8 - lod)));
+    };
+    TerrainLayer.prototype._mapTilesPerAxis = function (mapSize, lod) {
+        return Math.floor(Math.sqrt(this._mapTileCount(mapSize, lod)));
+    };
+    TerrainLayer.prototype._mapGridLimits = function (mapSize, lod) {
+        var stepSize = this._mapStepSize(mapSize, lod);
+        var tilesPerAxis = this._mapTilesPerAxis(mapSize, lod);
+        var halfSize = stepSize * Math.floor(tilesPerAxis / 2);
+        if (halfSize <= 0)
+            return [-stepSize, -stepSize];
+        return [-halfSize, halfSize - stepSize];
+    };
+    TerrainLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
+        var newLod = this._calculateLod(zoom);
+        if (newLod != this.lod) {
+            this.lod = newLod;
+            this.defineTiles(this._mapTilesPerAxis(this.mapSize, newLod));
+        }
+        this.updateTileVisibility(viewBox);
+    };
+    return TerrainLayer;
+}(TileLayer));
 var HeroMap = (function () {
     function HeroMap(viewport) {
         this._continent = undefined;
@@ -655,7 +1033,7 @@ var HeroMap = (function () {
                     layer.setBaseOwnership(baseId, factionId);
                     break;
                 case "lattice":
-                    layer.updateBaseOwnership(baseId, _this._baseOwnershipMap);
+                    layer.setBaseOwnership(baseId, _this._baseOwnershipMap);
                     break;
             }
         });
@@ -712,7 +1090,7 @@ var HeroMap = (function () {
             });
         });
     };
-    HeroMap.prototype.updateBaseOwnership = function () {
+    HeroMap.prototype._pollBaseOwnership = function () {
         var _this = this;
         var _a, _b;
         var server_id = (_a = this._server) === null || _a === void 0 ? void 0 : _a.id;
@@ -734,9 +1112,9 @@ var HeroMap = (function () {
         this._baseOwnershipMap.clear();
         if (this._baseUpdateIntervalId != undefined)
             clearInterval(this._baseUpdateIntervalId);
-        this.updateBaseOwnership();
+        this._pollBaseOwnership();
         this._baseUpdateIntervalId = setInterval(function () {
-            _this.updateBaseOwnership();
+            _this._pollBaseOwnership();
         }, 5000);
     };
     return HeroMap;
@@ -1234,381 +1612,9 @@ var Api;
     }
     Api.getServerList = getServerList;
 })(Api || (Api = {}));
-var LatticeLayer = (function (_super) {
-    __extends(LatticeLayer, _super);
-    function LatticeLayer(id, mapSize) {
-        var _this = _super.call(this, id, mapSize) || this;
-        _this._latticeLinkCache = [];
-        _this.element.classList.add("ps2map__lattice");
-        return _this;
+var SupportsBaseOwnership = (function () {
+    function SupportsBaseOwnership() {
     }
-    LatticeLayer.factory = function (continent, id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var layer;
-            return __generator(this, function (_a) {
-                layer = new LatticeLayer(id, continent.map_size);
-                layer.element.addEventListener("ps2map_baseownershipchanged", function (event) {
-                    var evt = event;
-                    var map = new Map();
-                    map.set(evt.detail.baseId, evt.detail.factionId);
-                    layer.updateBaseOwnership(evt.detail.baseId, map);
-                });
-                return [2, Api.getLatticeForContinent(continent)
-                        .then(function (links) {
-                        layer._latticeLinkCache = [];
-                        var i = links.length;
-                        while (i-- > 0)
-                            layer._latticeLinkCache.push(links[i]);
-                        layer._createLatticeSvg();
-                        return layer;
-                    })];
-            });
-        });
-    };
-    LatticeLayer.prototype.updateBaseOwnership = function (baseId, baseOwnershipMap) {
-        var colours = {
-            0: "rgba(0, 0, 0, 1.0)",
-            1: "rgba(120, 37, 143, 1.0)",
-            2: "rgba(41, 83, 164, 1.0)",
-            3: "rgba(186, 25, 25, 1.0)",
-            4: "rgba(50, 50, 50, 1.0)"
-        };
-        var i = this._latticeLinkCache.length;
-        while (i-- > 0) {
-            var link = this._latticeLinkCache[i];
-            if (link.base_a_id == baseId || link.base_b_id == baseId) {
-                var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
-                var element = this.element.querySelector(id);
-                if (!element)
-                    continue;
-                var ownerA = baseOwnershipMap.get(link.base_a_id);
-                var ownerB = baseOwnershipMap.get(link.base_b_id);
-                if (ownerA == undefined || ownerB == undefined)
-                    continue;
-                if (ownerA == ownerB)
-                    element.style.stroke = colours[ownerA];
-                else
-                    element.style.stroke = "orange";
-            }
-        }
-    };
-    LatticeLayer.prototype._createLatticeSvg = function () {
-        var _this = this;
-        this.element.innerHTML = "";
-        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("viewBox", "0 0 ".concat(this.mapSize, " ").concat(this.mapSize));
-        this._latticeLinkCache.forEach(function (link) {
-            svg.appendChild(_this._createLatticeLink(link));
-        });
-        this.element.appendChild(svg);
-    };
-    LatticeLayer.prototype._createLatticeLink = function (link) {
-        var path = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        path.setAttribute("id", "lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id));
-        path.setAttribute("x1", (link.map_pos_a_x + this.mapSize * 0.5).toFixed());
-        path.setAttribute("y1", (-link.map_pos_a_y + this.mapSize * 0.5).toFixed());
-        path.setAttribute("x2", (link.map_pos_b_x + this.mapSize * 0.5).toFixed());
-        path.setAttribute("y2", (-link.map_pos_b_y + this.mapSize * 0.5).toFixed());
-        return path;
-    };
-    return LatticeLayer;
-}(StaticLayer));
-var BaseNameFeature = (function () {
-    function BaseNameFeature(pos, id, text, element, minZoom) {
-        if (minZoom === void 0) { minZoom = 0; }
-        this.visible = true;
-        this.forceVisible = false;
-        this.element = element;
-        this.id = id;
-        this.text = text;
-        this.pos = pos;
-        this.minZoom = minZoom;
-    }
-    return BaseNameFeature;
+    return SupportsBaseOwnership;
 }());
-var BaseNamesLayer = (function (_super) {
-    __extends(BaseNamesLayer, _super);
-    function BaseNamesLayer() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.features = [];
-        return _this;
-    }
-    BaseNamesLayer.factory = function (continent, id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var layer;
-            return __generator(this, function (_a) {
-                layer = new BaseNamesLayer(id, continent.map_size);
-                return [2, Api.getBasesFromContinent(continent.id)
-                        .then(function (bases) {
-                        console.log(bases);
-                        layer._loadBaseInfo(bases);
-                        layer.updateLayer();
-                        return layer;
-                    })];
-            });
-        });
-    };
-    BaseNamesLayer.prototype._loadBaseInfo = function (bases) {
-        var features = [];
-        var i = bases.length;
-        while (i-- > 0) {
-            var baseInfo = bases[i];
-            if (baseInfo.type_code == "no-mans-land")
-                continue;
-            var pos = {
-                x: baseInfo.map_pos[0],
-                y: baseInfo.map_pos[1]
-            };
-            var element = document.createElement("div");
-            var name_1 = baseInfo.name;
-            if (baseInfo.type_code == "amp-station" ||
-                baseInfo.type_code == "bio-lab" ||
-                baseInfo.type_code == "interlink" ||
-                baseInfo.type_code == "tech-plant" ||
-                baseInfo.type_code == "trident")
-                name_1 += " ".concat(baseInfo.type_name);
-            element.innerText = "".concat(name_1);
-            element.classList.add("ps2map__base-names__icon");
-            element.style.left = "".concat(this.mapSize * 0.5 + pos.x, "px");
-            element.style.bottom = "".concat(this.mapSize * 0.5 + pos.y, "px");
-            element.classList.add("ps2map__base-names__icon__".concat(baseInfo.type_code));
-            var minZoom = 0;
-            if (baseInfo.type_code == "small-outpost")
-                minZoom = 0.60;
-            if (baseInfo.type_code == "large-outpost")
-                minZoom = 0.45;
-            features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
-            this.element.appendChild(element);
-        }
-        this.features = features;
-    };
-    BaseNamesLayer.prototype.onBaseHover = function (baseId, element) {
-        var feat = null;
-        var i = this.features.length;
-        while (i-- > 0)
-            if (this.features[i].id == baseId)
-                feat = this.features[i];
-        if (feat == null)
-            return;
-        var leave = function () {
-            if (feat == null)
-                throw "feature was unset";
-            element.removeEventListener("mouseleave", leave);
-            feat.forceVisible = false;
-            if (feat.visible)
-                feat.element.innerText = feat.text;
-            else
-                feat.element.innerText = "";
-        };
-        element.addEventListener("mouseleave", leave);
-        feat.forceVisible = true;
-        feat.element.innerText = feat.text;
-    };
-    BaseNamesLayer.prototype.setBaseOwnership = function (baseId, factionId) {
-        var colours = {
-            0: "rgba(0, 0, 0, 1.0)",
-            1: "rgba(120, 37, 143, 1.0)",
-            2: "rgba(41, 83, 164, 1.0)",
-            3: "rgba(186, 25, 25, 1.0)",
-            4: "rgba(50, 50, 50, 1.0)"
-        };
-        var i = this.features.length;
-        while (i-- > 0) {
-            var feat = this.features[i];
-            if (feat.id == baseId)
-                feat.element.style.setProperty("--ps2map__base-color", colours[factionId]);
-        }
-    };
-    BaseNamesLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
-        var unzoom = 1 / zoom;
-        var i = this.features.length;
-        while (i-- > 0) {
-            var feat = this.features[i];
-            feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * ".concat(unzoom, ")) ") +
-                "scale(".concat(unzoom, ", ").concat(unzoom, ")"));
-            if (!feat.forceVisible)
-                if (zoom >= feat.minZoom)
-                    feat.element.innerText = feat.text;
-                else
-                    feat.element.innerText = "";
-            feat.visible = zoom >= feat.minZoom;
-        }
-    };
-    return BaseNamesLayer;
-}(StaticLayer));
-var MapTile = (function () {
-    function MapTile(box, element, gridPos) {
-        this.visible = true;
-        this.box = box;
-        this.element = element;
-        this.gridPos = gridPos;
-    }
-    return MapTile;
-}());
-var TileLayer = (function (_super) {
-    __extends(TileLayer, _super);
-    function TileLayer(id, mapSize, initialLod) {
-        var _this = _super.call(this, id, mapSize) || this;
-        _this.tiles = [];
-        _this.lod = initialLod;
-        return _this;
-    }
-    TileLayer.prototype.defineTiles = function (gridSize) {
-        var newTiles = [];
-        var tileSize = this.mapSize / gridSize;
-        var baseSize = this.mapSize / gridSize;
-        var y = gridSize;
-        while (y-- > 0)
-            for (var x = 0; x < gridSize; x++) {
-                var pos = {
-                    x: x,
-                    y: y
-                };
-                var tile = this.createTile(pos, gridSize);
-                tile.element.style.height = tile.element.style.width = ("".concat(tileSize.toFixed(), "px"));
-                tile.element.style.left = "".concat(pos.x * baseSize, "px");
-                tile.element.style.bottom = "".concat(pos.y * baseSize, "px");
-                var url = this.generateTilePath(pos, this.lod);
-                tile.element.style.backgroundImage = "url(".concat(url, ")");
-                newTiles.push(tile);
-            }
-        this.tiles = newTiles;
-    };
-    TileLayer.prototype.tileIsVisible = function (tile, viewBox) {
-        return Utils.rectanglesIntersect(tile.box, viewBox);
-    };
-    TileLayer.prototype.updateTileVisibility = function (viewBox) {
-        var _this = this;
-        var activeTiles = [];
-        var i = this.tiles.length;
-        while (i-- > 0) {
-            var tile = this.tiles[i];
-            if (this.tileIsVisible(tile, viewBox))
-                activeTiles.push(tile.element);
-        }
-        requestAnimationFrame(function () {
-            _this.element.innerHTML = "";
-            i = activeTiles.length;
-            while (i-- > 0)
-                _this.element.append(activeTiles[i]);
-        });
-    };
-    TileLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
-        this.updateTileVisibility(viewBox);
-    };
-    TileLayer.prototype.redraw = function (viewBox, zoom) {
-        var targetX = (viewBox.right + viewBox.left) * 0.5;
-        var targetY = (viewBox.top + viewBox.bottom) * 0.5;
-        var halfMapSize = this.mapSize * 0.5;
-        var offsetX = -halfMapSize;
-        var offsetY = -halfMapSize;
-        offsetX += (halfMapSize - targetX) * zoom;
-        offsetY -= (halfMapSize - targetY) * zoom;
-        this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
-    };
-    return TileLayer;
-}(MapLayer));
-var TerrainLayer = (function (_super) {
-    __extends(TerrainLayer, _super);
-    function TerrainLayer(id, mapSize) {
-        var _this = _super.call(this, id, mapSize, 3) || this;
-        _this._code = "";
-        _this.element.classList.add("ps2map__terrain");
-        return _this;
-    }
-    TerrainLayer.factory = function (continent, id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var layer;
-            return __generator(this, function (_a) {
-                layer = new TerrainLayer(id, continent.map_size);
-                layer._setContinent(continent.code);
-                layer.updateLayer();
-                return [2, layer];
-            });
-        });
-    };
-    TerrainLayer.prototype._setContinent = function (code) {
-        if (this._code == code)
-            return;
-        this._code = code;
-        this.element.style.backgroundImage = ("url(".concat(Api.getMinimapImagePath(code), ")"));
-        var gridSize = this._mapTilesPerAxis(this.mapSize, this.lod);
-        this.defineTiles(gridSize);
-    };
-    TerrainLayer.prototype._calculateLod = function (zoom) {
-        var adjustedZoom = zoom * devicePixelRatio;
-        if (adjustedZoom < 0.125)
-            return 3;
-        if (adjustedZoom < 0.25)
-            return 2;
-        if (adjustedZoom < 0.5)
-            return 1;
-        return 0;
-    };
-    TerrainLayer.prototype.createTile = function (pos, gridSize) {
-        var mapStep = this.mapSize / gridSize;
-        var box = {
-            left: mapStep * pos.x,
-            right: mapStep * (pos.x + 1),
-            top: mapStep * (pos.y + 1),
-            bottom: mapStep * pos.y
-        };
-        var element = document.createElement("div");
-        element.classList.add("ps2map__terrain__tile");
-        return new MapTile(box, element, pos);
-    };
-    TerrainLayer.prototype._formatTileCoordinate = function (value) {
-        var negative = value < 0;
-        var coord = Math.abs(value).toFixed();
-        if (coord.length < 3)
-            coord = ("00" + coord).slice(-3);
-        if (negative)
-            coord = "-" + coord.slice(1);
-        return coord;
-    };
-    TerrainLayer.prototype.generateTilePath = function (pos, lod) {
-        var _a = this._gridPosToTilePos(pos, lod), tileX = _a[0], tileY = _a[1];
-        var tilePos = [
-            this._formatTileCoordinate(tileX),
-            this._formatTileCoordinate(tileY)
-        ];
-        return Api.getTerrainTilePath(this._code, tilePos, lod);
-    };
-    TerrainLayer.prototype._gridPosToTilePos = function (pos, lod) {
-        var min = this._mapGridLimits(this.mapSize, lod)[0];
-        var stepSize = this._mapStepSize(this.mapSize, lod);
-        return [min + (stepSize * pos.x), min + (stepSize * pos.y)];
-    };
-    TerrainLayer.prototype._mapStepSize = function (mapSize, lod) {
-        if (lod == 0)
-            return 4;
-        if (lod == 1 || mapSize <= 1024)
-            return 8;
-        if (lod == 2 || mapSize <= 2048)
-            return 16;
-        return 32;
-    };
-    TerrainLayer.prototype._mapTileCount = function (mapSize, lod) {
-        return Math.ceil(Math.pow(4, (Math.floor(Math.log2(mapSize)) - 8 - lod)));
-    };
-    TerrainLayer.prototype._mapTilesPerAxis = function (mapSize, lod) {
-        return Math.floor(Math.sqrt(this._mapTileCount(mapSize, lod)));
-    };
-    TerrainLayer.prototype._mapGridLimits = function (mapSize, lod) {
-        var stepSize = this._mapStepSize(mapSize, lod);
-        var tilesPerAxis = this._mapTilesPerAxis(mapSize, lod);
-        var halfSize = stepSize * Math.floor(tilesPerAxis / 2);
-        if (halfSize <= 0)
-            return [-stepSize, -stepSize];
-        return [-halfSize, halfSize - stepSize];
-    };
-    TerrainLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
-        var newLod = this._calculateLod(zoom);
-        if (newLod != this.lod) {
-            this.lod = newLod;
-            this.defineTiles(this._mapTilesPerAxis(this.mapSize, newLod));
-        }
-        this.updateTileVisibility(viewBox);
-    };
-    return TerrainLayer;
-}(TileLayer));
+;

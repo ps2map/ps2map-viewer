@@ -20,7 +20,7 @@ class LatticeLayer extends StaticLayer {
             const evt = event as CustomEvent<Events.BaseOwnershipChanged>;
             const map = new Map();
             map.set(evt.detail.baseId, evt.detail.factionId);
-            layer.updateBaseOwnership(evt.detail.baseId, map);
+            layer.setBaseOwnership(evt.detail.baseId, map);
         });
         return Api.getLatticeForContinent(continent)
             .then((links) => {
@@ -33,7 +33,7 @@ class LatticeLayer extends StaticLayer {
             });
     }
 
-    updateBaseOwnership(baseId: number, baseOwnershipMap: Map<number, number>): void {
+    setBaseOwnership(baseId: number, baseOwnershipMap: Map<number, number>): void {
         const colours: any = {
             0: "rgba(0, 0, 0, 1.0)",
             1: "rgba(120, 37, 143, 1.0)",
