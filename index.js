@@ -1138,8 +1138,7 @@ var HeroMap = (function () {
     return HeroMap;
 }());
 var Minimap = (function () {
-    function Minimap(element, continent) {
-        if (continent === void 0) { continent = undefined; }
+    function Minimap(element) {
         this._mapSize = 0;
         this._baseOutlineSvg = undefined;
         this._minimapHexAlpha = 0.5;
@@ -1151,37 +1150,11 @@ var Minimap = (function () {
         this._viewBoxElement = document.createElement("div");
         this._viewBoxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this._viewBoxElement);
-        if (continent != undefined)
-            this.setContinent(continent);
         this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), {
             passive: true
         });
     }
-    Minimap.prototype._jumpToPosition = function (evtDown) {
-        var _this = this;
-        if (this._mapSize == 0)
-            return;
-        var drag = Utils.rafDebounce(function (evtDrag) {
-            var rect = _this.element.getBoundingClientRect();
-            var relX = (evtDrag.clientX - rect.left) / (rect.width);
-            var relY = (evtDrag.clientY - rect.top) / (rect.height);
-            var target = {
-                x: Math.round(relX * _this._mapSize),
-                y: Math.round((1 - relY) * _this._mapSize)
-            };
-            _this.element.dispatchEvent(_this._buildMinimapJumpEvent(target));
-        });
-        var up = function () {
-            _this.element.removeEventListener("mousemove", drag);
-            document.removeEventListener("mouseup", up);
-        };
-        document.addEventListener("mouseup", up);
-        this.element.addEventListener("mousemove", drag, {
-            passive: true
-        });
-        drag(evtDown);
-    };
-    Minimap.prototype.setViewBox = function (viewBox) {
+    Minimap.prototype.updateViewbox = function (viewBox) {
         var mapSize = this._mapSize;
         var relViewBox = {
             top: (viewBox.top + mapSize * 0.5) / mapSize,
@@ -1213,25 +1186,32 @@ var Minimap = (function () {
                 polygon.style.fill = colours[factionId];
         });
     };
-    Minimap.prototype.setContinent = function (continent) {
-        var _this = this;
-        this._mapSize = continent.map_size;
-        this.element.style.backgroundImage =
-            "url(".concat(Api.getMinimapImagePath(continent.code), ")");
-        Api.getContinentOutlinesSvg(continent)
-            .then(function (svg) {
-            if (_this._baseOutlineSvg != undefined)
-                _this.element.removeChild(_this._baseOutlineSvg);
-            _this._polygons = new Map();
-            svg.classList.add("ps2map__minimap__hexes");
-            _this._baseOutlineSvg = svg;
-            _this.element.appendChild(_this._baseOutlineSvg);
-            var polygons = svg.querySelectorAll("polygon");
-            var i = polygons.length;
-            while (i-- > 0) {
-                _this._polygons.set(parseInt(polygons[i].id), polygons[i]);
-                polygons[i].id = _this._polygonIdFromBaseId(polygons[i].id);
-            }
+    Minimap.prototype.switchContinent = function (continent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var svg, polygons, i;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, Api.getContinentOutlinesSvg(continent)];
+                    case 1:
+                        svg = _a.sent();
+                        this._mapSize = continent.map_size;
+                        this.element.style.backgroundImage =
+                            "url(".concat(Api.getMinimapImagePath(continent.code), ")");
+                        if (this._baseOutlineSvg != undefined)
+                            this.element.removeChild(this._baseOutlineSvg);
+                        this._polygons = new Map();
+                        svg.classList.add("ps2map__minimap__hexes");
+                        this._baseOutlineSvg = svg;
+                        this.element.appendChild(this._baseOutlineSvg);
+                        polygons = svg.querySelectorAll("polygon");
+                        i = polygons.length;
+                        while (i-- > 0) {
+                            this._polygons.set(parseInt(polygons[i].id), polygons[i]);
+                            polygons[i].id = this._polygonIdFromBaseId(polygons[i].id);
+                        }
+                        return [2];
+                }
+            });
         });
     };
     Minimap.prototype._buildMinimapJumpEvent = function (target) {
@@ -1242,6 +1222,30 @@ var Minimap = (function () {
             bubbles: true,
             cancelable: true
         });
+    };
+    Minimap.prototype._jumpToPosition = function (evtDown) {
+        var _this = this;
+        if (this._mapSize == 0)
+            return;
+        var drag = Utils.rafDebounce(function (evtDrag) {
+            var rect = _this.element.getBoundingClientRect();
+            var relX = (evtDrag.clientX - rect.left) / (rect.width);
+            var relY = (evtDrag.clientY - rect.top) / (rect.height);
+            var target = {
+                x: Math.round(relX * _this._mapSize),
+                y: Math.round((1 - relY) * _this._mapSize)
+            };
+            _this.element.dispatchEvent(_this._buildMinimapJumpEvent(target));
+        });
+        var up = function () {
+            _this.element.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", up);
+        };
+        document.addEventListener("mouseup", up);
+        this.element.addEventListener("mousemove", drag, {
+            passive: true
+        });
+        drag(evtDown);
     };
     Minimap.prototype._polygonIdFromBaseId = function (baseId) {
         return "minimap-baseId-".concat(baseId);
@@ -1568,11 +1572,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }, { passive: true });
     document.addEventListener("ps2map_continentchanged", function (event) {
         var evt = event.detail;
-        minimap.setContinent(evt.continent);
+        minimap.switchContinent(evt.continent);
     }, { passive: true });
     document.addEventListener("ps2map_viewboxchanged", function (event) {
         var evt = event.detail;
-        minimap.setViewBox(evt.viewBox);
+        minimap.updateViewbox(evt.viewBox);
     }, { passive: true });
     document.addEventListener("ps2map_minimapjump", function (event) {
         var evt = event.detail;

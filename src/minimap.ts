@@ -30,7 +30,7 @@ class Minimap {
     private _minimapHexAlpha: number = 0.5;
     private _polygons: Map<number, SVGPolygonElement> = new Map();
 
-    constructor(element: HTMLDivElement, continent: Api.Continent | undefined = undefined) {
+    constructor(element: HTMLDivElement) {
         // Set up DOM containers
         this.element = element;
         this.element.classList.add("ps2map__minimap");
@@ -40,52 +40,14 @@ class Minimap {
         this._viewBoxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this._viewBoxElement);
 
-        // If a continent is provided, set up the minimap
-        if (continent != undefined)
-            this.setContinent(continent);
-
         // Attach event listener
         this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), {
             passive: true
         });
     }
 
-    /**
-     * Event callback for clicking on the minimap.
-     * @param evtDown Position the mouse was clicked at
-     */
-    private _jumpToPosition(evtDown: MouseEvent): void {
-        if (this._mapSize == 0)
-            return;
-        // Continuous "mousemove" callback
-        const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
-            // Get relative cursor position
-            const rect = this.element.getBoundingClientRect();
-            const relX = (evtDrag.clientX - rect.left) / (rect.width);
-            const relY = (evtDrag.clientY - rect.top) / (rect.height);
-            // Calculate target cursor position
-            const target: Point = {
-                x: Math.round(relX * this._mapSize),
-                y: Math.round((1 - relY) * this._mapSize)
-            };
-            this.element.dispatchEvent(this._buildMinimapJumpEvent(target));
-        });
-        // Global "mouseup" callback
-        const up = () => {
-            this.element.removeEventListener("mousemove", drag);
-            document.removeEventListener("mouseup", up);
-        };
-        // Add listeners
-        document.addEventListener("mouseup", up);
-        this.element.addEventListener("mousemove", drag, {
-            passive: true
-        });
-        // Manually invoke the "drag" callback once to handle single click pans
-        drag(evtDown);
-    }
-
     /** Update the viewBox displayed on the minimap. */
-    setViewBox(viewBox: Box): void {
+    updateViewbox(viewBox: Box): void {
         const mapSize = this._mapSize;
         // Convert map-coordinate viewBox to percentages
         const relViewBox: Box = {
@@ -123,33 +85,35 @@ class Minimap {
         });
     }
 
-    // TODO: Move to async factory
-    setContinent(continent: Api.Continent): void {
+    async switchContinent(continent: Api.Continent): Promise<void> {
+
+        // Load the base outline SVG
+        const svg = await Api.getContinentOutlinesSvg(continent);
+
         this._mapSize = continent.map_size;
         // Set minimap background image
         this.element.style.backgroundImage =
             `url(${Api.getMinimapImagePath(continent.code)})`;
-        // Create base outlines
-        Api.getContinentOutlinesSvg(continent)
-            .then((svg) => {
-                // Delete the existing hex layer, if any
-                if (this._baseOutlineSvg != undefined)
-                    this.element.removeChild(this._baseOutlineSvg);
-                // Delete any existing polygons
-                this._polygons = new Map();
-                // Add the new hex layer
-                svg.classList.add("ps2map__minimap__hexes");
-                this._baseOutlineSvg = svg;
-                this.element.appendChild(this._baseOutlineSvg);
-                // Add the polygons to the local cache
-                const polygons = svg.querySelectorAll("polygon");
-                let i = polygons.length;
-                while (i-- > 0) {
-                    this._polygons.set(parseInt(polygons[i].id), polygons[i]);
-                    // Update polygon IDs to be unique
-                    polygons[i].id = this._polygonIdFromBaseId(polygons[i].id);
-                }
-            });
+
+        // Delete the existing hex layer, if any
+        if (this._baseOutlineSvg != undefined)
+            this.element.removeChild(this._baseOutlineSvg);
+
+        // Delete any existing polygons
+        this._polygons = new Map();
+        // Add the new hex layer
+        svg.classList.add("ps2map__minimap__hexes");
+        this._baseOutlineSvg = svg;
+        this.element.appendChild(this._baseOutlineSvg);
+
+        // Add the polygons to the local cache
+        const polygons = svg.querySelectorAll("polygon");
+        let i = polygons.length;
+        while (i-- > 0) {
+            this._polygons.set(parseInt(polygons[i].id), polygons[i]);
+            // Update polygon IDs to be unique
+            polygons[i].id = this._polygonIdFromBaseId(polygons[i].id);
+        }
     }
 
     private _buildMinimapJumpEvent(target: Point): CustomEvent<MinimapJumpEvent> {
@@ -160,6 +124,40 @@ class Minimap {
             bubbles: true,
             cancelable: true,
         });
+    }
+
+    /**
+     * Event callback for clicking on the minimap.
+     * @param evtDown Position the mouse was clicked at
+     */
+    private _jumpToPosition(evtDown: MouseEvent): void {
+        if (this._mapSize == 0)
+            return;
+        // Continuous "mousemove" callback
+        const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
+            // Get relative cursor position
+            const rect = this.element.getBoundingClientRect();
+            const relX = (evtDrag.clientX - rect.left) / (rect.width);
+            const relY = (evtDrag.clientY - rect.top) / (rect.height);
+            // Calculate target cursor position
+            const target: Point = {
+                x: Math.round(relX * this._mapSize),
+                y: Math.round((1 - relY) * this._mapSize)
+            };
+            this.element.dispatchEvent(this._buildMinimapJumpEvent(target));
+        });
+        // Global "mouseup" callback
+        const up = () => {
+            this.element.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", up);
+        };
+        // Add listeners
+        document.addEventListener("mouseup", up);
+        this.element.addEventListener("mousemove", drag, {
+            passive: true
+        });
+        // Manually invoke the "drag" callback once to handle single click pans
+        drag(evtDown);
     }
 
     private _polygonIdFromBaseId(baseId: number | string): string {

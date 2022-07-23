@@ -20,11 +20,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }, { passive: true });
     document.addEventListener("ps2map_continentchanged", (event) => {
         const evt = (event as CustomEvent<Events.ContinentChanged>).detail;
-        minimap.setContinent(evt.continent);
+        minimap.switchContinent(evt.continent);
     }, { passive: true });
     document.addEventListener("ps2map_viewboxchanged", (event) => {
         const evt = (event as CustomEvent<ViewBoxChangedEvent>).detail;
-        minimap.setViewBox(evt.viewBox);
+        minimap.updateViewbox(evt.viewBox);
     }, { passive: true });
     document.addEventListener("ps2map_minimapjump", (event) => {
         const evt = (event as CustomEvent<MinimapJumpEvent>).detail;
