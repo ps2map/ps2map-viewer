@@ -1,4 +1,5 @@
-/// <reference path="api/index.ts" />
+/// <reference path="interfaces/index.ts" />
+/// <reference path="rest/index.ts" />
 /// <reference path="map-engine/types.ts" />
 
 /**
@@ -85,15 +86,15 @@ class Minimap {
         });
     }
 
-    async switchContinent(continent: Api.Continent): Promise<void> {
+    async switchContinent(continent: Continent): Promise<void> {
 
         // Load the base outline SVG
-        const svg = await Api.getContinentOutlinesSvg(continent);
+        const svg = await fetchContinentOutlines(continent.code);
 
         this._mapSize = continent.map_size;
         // Set minimap background image
         this.element.style.backgroundImage =
-            `url(${Api.getMinimapImagePath(continent.code)})`;
+            `url(${UrlGen.mapBackground(continent.code)})`;
 
         // Delete the existing hex layer, if any
         if (this._baseOutlineSvg != undefined)

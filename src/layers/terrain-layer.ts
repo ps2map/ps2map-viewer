@@ -1,3 +1,5 @@
+/// <reference path="../interfaces/index.ts" />
+/// <reference path="../rest/index.ts" />
 /// <reference path="../map-engine/tile-layer.ts" />
 
 /**
@@ -12,7 +14,7 @@ class TerrainLayer extends TileLayer {
         this.element.classList.add("ps2map__terrain");
     }
 
-    static async factory(continent: Api.Continent, id: string): Promise<TerrainLayer> {
+    static async factory(continent: Continent, id: string): Promise<TerrainLayer> {
         const layer = new TerrainLayer(id, continent.map_size);
         layer._setContinent(continent.code);
         layer.updateLayer();
@@ -32,7 +34,7 @@ class TerrainLayer extends TileLayer {
         this._code = code;
         // Add low-res background buffer for antialiasing and preloading
         this.element.style.backgroundImage = (
-            `url(${Api.getMinimapImagePath(code)})`);
+            `url(${UrlGen.mapBackground(code)})`);
         // Generate grid
         const gridSize = this._mapTilesPerAxis(this.mapSize, this.lod);
         this.defineTiles(gridSize);
@@ -90,7 +92,7 @@ class TerrainLayer extends TileLayer {
         const tilePos: [string, string] = [
             this._formatTileCoordinate(tileX),
             this._formatTileCoordinate(tileY)];
-        return Api.getTerrainTilePath(this._code, tilePos, lod);
+        return UrlGen.terrainTile(this._code, tilePos, lod);
     }
 
     /**

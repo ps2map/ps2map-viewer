@@ -35,141 +35,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var Api;
-(function (Api) {
-    function getBasesFromContinent(id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getBasesFromContinentUrl(id))];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
-        });
-    }
-    Api.getBasesFromContinent = getBasesFromContinent;
-    function getBaseOwnership(continent_id, server_id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getBaseOwnershipUrl(continent_id, server_id))];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
-        });
-    }
-    Api.getBaseOwnership = getBaseOwnership;
-})(Api || (Api = {}));
-var Api;
-(function (Api) {
-    Api.restEndpoint = "http://127.0.0.1:5000/";
-    function getContinentListUrl() {
-        return "".concat(Api.restEndpoint, "continent");
-    }
-    Api.getContinentListUrl = getContinentListUrl;
-    function getServerListUrl() {
-        return "".concat(Api.restEndpoint, "server");
-    }
-    Api.getServerListUrl = getServerListUrl;
-    function getBasesFromContinentUrl(id) {
-        return "".concat(Api.restEndpoint, "base?continent_id=").concat(id);
-    }
-    Api.getBasesFromContinentUrl = getBasesFromContinentUrl;
-    function getMinimapImagePath(code) {
-        return "".concat(Api.restEndpoint, "static/minimap/").concat(code, ".jpg");
-    }
-    Api.getMinimapImagePath = getMinimapImagePath;
-    function getTerrainTilePath(code, pos, lod) {
-        var filename = "".concat(code, "_tile_").concat(pos[0], "_").concat(pos[1], "_lod").concat(lod, ".jpeg");
-        return "".concat(Api.restEndpoint, "static/tile/").concat(filename);
-    }
-    Api.getTerrainTilePath = getTerrainTilePath;
-    function getContinentOutlinesPath(code) {
-        return "".concat(Api.restEndpoint, "static/hex/").concat(code, "-minimal.svg");
-    }
-    Api.getContinentOutlinesPath = getContinentOutlinesPath;
-    function getBaseOwnershipUrl(continent_id, server_id) {
-        return "".concat(Api.restEndpoint, "base/status?continent_id=").concat(continent_id, "&server_id=").concat(server_id);
-    }
-    Api.getBaseOwnershipUrl = getBaseOwnershipUrl;
-    function getLatticePath(continentId) {
-        return "".concat(Api.restEndpoint, "lattice?continent_id=").concat(continentId);
-    }
-    Api.getLatticePath = getLatticePath;
-})(Api || (Api = {}));
-var Api;
-(function (Api) {
-    function getContinentList() {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getContinentListUrl())];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
-        });
-    }
-    Api.getContinentList = getContinentList;
-    function getContinentOutlinesSvg(continent) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response, payload, factory, svg;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getContinentOutlinesPath(continent.code))];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.text()];
-                    case 2:
-                        payload = _a.sent();
-                        factory = document.createElement("template");
-                        factory.innerHTML = payload;
-                        svg = factory.content.firstElementChild;
-                        if (!(svg instanceof SVGElement))
-                            throw "Unable to load contents from map hex SVG";
-                        return [2, svg];
-                }
-            });
-        });
-    }
-    Api.getContinentOutlinesSvg = getContinentOutlinesSvg;
-    function getLatticeForContinent(continent) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getLatticePath(continent.id))];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
-        });
-    }
-    Api.getLatticeForContinent = getLatticeForContinent;
-})(Api || (Api = {}));
 var GameData = (function () {
     function GameData() {
         this._continents = [];
@@ -203,8 +68,8 @@ var GameData = (function () {
             var continents, servers, loading;
             var _this = this;
             return __generator(this, function (_a) {
-                continents = Api.getContinentList();
-                servers = Api.getServerList();
+                continents = fetchContinents();
+                servers = fetchServers();
                 loading = Promise.all([continents, servers])
                     .then(function (_a) {
                     var continents = _a[0], servers = _a[1];
@@ -216,7 +81,7 @@ var GameData = (function () {
                     return instance;
                 }).then(function (instance) {
                     instance._continents.forEach(function (c) {
-                        Api.getBasesFromContinent(c.id)
+                        fetchBasesForContinent(c.id)
                             .then(function (bases) {
                             var _a;
                             (_a = instance._bases).push.apply(_a, bases);
@@ -576,6 +441,69 @@ var MapRenderer = (function () {
     };
     return MapRenderer;
 }());
+var UrlGen = (function () {
+    function UrlGen() {
+    }
+    UrlGen.serverList = function () {
+        return "".concat(this.restEndpoint, "server");
+    };
+    UrlGen.continentList = function () {
+        return "".concat(this.restEndpoint, "continent");
+    };
+    UrlGen.latticeForContinent = function (continentId) {
+        return "".concat(this.restEndpoint, "lattice?continent_id=").concat(continentId);
+    };
+    UrlGen.basesForContinent = function (continentId) {
+        return "".concat(this.restEndpoint, "base?continent_id=").concat(continentId);
+    };
+    UrlGen.mapBackground = function (code) {
+        return "".concat(this.restEndpoint, "static/minimap/").concat(code, ".jpg");
+    };
+    UrlGen.terrainTile = function (code, pos, lod) {
+        var filename = "".concat(code, "_tile_").concat(pos[0], "_").concat(pos[1], "_lod").concat(lod, ".jpeg");
+        return "".concat(this.restEndpoint, "static/tile/").concat(filename);
+    };
+    UrlGen.continentOutlines = function (code) {
+        return "".concat(this.restEndpoint, "static/hex/").concat(code, "-minimal.svg");
+    };
+    UrlGen.baseStatus = function (continentId, serverId) {
+        return "".concat(this.restEndpoint, "base/status?continent_id=").concat(continentId, "&server_id=").concat(serverId);
+    };
+    UrlGen.restEndpoint = "http://127.0.0.1:5000/";
+    return UrlGen;
+}());
+function fetchServers() {
+    return fetch(UrlGen.serverList())
+        .then(function (response) { return response.json(); });
+}
+function fetchContinents() {
+    return fetch(UrlGen.continentList())
+        .then(function (response) { return response.json(); });
+}
+function fetchContinentLattice(continentId) {
+    return fetch(UrlGen.latticeForContinent(continentId))
+        .then(function (response) { return response.json(); });
+}
+function fetchBasesForContinent(continentId) {
+    return fetch(UrlGen.basesForContinent(continentId))
+        .then(function (response) { return response.json(); });
+}
+function fetchBaseStatus(continentId, serverId) {
+    return fetch(UrlGen.baseStatus(continentId, serverId))
+        .then(function (response) { return response.json(); });
+}
+function fetchContinentOutlines(continentCode) {
+    return fetch(UrlGen.continentOutlines(continentCode))
+        .then(function (response) { return response.text(); })
+        .then(function (payload) {
+        var factory = document.createElement("template");
+        factory.innerHTML = payload;
+        var svg = factory.content.firstElementChild;
+        if (!(svg instanceof SVGElement))
+            throw "Unable to load contents from map hex SVG";
+        return svg;
+    });
+}
 var SupportsBaseOwnership = (function () {
     function SupportsBaseOwnership() {
     }
@@ -594,7 +522,7 @@ var BasePolygonsLayer = (function (_super) {
             var layer;
             return __generator(this, function (_a) {
                 layer = new BasePolygonsLayer(id, continent.map_size);
-                return [2, Api.getContinentOutlinesSvg(continent)
+                return [2, fetchContinentOutlines(continent.code)
                         .then(function (svg) {
                         svg.classList.add("ps2map__base-hexes__svg");
                         layer.element.appendChild(svg);
@@ -688,7 +616,7 @@ var LatticeLayer = (function (_super) {
             var layer;
             return __generator(this, function (_a) {
                 layer = new LatticeLayer(id, continent.map_size);
-                return [2, Api.getLatticeForContinent(continent)
+                return [2, fetchContinentLattice(continent.id)
                         .then(function (links) {
                         layer._links = [];
                         var i = links.length;
@@ -775,7 +703,7 @@ var BaseNamesLayer = (function (_super) {
             var layer;
             return __generator(this, function (_a) {
                 layer = new BaseNamesLayer(id, continent.map_size);
-                return [2, Api.getBasesFromContinent(continent.id)
+                return [2, fetchBasesForContinent(continent.id)
                         .then(function (bases) {
                         layer._loadBaseInfo(bases);
                         layer.updateLayer();
@@ -960,7 +888,7 @@ var TerrainLayer = (function (_super) {
         if (this._code == code)
             return;
         this._code = code;
-        this.element.style.backgroundImage = ("url(".concat(Api.getMinimapImagePath(code), ")"));
+        this.element.style.backgroundImage = ("url(".concat(UrlGen.mapBackground(code), ")"));
         var gridSize = this._mapTilesPerAxis(this.mapSize, this.lod);
         this.defineTiles(gridSize);
     };
@@ -1001,7 +929,7 @@ var TerrainLayer = (function (_super) {
             this._formatTileCoordinate(tileX),
             this._formatTileCoordinate(tileY)
         ];
-        return Api.getTerrainTilePath(this._code, tilePos, lod);
+        return UrlGen.terrainTile(this._code, tilePos, lod);
     };
     TerrainLayer.prototype._gridPosToTilePos = function (pos, lod) {
         var min = this._mapGridLimits(this.mapSize, lod)[0];
@@ -1156,12 +1084,12 @@ var Minimap = (function () {
             var svg, polygons, i;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, Api.getContinentOutlinesSvg(continent)];
+                    case 0: return [4, fetchContinentOutlines(continent.code)];
                     case 1:
                         svg = _a.sent();
                         this._mapSize = continent.map_size;
                         this.element.style.backgroundImage =
-                            "url(".concat(Api.getMinimapImagePath(continent.code), ")");
+                            "url(".concat(UrlGen.mapBackground(continent.code), ")");
                         if (this._baseOutlineSvg != undefined)
                             this.element.removeChild(this._baseOutlineSvg);
                         this._polygons = new Map();
@@ -1216,6 +1144,67 @@ var Minimap = (function () {
         return "minimap-baseId-".concat(baseId);
     };
     return Minimap;
+}());
+var MapListener = (function () {
+    function MapListener(server) {
+        if (server === void 0) { server = undefined; }
+        this._subscribers = [];
+        this._startMapStatePolling();
+        this._server = server;
+        this._baseUpdateIntervalId = undefined;
+    }
+    MapListener.prototype.subscribe = function (callback) {
+        this._subscribers.push(callback);
+    };
+    MapListener.prototype.unsubscribe = function (callback) {
+        this._subscribers = this._subscribers.filter(function (subscriber) { return subscriber !== callback; });
+    };
+    MapListener.prototype.notify = function (event, data) {
+        this._subscribers.forEach(function (subscriber) { return subscriber(event, data); });
+    };
+    MapListener.prototype.clear = function () {
+        this._subscribers = [];
+    };
+    MapListener.prototype.switchServer = function (server) {
+        this._server = server;
+        this._startMapStatePolling();
+    };
+    MapListener.prototype._pollBaseOwnership = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                if (this._server == undefined)
+                    return [2];
+                fetchContinents().then(function (continents) {
+                    var status = [];
+                    continents.forEach(function (continent) {
+                        status.push(fetchBaseStatus(continent.id, _this._server.id));
+                    });
+                    var baseOwnership = new Map();
+                    Promise.all(status).then(function (results) {
+                        results.forEach(function (status) {
+                            status.forEach(function (base) {
+                                baseOwnership.set(base.base_id, base.owning_faction_id);
+                            });
+                        });
+                    }).then(function () {
+                        _this.notify("baseCaptured", baseOwnership);
+                    });
+                });
+                return [2];
+            });
+        });
+    };
+    MapListener.prototype._startMapStatePolling = function () {
+        var _this = this;
+        if (this._baseUpdateIntervalId != undefined)
+            clearInterval(this._baseUpdateIntervalId);
+        this._pollBaseOwnership();
+        this._baseUpdateIntervalId = setInterval(function () {
+            _this._pollBaseOwnership();
+        }, 5000);
+    };
+    return MapListener;
 }());
 var Tool = (function () {
     function Tool(viewport, map) {
@@ -1272,7 +1261,7 @@ var BaseInfo = (function (_super) {
         var continent = this.map.continent();
         if (continent == undefined)
             return;
-        Api.getBasesFromContinent(continent.id).then(function (bases) {
+        fetchBasesForContinent(continent.id).then(function (bases) {
             _this._bases = new Map(bases.map(function (base) { return [base.id, base]; }));
         });
         var parent = this.tool_panel;
@@ -1520,6 +1509,64 @@ document.addEventListener("DOMContentLoaded", function () {
             resetTool();
     });
 });
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var State;
+(function (State) {
+    State.defaultMapState = {
+        baseOwnership: new Map()
+    };
+    function mapReducer(state, action, data) {
+        switch (action) {
+            case "map/baseCaptured":
+                return __assign(__assign({}, state), { baseOwnership: data });
+            default:
+                return state;
+        }
+    }
+    State.mapReducer = mapReducer;
+})(State || (State = {}));
+var State;
+(function (State) {
+    ;
+    State.defaultUserState = {
+        server: undefined,
+        continent: undefined,
+        hoveredBase: undefined
+    };
+    function userReducer(state, action, data) {
+        switch (action) {
+            case "user/serverChanged":
+                return __assign(__assign({}, state), { server: data });
+            case "user/continentChanged":
+                return __assign(__assign({}, state), { continent: data });
+            case "user/baseHovered":
+                return __assign(__assign({}, state), { hoveredBase: data });
+            default:
+                return state;
+        }
+    }
+    State.userReducer = userReducer;
+})(State || (State = {}));
+var State;
+(function (State) {
+    function appReducer(state, action, data) {
+        return {
+            map: State.mapReducer(state.map, action, data),
+            user: State.userReducer(state.user, action, data)
+        };
+    }
+    State.appReducer = appReducer;
+})(State || (State = {}));
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
@@ -1611,145 +1658,6 @@ document.addEventListener("DOMContentLoaded", function () {
         StateManager.dispatch("user/continentChanged", continents[continents.length - 1]);
     });
 });
-var MapListener = (function () {
-    function MapListener(server) {
-        if (server === void 0) { server = undefined; }
-        this._subscribers = [];
-        this._startMapStatePolling();
-        this._server = server;
-        this._baseUpdateIntervalId = undefined;
-    }
-    MapListener.prototype.subscribe = function (callback) {
-        this._subscribers.push(callback);
-    };
-    MapListener.prototype.unsubscribe = function (callback) {
-        this._subscribers = this._subscribers.filter(function (subscriber) { return subscriber !== callback; });
-    };
-    MapListener.prototype.notify = function (event, data) {
-        this._subscribers.forEach(function (subscriber) { return subscriber(event, data); });
-    };
-    MapListener.prototype.clear = function () {
-        this._subscribers = [];
-    };
-    MapListener.prototype.switchServer = function (server) {
-        this._server = server;
-        this._startMapStatePolling();
-    };
-    MapListener.prototype._pollBaseOwnership = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            return __generator(this, function (_a) {
-                if (this._server == undefined)
-                    return [2];
-                Api.getContinentList().then(function (continents) {
-                    var status = [];
-                    continents.forEach(function (continent) {
-                        status.push(Api.getBaseOwnership(continent.id, _this._server.id));
-                    });
-                    var baseOwnership = new Map();
-                    Promise.all(status).then(function (results) {
-                        results.forEach(function (status) {
-                            status.forEach(function (base) {
-                                baseOwnership.set(base.base_id, base.owning_faction_id);
-                            });
-                        });
-                    }).then(function () {
-                        _this.notify("baseCaptured", baseOwnership);
-                    });
-                });
-                return [2];
-            });
-        });
-    };
-    MapListener.prototype._startMapStatePolling = function () {
-        var _this = this;
-        if (this._baseUpdateIntervalId != undefined)
-            clearInterval(this._baseUpdateIntervalId);
-        this._pollBaseOwnership();
-        this._baseUpdateIntervalId = setInterval(function () {
-            _this._pollBaseOwnership();
-        }, 5000);
-    };
-    return MapListener;
-}());
-var Api;
-(function (Api) {
-    function getServerList() {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetch(Api.getServerListUrl())];
-                    case 1:
-                        response = _a.sent();
-                        if (!response.ok)
-                            throw new Error(response.statusText);
-                        return [4, response.json()];
-                    case 2: return [2, _a.sent()];
-                }
-            });
-        });
-    }
-    Api.getServerList = getServerList;
-})(Api || (Api = {}));
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-var State;
-(function (State) {
-    State.defaultMapState = {
-        baseOwnership: new Map()
-    };
-    function mapReducer(state, action, data) {
-        switch (action) {
-            case "map/baseCaptured":
-                return __assign(__assign({}, state), { baseOwnership: data });
-            default:
-                return state;
-        }
-    }
-    State.mapReducer = mapReducer;
-})(State || (State = {}));
-var State;
-(function (State) {
-    ;
-    State.defaultUserState = {
-        server: undefined,
-        continent: undefined,
-        hoveredBase: undefined
-    };
-    function userReducer(state, action, data) {
-        switch (action) {
-            case "user/serverChanged":
-                return __assign(__assign({}, state), { server: data });
-            case "user/continentChanged":
-                return __assign(__assign({}, state), { continent: data });
-            case "user/baseHovered":
-                return __assign(__assign({}, state), { hoveredBase: data });
-            default:
-                return state;
-        }
-    }
-    State.userReducer = userReducer;
-})(State || (State = {}));
-var State;
-(function (State) {
-    function appReducer(state, action, data) {
-        return {
-            map: State.mapReducer(state.map, action, data),
-            user: State.userReducer(state.user, action, data)
-        };
-    }
-    State.appReducer = appReducer;
-})(State || (State = {}));
 var StateManager = (function () {
     function StateManager() {
     }

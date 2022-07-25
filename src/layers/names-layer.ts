@@ -1,3 +1,5 @@
+/// <reference path="../interfaces/index.ts" />
+/// <reference path="../rest/index.ts" />
 /// <reference path="../map-engine/static-layer.ts" />
 /// <reference path="./base.ts" />
 
@@ -32,10 +34,10 @@ class BaseNameFeature {
 class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
     features: BaseNameFeature[] = []
 
-    static async factory(continent: Api.Continent, id: string): Promise<BaseNamesLayer> {
+    static async factory(continent: Continent, id: string): Promise<BaseNamesLayer> {
         const layer = new BaseNamesLayer(id, continent.map_size);
-        return Api.getBasesFromContinent(continent.id)
-            .then((bases: Api.Base[]) => {
+        return fetchBasesForContinent(continent.id)
+            .then((bases: Base[]) => {
                 layer._loadBaseInfo(bases);
                 layer.updateLayer();
                 return layer;
@@ -60,7 +62,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         });
     }
 
-    private _loadBaseInfo(bases: Api.Base[]): void {
+    private _loadBaseInfo(bases: Base[]): void {
         const features: BaseNameFeature[] = [];
         let i = bases.length;
         while (i-- > 0) {
@@ -103,7 +105,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
      * 
      * This displays the name of the current base regardless of zoom level.
      */
-    setHoveredBase(base: Api.Base | undefined): void {
+    setHoveredBase(base: Base | undefined): void {
         let i = this.features.length;
         while (i-- > 0) {
             const feat = this.features[i];

@@ -1,3 +1,5 @@
+/// <reference path="./interfaces/index.ts" />
+
 /**
  * Repository for static game data.
  * 
@@ -12,9 +14,9 @@ class GameData {
     private static _loaded: boolean = false;
 
     // Game data fields
-    private _continents: Api.Continent[];
-    private _servers: Api.Server[];
-    private _bases: Api.Base[];
+    private _continents: Continent[];
+    private _servers: Server[];
+    private _bases: Base[];
 
     private constructor() {
         this._continents = [];
@@ -24,11 +26,11 @@ class GameData {
 
     // Getters
 
-    public continents(): Api.Continent[] { return this._continents; }
+    public continents(): Continent[] { return this._continents; }
 
-    public servers(): Api.Server[] { return this._servers; }
+    public servers(): Server[] { return this._servers; }
 
-    public getBase(id: number): Api.Base | undefined {
+    public getBase(id: number): Base | undefined {
         return this._bases.find(b => b.id == id);
     }
 
@@ -57,8 +59,8 @@ class GameData {
     }
 
     private static async _loadInternal(): Promise<GameData> {
-        const continents = Api.getContinentList();
-        const servers = Api.getServerList();
+        const continents = fetchContinents();
+        const servers = fetchServers();
         const loading = Promise.all([continents, servers])
             .then(([continents, servers]) => {
                 const instance = new GameData();
@@ -69,7 +71,7 @@ class GameData {
                 return instance;
             }).then((instance) => {
                 instance._continents.forEach(c => {
-                    Api.getBasesFromContinent(c.id)
+                    fetchBasesForContinent(c.id)
                         .then(bases => {
                             instance._bases.push(...bases);
                         });

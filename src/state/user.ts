@@ -1,9 +1,11 @@
+/// <reference path="../interfaces/index.ts" />
+
 namespace State {
 
     export interface UserState {
-        server: Api.Server | undefined;
-        continent: Api.Continent | undefined;
-        hoveredBase: Api.Base | undefined;
+        server: Server | undefined;
+        continent: Continent | undefined;
+        hoveredBase: Base | undefined;
     };
 
     export const defaultUserState: UserState = {

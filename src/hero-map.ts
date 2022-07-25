@@ -1,7 +1,6 @@
 /// <reference path="./map-engine/renderer.ts" />
-/// <reference path="./api/index.ts" />
+/// <reference path="./interfaces/index.ts" />
 /// <reference path="./layers/index.ts" />
-/// <reference path="./events.ts" />
 
 /**
  * Custom map controller for primary PlanetSide 2 continent map.
@@ -11,13 +10,13 @@
 class HeroMap {
 
     readonly renderer: MapRenderer;
-    private _continent: Api.Continent | undefined = undefined;
+    private _continent: Continent | undefined = undefined;
 
     constructor(viewport: HTMLDivElement) {
         this.renderer = new MapRenderer(viewport, 0);
     }
 
-    continent(): Api.Continent { return this._continent!; }
+    continent(): Continent { return this._continent!; }
 
     updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
         const data = GameData.getInstance();
@@ -40,7 +39,7 @@ class HeroMap {
         });
     }
 
-    async switchContinent(continent: Api.Continent): Promise<void> {
+    async switchContinent(continent: Continent): Promise<void> {
         if (continent.code == this._continent?.code)
             return;
 

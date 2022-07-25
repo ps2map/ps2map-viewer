@@ -4,9 +4,9 @@ class MapListener {
 
     private _subscribers: ((arg0: string, arg1: any) => void)[];
     private _baseUpdateIntervalId: number | undefined;
-    private _server: Api.Server | undefined;
+    private _server: Server | undefined;
 
-    constructor(server: Api.Server | undefined = undefined) {
+    constructor(server: Server | undefined = undefined) {
         this._subscribers = [];
         this._startMapStatePolling();
         this._server = server;
@@ -29,7 +29,7 @@ class MapListener {
         this._subscribers = [];
     }
 
-    public switchServer(server: Api.Server): void {
+    public switchServer(server: Server): void {
         this._server = server;
         this._startMapStatePolling();
     }
@@ -38,10 +38,10 @@ class MapListener {
         if (this._server == undefined)
             return;
 
-        Api.getContinentList().then((continents) => {
-            const status: Promise<Api.BaseStatus[]>[] = [];
+        fetchContinents().then((continents) => {
+            const status: Promise<BaseStatus[]>[] = [];
             continents.forEach((continent) => {
-                status.push(Api.getBaseOwnership(continent.id, this._server!.id));
+                status.push(fetchBaseStatus(continent.id, this._server!.id));
             });
             const baseOwnership = new Map<number, number>();
             Promise.all(status).then((results) => {

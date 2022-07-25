@@ -1,3 +1,5 @@
+/// <reference path="../interfaces/index.ts" />
+/// <reference path="../rest/index.ts" />
 /// <reference path="../map-engine/static-layer.ts" />
 /// <reference path="./base.ts" />
 
@@ -22,9 +24,9 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
         this.element.classList.add("ps2map__base-hexes");
     }
 
-    static async factory(continent: Api.Continent, id: string): Promise<BasePolygonsLayer> {
+    static async factory(continent: Continent, id: string): Promise<BasePolygonsLayer> {
         const layer = new BasePolygonsLayer(id, continent.map_size);
-        return Api.getContinentOutlinesSvg(continent)
+        return fetchContinentOutlines(continent.code)
             .then((svg) => {
                 svg.classList.add("ps2map__base-hexes__svg");
                 layer.element.appendChild(svg);

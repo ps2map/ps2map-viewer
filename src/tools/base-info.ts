@@ -1,9 +1,11 @@
-/// <reference path="tool.ts" />
+/// <reference path="../interfaces/index.ts" />
+/// <reference path="../rest/index.ts" />
+/// <reference path="./tool.ts" />
 
 class BaseInfo extends Tool {
 
     private _callback: ((arg0: State.AppState) => void) | undefined = undefined;
-    private _bases: Map<number, Api.Base> = new Map();
+    private _bases: Map<number, Base> = new Map();
 
     activate(): void {
         super.activate();
@@ -14,7 +16,7 @@ class BaseInfo extends Tool {
         const continent = this.map.continent();
         if (continent == undefined)
             return;
-        Api.getBasesFromContinent(continent.id).then(
+        fetchBasesForContinent(continent.id).then(
             (bases) => {
                 this._bases = new Map(bases.map((base) => [base.id, base]));
             }

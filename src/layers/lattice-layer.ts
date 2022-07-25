@@ -1,4 +1,5 @@
-/// <reference path="../api/index.ts" />
+/// <reference path="../interfaces/index.ts" />
+/// <reference path="../rest/index.ts" />
 /// <reference path="../map-engine/static-layer.ts" />
 /// <reference path="./base.ts" />
 
@@ -7,16 +8,16 @@
  */
 class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
 
-    private _links: Api.LatticeLink[] = [];
+    private _links: LatticeLink[] = [];
 
     constructor(id: string, mapSize: number) {
         super(id, mapSize);
         this.element.classList.add("ps2map__lattice");
     }
 
-    static async factory(continent: Api.Continent, id: string): Promise<LatticeLayer> {
+    static async factory(continent: Continent, id: string): Promise<LatticeLayer> {
         const layer = new LatticeLayer(id, continent.map_size);
-        return Api.getLatticeForContinent(continent)
+        return fetchContinentLattice(continent.id)
             .then((links) => {
                 layer._links = [];
                 let i = links.length;
@@ -76,7 +77,7 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
         this.element.appendChild(svg);
     }
 
-    private _createLatticeLink(link: Api.LatticeLink): SVGElement {
+    private _createLatticeLink(link: LatticeLink): SVGElement {
         const path = document.createElementNS(
             "http://www.w3.org/2000/svg", "line");
         path.setAttribute("id", `lattice-link-${link.base_a_id}-${link.base_b_id}`);

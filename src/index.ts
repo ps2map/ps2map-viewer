@@ -1,8 +1,11 @@
-/// <reference path="./api/index.ts" />
+/// <reference path="./interfaces/index.ts" />
+/// <reference path="./rest/index.ts" />
 /// <reference path="./hero-map.ts" />
 /// <reference path="./minimap.ts" />
+/// <reference path="./listener.ts" />
 /// <reference path="./tools/index.ts" />
-/// <reference path="./events.ts" />
+/// <reference path="./state/index.ts" />
+/// <reference path="./game-data.ts" />
 
 /** Initialisation hook for components that need to be run on DOM load. */
 document.addEventListener("DOMContentLoaded", () => {
