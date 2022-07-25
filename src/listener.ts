@@ -3,12 +3,14 @@
 class MapListener {
 
     private _subscribers: ((arg0: string, arg1: any) => void)[];
-    /** Polling timer for base ownership updates via REST API. */
-    private _baseUpdateIntervalId: number | undefined = undefined;
+    private _baseUpdateIntervalId: number | undefined;
+    private _server: Api.Server | undefined;
 
-    constructor() {
+    constructor(server: Api.Server | undefined = undefined) {
         this._subscribers = [];
         this._startMapStatePolling();
+        this._server = server;
+        this._baseUpdateIntervalId = undefined;
     }
 
     public subscribe(callback: (arg0: string, arg1: any) => void) {
@@ -27,41 +29,30 @@ class MapListener {
         this._subscribers = [];
     }
 
-    private async _timeout<T>(promise: Promise<T>, timeout: number): Promise<T | undefined> {
-        const timeoutPromise = new Promise<undefined>(
-            (resolve) => setTimeout(() => resolve(undefined), timeout));
-        return Promise.race([timeoutPromise, promise]);
+    public switchServer(server: Api.Server): void {
+        this._server = server;
+        this._startMapStatePolling();
     }
 
     private async _pollBaseOwnership(): Promise<void> {
-        const server = 13;
-        const continents = await Api.getContinentList();
-        continents.forEach(continent => {
+        if (this._server == undefined)
+            return;
 
-            this._timeout(Api.getBaseOwnership(continent.id, server), 5000)
-                .then((data) => {
-                    if (data == undefined) {
-                        console.warn('Base ownership poll timed out')
-                        return;
-                    }
-
-                    // Create a copy of the map to avoid mutating the original
-                    const baseOwnershipMap = new Map();
-                    let i = data.length;
-                    while (i-- > 0) {
-                        const baseId = data[i].base_id;
-                        const factionId = data[i].owning_faction_id;
-
-                        // If the base has not changed, remove the key
-                        if (baseOwnershipMap.get(baseId) == factionId)
-                            baseOwnershipMap.delete(baseId);
-                        // Otherwise, update the key with the new value
-                        else
-                            baseOwnershipMap.set(baseId, factionId);
-                    }
-                    this.notify('baseCaptured', baseOwnershipMap);
+        Api.getContinentList().then((continents) => {
+            const status: Promise<Api.BaseStatus[]>[] = [];
+            continents.forEach((continent) => {
+                status.push(Api.getBaseOwnership(continent.id, this._server!.id));
+            });
+            const baseOwnership = new Map<number, number>();
+            Promise.all(status).then((results) => {
+                results.forEach((status) => {
+                    status.forEach((base) => {
+                        baseOwnership.set(base.base_id, base.owning_faction_id);
+                    });
                 });
-
+            }).then(() => {
+                this.notify("baseCaptured", baseOwnership);
+            });
         });
     }
 

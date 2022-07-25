@@ -73,9 +73,6 @@ class HeroMap {
 
                 // Update the current continent
                 this._continent = continent;
-
-                // Start polling for base ownership updates
-                // this._startMapStatePolling();
             });
     }
 
@@ -83,9 +80,6 @@ class HeroMap {
         if (server.id == this._server?.id)
             return;
         this._server = server;
-
-        // Restart map state polling loop
-        // this._startMapStatePolling();
     }
 
     jumpTo(point: Point): void {

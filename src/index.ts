@@ -20,12 +20,15 @@ document.addEventListener("DOMContentLoaded", () => {
         minimap.updateBaseOwnership(state.map.baseOwnership);
     });
     StateManager.subscribe("user/continentChanged", (state) => {
-        heroMap.switchContinent(state.user.continent!);
-        heroMap.updateBaseOwnership(state.map.baseOwnership);
-        minimap.switchContinent(state.user.continent!);
-        minimap.updateBaseOwnership(state.map.baseOwnership);
+        heroMap.switchContinent(state.user.continent!).then(() => {
+            heroMap.updateBaseOwnership(state.map.baseOwnership);
+        });
+        minimap.switchContinent(state.user.continent!).then(() => {
+            minimap.updateBaseOwnership(state.map.baseOwnership);
+        });
     });
     StateManager.subscribe("user/serverChanged", (state) => {
+        listener.switchServer(state.user.server!);
         heroMap.switchServer(state.user.server!);
     });
     StateManager.subscribe("user/baseHovered", (state) => {

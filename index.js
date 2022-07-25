@@ -1554,12 +1554,15 @@ document.addEventListener("DOMContentLoaded", function () {
         minimap.updateBaseOwnership(state.map.baseOwnership);
     });
     StateManager.subscribe("user/continentChanged", function (state) {
-        heroMap.switchContinent(state.user.continent);
-        heroMap.updateBaseOwnership(state.map.baseOwnership);
-        minimap.switchContinent(state.user.continent);
-        minimap.updateBaseOwnership(state.map.baseOwnership);
+        heroMap.switchContinent(state.user.continent).then(function () {
+            heroMap.updateBaseOwnership(state.map.baseOwnership);
+        });
+        minimap.switchContinent(state.user.continent).then(function () {
+            minimap.updateBaseOwnership(state.map.baseOwnership);
+        });
     });
     StateManager.subscribe("user/serverChanged", function (state) {
+        listener.switchServer(state.user.server);
         heroMap.switchServer(state.user.server);
     });
     StateManager.subscribe("user/baseHovered", function (state) {
@@ -1623,10 +1626,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 var MapListener = (function () {
-    function MapListener() {
-        this._baseUpdateIntervalId = undefined;
+    function MapListener(server) {
+        if (server === void 0) { server = undefined; }
         this._subscribers = [];
         this._startMapStatePolling();
+        this._server = server;
+        this._baseUpdateIntervalId = undefined;
     }
     MapListener.prototype.subscribe = function (callback) {
         this._subscribers.push(callback);
@@ -1640,48 +1645,33 @@ var MapListener = (function () {
     MapListener.prototype.clear = function () {
         this._subscribers = [];
     };
-    MapListener.prototype._timeout = function (promise, timeout) {
-        return __awaiter(this, void 0, void 0, function () {
-            var timeoutPromise;
-            return __generator(this, function (_a) {
-                timeoutPromise = new Promise(function (resolve) { return setTimeout(function () { return resolve(undefined); }, timeout); });
-                return [2, Promise.race([timeoutPromise, promise])];
-            });
-        });
+    MapListener.prototype.switchServer = function (server) {
+        this._server = server;
+        this._startMapStatePolling();
     };
     MapListener.prototype._pollBaseOwnership = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var server, continents;
             var _this = this;
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        server = 13;
-                        return [4, Api.getContinentList()];
-                    case 1:
-                        continents = _a.sent();
-                        continents.forEach(function (continent) {
-                            _this._timeout(Api.getBaseOwnership(continent.id, server), 5000)
-                                .then(function (data) {
-                                if (data == undefined) {
-                                    console.warn('Base ownership poll timed out');
-                                    return;
-                                }
-                                var baseOwnershipMap = new Map();
-                                var i = data.length;
-                                while (i-- > 0) {
-                                    var baseId = data[i].base_id;
-                                    var factionId = data[i].owning_faction_id;
-                                    if (baseOwnershipMap.get(baseId) == factionId)
-                                        baseOwnershipMap["delete"](baseId);
-                                    else
-                                        baseOwnershipMap.set(baseId, factionId);
-                                }
-                                _this.notify('baseCaptured', baseOwnershipMap);
+                if (this._server == undefined)
+                    return [2];
+                Api.getContinentList().then(function (continents) {
+                    var status = [];
+                    continents.forEach(function (continent) {
+                        status.push(Api.getBaseOwnership(continent.id, _this._server.id));
+                    });
+                    var baseOwnership = new Map();
+                    Promise.all(status).then(function (results) {
+                        results.forEach(function (status) {
+                            status.forEach(function (base) {
+                                baseOwnership.set(base.base_id, base.owning_faction_id);
                             });
                         });
-                        return [2];
-                }
+                    }).then(function () {
+                        _this.notify("baseCaptured", baseOwnership);
+                    });
+                });
+                return [2];
             });
         });
     };
