@@ -10,6 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroMap = new HeroMap(document.getElementById("hero-map") as HTMLDivElement);
     const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
 
+    const listener = new MapListener();
+    listener.subscribe((name, data) => {
+        StateManager.dispatch(`map/${name}`, data);
+    });
+
     StateManager.subscribe("map/baseCaptured", (state) => {
         heroMap.updateBaseOwnership(state.map.baseOwnership);
         minimap.updateBaseOwnership(state.map.baseOwnership);

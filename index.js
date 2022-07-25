@@ -1045,20 +1045,26 @@ var HeroMap = (function () {
     function HeroMap(viewport) {
         this._continent = undefined;
         this._server = undefined;
-        this._baseOwnershipMap = new Map();
-        this._baseUpdateIntervalId = undefined;
         this.renderer = new MapRenderer(viewport, 0);
     }
     HeroMap.prototype.continent = function () { return this._continent; };
     HeroMap.prototype.server = function () { return this._server; };
     HeroMap.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+        var _this = this;
         var _a;
+        var data = GameData.getInstance();
+        var continentMap = new Map();
+        baseOwnershipMap.forEach(function (value, key) {
+            var _a, _b;
+            if (((_a = data.getBase(key)) === null || _a === void 0 ? void 0 : _a.continent_id) == ((_b = _this._continent) === null || _b === void 0 ? void 0 : _b.id))
+                continentMap.set(key, value);
+        });
         function supportsBaseOwnership(object) {
             return "updateBaseOwnership" in object;
         }
         (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
             if (supportsBaseOwnership(layer))
-                layer.updateBaseOwnership(baseOwnershipMap);
+                layer.updateBaseOwnership(continentMap);
         });
     };
     HeroMap.prototype.switchContinent = function (continent) {
@@ -1084,7 +1090,6 @@ var HeroMap = (function () {
                                     layer.updateLayer();
                                 });
                                 _this._continent = continent;
-                                _this._startMapStatePolling();
                             })];
                     case 1:
                         _b.sent();
@@ -1100,59 +1105,13 @@ var HeroMap = (function () {
                 if (server.id == ((_a = this._server) === null || _a === void 0 ? void 0 : _a.id))
                     return [2];
                 this._server = server;
-                this._startMapStatePolling();
                 return [2];
             });
-        });
-    };
-    HeroMap.prototype._timeout = function (promise, timeout) {
-        return __awaiter(this, void 0, void 0, function () {
-            var timeoutPromise;
-            return __generator(this, function (_a) {
-                timeoutPromise = new Promise(function (resolve) { return setTimeout(function () { return resolve(undefined); }, timeout); });
-                return [2, Promise.race([timeoutPromise, promise])];
-            });
-        });
-    };
-    HeroMap.prototype._pollBaseOwnership = function () {
-        var _this = this;
-        var _a, _b;
-        var serverId = (_a = this._server) === null || _a === void 0 ? void 0 : _a.id;
-        var continentId = (_b = this._continent) === null || _b === void 0 ? void 0 : _b.id;
-        if (serverId == undefined || continentId == undefined)
-            return;
-        this._timeout(Api.getBaseOwnership(continentId, serverId), 5000)
-            .then(function (data) {
-            if (data == undefined) {
-                console.warn('Base ownership poll timed out');
-                return;
-            }
-            var baseOwnershipMap = new Map(_this._baseOwnershipMap);
-            var i = data.length;
-            while (i-- > 0) {
-                var baseId = data[i].base_id;
-                var factionId = data[i].owning_faction_id;
-                if (baseOwnershipMap.get(baseId) == factionId)
-                    baseOwnershipMap["delete"](baseId);
-                else
-                    baseOwnershipMap.set(baseId, factionId);
-            }
-            StateManager.dispatch("map/baseCaptured", baseOwnershipMap);
         });
     };
     HeroMap.prototype.jumpTo = function (point) {
         var _a;
         (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.jumpTo(point);
-    };
-    HeroMap.prototype._startMapStatePolling = function () {
-        var _this = this;
-        this._baseOwnershipMap.clear();
-        if (this._baseUpdateIntervalId != undefined)
-            clearInterval(this._baseUpdateIntervalId);
-        this._pollBaseOwnership();
-        this._baseUpdateIntervalId = setInterval(function () {
-            _this._pollBaseOwnership();
-        }, 5000);
     };
     return HeroMap;
 }());
@@ -1586,6 +1545,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
     var minimap = new Minimap(document.getElementById("minimap"));
+    var listener = new MapListener();
+    listener.subscribe(function (name, data) {
+        StateManager.dispatch("map/".concat(name), data);
+    });
     StateManager.subscribe("map/baseCaptured", function (state) {
         heroMap.updateBaseOwnership(state.map.baseOwnership);
         minimap.updateBaseOwnership(state.map.baseOwnership);
@@ -1659,6 +1622,80 @@ document.addEventListener("DOMContentLoaded", function () {
         StateManager.dispatch("user/continentChanged", continents[continents.length - 1]);
     });
 });
+var MapListener = (function () {
+    function MapListener() {
+        this._baseUpdateIntervalId = undefined;
+        this._subscribers = [];
+        this._startMapStatePolling();
+    }
+    MapListener.prototype.subscribe = function (callback) {
+        this._subscribers.push(callback);
+    };
+    MapListener.prototype.unsubscribe = function (callback) {
+        this._subscribers = this._subscribers.filter(function (subscriber) { return subscriber !== callback; });
+    };
+    MapListener.prototype.notify = function (event, data) {
+        this._subscribers.forEach(function (subscriber) { return subscriber(event, data); });
+    };
+    MapListener.prototype.clear = function () {
+        this._subscribers = [];
+    };
+    MapListener.prototype._timeout = function (promise, timeout) {
+        return __awaiter(this, void 0, void 0, function () {
+            var timeoutPromise;
+            return __generator(this, function (_a) {
+                timeoutPromise = new Promise(function (resolve) { return setTimeout(function () { return resolve(undefined); }, timeout); });
+                return [2, Promise.race([timeoutPromise, promise])];
+            });
+        });
+    };
+    MapListener.prototype._pollBaseOwnership = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var server, continents;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        server = 13;
+                        return [4, Api.getContinentList()];
+                    case 1:
+                        continents = _a.sent();
+                        continents.forEach(function (continent) {
+                            _this._timeout(Api.getBaseOwnership(continent.id, server), 5000)
+                                .then(function (data) {
+                                if (data == undefined) {
+                                    console.warn('Base ownership poll timed out');
+                                    return;
+                                }
+                                var baseOwnershipMap = new Map();
+                                var i = data.length;
+                                while (i-- > 0) {
+                                    var baseId = data[i].base_id;
+                                    var factionId = data[i].owning_faction_id;
+                                    if (baseOwnershipMap.get(baseId) == factionId)
+                                        baseOwnershipMap["delete"](baseId);
+                                    else
+                                        baseOwnershipMap.set(baseId, factionId);
+                                }
+                                _this.notify('baseCaptured', baseOwnershipMap);
+                            });
+                        });
+                        return [2];
+                }
+            });
+        });
+    };
+    MapListener.prototype._startMapStatePolling = function () {
+        var _this = this;
+        if (this._baseUpdateIntervalId != undefined)
+            clearInterval(this._baseUpdateIntervalId);
+        this._pollBaseOwnership();
+        this._baseUpdateIntervalId = setInterval(function () {
+            _this._pollBaseOwnership();
+        }, 5000);
+    };
+    return MapListener;
+}());
 var Api;
 (function (Api) {
     function getServerList() {
@@ -1707,6 +1744,7 @@ var State;
 })(State || (State = {}));
 var State;
 (function (State) {
+    ;
     State.defaultUserState = {
         server: undefined,
         continent: undefined,

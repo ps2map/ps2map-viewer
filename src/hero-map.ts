@@ -20,13 +20,6 @@ class HeroMap {
     /** Active game server. */
     private _server: Api.Server | undefined = undefined;
 
-    // Dynamic state (changeable on the fly)
-
-    /** Local base ownership cache for the current continent. */
-    private _baseOwnershipMap: Map<number, number> = new Map();
-    /** Polling timer for base ownership updates via REST API. */
-    private _baseUpdateIntervalId: number | undefined = undefined;
-
     constructor(viewport: HTMLDivElement) {
         this.renderer = new MapRenderer(viewport, 0);
     }
@@ -38,6 +31,12 @@ class HeroMap {
     server(): Api.Server { return this._server!; }
 
     updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+        const data = GameData.getInstance();
+        const continentMap = new Map<number, number>();
+        baseOwnershipMap.forEach((value, key) => {
+            if (data.getBase(key)?.continent_id == this._continent?.id)
+                continentMap.set(key, value);
+        });
         /** Helper function for filtering dynamic layers from static ones */
         function supportsBaseOwnership(object: any): object is SupportsBaseOwnership {
             return "updateBaseOwnership" in object;
@@ -45,7 +44,7 @@ class HeroMap {
 
         this.renderer?.forEachLayer((layer) => {
             if (supportsBaseOwnership(layer))
-                layer.updateBaseOwnership(baseOwnershipMap);
+                layer.updateBaseOwnership(continentMap);
         });
     }
 
@@ -76,7 +75,7 @@ class HeroMap {
                 this._continent = continent;
 
                 // Start polling for base ownership updates
-                this._startMapStatePolling();
+                // this._startMapStatePolling();
             });
     }
 
@@ -86,58 +85,11 @@ class HeroMap {
         this._server = server;
 
         // Restart map state polling loop
-        this._startMapStatePolling();
-    }
-
-    private async _timeout<T>(promise: Promise<T>, timeout: number): Promise<T | undefined> {
-        const timeoutPromise = new Promise<undefined>(
-            (resolve) => setTimeout(() => resolve(undefined), timeout));
-        return Promise.race([timeoutPromise, promise]);
-    }
-
-    private _pollBaseOwnership(): void {
-        const serverId = this._server?.id;
-        const continentId = this._continent?.id;
-        if (serverId == undefined || continentId == undefined)
-            return;
-
-        this._timeout(Api.getBaseOwnership(continentId, serverId), 5000)
-            .then((data) => {
-                if (data == undefined) {
-                    console.warn('Base ownership poll timed out')
-                    return;
-                }
-
-                // Create a copy of the map to avoid mutating the original
-                const baseOwnershipMap = new Map(this._baseOwnershipMap);
-                let i = data.length;
-                while (i-- > 0) {
-                    const baseId = data[i].base_id;
-                    const factionId = data[i].owning_faction_id;
-
-                    // If the base has not changed, remove the key
-                    if (baseOwnershipMap.get(baseId) == factionId)
-                        baseOwnershipMap.delete(baseId);
-                    // Otherwise, update the key with the new value
-                    else
-                        baseOwnershipMap.set(baseId, factionId);
-                }
-                StateManager.dispatch("map/baseCaptured", baseOwnershipMap);
-            });
+        // this._startMapStatePolling();
     }
 
     jumpTo(point: Point): void {
         this.renderer?.jumpTo(point);
-    }
-
-    private _startMapStatePolling() {
-        this._baseOwnershipMap.clear();
-        if (this._baseUpdateIntervalId != undefined)
-            clearInterval(this._baseUpdateIntervalId);
-        this._pollBaseOwnership();
-        this._baseUpdateIntervalId = setInterval(() => {
-            this._pollBaseOwnership();
-        }, 5000);
     }
 
 }

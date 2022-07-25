@@ -4,7 +4,7 @@ namespace State {
         server: Api.Server | undefined;
         continent: Api.Continent | undefined;
         hoveredBase: Api.Base | undefined;
-    }
+    };
 
     export const defaultUserState: UserState = {
         server: undefined,
