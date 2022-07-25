@@ -1044,25 +1044,23 @@ var TerrainLayer = (function (_super) {
 var HeroMap = (function () {
     function HeroMap(viewport) {
         this._continent = undefined;
-        this._server = undefined;
         this.renderer = new MapRenderer(viewport, 0);
     }
     HeroMap.prototype.continent = function () { return this._continent; };
-    HeroMap.prototype.server = function () { return this._server; };
     HeroMap.prototype.updateBaseOwnership = function (baseOwnershipMap) {
         var _this = this;
-        var _a;
         var data = GameData.getInstance();
         var continentMap = new Map();
-        baseOwnershipMap.forEach(function (value, key) {
-            var _a, _b;
-            if (((_a = data.getBase(key)) === null || _a === void 0 ? void 0 : _a.continent_id) == ((_b = _this._continent) === null || _b === void 0 ? void 0 : _b.id))
-                continentMap.set(key, value);
+        baseOwnershipMap.forEach(function (owner, baseId) {
+            var _a;
+            var base = data.getBase(baseId);
+            if (base && base.continent_id == ((_a = _this._continent) === null || _a === void 0 ? void 0 : _a.id))
+                continentMap.set(baseId, owner);
         });
         function supportsBaseOwnership(object) {
             return "updateBaseOwnership" in object;
         }
-        (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.forEachLayer(function (layer) {
+        this.renderer.forEachLayer(function (layer) {
             if (supportsBaseOwnership(layer))
                 layer.updateBaseOwnership(continentMap);
         });
@@ -1095,17 +1093,6 @@ var HeroMap = (function () {
                         _b.sent();
                         return [2];
                 }
-            });
-        });
-    };
-    HeroMap.prototype.switchServer = function (server) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_b) {
-                if (server.id == ((_a = this._server) === null || _a === void 0 ? void 0 : _a.id))
-                    return [2];
-                this._server = server;
-                return [2];
             });
         });
     };
@@ -1563,7 +1550,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     StateManager.subscribe("user/serverChanged", function (state) {
         listener.switchServer(state.user.server);
-        heroMap.switchServer(state.user.server);
     });
     StateManager.subscribe("user/baseHovered", function (state) {
         var names = heroMap.renderer.getLayer("names");

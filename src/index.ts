@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     StateManager.subscribe("user/serverChanged", (state) => {
         listener.switchServer(state.user.server!);
-        heroMap.switchServer(state.user.server!);
     });
     StateManager.subscribe("user/baseHovered", (state) => {
         const names = heroMap.renderer.getLayer("names") as BaseNamesLayer;

@@ -10,39 +10,31 @@
  */
 class HeroMap {
 
-    /** Internal map renderer and input handler. */
     readonly renderer: MapRenderer;
-
-    // Semi-persistent state (require map reload on change)
-
-    /** Active continent. */
     private _continent: Api.Continent | undefined = undefined;
-    /** Active game server. */
-    private _server: Api.Server | undefined = undefined;
 
     constructor(viewport: HTMLDivElement) {
         this.renderer = new MapRenderer(viewport, 0);
     }
 
-    // Properties & getters/setters
-
     continent(): Api.Continent { return this._continent!; }
-
-    server(): Api.Server { return this._server!; }
 
     updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
         const data = GameData.getInstance();
+        // Filter the base ownership map to only include bases that are in the
+        // current continent
         const continentMap = new Map<number, number>();
-        baseOwnershipMap.forEach((value, key) => {
-            if (data.getBase(key)?.continent_id == this._continent?.id)
-                continentMap.set(key, value);
+        baseOwnershipMap.forEach((owner, baseId) => {
+            const base = data.getBase(baseId);
+            if (base && base.continent_id == this._continent?.id)
+                continentMap.set(baseId, owner);
         });
         /** Helper function for filtering dynamic layers from static ones */
         function supportsBaseOwnership(object: any): object is SupportsBaseOwnership {
             return "updateBaseOwnership" in object;
         }
-
-        this.renderer?.forEachLayer((layer) => {
+        // Forward the base ownership map to all dynamic layers
+        this.renderer.forEachLayer((layer) => {
             if (supportsBaseOwnership(layer))
                 layer.updateBaseOwnership(continentMap);
         });
@@ -74,12 +66,6 @@ class HeroMap {
                 // Update the current continent
                 this._continent = continent;
             });
-    }
-
-    async switchServer(server: Api.Server): Promise<void> {
-        if (server.id == this._server?.id)
-            return;
-        this._server = server;
     }
 
     jumpTo(point: Point): void {
