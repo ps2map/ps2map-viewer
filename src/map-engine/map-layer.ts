@@ -95,5 +95,5 @@ abstract class MapLayer {
      * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    protected deferredLayerUpdate(viewBox: Box, zoom: number): void { }
+    protected abstract deferredLayerUpdate(viewBox: Box, zoom: number): void;
 }

@@ -259,7 +259,6 @@ var MapLayer = (function () {
     MapLayer.prototype.updateLayer = function () {
         this.element.dispatchEvent(new Event("transitionend"));
     };
-    MapLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) { };
     return MapLayer;
 }());
 var __extends = (this && this.__extends) || (function () {
@@ -282,6 +281,7 @@ var StaticLayer = (function (_super) {
     function StaticLayer(id, mapSize) {
         return _super.call(this, id, mapSize) || this;
     }
+    StaticLayer.prototype.deferredLayerUpdate = function (_, __) { };
     StaticLayer.prototype.redraw = function (viewBox, zoom) {
         var targetX = (viewBox.right + viewBox.left) * 0.5;
         var targetY = (viewBox.top + viewBox.bottom) * 0.5;
