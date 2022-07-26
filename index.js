@@ -587,7 +587,7 @@ var BasePolygonsLayer = (function (_super) {
             });
         });
     };
-    BasePolygonsLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
+    BasePolygonsLayer.prototype.deferredLayerUpdate = function (_, zoom) {
         var svg = this.element.firstElementChild;
         if (svg) {
             var strokeWith = 10 / Math.pow(1.5, zoom);
@@ -646,7 +646,7 @@ var LatticeLayer = (function (_super) {
             3: "rgba(186, 25, 25, 1.0)",
             4: "rgba(50, 50, 50, 1.0)"
         };
-        baseOwnershipMap.forEach(function (owner, baseId) {
+        baseOwnershipMap.forEach(function (_, baseId) {
             var links = _this._links.filter(function (l) { return l.base_a_id === baseId || l.base_b_id === baseId; });
             links.forEach(function (link) {
                 var ownerA = baseOwnershipMap.get(link.base_a_id);
@@ -785,7 +785,7 @@ var BaseNamesLayer = (function (_super) {
             }
         }
     };
-    BaseNamesLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
+    BaseNamesLayer.prototype.deferredLayerUpdate = function (_, zoom) {
         var unzoom = 1 / zoom;
         var i = this.features.length;
         while (i-- > 0) {
@@ -859,7 +859,7 @@ var TileLayer = (function (_super) {
                 _this.element.append(activeTiles[i]);
         });
     };
-    TileLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
+    TileLayer.prototype.deferredLayerUpdate = function (viewBox, _) {
         this.updateTileVisibility(viewBox);
     };
     TileLayer.prototype.redraw = function (viewBox, zoom) {

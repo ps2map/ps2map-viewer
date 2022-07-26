@@ -115,7 +115,7 @@ abstract class TileLayer extends MapLayer {
 
     }
 
-    protected deferredLayerUpdate(viewBox: Box, zoom: number): void {
+    protected deferredLayerUpdate(viewBox: Box, _: number): void {
         this.updateTileVisibility(viewBox);
     }
 

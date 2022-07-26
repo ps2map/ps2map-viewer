@@ -38,7 +38,7 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
             4: "rgba(50, 50, 50, 1.0)",
         };
 
-        baseOwnershipMap.forEach((owner, baseId) => {
+        baseOwnershipMap.forEach((_, baseId) => {
             const links = this._links.filter(
                 l => l.base_a_id === baseId || l.base_b_id === baseId);
             links.forEach((link) => {
