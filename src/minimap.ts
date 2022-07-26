@@ -111,9 +111,10 @@ class Minimap {
         const polygons = svg.querySelectorAll("polygon");
         let i = polygons.length;
         while (i-- > 0) {
-            this._polygons.set(parseInt(polygons[i].id), polygons[i]);
+            const poly = polygons[i]!;
+            this._polygons.set(parseInt(poly.id), poly);
             // Update polygon IDs to be unique
-            polygons[i].id = this._polygonIdFromBaseId(polygons[i].id);
+            poly.id = this._polygonIdFromBaseId(poly.id);
         }
     }
 

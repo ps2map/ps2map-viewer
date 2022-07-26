@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
         servers.sort((a, b) => b.name.localeCompare(a.name));
         let i = servers.length;
         while (i-- > 0) {
-            const server = servers[i];
+            const server = servers[i]!;
             const option = document.createElement("option");
             option.value = server.id.toString();
             option.text = server.name;
@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
         continents.sort((a, b) => b.name.localeCompare(a.name));
         i = continents.length;
         while (i-- > 0) {
-            const cont = continents[i];
+            const cont = continents[i]!;
             const option = document.createElement("option");
             option.value = cont.id.toString();
             option.text = cont.name;

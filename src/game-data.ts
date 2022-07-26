@@ -33,7 +33,7 @@ class GameData {
     public getBase(id: number): Base | undefined {
         let i = this._bases.length;
         while (i-- > 0)
-            if (this._bases[i].id === id)
+            if (this._bases[i]!.id === id)
                 return this._bases[i];
         return undefined;
     }

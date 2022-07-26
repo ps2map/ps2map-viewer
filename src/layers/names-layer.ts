@@ -66,7 +66,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         const features: BaseNameFeature[] = [];
         let i = bases.length;
         while (i-- > 0) {
-            const baseInfo = bases[i];
+            const baseInfo = bases[i]!;
             if (baseInfo.type_code === "no-mans-land")
                 continue; // "No man's land" bases do not get icons
             const pos = {
@@ -108,8 +108,8 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
     setHoveredBase(base: Base | undefined): void {
         let i = this.features.length;
         while (i-- > 0) {
-            const feat = this.features[i];
-            if (this.features[i].id === base?.id) {
+            const feat = this.features[i]!;
+            if (feat.id === base?.id) {
                 feat.forceVisible = true;
                 feat.element.innerText = feat.text;
             }
@@ -125,7 +125,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         const unzoom = 1 / zoom;
         let i = this.features.length;
         while (i-- > 0) {
-            const feat = this.features[i];
+            const feat = this.features[i]!;
             feat.element.style.transform = (
                 `translate(-50%, calc(var(--ps2map__base-icon-size) * ${unzoom})) ` +
                 `scale(${unzoom}, ${unzoom})`);

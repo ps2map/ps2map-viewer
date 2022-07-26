@@ -66,8 +66,6 @@ class MapCamera {
     bumpZoomLevel(direction: number): number {
         let newIndex = this._currentZoomIndex;
         // Bump zoom level
-        if (direction === 0)
-            return newIndex;
         if (direction < 0)
             newIndex--;
         else if (direction > 0)
@@ -79,7 +77,7 @@ class MapCamera {
             newIndex = this._zoomLevels.length - 1;
         // Update zoom level
         this._currentZoomIndex = newIndex;
-        return this._zoomLevels[newIndex];
+        return this._zoomLevels[newIndex]!;
     }
 
     /**
@@ -104,7 +102,14 @@ class MapCamera {
      * @returns Current map scaling factor.
      */
     getZoom(): number {
-        return this._zoomLevels[this._currentZoomIndex];
+        let zoom = this._zoomLevels[this._currentZoomIndex];
+        if (!zoom) {
+            const old = zoom;
+            zoom = this.bumpZoomLevel(0); // Clamp zoom level to valid range
+            console.warn(`Clamped zoom level from ${old} to `
+                + this._currentZoomIndex);
+        }
+        return zoom;
     }
 
     /**

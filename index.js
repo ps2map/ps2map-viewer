@@ -175,8 +175,6 @@ var MapCamera = (function () {
     }
     MapCamera.prototype.bumpZoomLevel = function (direction) {
         var newIndex = this._currentZoomIndex;
-        if (direction === 0)
-            return newIndex;
         if (direction < 0)
             newIndex--;
         else if (direction > 0)
@@ -199,7 +197,14 @@ var MapCamera = (function () {
         };
     };
     MapCamera.prototype.getZoom = function () {
-        return this._zoomLevels[this._currentZoomIndex];
+        var zoom = this._zoomLevels[this._currentZoomIndex];
+        if (!zoom) {
+            var old = zoom;
+            zoom = this.bumpZoomLevel(0);
+            console.warn("Clamped zoom level from ".concat(old, " to ")
+                + this._currentZoomIndex);
+        }
+        return zoom;
     };
     MapCamera.prototype.zoomTo = function (direction, viewX, viewY) {
         if (viewX === void 0) { viewX = 0.5; }
@@ -769,7 +774,7 @@ var BaseNamesLayer = (function (_super) {
         var i = this.features.length;
         while (i-- > 0) {
             var feat = this.features[i];
-            if (this.features[i].id === (base === null || base === void 0 ? void 0 : base.id)) {
+            if (feat.id === (base === null || base === void 0 ? void 0 : base.id)) {
                 feat.forceVisible = true;
                 feat.element.innerText = feat.text;
             }
@@ -1085,7 +1090,7 @@ var Minimap = (function () {
     };
     Minimap.prototype.switchContinent = function (continent) {
         return __awaiter(this, void 0, void 0, function () {
-            var svg, polygons, i;
+            var svg, polygons, i, poly;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4, fetchContinentOutlines(continent.code)];
@@ -1103,8 +1108,9 @@ var Minimap = (function () {
                         polygons = svg.querySelectorAll("polygon");
                         i = polygons.length;
                         while (i-- > 0) {
-                            this._polygons.set(parseInt(polygons[i].id), polygons[i]);
-                            polygons[i].id = this._polygonIdFromBaseId(polygons[i].id);
+                            poly = polygons[i];
+                            this._polygons.set(parseInt(poly.id), poly);
+                            poly.id = this._polygonIdFromBaseId(poly.id);
                         }
                         return [2];
                 }

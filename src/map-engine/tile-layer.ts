@@ -101,7 +101,7 @@ abstract class TileLayer extends MapLayer {
         const activeTiles: HTMLElement[] = [];
         let i = this.tiles.length;
         while (i-- > 0) {
-            const tile = this.tiles[i];
+            const tile = this.tiles[i]!;
             if (this.tileIsVisible(tile, viewBox))
                 activeTiles.push(tile.element);
         }
@@ -110,7 +110,7 @@ abstract class TileLayer extends MapLayer {
             this.element.innerHTML = "";
             i = activeTiles.length;
             while (i-- > 0)
-                this.element.append(activeTiles[i]);
+                this.element.append(activeTiles[i]!);
         });
 
     }

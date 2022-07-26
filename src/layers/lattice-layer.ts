@@ -22,7 +22,7 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
                 layer._links = [];
                 let i = links.length;
                 while (i-- > 0)
-                    layer._links.push(links[i])
+                    layer._links.push(links[i]!)
                 layer._createLatticeSvg();
                 return layer;
             });

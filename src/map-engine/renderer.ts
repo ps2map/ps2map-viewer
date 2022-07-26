@@ -114,7 +114,7 @@ class MapRenderer {
     forEachLayer(callback: (layer: MapLayer) => void): void {
         let i = this._layers.length;
         while (i-- > 0)
-            callback(this._layers[i]);
+            callback(this._layers[i]!);
     }
 
     /**
@@ -212,7 +212,7 @@ class MapRenderer {
         // Disable CSS transitions while panning
         let i = this._layers.length;
         while (i-- > 0) {
-            const element = this._layers[i].element;
+            const element = this._layers[i]!.element;
             if (locked)
                 element.style.transition = "transform 0ms ease-out";
             else
@@ -229,7 +229,7 @@ class MapRenderer {
         // Apply new zoom level and schedule map layer updates
         let i = this._layers.length;
         while (i-- > 0) {
-            const layer = this._layers[i];
+            const layer = this._layers[i]!;
             layer.redraw(viewBox, zoom);
             layer.setRedrawArgs(viewBox, zoom);
         }
