@@ -44,7 +44,11 @@ var GameData = (function () {
     GameData.prototype.continents = function () { return this._continents; };
     GameData.prototype.servers = function () { return this._servers; };
     GameData.prototype.getBase = function (id) {
-        return this._bases.find(function (b) { return b.id == id; });
+        var i = this._bases.length;
+        while (i-- > 0)
+            if (this._bases[i].id === id)
+                return this._bases[i];
+        return undefined;
     };
     GameData.load = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -137,7 +141,7 @@ var Utils;
     function remap(value, sourceLower, sourceUpper, targetLower, targetUpper) {
         var sourceSpan = sourceUpper - sourceLower;
         var targetSpan = targetUpper - targetLower;
-        if (sourceSpan == 0)
+        if (sourceSpan === 0)
             return targetLower;
         var relValue = value - sourceLower / sourceSpan;
         return targetLower + relValue * targetSpan;
@@ -171,7 +175,7 @@ var MapCamera = (function () {
     }
     MapCamera.prototype.bumpZoomLevel = function (direction) {
         var newIndex = this._currentZoomIndex;
-        if (direction == 0)
+        if (direction === 0)
             return newIndex;
         if (direction < 0)
             newIndex--;
@@ -222,7 +226,7 @@ var MapLayer = (function () {
         this.isVisible = true;
         this._lastRedraw = null;
         this._runDeferredLayerUpdate = Utils.rafDebounce(function () {
-            if (_this._lastRedraw == null)
+            if (!_this._lastRedraw)
                 return;
             var _a = _this._lastRedraw, viewBox = _a[0], zoom = _a[1];
             _this.deferredLayerUpdate(viewBox, zoom);
@@ -239,7 +243,7 @@ var MapLayer = (function () {
         this._lastRedraw = [viewBox, zoom];
     };
     MapLayer.prototype.setVisibility = function (visible) {
-        if (this.isVisible == visible)
+        if (this.isVisible === visible)
             return;
         if (visible)
             this.element.style.removeProperty("display");
@@ -330,7 +334,7 @@ var MapRenderer = (function () {
         return this._mapSize;
     };
     MapRenderer.prototype.addLayer = function (layer) {
-        if (layer.mapSize != this._mapSize)
+        if (layer.mapSize !== this._mapSize)
             throw "Map layer size must match the map renderer's.";
         this._layers.push(layer);
         this._anchor.appendChild(layer.element);
@@ -339,7 +343,7 @@ var MapRenderer = (function () {
     MapRenderer.prototype.getLayer = function (id) {
         for (var _i = 0, _a = this._layers; _i < _a.length; _i++) {
             var layer = _a[_i];
-            if (layer.id == id)
+            if (layer.id === id)
                 return layer;
         }
         return undefined;
@@ -366,7 +370,7 @@ var MapRenderer = (function () {
     };
     MapRenderer.prototype._mousePan = function (evtDown) {
         var _this = this;
-        if (evtDown.button == 2)
+        if (evtDown.button === 2)
             return;
         this._setPanLock(true);
         var refX = this._camera.target.x;
@@ -535,7 +539,7 @@ var BasePolygonsLayer = (function (_super) {
     BasePolygonsLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
         var _this = this;
         var svg = this.element.firstElementChild;
-        if (svg == null)
+        if (!svg)
             throw "Unable to find HexLayer SVG element";
         var colours = {
             0: "rgba(0, 0, 0, 1.0)",
@@ -546,7 +550,7 @@ var BasePolygonsLayer = (function (_super) {
         };
         baseOwnershipMap.forEach(function (owner, baseId) {
             var polygon = svg.querySelector("#".concat(_this._baseIdToPolygonId(baseId)));
-            if (polygon == null)
+            if (!polygon)
                 throw "Unable to find polygon for base ".concat(baseId);
             polygon.style.fill = colours[owner];
         });
@@ -580,7 +584,7 @@ var BasePolygonsLayer = (function (_super) {
     };
     BasePolygonsLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
         var svg = this.element.firstElementChild;
-        if (svg != null) {
+        if (svg) {
             var strokeWith = 10 / Math.pow(1.5, zoom);
             svg.style.setProperty("--ps2map__base-hexes__stroke-width", "".concat(strokeWith, "px"));
         }
@@ -642,15 +646,15 @@ var LatticeLayer = (function (_super) {
             links.forEach(function (link) {
                 var ownerA = baseOwnershipMap.get(link.base_a_id);
                 var ownerB = baseOwnershipMap.get(link.base_b_id);
-                if (ownerA == undefined || ownerB == undefined)
+                if (!ownerA || !ownerB)
                     return;
                 var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
                 var element = _this.element.querySelector(id);
-                if (element == null)
+                if (!element)
                     return;
-                if (ownerA == ownerB)
+                if (ownerA === ownerB)
                     element.style.stroke = colours[ownerA];
-                else if (ownerA == 0 || ownerB == 0)
+                else if (ownerA === 0 || ownerB === 0)
                     element.style.stroke = colours[0];
                 else
                     element.style.stroke = "orange";
@@ -722,8 +726,8 @@ var BaseNamesLayer = (function (_super) {
             4: "rgba(50, 50, 50, 1.0)"
         };
         baseOwnershipMap.forEach(function (owner, baseId) {
-            var feat = _this.features.find(function (f) { return f.id == baseId; });
-            if (feat != undefined)
+            var feat = _this.features.find(function (f) { return f.id === baseId; });
+            if (feat)
                 feat.element.style.setProperty("--ps2map__base-color", colours[owner]);
         });
     };
@@ -732,7 +736,7 @@ var BaseNamesLayer = (function (_super) {
         var i = bases.length;
         while (i-- > 0) {
             var baseInfo = bases[i];
-            if (baseInfo.type_code == "no-mans-land")
+            if (baseInfo.type_code === "no-mans-land")
                 continue;
             var pos = {
                 x: baseInfo.map_pos[0],
@@ -740,11 +744,11 @@ var BaseNamesLayer = (function (_super) {
             };
             var element = document.createElement("div");
             var name_1 = baseInfo.name;
-            if (baseInfo.type_code == "amp-station" ||
-                baseInfo.type_code == "bio-lab" ||
-                baseInfo.type_code == "interlink" ||
-                baseInfo.type_code == "tech-plant" ||
-                baseInfo.type_code == "trident")
+            if (baseInfo.type_code === "amp-station" ||
+                baseInfo.type_code === "bio-lab" ||
+                baseInfo.type_code === "interlink" ||
+                baseInfo.type_code === "tech-plant" ||
+                baseInfo.type_code === "trident")
                 name_1 += " ".concat(baseInfo.type_name);
             element.innerText = "".concat(name_1);
             element.classList.add("ps2map__base-names__icon");
@@ -752,9 +756,9 @@ var BaseNamesLayer = (function (_super) {
             element.style.bottom = "".concat(this.mapSize * 0.5 + pos.y, "px");
             element.classList.add("ps2map__base-names__icon__".concat(baseInfo.type_code));
             var minZoom = 0;
-            if (baseInfo.type_code == "small-outpost")
+            if (baseInfo.type_code === "small-outpost")
                 minZoom = 0.60;
-            if (baseInfo.type_code == "large-outpost")
+            if (baseInfo.type_code === "large-outpost")
                 minZoom = 0.45;
             features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
             this.element.appendChild(element);
@@ -765,7 +769,7 @@ var BaseNamesLayer = (function (_super) {
         var i = this.features.length;
         while (i-- > 0) {
             var feat = this.features[i];
-            if (this.features[i].id == (base === null || base === void 0 ? void 0 : base.id)) {
+            if (this.features[i].id === (base === null || base === void 0 ? void 0 : base.id)) {
                 feat.forceVisible = true;
                 feat.element.innerText = feat.text;
             }
@@ -885,7 +889,7 @@ var TerrainLayer = (function (_super) {
         });
     };
     TerrainLayer.prototype._setContinent = function (code) {
-        if (this._code == code)
+        if (this._code === code)
             return;
         this._code = code;
         this.element.style.backgroundImage = ("url(".concat(UrlGen.mapBackground(code), ")"));
@@ -937,11 +941,11 @@ var TerrainLayer = (function (_super) {
         return [min + (stepSize * pos.x), min + (stepSize * pos.y)];
     };
     TerrainLayer.prototype._mapStepSize = function (mapSize, lod) {
-        if (lod == 0)
+        if (lod === 0)
             return 4;
-        if (lod == 1 || mapSize <= 1024)
+        if (lod === 1 || mapSize <= 1024)
             return 8;
-        if (lod == 2 || mapSize <= 2048)
+        if (lod === 2 || mapSize <= 2048)
             return 16;
         return 32;
     };
@@ -961,7 +965,7 @@ var TerrainLayer = (function (_super) {
     };
     TerrainLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
         var newLod = this._calculateLod(zoom);
-        if (newLod != this.lod) {
+        if (newLod) {
             this.lod = newLod;
             this.defineTiles(this._mapTilesPerAxis(this.mapSize, newLod));
         }
@@ -982,7 +986,7 @@ var HeroMap = (function () {
         baseOwnershipMap.forEach(function (owner, baseId) {
             var _a;
             var base = data.getBase(baseId);
-            if (base && base.continent_id == ((_a = _this._continent) === null || _a === void 0 ? void 0 : _a.id))
+            if (base && base.continent_id === ((_a = _this._continent) === null || _a === void 0 ? void 0 : _a.id))
                 continentMap.set(baseId, owner);
         });
         function supportsBaseOwnership(object) {
@@ -1001,7 +1005,7 @@ var HeroMap = (function () {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        if (continent.code == ((_a = this._continent) === null || _a === void 0 ? void 0 : _a.code))
+                        if (continent.code === ((_a = this._continent) === null || _a === void 0 ? void 0 : _a.code))
                             return [2];
                         terrain = TerrainLayer.factory(continent, "terrain");
                         hexes = BasePolygonsLayer.factory(continent, "hexes");
@@ -1075,7 +1079,7 @@ var Minimap = (function () {
         };
         baseOwnershipMap.forEach(function (factionId, baseId) {
             var polygon = _this._polygons.get(baseId);
-            if (polygon != undefined)
+            if (polygon)
                 polygon.style.fill = colours[factionId];
         });
     };
@@ -1090,7 +1094,7 @@ var Minimap = (function () {
                         this._mapSize = continent.map_size;
                         this.element.style.backgroundImage =
                             "url(".concat(UrlGen.mapBackground(continent.code), ")");
-                        if (this._baseOutlineSvg != undefined)
+                        if (this._baseOutlineSvg)
                             this.element.removeChild(this._baseOutlineSvg);
                         this._polygons = new Map();
                         svg.classList.add("ps2map__minimap__hexes");
@@ -1118,7 +1122,7 @@ var Minimap = (function () {
     };
     Minimap.prototype._jumpToPosition = function (evtDown) {
         var _this = this;
-        if (this._mapSize == 0)
+        if (this._mapSize === 0)
             return;
         var drag = Utils.rafDebounce(function (evtDrag) {
             var rect = _this.element.getBoundingClientRect();
@@ -1173,7 +1177,7 @@ var MapListener = (function () {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
             return __generator(this, function (_a) {
-                if (this._server == undefined)
+                if (!this._server)
                     return [2];
                 fetchContinents().then(function (continents) {
                     var status = [];
@@ -1197,7 +1201,7 @@ var MapListener = (function () {
     };
     MapListener.prototype._startMapStatePolling = function () {
         var _this = this;
-        if (this._baseUpdateIntervalId != undefined)
+        if (this._baseUpdateIntervalId)
             clearInterval(this._baseUpdateIntervalId);
         this._pollBaseOwnership();
         this._baseUpdateIntervalId = setInterval(function () {
@@ -1249,21 +1253,15 @@ var BaseInfo = (function (_super) {
     function BaseInfo() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this._callback = undefined;
-        _this._bases = new Map();
         return _this;
     }
     BaseInfo.prototype.activate = function () {
-        var _this = this;
         _super.prototype.activate.call(this);
         this._callback = this._onHover.bind(this);
         StateManager.subscribe("user/baseHovered", this._callback);
-        this._bases = new Map();
         var continent = this.map.continent();
-        if (continent == undefined)
+        if (!continent)
             return;
-        fetchBasesForContinent(continent.id).then(function (bases) {
-            _this._bases = new Map(bases.map(function (base) { return [base.id, base]; }));
-        });
         var parent = this.tool_panel;
         if (parent)
             parent.style.display = "block";
@@ -1284,7 +1282,7 @@ var BaseInfo = (function (_super) {
     };
     BaseInfo.prototype._onHover = function (event) {
         var base = event.user.hoveredBase;
-        if (base == undefined)
+        if (!base)
             return;
         this.tool_panel.innerHTML = "";
         var name = document.createElement("span");
@@ -1299,7 +1297,7 @@ var BaseInfo = (function (_super) {
         type.classList.add("ps2map__tool__base-info__type");
         type.textContent = base.type_name;
         this.tool_panel.appendChild(type);
-        if (base.resource_code != undefined) {
+        if (base.resource_code) {
             this.tool_panel.appendChild(document.createElement("br"));
             var resource_icon = document.createElement("img");
             resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
@@ -1421,13 +1419,13 @@ var DevTools;
                 return;
             var pos = this.getMapPosition(event);
             var baseIdStr = prompt("Base ID (aka. map_region_id)");
-            if (baseIdStr == null)
+            if (!baseIdStr)
                 return;
             var baseId = parseInt(baseIdStr);
             if (isNaN(baseId))
                 return;
             var baseName = prompt("Base name");
-            if (baseName == null)
+            if (!baseName)
                 return;
             var typeIdStr = prompt("Base type ID\n\n" +
                 "1: No Man's Land\n" +
@@ -1441,7 +1439,7 @@ var DevTools;
                 "9: Construction Outpost\n" +
                 "11: Containment Site\n" +
                 "12: Trident", "6");
-            if (typeIdStr == null)
+            if (!typeIdStr)
                 return;
             var typeId = parseInt(typeIdStr);
             if (isNaN(typeId))
@@ -1475,13 +1473,13 @@ function setupToolbox(map) {
 function setTool(tool) {
     if (tool === void 0) { tool = undefined; }
     currentTool === null || currentTool === void 0 ? void 0 : currentTool.deactivate();
-    if (tool == undefined || currentTool instanceof tool)
+    if (!tool || currentTool instanceof tool)
         tool = Tool;
     var newTool = new tool(document.getElementById("hero-map"), heroMap);
     newTool.activate();
     currentTool = newTool;
     document.querySelectorAll(".toolbar__button").forEach(function (btn) {
-        if (btn.id == "tool-".concat(tool === null || tool === void 0 ? void 0 : tool.getId()))
+        if (btn.id === "tool-".concat(tool === null || tool === void 0 ? void 0 : tool.getId()))
             btn.classList.add("toolbar__button__active");
         else
             btn.classList.remove("toolbar__button__active");
@@ -1505,7 +1503,7 @@ document.addEventListener("DOMContentLoaded", function () {
         toolbar_container.appendChild(btn);
     });
     document.addEventListener("keydown", function (event) {
-        if (event.key == "Escape")
+        if (event.key === "Escape")
             resetTool();
     });
 });
@@ -1620,7 +1618,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var server_picker = document.getElementById("server-picker");
     server_picker.addEventListener("change", function () {
         var server = GameData.getInstance().servers()
-            .find(function (s) { return s.id == parseInt(server_picker.value); });
+            .find(function (s) { return s.id === parseInt(server_picker.value); });
         if (!server)
             throw new Error("No server found with id ".concat(server_picker.value));
         StateManager.dispatch("user/serverChanged", server);
@@ -1628,7 +1626,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var continent_picker = document.getElementById("continent-picker");
     continent_picker.addEventListener("change", function () {
         var continent = GameData.getInstance().continents()
-            .find(function (c) { return c.id == parseInt(continent_picker.value); });
+            .find(function (c) { return c.id === parseInt(continent_picker.value); });
         if (!continent)
             throw new Error("No continent found with id ".concat(continent_picker.value));
         StateManager.dispatch("user/continentChanged", continent);

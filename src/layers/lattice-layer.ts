@@ -45,19 +45,19 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
                 // Get ownership for both bases
                 const ownerA = baseOwnershipMap.get(link.base_a_id);
                 const ownerB = baseOwnershipMap.get(link.base_b_id);
-                if (ownerA == undefined || ownerB == undefined)
+                if (!ownerA || !ownerB)
                     return;
 
                 // Retrieve the SVG element of the link
                 const id = `#lattice-link-${link.base_a_id}-${link.base_b_id}`;
                 const element = this.element.querySelector(id) as SVGLineElement | null;
-                if (element == null)
+                if (!element)
                     return;
 
                 // Set the stroke colour
-                if (ownerA == ownerB)
+                if (ownerA === ownerB)
                     element.style.stroke = colours[ownerA];
-                else if (ownerA == 0 || ownerB == 0)
+                else if (ownerA === 0 || ownerB === 0)
                     element.style.stroke = colours[0];
                 else
                     element.style.stroke = "orange";

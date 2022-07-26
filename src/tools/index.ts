@@ -15,13 +15,13 @@ function setupToolbox(map: HeroMap): void {
 
 function setTool(tool: typeof Tool | undefined = undefined): void {
     currentTool?.deactivate()
-    if (tool == undefined || currentTool instanceof tool)
+    if (!tool || currentTool instanceof tool)
         tool = Tool;  // Deselect
     const newTool = new tool(document.getElementById("hero-map") as HTMLDivElement, (heroMap as HeroMap));
     newTool.activate()
     currentTool = newTool;
     document.querySelectorAll(".toolbar__button").forEach((btn) => {
-        if (btn.id == `tool-${tool?.getId()}`)
+        if (btn.id === `tool-${tool?.getId()}`)
             btn.classList.add("toolbar__button__active");
         else
             btn.classList.remove("toolbar__button__active");
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Reset tool on ESC
     document.addEventListener("keydown", (event) => {
-        if (event.key == "Escape")
+        if (event.key === "Escape")
             resetTool();
     });
 

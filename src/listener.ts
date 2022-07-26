@@ -35,7 +35,7 @@ class MapListener {
     }
 
     private async _pollBaseOwnership(): Promise<void> {
-        if (this._server == undefined)
+        if (!this._server)
             return;
 
         fetchContinents().then((continents) => {
@@ -57,7 +57,7 @@ class MapListener {
     }
 
     private _startMapStatePolling() {
-        if (this._baseUpdateIntervalId != undefined)
+        if (this._baseUpdateIntervalId)
             clearInterval(this._baseUpdateIntervalId);
         this._pollBaseOwnership();
         this._baseUpdateIntervalId = setInterval(() => {

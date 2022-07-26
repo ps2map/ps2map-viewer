@@ -55,8 +55,8 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         }
 
         baseOwnershipMap.forEach((owner, baseId) => {
-            const feat = this.features.find(f => f.id == baseId);
-            if (feat != undefined)
+            const feat = this.features.find(f => f.id === baseId);
+            if (feat)
                 feat.element.style.setProperty(
                     "--ps2map__base-color", colours[owner]);
         });
@@ -67,7 +67,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         let i = bases.length;
         while (i-- > 0) {
             const baseInfo = bases[i];
-            if (baseInfo.type_code == "no-mans-land")
+            if (baseInfo.type_code === "no-mans-land")
                 continue; // "No man's land" bases do not get icons
             const pos = {
                 x: baseInfo.map_pos[0],
@@ -76,11 +76,11 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
             const element = document.createElement("div");
             let name = baseInfo.name;
             // Append the facility type for primary bases
-            if (baseInfo.type_code == "amp-station" ||
-                baseInfo.type_code == "bio-lab" ||
-                baseInfo.type_code == "interlink" ||
-                baseInfo.type_code == "tech-plant" ||
-                baseInfo.type_code == "trident")
+            if (baseInfo.type_code === "amp-station" ||
+                baseInfo.type_code === "bio-lab" ||
+                baseInfo.type_code === "interlink" ||
+                baseInfo.type_code === "tech-plant" ||
+                baseInfo.type_code === "trident")
 
                 name += ` ${baseInfo.type_name}`;
             element.innerText = `${name}`;
@@ -91,8 +91,8 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
             element.classList.add(`ps2map__base-names__icon__${baseInfo.type_code}`)
 
             let minZoom = 0;
-            if (baseInfo.type_code == "small-outpost") minZoom = 0.60
-            if (baseInfo.type_code == "large-outpost") minZoom = 0.45;
+            if (baseInfo.type_code === "small-outpost") minZoom = 0.60
+            if (baseInfo.type_code === "large-outpost") minZoom = 0.45;
 
             features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
             this.element.appendChild(element);
@@ -109,7 +109,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         let i = this.features.length;
         while (i-- > 0) {
             const feat = this.features[i];
-            if (this.features[i].id == base?.id) {
+            if (this.features[i].id === base?.id) {
                 feat.forceVisible = true;
                 feat.element.innerText = feat.text;
             }

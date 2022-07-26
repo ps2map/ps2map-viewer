@@ -29,7 +29,7 @@ class TerrainLayer extends TileLayer {
      * @param code 
      */
     private _setContinent(code: string): void {
-        if (this._code == code)
+        if (this._code === code)
             return;
         this._code = code;
         // Add low-res background buffer for antialiasing and preloading
@@ -114,13 +114,13 @@ class TerrainLayer extends TileLayer {
      * @returns Map tile grid step size
      */
     private _mapStepSize(mapSize: number, lod: number): number {
-        if (lod == 0)
+        if (lod === 0)
             // Base case for all map sizes
             return 4;
-        if (lod == 1 || mapSize <= 1024)
+        if (lod === 1 || mapSize <= 1024)
             // Past LOD0, very small maps (e.g. old Tutorial) do not scale past 8
             return 8;
-        if (lod == 2 || mapSize <= 2048)
+        if (lod === 2 || mapSize <= 2048)
             // Past LOD1, small maps (e.g. VR training or Nexus) do not scale past 16
             return 16;
         // LOD3 base case for large maps (i.e. Koltyr and up)
@@ -169,7 +169,7 @@ class TerrainLayer extends TileLayer {
         // Calculate appropriate LOD for the new zoom level
         const newLod = this._calculateLod(zoom);
         // Update tiles for new LOD if required
-        if (newLod != this.lod) {
+        if (newLod) {
             this.lod = newLod;
             this.defineTiles(this._mapTilesPerAxis(this.mapSize, newLod));
         }

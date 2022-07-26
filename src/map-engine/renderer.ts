@@ -87,7 +87,7 @@ class MapRenderer {
      * @param layer Map layer to add.
      */
     addLayer(layer: MapLayer): void {
-        if (layer.mapSize != this._mapSize)
+        if (layer.mapSize !== this._mapSize)
             throw "Map layer size must match the map renderer's.";
         this._layers.push(layer);
         this._anchor.appendChild(layer.element);
@@ -101,7 +101,7 @@ class MapRenderer {
      */
     getLayer(id: string): MapLayer | undefined {
         for (const layer of this._layers)
-            if (layer.id == id)
+            if (layer.id === id)
                 return layer;
         return undefined;
     }
@@ -166,7 +166,7 @@ class MapRenderer {
      * @param evtDown "mousedown" event starting the panning operation
      */
     private _mousePan(evtDown: MouseEvent): void {
-        if (evtDown.button == 2)
+        if (evtDown.button === 2)
             return;
         this._setPanLock(true);
         // Cache the initial anchor offset relative to which the pan will occur

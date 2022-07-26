@@ -5,22 +5,15 @@
 class BaseInfo extends Tool {
 
     private _callback: ((arg0: State.AppState) => void) | undefined = undefined;
-    private _bases: Map<number, Base> = new Map();
 
     activate(): void {
         super.activate();
         this._callback = this._onHover.bind(this);
         StateManager.subscribe("user/baseHovered", this._callback);
 
-        this._bases = new Map();
         const continent = this.map.continent();
-        if (continent == undefined)
+        if (!continent)
             return;
-        fetchBasesForContinent(continent.id).then(
-            (bases) => {
-                this._bases = new Map(bases.map((base) => [base.id, base]));
-            }
-        );
         const parent = this.tool_panel;
         if (parent)
             parent.style.display = "block";
@@ -45,7 +38,7 @@ class BaseInfo extends Tool {
 
     private _onHover(event: State.AppState): void {
         const base = event.user.hoveredBase;
-        if (base == undefined)
+        if (!base)
             return;
 
         this.tool_panel.innerHTML = "";
@@ -64,7 +57,7 @@ class BaseInfo extends Tool {
         type.textContent = base.type_name;
         this.tool_panel.appendChild(type);
 
-        if (base.resource_code != undefined) {
+        if (base.resource_code) {
             this.tool_panel.appendChild(document.createElement("br"));
 
             const resource_icon = document.createElement("img");

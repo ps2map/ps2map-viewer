@@ -37,7 +37,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
         const svg = this.element.firstElementChild as SVGElement | null;
-        if (svg == null)
+        if (!svg)
             throw "Unable to find HexLayer SVG element";
 
         const colours: any = {
@@ -51,7 +51,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
         baseOwnershipMap.forEach((owner, baseId) => {
             const polygon = svg.querySelector(
                 `#${this._baseIdToPolygonId(baseId)}`) as SVGPolygonElement | null;
-            if (polygon == null)
+            if (!polygon)
                 throw `Unable to find polygon for base ${baseId}`;
             polygon.style.fill = colours[owner];
         });
@@ -93,7 +93,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     protected deferredLayerUpdate(viewBox: Box, zoom: number): void {
         const svg = this.element.firstElementChild as SVGElement | null;
-        if (svg != null) {
+        if (svg) {
             const strokeWith = 10 / 1.5 ** zoom;
             svg.style.setProperty(
                 "--ps2map__base-hexes__stroke-width", `${strokeWith}px`);

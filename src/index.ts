@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const server_picker = document.getElementById("server-picker") as HTMLSelectElement;
     server_picker.addEventListener("change", () => {
         const server = GameData.getInstance().servers()
-            .find(s => s.id == parseInt(server_picker.value));
+            .find(s => s.id === parseInt(server_picker.value));
         if (!server)
             throw new Error(`No server found with id ${server_picker.value}`);
         StateManager.dispatch("user/serverChanged", server);
@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const continent_picker = document.getElementById("continent-picker") as HTMLSelectElement;
     continent_picker.addEventListener("change", () => {
         const continent = GameData.getInstance().continents()
-            .find(c => c.id == parseInt(continent_picker.value));
+            .find(c => c.id === parseInt(continent_picker.value));
         if (!continent)
             throw new Error(`No continent found with id ${continent_picker.value}`);
         StateManager.dispatch("user/continentChanged", continent);

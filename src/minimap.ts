@@ -81,7 +81,7 @@ class Minimap {
 
         baseOwnershipMap.forEach((factionId, baseId) => {
             const polygon = this._polygons.get(baseId);
-            if (polygon != undefined)
+            if (polygon)
                 polygon.style.fill = colours[factionId];
         });
     }
@@ -97,7 +97,7 @@ class Minimap {
             `url(${UrlGen.mapBackground(continent.code)})`;
 
         // Delete the existing hex layer, if any
-        if (this._baseOutlineSvg != undefined)
+        if (this._baseOutlineSvg)
             this.element.removeChild(this._baseOutlineSvg);
 
         // Delete any existing polygons
@@ -132,7 +132,7 @@ class Minimap {
      * @param evtDown Position the mouse was clicked at
      */
     private _jumpToPosition(evtDown: MouseEvent): void {
-        if (this._mapSize == 0)
+        if (this._mapSize === 0)
             return;
         // Continuous "mousemove" callback
         const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {

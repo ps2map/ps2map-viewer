@@ -25,7 +25,7 @@ class HeroMap {
         const continentMap = new Map<number, number>();
         baseOwnershipMap.forEach((owner, baseId) => {
             const base = data.getBase(baseId);
-            if (base && base.continent_id == this._continent?.id)
+            if (base && base.continent_id === this._continent?.id)
                 continentMap.set(baseId, owner);
         });
         /** Helper function for filtering dynamic layers from static ones */
@@ -40,7 +40,7 @@ class HeroMap {
     }
 
     async switchContinent(continent: Continent): Promise<void> {
-        if (continent.code == this._continent?.code)
+        if (continent.code === this._continent?.code)
             return;
 
         // Create layers for the new target continent

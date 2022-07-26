@@ -66,7 +66,7 @@ class MapCamera {
     bumpZoomLevel(direction: number): number {
         let newIndex = this._currentZoomIndex;
         // Bump zoom level
-        if (direction == 0)
+        if (direction === 0)
             return newIndex;
         if (direction < 0)
             newIndex--;

@@ -50,7 +50,7 @@ abstract class MapLayer {
      * @param visible New visibility state to apply
      */
     setVisibility(visible: boolean): void {
-        if (this.isVisible == visible)
+        if (this.isVisible === visible)
             return;
         if (visible)
             this.element.style.removeProperty("display");
@@ -66,7 +66,7 @@ abstract class MapLayer {
 
     /** Wrapper to run deferred layer updates from event listeners. */
     private _runDeferredLayerUpdate = Utils.rafDebounce(() => {
-        if (this._lastRedraw == null)
+        if (!this._lastRedraw)
             return;
         const [viewBox, zoom] = this._lastRedraw;
         this.deferredLayerUpdate(viewBox, zoom);

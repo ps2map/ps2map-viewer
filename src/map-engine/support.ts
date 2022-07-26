@@ -71,7 +71,8 @@ namespace Utils {
 
         const sourceSpan = sourceUpper - sourceLower;
         const targetSpan = targetUpper - targetLower;
-        if (sourceSpan == 0) return targetLower;
+        if (sourceSpan === 0)
+            return targetLower;
         const relValue = value - sourceLower / sourceSpan;
         return targetLower + relValue * targetSpan;
     }

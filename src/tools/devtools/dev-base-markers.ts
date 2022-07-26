@@ -59,13 +59,13 @@ namespace DevTools {
             const pos = this.getMapPosition(event);
 
             const baseIdStr = prompt("Base ID (aka. map_region_id)");
-            if (baseIdStr == null)
+            if (!baseIdStr)
                 return;
             const baseId = parseInt(baseIdStr);
             if (isNaN(baseId))
                 return;
             const baseName = prompt("Base name");
-            if (baseName == null)
+            if (!baseName)
                 return;
             const typeIdStr = prompt(
                 "Base type ID\n\n" +
@@ -80,7 +80,7 @@ namespace DevTools {
                 "9: Construction Outpost\n" +
                 "11: Containment Site\n" +
                 "12: Trident", "6");
-            if (typeIdStr == null)
+            if (!typeIdStr)
                 return;
             const typeId = parseInt(typeIdStr);
             if (isNaN(typeId))
