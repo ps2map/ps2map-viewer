@@ -973,7 +973,7 @@ var TerrainLayer = (function (_super) {
     };
     TerrainLayer.prototype.deferredLayerUpdate = function (viewBox, zoom) {
         var newLod = this._calculateLod(zoom);
-        if (newLod) {
+        if (this.lod !== newLod) {
             this.lod = newLod;
             this.defineTiles(this._mapTilesPerAxis(this.mapSize, newLod));
         }

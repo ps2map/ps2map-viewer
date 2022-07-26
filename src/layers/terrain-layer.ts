@@ -169,7 +169,7 @@ class TerrainLayer extends TileLayer {
         // Calculate appropriate LOD for the new zoom level
         const newLod = this._calculateLod(zoom);
         // Update tiles for new LOD if required
-        if (newLod) {
+        if (this.lod !== newLod) {
             this.lod = newLod;
             this.defineTiles(this._mapTilesPerAxis(this.mapSize, newLod));
         }
