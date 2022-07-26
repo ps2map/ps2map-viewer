@@ -37,7 +37,7 @@ class MapRenderer {
     private _panOffsetX: number;
     private _panOffsetY: number;
     private _isPanning: boolean = false;
-    private _camera: MapCamera;
+    private _camera: Camera;
 
     constructor(viewport: HTMLDivElement, mapSize: number) {
         // Set up DOM containers
@@ -47,11 +47,17 @@ class MapRenderer {
         this._anchor.classList.add("ps2map__anchor")
         this.viewport.appendChild(this._anchor);
 
-        this.setMapSize(mapSize);
-
         // Set up camera
-        this._camera = new MapCamera(
-            mapSize, this.viewport.clientHeight, this.viewport.clientWidth);
+        this._camera = new Camera(
+            { // Map dimensions
+                width: mapSize, height: mapSize
+            },
+            { // Viewport dimensions
+                width: this.viewport.clientWidth,
+                height: this.viewport.clientHeight,
+            });
+
+        this.setMapSize(mapSize);
 
         this._panOffsetX = this.viewport.clientWidth * 0.5;
         this._panOffsetY = this.viewport.clientHeight * 0.5;
@@ -68,12 +74,12 @@ class MapRenderer {
 
         // TODO: Fix the minimap viewport positioning delay bug in a less hacky way
         setInterval(() => {
-            this.viewport.dispatchEvent(this._buildViewBoxChangedEvent(this._camera.getViewBox()))
+            this.viewport.dispatchEvent(this._buildViewBoxChangedEvent(this.getViewBox()))
         }, 0.01);
     }
 
-    getViewBox(): ViewBox {
-        return this._camera.getViewBox();
+    getViewBox(): Readonly<ViewBox> {
+        return this._camera.currentViewBox();
     }
 
     getMapSize(): number {
@@ -91,7 +97,7 @@ class MapRenderer {
             throw "Map layer size must match the map renderer's.";
         this._layers.push(layer);
         this._anchor.appendChild(layer.element);
-        this._redraw(this._camera.getViewBox(), this._camera.getZoom());
+        this._redraw(this.getViewBox(), this._camera.getZoom());
     }
 
     /**
@@ -122,9 +128,9 @@ class MapRenderer {
      * @param target Map position to jump to
      */
     jumpTo(target: Point): void {
-        this._camera.target = target;
+        this._camera.jumpTo(target);
         this._constrainMapTarget();
-        this._redraw(this._camera.getViewBox(), this._camera.getZoom());
+        this._redraw(this.getViewBox(), this._camera.getZoom());
     }
 
     /**
@@ -139,8 +145,14 @@ class MapRenderer {
             throw "Remove all map layers before changing map size.";
         this._mapSize = value;
         // Create a new camera as zoom levels depend on map size
-        this._camera = new MapCamera(
-            value, this.viewport.clientHeight, this.viewport.clientWidth);
+        this._camera = new Camera(
+            { // Map dimensions
+                width: value, height: value
+            },
+            { // Viewport dimensions
+                width: this.viewport.clientWidth,
+                height: this.viewport.clientHeight,
+            });
     }
 
     /**
@@ -157,9 +169,9 @@ class MapRenderer {
         const relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
         const relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
         // Update the camera target and view box
-        this._camera.zoomTo(evt.deltaY, relX, relY);
+        this._camera.zoomTowards(evt.deltaY, { x: relX, y: relY });
         this._constrainMapTarget();
-        this._redraw(this._camera.getViewBox(), this._camera.getZoom());
+        this._redraw(this.getViewBox(), this._camera.getZoom());
     });
 
     /** Event callback for mouse map panning.
@@ -186,7 +198,7 @@ class MapRenderer {
                 y: refY + deltaY / zoom
             };
             this._constrainMapTarget();
-            this._redraw(this._camera.getViewBox(), zoom);
+            this._redraw(this.getViewBox(), zoom);
         });
         // Global "mouseup" callback
         const up = () => {
