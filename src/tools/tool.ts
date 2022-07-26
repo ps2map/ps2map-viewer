@@ -39,7 +39,7 @@ class Tool {
         const clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
         const clickRelY = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
         const renderer = this.map.renderer;
-        const viewBox = renderer.getCamera().getViewBox();
+        const viewBox = renderer.getViewBox();
         const xMap = -renderer.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
         const yMap = -renderer.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
         return [xMap, yMap];

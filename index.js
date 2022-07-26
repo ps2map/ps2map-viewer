@@ -332,8 +332,8 @@ var MapRenderer = (function () {
             _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this._camera.getViewBox()));
         }, 0.01);
     }
-    MapRenderer.prototype.getCamera = function () {
-        return this._camera;
+    MapRenderer.prototype.getViewBox = function () {
+        return this._camera.getViewBox();
     };
     MapRenderer.prototype.getMapSize = function () {
         return this._mapSize;
@@ -1247,7 +1247,7 @@ var Tool = (function () {
         var clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
         var clickRelY = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
         var renderer = this.map.renderer;
-        var viewBox = renderer.getCamera().getViewBox();
+        var viewBox = renderer.getViewBox();
         var xMap = -renderer.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
         var yMap = -renderer.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
         return [xMap, yMap];

@@ -72,8 +72,8 @@ class MapRenderer {
         }, 0.01);
     }
 
-    getCamera(): MapCamera {
-        return this._camera;
+    getViewBox(): Box {
+        return this._camera.getViewBox();
     }
 
     getMapSize(): number {
