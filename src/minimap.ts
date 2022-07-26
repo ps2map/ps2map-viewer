@@ -48,10 +48,10 @@ class Minimap {
     }
 
     /** Update the viewBox displayed on the minimap. */
-    updateViewbox(viewBox: Box): void {
+    updateViewbox(viewBox: ViewBox): void {
         const mapSize = this._mapSize;
         // Convert map-coordinate viewBox to percentages
-        const relViewBox: Box = {
+        const relViewBox: ViewBox = {
             top: (viewBox.top + mapSize * 0.5) / mapSize,
             left: (viewBox.left + mapSize * 0.5) / mapSize,
             bottom: (viewBox.bottom + mapSize * 0.5) / mapSize,

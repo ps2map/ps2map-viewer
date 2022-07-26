@@ -121,7 +121,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         }
     }
 
-    protected deferredLayerUpdate(_: Box, zoom: number) {
+    protected deferredLayerUpdate(_: ViewBox, zoom: number) {
         const unzoom = 1 / zoom;
         let i = this.features.length;
         while (i-- > 0) {

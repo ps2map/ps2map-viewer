@@ -45,7 +45,7 @@ namespace Utils {
      * @param b Second rewctangle
      * @returns true if the rectangles have a non-zero overlap, otherwise false
      */
-    export function rectanglesIntersect(a: Box, b: Box): boolean {
+    export function rectanglesIntersect(a: ViewBox, b: ViewBox): boolean {
         return (a.left < b.right
             && a.right > b.left
             && a.top > b.bottom

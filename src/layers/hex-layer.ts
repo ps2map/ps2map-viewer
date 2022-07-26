@@ -91,7 +91,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
         });
     }
 
-    protected deferredLayerUpdate(_: Box, zoom: number): void {
+    protected deferredLayerUpdate(_: ViewBox, zoom: number): void {
         const svg = this.element.firstElementChild as SVGElement | null;
         if (svg) {
             const strokeWith = 10 / 1.5 ** zoom;

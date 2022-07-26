@@ -18,7 +18,7 @@ abstract class MapLayer {
     protected isVisible: boolean = true;
 
     /** Internal cache for deferred layer updates. */
-    private _lastRedraw: [Box, number] | null = null;
+    private _lastRedraw: [ViewBox, number] | null = null;
 
     constructor(id: string, mapSize: number) {
         this.id = id;
@@ -41,7 +41,7 @@ abstract class MapLayer {
      * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    setRedrawArgs(viewBox: Box, zoom: number): void {
+    setRedrawArgs(viewBox: ViewBox, zoom: number): void {
         this._lastRedraw = [viewBox, zoom];
     }
 
@@ -84,7 +84,7 @@ abstract class MapLayer {
      * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    abstract redraw(viewBox: Box, zoom: number): void;
+    abstract redraw(viewBox: ViewBox, zoom: number): void;
 
     /**
      * Implementation of the deferred layer update.
@@ -95,5 +95,5 @@ abstract class MapLayer {
      * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    protected abstract deferredLayerUpdate(viewBox: Box, zoom: number): void;
+    protected abstract deferredLayerUpdate(viewBox: ViewBox, zoom: number): void;
 }

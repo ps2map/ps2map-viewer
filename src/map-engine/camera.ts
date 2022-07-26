@@ -84,7 +84,7 @@ class MapCamera {
      * Returns teh current viewBox of the camera.
      * @returns Current viewBox object.
      */
-    getViewBox(): Box {
+    getViewBox(): ViewBox {
         // Calculate the lengths covered by the viewport in map units
         const viewBoxHeight = this._viewportHeight / this.getZoom();
         const viewBoxWidth = this._viewportWidth / this.getZoom();

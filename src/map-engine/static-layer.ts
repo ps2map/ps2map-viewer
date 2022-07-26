@@ -12,9 +12,9 @@ class StaticLayer extends MapLayer {
         super(id, mapSize);
     }
 
-    protected deferredLayerUpdate(_: Box, __: number): void { }
+    protected deferredLayerUpdate(_: ViewBox, __: number): void { }
 
-    redraw(viewBox: Box, zoom: number): void {
+    redraw(viewBox: ViewBox, zoom: number): void {
         const targetX = (viewBox.right + viewBox.left) * 0.5;
         const targetY = (viewBox.top + viewBox.bottom) * 0.5;
         // Initial offset to move the centre of the SVG to its CSS origin

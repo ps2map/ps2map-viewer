@@ -8,11 +8,11 @@ class MapTile {
     /** Grid position of the map tile. */
     readonly gridPos: GridPos;
     /** Map area of the tile. */
-    readonly box: Box;
+    readonly box: ViewBox;
     /** Visibility DOM cache. */
     visible: boolean = true;
 
-    constructor(box: Box, element: HTMLElement, gridPos: GridPos) {
+    constructor(box: ViewBox, element: HTMLElement, gridPos: GridPos) {
         this.box = box;
         this.element = element;
         this.gridPos = gridPos;
@@ -88,7 +88,7 @@ abstract class TileLayer extends MapLayer {
      * @param viewBox Current client view box
      * @returns true if the tile is in view, otherwise false
      */
-    protected tileIsVisible(tile: MapTile, viewBox: Box): boolean {
+    protected tileIsVisible(tile: MapTile, viewBox: ViewBox): boolean {
         return Utils.rectanglesIntersect(tile.box, viewBox);
     }
 
@@ -96,7 +96,7 @@ abstract class TileLayer extends MapLayer {
      * Update the CSS visibility of all map tiles.
      * @param viewBox Current view box to apply
      */
-    protected updateTileVisibility(viewBox: Box): void {
+    protected updateTileVisibility(viewBox: ViewBox): void {
         // Process all tiles to determine which ones are active
         const activeTiles: HTMLElement[] = [];
         let i = this.tiles.length;
@@ -115,11 +115,11 @@ abstract class TileLayer extends MapLayer {
 
     }
 
-    protected deferredLayerUpdate(viewBox: Box, _: number): void {
+    protected deferredLayerUpdate(viewBox: ViewBox, _: number): void {
         this.updateTileVisibility(viewBox);
     }
 
-    redraw(viewBox: Box, zoom: number): void {
+    redraw(viewBox: ViewBox, zoom: number): void {
         const targetX = (viewBox.right + viewBox.left) * 0.5;
         const targetY = (viewBox.top + viewBox.bottom) * 0.5;
         // Initial offset to move the centre of the SVG to its CSS origin

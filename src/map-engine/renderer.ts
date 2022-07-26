@@ -8,7 +8,7 @@
  * Details for the "ps2map_viewboxchanged" custom event.
  */
 interface ViewBoxChangedEvent {
-    viewBox: Box;
+    viewBox: ViewBox;
 }
 
 /**
@@ -72,7 +72,7 @@ class MapRenderer {
         }, 0.01);
     }
 
-    getViewBox(): Box {
+    getViewBox(): ViewBox {
         return this._camera.getViewBox();
     }
 
@@ -225,7 +225,7 @@ class MapRenderer {
      * @param viewBox View box to dispatch
      * @param zoom Zoom level to use
      */
-    private _redraw(viewBox: Box, zoom: number): void {
+    private _redraw(viewBox: ViewBox, zoom: number): void {
         // Apply new zoom level and schedule map layer updates
         let i = this._layers.length;
         while (i-- > 0) {
@@ -257,7 +257,7 @@ class MapRenderer {
         };
     }
 
-    private _buildViewBoxChangedEvent(viewBox: Box): CustomEvent<ViewBoxChangedEvent> {
+    private _buildViewBoxChangedEvent(viewBox: ViewBox): CustomEvent<ViewBoxChangedEvent> {
         return new CustomEvent("ps2map_viewboxchanged", {
             detail: {
                 viewBox: viewBox
