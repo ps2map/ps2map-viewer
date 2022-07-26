@@ -150,14 +150,6 @@ var Camera = (function () {
     Camera.prototype.jumpTo = function (point) {
         this.target = point;
     };
-    Camera.prototype.pan = function (viewportDelta) {
-        var zoom = this.getZoom();
-        this.target = {
-            x: this.target.x + viewportDelta.x / zoom,
-            y: this.target.y + viewportDelta.y / zoom
-        };
-        return this.target;
-    };
     Camera.prototype.zoomTowards = function (value, viewportRelPos) {
         var oldZoom = this.getZoom();
         var zoom = this.bumpZoom(value);
@@ -392,18 +384,18 @@ var MapRenderer = (function () {
         if (evtDown.button === 2)
             return;
         this._setPanLock(true);
-        var refX = this._camera.target.x;
-        var refY = this._camera.target.y;
+        var panStart = {
+            x: this._camera.target.x,
+            y: this._camera.target.y
+        };
         var zoom = this._camera.getZoom();
         var startX = evtDown.clientX;
         var startY = evtDown.clientY;
         var drag = Utils.rafDebounce(function (evtDrag) {
-            var deltaX = evtDrag.clientX - startX;
-            var deltaY = evtDrag.clientY - startY;
-            _this._camera.target = {
-                x: refX - deltaX / zoom,
-                y: refY + deltaY / zoom
-            };
+            _this._camera.jumpTo({
+                x: panStart.x - (evtDrag.clientX - startX) / zoom,
+                y: panStart.y + (evtDrag.clientY - startY) / zoom
+            });
             _this._constrainMapTarget();
             _this._redraw(_this.getViewBox(), zoom);
         });

@@ -181,32 +181,32 @@ class MapRenderer {
         if (evtDown.button === 2)
             return;
         this._setPanLock(true);
-        // Cache the initial anchor offset relative to which the pan will occur
-        const refX = this._camera.target.x;
-        const refY = this._camera.target.y;
+
+        const panStart = {
+            x: this._camera.target.x,
+            y: this._camera.target.y
+        };
         const zoom = this._camera.getZoom();
-        // Initial cursor position
         const startX = evtDown.clientX;
         const startY = evtDown.clientY;
+
         // Continuous "mousemove" callback
         const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
-            const deltaX = evtDrag.clientX - startX;
-            const deltaY = evtDrag.clientY - startY;
-            // Calculate and apply new layer anchor offset
-            this._camera.target = {
-                x: refX - deltaX / zoom,
-                y: refY + deltaY / zoom
-            };
+            this._camera.jumpTo({
+                x: panStart.x - (evtDrag.clientX - startX) / zoom,
+                y: panStart.y + (evtDrag.clientY - startY) / zoom
+            });
             this._constrainMapTarget();
             this._redraw(this.getViewBox(), zoom);
         });
+
         // Global "mouseup" callback
         const up = () => {
             this._setPanLock(false);
             this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
         };
-        // Add listeners
+
         document.addEventListener("mouseup", up);
         this.viewport.addEventListener("mousemove", drag, {
             passive: true

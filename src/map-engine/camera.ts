@@ -108,24 +108,6 @@ class Camera {
     }
 
     /**
-     * Pan the camera by the given amount.
-     *
-     * The panning is performed in viewport coordinates and converted to map
-     * coordinates based on the current zoom level.
-     *
-     * @param viewportDelta Relative panning delta in viewport coordinates.
-     * @returns New camera target in map coordinates.
-     */
-    public pan(viewportDelta: Readonly<Point>): Point {
-        const zoom = this.getZoom();
-        this.target = {
-            x: this.target.x + viewportDelta.x / zoom,
-            y: this.target.y + viewportDelta.y / zoom,
-        };
-        return this.target;
-    }
-
-    /**
      * Zoom the camera towards the given point.
      *
      * This method is a combination of `bumpZoom()` and `pan()`. The camera
