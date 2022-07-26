@@ -329,9 +329,6 @@ var MapRenderer = (function () {
         this.viewport.addEventListener("mousedown", this._mousePan.bind(this), {
             passive: true
         });
-        setInterval(function () {
-            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this.getViewBox()));
-        }, 0.01);
     }
     MapRenderer.prototype.getViewBox = function () {
         return this._camera.currentViewBox();

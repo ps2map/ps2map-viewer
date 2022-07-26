@@ -71,11 +71,6 @@ class MapRenderer {
         this.viewport.addEventListener("mousedown", this._mousePan.bind(this), {
             passive: true
         });
-
-        // TODO: Fix the minimap viewport positioning delay bug in a less hacky way
-        setInterval(() => {
-            this.viewport.dispatchEvent(this._buildViewBoxChangedEvent(this.getViewBox()))
-        }, 0.01);
     }
 
     getViewBox(): Readonly<ViewBox> {
