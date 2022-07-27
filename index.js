@@ -1161,9 +1161,8 @@ var Minimap = (function () {
 var MapListener = (function () {
     function MapListener(server) {
         if (server === void 0) { server = undefined; }
-        this._subscribers = [];
-        this._startMapStatePolling();
         this._server = server;
+        this._subscribers = [];
         this._baseUpdateIntervalId = undefined;
     }
     MapListener.prototype.subscribe = function (callback) {

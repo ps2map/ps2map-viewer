@@ -7,9 +7,8 @@ class MapListener {
     private _server: Server | undefined;
 
     constructor(server: Server | undefined = undefined) {
-        this._subscribers = [];
-        this._startMapStatePolling();
         this._server = server;
+        this._subscribers = [];
         this._baseUpdateIntervalId = undefined;
     }
 
