@@ -1,13 +1,10 @@
 /// <reference path="./tool.ts" />
-/// <reference path="./base-info.ts" />
-/// <reference path="./crosshair.ts" />
-/// <reference path="./devtools/dev-base-markers.ts" />
 
 // Global variable storing the currently active tool.
 let currentTool: Tool | undefined = undefined;
 
 let heroMap: HeroMap | undefined = undefined;
-const available_tools = [Tool, BaseInfo, Crosshair, DevTools.BaseMarkers];
+const available_tools = [Tool];
 
 function setupToolbox(map: HeroMap): void {
     heroMap = map;
