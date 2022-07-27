@@ -1244,9 +1244,41 @@ var Tool = (function () {
     Tool.displayName = "None";
     return Tool;
 }());
+var Cursor = (function (_super) {
+    __extends(Cursor, _super);
+    function Cursor(viewport, map, tool_panel) {
+        var _this = _super.call(this, viewport, map, tool_panel) || this;
+        _this._onMove = _this._onMove.bind(_this);
+        _this._viewport.addEventListener("mousemove", _this._onMove, { passive: true });
+        return _this;
+    }
+    Cursor.prototype.tearDown = function () {
+        _super.prototype.tearDown.call(this);
+        this._viewport.removeEventListener("mousemove", this._onMove);
+    };
+    Cursor.prototype._setUpToolPanel = function () {
+        _super.prototype._setUpToolPanel.call(this);
+        this._tool_panel.innerHTML += "\n        <div class=\"tools__cursor\">\n            <span>X:</span>\n            <span id=\"tool-cursor_x\">0.00</span>\n            <span>Y:</span>\n            <span id=\"tool-cursor_y\">0.00</span>            \n        </div>\n        ";
+        this._tool_panel.style.display = "block";
+    };
+    Cursor.prototype._updateToolPanel = function (target) {
+        var x = document.getElementById("tool-cursor_x");
+        if (x)
+            x.textContent = target.x.toFixed(2);
+        var y = document.getElementById("tool-cursor_y");
+        if (y)
+            y.textContent = target.y.toFixed(2);
+    };
+    Cursor.prototype._onMove = function (event) {
+        this._updateToolPanel(this._getMapPosition(event));
+    };
+    Cursor.id = "cursor";
+    Cursor.displayName = "Map Cursor";
+    return Cursor;
+}(Tool));
 var currentTool = undefined;
 var heroMap = undefined;
-var available_tools = [Tool];
+var available_tools = [Tool, Cursor];
 function setupToolbox(map) {
     heroMap = map;
 }

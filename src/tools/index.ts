@@ -5,7 +5,7 @@
 let currentTool: Tool | undefined = undefined;
 
 let heroMap: HeroMap | undefined = undefined;
-const available_tools = [Tool];
+const available_tools = [Tool, Cursor];
 
 function setupToolbox(map: HeroMap): void {
     heroMap = map;
