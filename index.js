@@ -1544,6 +1544,23 @@ var State;
 var State;
 (function (State) {
     ;
+    State.defaultToolState = {
+        current: undefined,
+        data: {}
+    };
+    function toolReducer(state, action, data) {
+        switch (action) {
+            case "tool/changed":
+                return __assign(__assign({}, state), { current: data.id, data: data.data });
+            default:
+                return state;
+        }
+    }
+    State.toolReducer = toolReducer;
+})(State || (State = {}));
+var State;
+(function (State) {
+    ;
     State.defaultUserState = {
         server: undefined,
         continent: undefined,
@@ -1568,6 +1585,7 @@ var State;
     function appReducer(state, action, data) {
         return {
             map: State.mapReducer(state.map, action, data),
+            tool: State.toolReducer(state.tool, action, data),
             user: State.userReducer(state.user, action, data)
         };
     }
@@ -1702,6 +1720,7 @@ var StateManager = (function () {
     };
     StateManager._state = {
         map: State.defaultMapState,
+        tool: State.defaultToolState,
         user: State.defaultUserState
     };
     StateManager._subscriptions = new Map();
