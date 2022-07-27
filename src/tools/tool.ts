@@ -1,47 +1,62 @@
-
+/**
+ * Base class for all tools.
+ * 
+ * Additionally serves as the tool instance used when no tool is active. Its
+ * "id" and "displayName" field are therefore valid.
+ */
 class Tool {
-    readonly map: HeroMap;
-    readonly viewport: HTMLDivElement
-    protected tool_panel: HTMLDivElement;
 
-    constructor(viewport: HTMLDivElement, map: HeroMap) {
-        this.map = map;
-        this.viewport = viewport;
-        this.tool_panel = document.getElementById("tool-panel") as HTMLDivElement;
+    static readonly id: string = "none";
+    static readonly displayName: string = "None";
+
+    private readonly _map: HeroMap;
+    protected readonly _viewport: HTMLDivElement;
+    protected readonly _tool_panel: HTMLDivElement;
+
+    constructor(viewport: HTMLDivElement, map: HeroMap, tool_panel: HTMLDivElement) {
+        this._map = map;
+        this._viewport = viewport;
+        this._tool_panel = tool_panel;
+
+        this._setUpToolPanel();
     }
 
-    activate(): void {
-        dispatchEvent(new CustomEvent("tool-activated", {
-            detail: {
-                tool: this,
-            }
-        }));
+    /**
+     * Clean-up method called when the tool is deactivated.
+     * 
+     * Consider this a "destructor" for the tool that must be called to ensure
+     * that the tool is properly deactivated without leaving any orphaned GUI
+     * elements or event listeners in the DOM.
+     */
+    public tearDown(): void {
+        this._tool_panel.innerHTML = "";
+        this._tool_panel.removeAttribute("style");
     }
 
-    deactivate(): void {
-        dispatchEvent(new CustomEvent("tool-deactivated", {
-            detail: {
-                tool: this,
-            }
-        }));
-        this.tool_panel.innerHTML = "";
+    /**
+     * Helper method to get the clicked map coordinates from a mouse event.
+     * @param event The mouse event.
+     * @returns The clicked map coordinates.
+     */
+    protected _getMapPosition(event: MouseEvent): Point {
+        // Get relative click position within the viewport
+        const relX = (event.clientX - this._viewport.offsetLeft) / this._viewport.clientWidth;
+        const relY = 1 - (event.clientY - this._viewport.offsetTop) / this._viewport.clientHeight;
+        // Calculate corresponding map position
+        const viewBox = this._map.renderer.getViewBox();
+        const halfSize = this._map.renderer.getMapSize() * 0.5;
+        return {
+            x: -halfSize + viewBox.left + (viewBox.right - viewBox.left) * relX,
+            y: -halfSize + viewBox.bottom + (viewBox.top - viewBox.bottom) * relY,
+        };
     }
 
-    static getDisplayName(): string {
-        return "None";
-    }
-
-    static getId(): string {
-        return "default";
-    }
-
-    protected getMapPosition(event: MouseEvent): [number, number] {
-        const clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
-        const clickRelY = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
-        const renderer = this.map.renderer;
-        const viewBox = renderer.getViewBox();
-        const xMap = -renderer.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
-        const yMap = -renderer.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
-        return [xMap, yMap];
-    }
+    /**
+     * Populate the tool panel with tool-specific user interface elements.
+     * 
+     * This is called automatically when the tool is created. The default
+     * implementation does nothing, but subclasses may override this to add
+     * their own elements.
+     */
+    protected _setUpToolPanel(): void { }
 }

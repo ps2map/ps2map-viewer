@@ -1,4 +1,5 @@
 /// <reference path="./tool.ts" />
+/// <reference path="./cursor.ts" />
 
 // Global variable storing the currently active tool.
 let currentTool: Tool | undefined = undefined;
@@ -11,14 +12,17 @@ function setupToolbox(map: HeroMap): void {
 }
 
 function setTool(tool: typeof Tool | undefined = undefined): void {
-    currentTool?.deactivate()
+    if (currentTool)
+        currentTool.tearDown();
     if (!tool || currentTool instanceof tool)
         tool = Tool;  // Deselect
-    const newTool = new tool(document.getElementById("hero-map") as HTMLDivElement, (heroMap as HeroMap));
-    newTool.activate()
+    const toolBar = document.getElementById("tool-panel") as HTMLDivElement;
+    if (!toolBar)
+        return;
+    const newTool = new tool(document.getElementById("hero-map") as HTMLDivElement, (heroMap as HeroMap), toolBar);
     currentTool = newTool;
     document.querySelectorAll(".toolbar__button").forEach((btn) => {
-        if (btn.id === `tool-${tool?.getId()}`)
+        if (btn.id === `tool-${tool?.id}`)
             btn.classList.add("toolbar__button__active");
         else
             btn.classList.remove("toolbar__button__active");
@@ -37,9 +41,9 @@ document.addEventListener("DOMContentLoaded", () => {
     available_tools.forEach((tool) => {
         const btn = document.createElement("input");
         btn.type = "button";
-        btn.value = tool.getDisplayName();
+        btn.value = tool.displayName;
         btn.classList.add("toolbar__button");
-        btn.id = `tool-${tool.getId()}`;
+        btn.id = `tool-${tool.id}`;
 
         btn.addEventListener("click", () => {
             setTool(tool);

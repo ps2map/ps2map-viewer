@@ -1219,41 +1219,29 @@ var MapListener = (function () {
     return MapListener;
 }());
 var Tool = (function () {
-    function Tool(viewport, map) {
-        this.map = map;
-        this.viewport = viewport;
-        this.tool_panel = document.getElementById("tool-panel");
+    function Tool(viewport, map, tool_panel) {
+        this._map = map;
+        this._viewport = viewport;
+        this._tool_panel = tool_panel;
+        this._setUpToolPanel();
     }
-    Tool.prototype.activate = function () {
-        dispatchEvent(new CustomEvent("tool-activated", {
-            detail: {
-                tool: this
-            }
-        }));
+    Tool.prototype.tearDown = function () {
+        this._tool_panel.innerHTML = "";
+        this._tool_panel.removeAttribute("style");
     };
-    Tool.prototype.deactivate = function () {
-        dispatchEvent(new CustomEvent("tool-deactivated", {
-            detail: {
-                tool: this
-            }
-        }));
-        this.tool_panel.innerHTML = "";
+    Tool.prototype._getMapPosition = function (event) {
+        var relX = (event.clientX - this._viewport.offsetLeft) / this._viewport.clientWidth;
+        var relY = 1 - (event.clientY - this._viewport.offsetTop) / this._viewport.clientHeight;
+        var viewBox = this._map.renderer.getViewBox();
+        var halfSize = this._map.renderer.getMapSize() * 0.5;
+        return {
+            x: -halfSize + viewBox.left + (viewBox.right - viewBox.left) * relX,
+            y: -halfSize + viewBox.bottom + (viewBox.top - viewBox.bottom) * relY
+        };
     };
-    Tool.getDisplayName = function () {
-        return "None";
-    };
-    Tool.getId = function () {
-        return "default";
-    };
-    Tool.prototype.getMapPosition = function (event) {
-        var clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
-        var clickRelY = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
-        var renderer = this.map.renderer;
-        var viewBox = renderer.getViewBox();
-        var xMap = -renderer.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
-        var yMap = -renderer.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
-        return [xMap, yMap];
-    };
+    Tool.prototype._setUpToolPanel = function () { };
+    Tool.id = "none";
+    Tool.displayName = "None";
     return Tool;
 }());
 var currentTool = undefined;
@@ -1264,14 +1252,17 @@ function setupToolbox(map) {
 }
 function setTool(tool) {
     if (tool === void 0) { tool = undefined; }
-    currentTool === null || currentTool === void 0 ? void 0 : currentTool.deactivate();
+    if (currentTool)
+        currentTool.tearDown();
     if (!tool || currentTool instanceof tool)
         tool = Tool;
-    var newTool = new tool(document.getElementById("hero-map"), heroMap);
-    newTool.activate();
+    var toolBar = document.getElementById("tool-panel");
+    if (!toolBar)
+        return;
+    var newTool = new tool(document.getElementById("hero-map"), heroMap, toolBar);
     currentTool = newTool;
     document.querySelectorAll(".toolbar__button").forEach(function (btn) {
-        if (btn.id === "tool-".concat(tool === null || tool === void 0 ? void 0 : tool.getId()))
+        if (btn.id === "tool-".concat(tool === null || tool === void 0 ? void 0 : tool.id))
             btn.classList.add("toolbar__button__active");
         else
             btn.classList.remove("toolbar__button__active");
@@ -1286,9 +1277,9 @@ document.addEventListener("DOMContentLoaded", function () {
     available_tools.forEach(function (tool) {
         var btn = document.createElement("input");
         btn.type = "button";
-        btn.value = tool.getDisplayName();
+        btn.value = tool.displayName;
         btn.classList.add("toolbar__button");
-        btn.id = "tool-".concat(tool.getId());
+        btn.id = "tool-".concat(tool.id);
         btn.addEventListener("click", function () {
             setTool(tool);
         });
