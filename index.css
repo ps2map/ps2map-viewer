@@ -93,13 +93,9 @@ body {
 
 #tool-panel {
     position: absolute;
-    right: var(--sidebar-margin);
-    bottom: var(--sidebar-margin);
-    min-width: 240px;
-    max-width: 800px;
-    min-height: 100px;
-    padding: 10px;
+    right: 0;
+    bottom: 0;
     display: none;
-
-    background-color: magenta;
+    padding: 10px;
+    background-color: #333333;
 }
