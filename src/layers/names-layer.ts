@@ -102,7 +102,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
 
     /**
      * Callback invoked when hovering over base hexes.
-     * 
+     *
      * This displays the name of the current base regardless of zoom level.
      */
     setHoveredBase(base: Base | undefined): void {

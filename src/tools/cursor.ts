@@ -29,7 +29,7 @@ class Cursor extends Tool {
             <span>X:</span>
             <span id="tool-cursor_x">0.00</span>
             <span>Y:</span>
-            <span id="tool-cursor_y">0.00</span>            
+            <span id="tool-cursor_y">0.00</span>
         </div>
         `;
         this._tool_panel.style.display = "block";

@@ -1259,7 +1259,7 @@ var Cursor = (function (_super) {
     };
     Cursor.prototype._setUpToolPanel = function () {
         _super.prototype._setUpToolPanel.call(this);
-        this._tool_panel.innerHTML += "\n        <div class=\"tools__cursor\">\n            <span>X:</span>\n            <span id=\"tool-cursor_x\">0.00</span>\n            <span>Y:</span>\n            <span id=\"tool-cursor_y\">0.00</span>            \n        </div>\n        ";
+        this._tool_panel.innerHTML += "\n        <div class=\"tools__cursor\">\n            <span>X:</span>\n            <span id=\"tool-cursor_x\">0.00</span>\n            <span>Y:</span>\n            <span id=\"tool-cursor_y\">0.00</span>\n        </div>\n        ";
         this._tool_panel.style.display = "block";
     };
     Cursor.prototype._updateToolPanel = function (target) {

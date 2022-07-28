@@ -23,10 +23,10 @@ class TerrainLayer extends TileLayer {
 
     /**
      * Update the current continent.
-     * 
+     *
      * If the continent is different to the previous value, all tiles are
      * recreated at the current zoom level.
-     * @param code 
+     * @param code
      */
     private _setContinent(code: string): void {
         if (this._code === code)
@@ -149,7 +149,7 @@ class TerrainLayer extends TileLayer {
 
     /**
      * Return the map grid limits for a given map and LOD.
-     * 
+     *
      * These are the minimum and maximum grid indices for the map grid.
      * @param mapSize Map size in metres
      * @param lod Map level of detail

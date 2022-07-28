@@ -100,7 +100,7 @@ class Camera {
 
     /**
      * Jump to the given point on the map.
-     * 
+     *
      * @param point Point in map coordinates.
      */
     public jumpTo(point: Readonly<Point>): void {
