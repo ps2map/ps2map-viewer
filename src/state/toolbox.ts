@@ -2,20 +2,24 @@
 
 namespace State {
 
-    export interface ToolState {
+    export interface ToolBoxState {
         current: string | undefined;
         data: object;
     };
 
-    export const defaultToolState: ToolState = {
+    export const defaultToolState: ToolBoxState = {
         current: undefined,
         data: {},
     };
 
     /** State reducer for "tool/" actions. */
-    export function toolReducer(state: ToolState, action: string, data: any): ToolState {
+    export function toolboxReducer(
+        state: ToolBoxState,
+        action: string,
+        data: any
+    ): ToolBoxState {
         switch (action) {
-            case "tool/changed":
+            case "toolbox/changed":
                 return {
                     ...state,
                     current: data.id,

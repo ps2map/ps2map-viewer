@@ -3,21 +3,21 @@
  */
 
 /// <reference path="./map.ts" />
-/// <reference path="./tool.ts" />
+/// <reference path="./toolbox.ts" />
 /// <reference path="./user.ts" />
 
 namespace State {
 
     export interface AppState {
         map: MapState;
-        tool: ToolState;
+        tool: ToolBoxState;
         user: UserState;
     }
 
     export function appReducer(state: AppState, action: string, data: any): AppState {
         return {
             map: mapReducer(state.map, action, data),
-            tool: toolReducer(state.tool, action, data),
+            tool: toolboxReducer(state.tool, action, data),
             user: userReducer(state.user, action, data),
         };
     }

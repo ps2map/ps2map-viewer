@@ -8,6 +8,7 @@ class Tool {
 
     static readonly id: string = "none";
     static readonly displayName: string = "None";
+    static readonly defaultState: object = {};
 
     private readonly _map: HeroMap;
     protected readonly _viewport: HTMLDivElement;

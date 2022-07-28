@@ -5,7 +5,11 @@ class Cursor extends Tool {
     static readonly id = "cursor";
     static readonly displayName = "Map Cursor";
 
-    constructor(viewport: HTMLDivElement, map: HeroMap, tool_panel: HTMLDivElement) {
+    constructor(
+        viewport: HTMLDivElement,
+        map: HeroMap,
+        tool_panel: HTMLDivElement
+    ) {
         super(viewport, map, tool_panel);
         this._onMove = this._onMove.bind(this);
         this._viewport.addEventListener(

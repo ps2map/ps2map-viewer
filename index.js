@@ -1242,6 +1242,7 @@ var Tool = (function () {
     Tool.prototype._setUpToolPanel = function () { };
     Tool.id = "none";
     Tool.displayName = "None";
+    Tool.defaultState = {};
     return Tool;
 }());
 var Cursor = (function (_super) {
@@ -1355,15 +1356,15 @@ var State;
         current: undefined,
         data: {}
     };
-    function toolReducer(state, action, data) {
+    function toolboxReducer(state, action, data) {
         switch (action) {
-            case "tool/changed":
+            case "toolbox/changed":
                 return __assign(__assign({}, state), { current: data.id, data: data.data });
             default:
                 return state;
         }
     }
-    State.toolReducer = toolReducer;
+    State.toolboxReducer = toolboxReducer;
 })(State || (State = {}));
 var State;
 (function (State) {
@@ -1392,7 +1393,7 @@ var State;
     function appReducer(state, action, data) {
         return {
             map: State.mapReducer(state.map, action, data),
-            tool: State.toolReducer(state.tool, action, data),
+            tool: State.toolboxReducer(state.tool, action, data),
             user: State.userReducer(state.user, action, data)
         };
     }
