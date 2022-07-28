@@ -1533,3 +1533,4 @@ var StateManager = (function () {
     StateManager._subscriptions = new Map();
     return StateManager;
 }());
+//# sourceMappingURL=index.js.map
