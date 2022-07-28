@@ -85,4 +85,3 @@ class GameData {
         return loading;
     }
 }
-
