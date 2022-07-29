@@ -23,16 +23,29 @@ class BaseInfo extends Tool {
     protected _setUpToolPanel(): void {
         super._setUpToolPanel();
 
-        this._tool_panel.innerHTML = `
-        <span class="ps2map__tool__base-info__name" id="tool-base-name"></span>
-        <img class="ps2map__tool__base-info__type-icon" id="tool-base-icon"/>
-        <span class="ps2map__tool__base-info__type" id="tool-base-type"></span>
-        `;
-        this._tool_panel.innerHTML += `
-        <br/>
-        <img class="ps2map__tool__base-info__resource-icon" id="tool-base-resource-icon"/>
-        <span class="ps2map__tool__base-info__resource-text" id="tool-base-resource-name"></span>
-        `;
+        const frag = document.createDocumentFragment();
+        frag.appendChild(Object.assign(document.createElement("span"), {
+            id: "tool-base-name",
+            classList: "ps2map__tool__base-info__name",
+        }));
+        frag.appendChild(Object.assign(document.createElement("img"), {
+            id: "tool-base-icon",
+            classList: "ps2map__tool__base-info__type-icon",
+        }));
+        frag.appendChild(Object.assign(document.createElement("span"), {
+            id: "tool-base-type",
+            classList: "ps2map__tool__base-info__type",
+        }));
+        frag.appendChild(document.createElement("br"));
+        frag.appendChild(Object.assign(document.createElement("img"), {
+            id: "tool-base-resource-icon",
+            classList: "ps2map__tool__base-info__resource-icon",
+        }));
+        frag.appendChild(Object.assign(document.createElement("span"), {
+            id: "tool-base-resource-name",
+            classList: "ps2map__tool__base-info__resource-text",
+        }));
+        this._tool_panel.appendChild(frag);
     }
 
     private _updateBaseInfo(base: Base | null): void {

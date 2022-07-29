@@ -24,15 +24,31 @@ class Cursor extends Tool {
     protected _setUpToolPanel(): void {
         super._setUpToolPanel();
 
-        this._tool_panel.innerHTML += `
-        <div class="tools__cursor">
-            <span>X:</span>
-            <span id="tool-cursor_x">0.00</span>
-            <span>Y:</span>
-            <span id="tool-cursor_y">0.00</span>
-        </div>
-        `;
-        this._tool_panel.style.display = "block";
+        // Dynamic elements        
+        const x = Object.assign(document.createElement("span"), {
+            id: "tool-cursor_x",
+            textContent: "0.00",
+        });
+        const y = Object.assign(document.createElement("span"), {
+            id: "tool-cursor_y",
+            textContent: "0.00",
+        });
+        // Static elements
+        const frag = document.createDocumentFragment();
+        frag.appendChild(document.createTextNode("X:"));
+        frag.appendChild(x);
+        frag.appendChild(document.createTextNode(" Y:"));
+        frag.appendChild(y);
+        this._tool_panel.appendChild(frag);
+        // Set style
+        Object.assign(this._tool_panel.style, {
+            display: "grid",
+            gridTemplateColumns: "1fr 3fr",
+            minWidth: "120px",
+            fontFamily: "Consolas, monospace",
+            fontSize: "18px",
+            justifyItems: "right",
+        });
     }
 
     private _updateToolPanel(target: Readonly<Point>): void {

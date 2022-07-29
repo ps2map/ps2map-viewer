@@ -1259,8 +1259,28 @@ var Cursor = (function (_super) {
     };
     Cursor.prototype._setUpToolPanel = function () {
         _super.prototype._setUpToolPanel.call(this);
-        this._tool_panel.innerHTML += "\n        <div class=\"tools__cursor\">\n            <span>X:</span>\n            <span id=\"tool-cursor_x\">0.00</span>\n            <span>Y:</span>\n            <span id=\"tool-cursor_y\">0.00</span>\n        </div>\n        ";
-        this._tool_panel.style.display = "block";
+        var x = Object.assign(document.createElement("span"), {
+            id: "tool-cursor_x",
+            textContent: "0.00"
+        });
+        var y = Object.assign(document.createElement("span"), {
+            id: "tool-cursor_y",
+            textContent: "0.00"
+        });
+        var frag = document.createDocumentFragment();
+        frag.appendChild(document.createTextNode("X:"));
+        frag.appendChild(x);
+        frag.appendChild(document.createTextNode(" Y:"));
+        frag.appendChild(y);
+        this._tool_panel.appendChild(frag);
+        Object.assign(this._tool_panel.style, {
+            display: "grid",
+            gridTemplateColumns: "1fr 3fr",
+            minWidth: "120px",
+            fontFamily: "Consolas, monospace",
+            fontSize: "18px",
+            justifyItems: "right"
+        });
     };
     Cursor.prototype._updateToolPanel = function (target) {
         var x = document.getElementById("tool-cursor_x");
@@ -1291,8 +1311,29 @@ var BaseInfo = (function (_super) {
     };
     BaseInfo.prototype._setUpToolPanel = function () {
         _super.prototype._setUpToolPanel.call(this);
-        this._tool_panel.innerHTML = "\n        <span class=\"ps2map__tool__base-info__name\" id=\"tool-base-name\"></span>\n        <img class=\"ps2map__tool__base-info__type-icon\" id=\"tool-base-icon\"/>\n        <span class=\"ps2map__tool__base-info__type\" id=\"tool-base-type\"></span>\n        ";
-        this._tool_panel.innerHTML += "\n        <br/>\n        <img class=\"ps2map__tool__base-info__resource-icon\" id=\"tool-base-resource-icon\"/>\n        <span class=\"ps2map__tool__base-info__resource-text\" id=\"tool-base-resource-name\"></span>\n        ";
+        var frag = document.createDocumentFragment();
+        frag.appendChild(Object.assign(document.createElement("span"), {
+            id: "tool-base-name",
+            classList: "ps2map__tool__base-info__name"
+        }));
+        frag.appendChild(Object.assign(document.createElement("img"), {
+            id: "tool-base-icon",
+            classList: "ps2map__tool__base-info__type-icon"
+        }));
+        frag.appendChild(Object.assign(document.createElement("span"), {
+            id: "tool-base-type",
+            classList: "ps2map__tool__base-info__type"
+        }));
+        frag.appendChild(document.createElement("br"));
+        frag.appendChild(Object.assign(document.createElement("img"), {
+            id: "tool-base-resource-icon",
+            classList: "ps2map__tool__base-info__resource-icon"
+        }));
+        frag.appendChild(Object.assign(document.createElement("span"), {
+            id: "tool-base-resource-name",
+            classList: "ps2map__tool__base-info__resource-text"
+        }));
+        this._tool_panel.appendChild(frag);
     };
     BaseInfo.prototype._updateBaseInfo = function (base) {
         if (!base) {
