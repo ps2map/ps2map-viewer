@@ -200,6 +200,7 @@ class MapRenderer {
             this._setPanLock(false);
             this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
+            this._layers.forEach(layer => layer.updateLayer());
         };
 
         document.addEventListener("mouseup", up);

@@ -400,6 +400,7 @@ var MapRenderer = (function () {
             _this._setPanLock(false);
             _this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
+            _this._layers.forEach(function (layer) { return layer.updateLayer(); });
         };
         document.addEventListener("mouseup", up);
         this.viewport.addEventListener("mousemove", drag, {
