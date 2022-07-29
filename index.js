@@ -1277,7 +1277,50 @@ var Cursor = (function (_super) {
     Cursor.displayName = "Map Cursor";
     return Cursor;
 }(Tool));
-var available_tools = [Tool, Cursor];
+var BaseInfo = (function (_super) {
+    __extends(BaseInfo, _super);
+    function BaseInfo(viewport, map, tool_panel) {
+        var _this = _super.call(this, viewport, map, tool_panel) || this;
+        _this._onHover = _this._onHover.bind(_this);
+        StateManager.subscribe("user/baseHovered", _this._onHover);
+        return _this;
+    }
+    BaseInfo.prototype.tearDown = function () {
+        _super.prototype.tearDown.call(this);
+        StateManager.unsubscribe("user/baseHovered", this._onHover);
+    };
+    BaseInfo.prototype._setUpToolPanel = function () {
+        _super.prototype._setUpToolPanel.call(this);
+        this._tool_panel.innerHTML = "\n        <span class=\"ps2map__tool__base-info__name\" id=\"tool-base-name\"></span>\n        <img class=\"ps2map__tool__base-info__type-icon\" id=\"tool-base-icon\"/>\n        <span class=\"ps2map__tool__base-info__type\" id=\"tool-base-type\"></span>\n        ";
+        this._tool_panel.innerHTML += "\n        <br/>\n        <img class=\"ps2map__tool__base-info__resource-icon\" id=\"tool-base-resource-icon\"/>\n        <span class=\"ps2map__tool__base-info__resource-text\" id=\"tool-base-resource-name\"></span>\n        ";
+    };
+    BaseInfo.prototype._updateBaseInfo = function (base) {
+        if (!base) {
+            this._tool_panel.removeAttribute("style");
+            return;
+        }
+        this._tool_panel.style.display = "block";
+        var name = document.getElementById("tool-base-name");
+        var typeIcon = document.getElementById("tool-base-icon");
+        var type = document.getElementById("tool-base-type");
+        var resourceIcon = document.getElementById("tool-base-resource-icon");
+        var resourceText = document.getElementById("tool-base-resource-name");
+        name.textContent = base.name;
+        type.textContent = base.type_name;
+        typeIcon.src = "img/icons/".concat(base.type_code, ".svg");
+        if (base.resource_code) {
+            resourceIcon.src = "img/icons/".concat(base.resource_code, ".png");
+            resourceText.textContent = "".concat(base.resource_capture_amount, " ").concat(base.resource_name, " (").concat(base.resource_control_amount.toFixed(1), "/min)");
+        }
+    };
+    BaseInfo.prototype._onHover = function (state) {
+        this._updateBaseInfo(state.user.hoveredBase);
+    };
+    BaseInfo.id = "base-info";
+    BaseInfo.displayName = "Base Info";
+    return BaseInfo;
+}(Tool));
+var available_tools = [Tool, Cursor, BaseInfo];
 document.addEventListener("DOMContentLoaded", function () {
     var toolbar_container = document.getElementById("toolbar-container");
     toolbar_container.innerHTML = "";
@@ -1364,7 +1407,7 @@ var State;
     State.defaultUserState = {
         server: undefined,
         continent: undefined,
-        hoveredBase: undefined
+        hoveredBase: null
     };
     function userReducer(state, action, data) {
         switch (action) {

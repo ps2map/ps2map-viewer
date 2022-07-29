@@ -1,4 +1,4 @@
-/// <reference path="tool.ts" />
+/// <reference path="./tool.ts" />
 
 class Cursor extends Tool {
 

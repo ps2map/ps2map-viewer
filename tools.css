@@ -7,3 +7,38 @@
     font-size: 18px;
     justify-items: right;
 }
+
+.ps2map__tool__base-info__name {
+    font-weight: 600;
+    font-size: 16pt;
+    display: block;
+    margin-bottom: 5px;
+    width: 300px;
+}
+
+.ps2map__tool__base-info__type-icon {
+    height: 24px;
+    width: 24px;
+    display: inline-block;
+}
+
+.ps2map__tool__base-info__type {
+    font-size: 12pt;
+    display: inline-block;
+    height: 24px;
+    vertical-align: top;
+    margin-left: 5px;
+}
+
+.ps2map__tool__base-info__resource-icon {
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+}
+
+.ps2map__tool__base-info__resource-text {
+    display: inline-block;
+    height: 24px;
+    vertical-align: top;
+    margin-left: 5px;
+}

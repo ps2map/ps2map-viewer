@@ -5,13 +5,13 @@ namespace State {
     export interface UserState {
         server: Server | undefined;
         continent: Continent | undefined;
-        hoveredBase: Base | undefined;
+        hoveredBase: Base | null;
     };
 
     export const defaultUserState: UserState = {
         server: undefined,
         continent: undefined,
-        hoveredBase: undefined,
+        hoveredBase: null,
     };
 
     /** State reducer for "user/" actions. */

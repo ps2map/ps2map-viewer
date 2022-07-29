@@ -1,7 +1,8 @@
 /// <reference path="./tool.ts" />
 /// <reference path="./cursor.ts" />
+/// <reference path="./base-info.ts" />
 
-const available_tools = [Tool, Cursor];
+const available_tools = [Tool, Cursor, BaseInfo];
 
 document.addEventListener("DOMContentLoaded", () => {
     // Create toolbar buttons
