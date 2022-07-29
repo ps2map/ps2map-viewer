@@ -1277,33 +1277,7 @@ var Cursor = (function (_super) {
     Cursor.displayName = "Map Cursor";
     return Cursor;
 }(Tool));
-var currentTool = undefined;
-var heroMap = undefined;
 var available_tools = [Tool, Cursor];
-function setupToolbox(map) {
-    heroMap = map;
-}
-function setTool(tool) {
-    if (tool === void 0) { tool = undefined; }
-    if (currentTool)
-        currentTool.tearDown();
-    if (!tool || currentTool instanceof tool)
-        tool = Tool;
-    var toolBar = document.getElementById("tool-panel");
-    if (!toolBar)
-        return;
-    var newTool = new tool(document.getElementById("hero-map"), heroMap, toolBar);
-    currentTool = newTool;
-    document.querySelectorAll(".toolbar__button").forEach(function (btn) {
-        if (btn.id === "tool-".concat(tool === null || tool === void 0 ? void 0 : tool.id))
-            btn.classList.add("toolbar__button__active");
-        else
-            btn.classList.remove("toolbar__button__active");
-    });
-}
-function resetTool() {
-    setTool();
-}
 document.addEventListener("DOMContentLoaded", function () {
     var toolbar_container = document.getElementById("toolbar-container");
     toolbar_container.innerHTML = "";
@@ -1314,14 +1288,15 @@ document.addEventListener("DOMContentLoaded", function () {
         btn.classList.add("toolbar__button");
         btn.id = "tool-".concat(tool.id);
         btn.addEventListener("click", function () {
-            setTool(tool);
+            StateManager.dispatch("toolbox/setTool", { type: tool });
         });
         toolbar_container.appendChild(btn);
     });
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape")
-            resetTool();
+            StateManager.dispatch("toolbox/setTool", { type: Tool });
     });
+    StateManager.dispatch("toolbox/setTool", { type: Tool });
 });
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
@@ -1351,15 +1326,32 @@ var State;
 })(State || (State = {}));
 var State;
 (function (State) {
-    ;
     State.defaultToolState = {
-        current: undefined,
+        currentTool: null,
+        targetMap: null,
         data: {}
     };
     function toolboxReducer(state, action, data) {
         switch (action) {
-            case "toolbox/changed":
-                return __assign(__assign({}, state), { current: data.id, data: data.data });
+            case "toolbox/setup":
+                return __assign(__assign(__assign({}, state), State.defaultToolState), { targetMap: data.map });
+            case "toolbox/setTool":
+                if (state.currentTool)
+                    state.currentTool.tearDown();
+                var cls_1 = data.type;
+                if (!cls_1)
+                    cls_1 = Tool;
+                var tool = null;
+                var toolBar = document.getElementById("tool-panel");
+                if (toolBar && state.targetMap)
+                    tool = new cls_1(state.targetMap.renderer.viewport, state.targetMap, toolBar);
+                document.querySelectorAll(".toolbar__button").forEach(function (btn) {
+                    if (btn.id === "tool-".concat(cls_1.id))
+                        btn.classList.add("toolbar__button__active");
+                    else
+                        btn.classList.remove("toolbar__button__active");
+                });
+                return __assign(__assign({}, state), { currentTool: tool });
             default:
                 return state;
         }
@@ -1434,7 +1426,7 @@ document.addEventListener("DOMContentLoaded", function () {
         var names = heroMap.renderer.getLayer("names");
         names.setHoveredBase(state.user.hoveredBase);
     });
-    setupToolbox(heroMap);
+    StateManager.dispatch("toolbox/setup", { map: heroMap });
     heroMap.renderer.viewport.addEventListener("ps2map_basehover", function (event) {
         var evt = event.detail;
         var base = GameData.getInstance().getBase(evt.baseId);

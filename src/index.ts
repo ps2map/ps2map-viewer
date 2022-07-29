@@ -3,7 +3,7 @@
 /// <reference path="./hero-map.ts" />
 /// <reference path="./minimap.ts" />
 /// <reference path="./listener.ts" />
-/// <reference path="./tools/index.ts" />
+/// <reference path="./toolbox/index.ts" />
 /// <reference path="./state/index.ts" />
 /// <reference path="./game-data.ts" />
 
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Set up toolbox
-    setupToolbox(heroMap);
+    StateManager.dispatch("toolbox/setup", { map: heroMap });
 
     // Hook up base hover event
     heroMap.renderer.viewport.addEventListener("ps2map_basehover", (event) => {

@@ -3,12 +3,14 @@
 namespace State {
 
     export interface ToolBoxState {
-        current: string | undefined;
-        data: object;
-    };
+        currentTool: Tool | null;
+        targetMap: HeroMap | null;
+        data: any;
+    }
 
     export const defaultToolState: ToolBoxState = {
-        current: undefined,
+        currentTool: null,
+        targetMap: null,
         data: {},
     };
 
@@ -19,11 +21,37 @@ namespace State {
         data: any
     ): ToolBoxState {
         switch (action) {
-            case "toolbox/changed":
+            case "toolbox/setup":
                 return {
                     ...state,
-                    current: data.id,
-                    data: data.data,
+                    ...defaultToolState,
+                    targetMap: data.map,
+                };
+            case "toolbox/setTool":
+                if (state.currentTool)
+                    state.currentTool.tearDown();
+
+                let cls: typeof Tool = data.type;
+                if (!cls)
+                    cls = Tool;
+                let tool: Tool | null = null;
+
+                const toolBar = document.getElementById("tool-panel") as HTMLDivElement;
+                if (toolBar && state.targetMap)
+                    tool = new cls(
+                        state.targetMap.renderer.viewport,
+                        state.targetMap,
+                        toolBar,
+                    );
+                document.querySelectorAll(".toolbar__button").forEach(btn => {
+                    if (btn.id === `tool-${cls.id}`)
+                        btn.classList.add("toolbar__button__active");
+                    else
+                        btn.classList.remove("toolbar__button__active");
+                });
+                return {
+                    ...state,
+                    currentTool: tool,
                 };
             default:
                 return state;
