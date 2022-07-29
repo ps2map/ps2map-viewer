@@ -45,44 +45,10 @@ namespace Utils {
      * @param b Second rewctangle
      * @returns true if the rectangles have a non-zero overlap, otherwise false
      */
-    export function rectanglesIntersect(a: Box, b: Box): boolean {
+    export function rectanglesIntersect(a: ViewBox, b: ViewBox): boolean {
         return (a.left < b.right
             && a.right > b.left
             && a.top > b.bottom
             && a.bottom < b.top);
-    }
-
-    /**
-     * Remap a value from the source range to the target range.
-     * @param value Value to remap
-     * @param sourceLower Lower limit of source range
-     * @param sourceUpper Upper limit of source range
-     * @param targetLower Lower limit of target range
-     * @param targetUpper Upper limit of target range
-     * @returns `value` rescaled to the target range
-     */
-    export function remap(
-        value: number,
-        sourceLower: number,
-        sourceUpper: number,
-        targetLower: number,
-        targetUpper: number
-    ): number {
-        const sourceSpan = sourceUpper - sourceLower;
-        const targetSpan = targetUpper - targetLower;
-        if (sourceSpan == 0) return targetLower;
-        const relValue = value - sourceLower / sourceSpan;
-        return targetLower + relValue * targetSpan;
-    }
-
-    /**
-     * Round the given value to `decimals` decimal places
-     * @param value Value to round
-     * @param decimals Number of decimal places
-     * @returns `value` rounded to `decimals` decimal places
-     */
-    export function roundTo(value: number, decimals: number): number {
-        const factor = 10 ** decimals;
-        return Math.round(value * factor) / factor
     }
 }

@@ -6,58 +6,96 @@ html {
 }
 
 body {
+    --sidebar-width: 300px;
+    --sidebar-margin: 10px;
+    /* Fill the entire screen */
     margin: 0;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+#sidebar {
+    position: absolute;
+    left: 0;
+    height: 100%;
+    width: var(--sidebar-width);
+    background-color: #333333;
 }
 
 #hero-map {
+    position: absolute;
+    left: var(--sidebar-width);
+    right: 0px;
+    height: 100%;
+}
+
+#map-switcher {
+    position: absolute;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    left: calc(var(--sidebar-width));
+    top: 0;
+    width: 200px;
+    padding: 10px 10px 10px 0px;
+    z-index: 1;
+    background-color: #333333;
+}
+
+.map_switcher__label {
+    grid-column: 1;
+}
+
+.map_switcher__dropdown {
+    grid-column: 2;
+}
+
+.map_switcher__row1 {
+    grid-row: 1;
+}
+
+.map_switcher__row2 {
+    grid-row: 2;
+}
+
+.sidebar__widget {
     position: relative;
-    margin-top: 5vh;
-    margin-left: 5vw;
-    height: 90vh;
-    width: 90vw;
+    top: var(--sidebar-margin);
+    left: var(--sidebar-margin);
+    width: calc(var(--sidebar-width) - var(--sidebar-margin) * 2);
+    z-index: 1;
+}
+
+.sidebar__widget__label {
+    display: block;
 }
 
 #minimap {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 999;
-    overflow: hidden;
+    height: calc(var(--sidebar-width) - var(--sidebar-margin) * 2);
 }
 
-#minimap>div {
-    box-sizing: border-box;
-    position: absolute;
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid white;
-    transition: all 100ms ease-out;
+#toolbar {
+    margin-top: 10px;
 }
 
-.widget {
-    position: absolute;
-    background: rgba(30, 30, 30, 0.8);
-    border: 2px solid grey;
-    width: 240px;
+.toolbar__button {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
-#widget_base-info {
-    right: 20px;
-    bottom: 60px;
+.toolbar__button__active {
+    border-color: red;
+}
+
+#tool-panel {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: none;
     padding: 10px;
-}
-
-#widget_base-info>h1 {
-    font-size: 18pt;
-    margin-block-start: 0;
-    margin-block-end: 0.5em;
-}
-
-#widget_base-info_name {
-    display: block;
-    font-size: 14pt;
-    margin-block-end: 0.5em;
-}
-
-#widget_base-info_type {
-    display: block;
+    background-color: #333333;
 }

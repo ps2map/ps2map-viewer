@@ -1,106 +1,74 @@
 /// <reference path="./map-engine/renderer.ts" />
-/// <reference path="./api/getters.ts" />
-/// <reference path="./layers/hex-layer.ts" />
-/// <reference path="./minimap.ts" />
+/// <reference path="./interfaces/index.ts" />
+/// <reference path="./layers/index.ts" />
 
 /**
  * Custom map controller for primary PlanetSide 2 continent map.
- * 
+ *
  * This also includes a mini-map because reasons.
  */
 class HeroMap {
-    /** Current continent ID */
-    private continentId: number;
-    /** Internal map renderer wrapped by this class. */
-    private controller: MapRenderer;
 
-    /** Minimap DOM container. */
-    private readonly minimap: Minimap;
+    readonly renderer: MapRenderer;
+    private _continent: Continent | undefined = undefined;
 
-    constructor(
-        viewport: HTMLDivElement,
-        initialContinentId: number,
-        endpoint: string
-    ) {
-        this.continentId = initialContinentId;
+    constructor(viewport: HTMLDivElement) {
+        this.renderer = new MapRenderer(viewport, 0);
+    }
 
-        // TODO: Query the API to determine the appropriate map size for the
-        // given continent
-        const mapSize = 8192;
+    continent(): Continent { return this._continent!; }
 
-        // Initialise map controller
-        this.controller = new MapRenderer(viewport, mapSize);
-        // Set up minimap
-        const minimapElement = document.getElementById("minimap");
-        if (minimapElement == null)
-            throw "Unable to locate minimap element.";
-        if (minimapElement.tagName != "DIV")
-            throw "Minimap element must be a DIV";
-        // FIXME: Hard-coded minimap URL for now
-        this.minimap = new Minimap(minimapElement as HTMLDivElement,
-            mapSize, "http://127.0.0.1:5000/static/minimap/esamir.jpg")
-        this.controller.viewboxCallbacks.push(
-            this.minimap.setViewbox.bind(this.minimap));
-        this.minimap.jumpToCallbacks.push(
-            this.controller.jumpTo.bind(this.controller));
-
-        // Add map layer for terrain texture
-        const terrainLayer = new TerrainLayer("terrain", mapSize);
-        // Load continent data
-        Api.getContinent(this.continentId).then((continent) => {
-            terrainLayer.setContinent(continent.code);
-            terrainLayer.updateLayer();
+    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+        const data = GameData.getInstance();
+        // Filter the base ownership map to only include bases that are in the
+        // current continent
+        const continentMap = new Map<number, number>();
+        baseOwnershipMap.forEach((owner, baseId) => {
+            const base = data.getBase(baseId);
+            if (base && base.continent_id === this._continent?.id)
+                continentMap.set(baseId, owner);
         });
-        this.controller.addLayer(terrainLayer);
-
-        // Add map layer for base hexes
-        const hexLayer = new HexLayer("hexes", mapSize);
-        // Load continent data
-        Api.getContinent(this.continentId)
-            // Fetch base outlines
-            .then((continent) => {
-                return fetch(`${endpoint}/static/hex/${continent.code}-minimal.svg`);
-            })
-            // Get raw text response (i.e. the SVG literal)
-            .then((data) => {
-                return data.text();
-            })
-            // Load the SVG literal into the layer
-            .then((payload) => {
-                hexLayer.element.appendChild(hexLayer.svgFactory(payload));
-                hexLayer.updateLayer();
-            });
-        this.controller.addLayer(hexLayer);
-
-        // Add map layer for base names
-        const namesLayer = new BaseNamesLayer("names", mapSize);
-        // Load continent data
-        Api.getBasesFromContinent(this.continentId)
-            .then((bases) => {
-                namesLayer.loadBaseInfo(bases);
-                namesLayer.updateLayer();
-            });
-
-        this.controller.addLayer(namesLayer);
-
-        hexLayer.polygonHoverCallbacks.push(
-            namesLayer.onBaseHover.bind(namesLayer));
-
-        // Base info panel
-        let bases: Api.BaseInfo[] = [];
-        Api.getBasesFromContinent(this.continentId).then((data) => bases = data);
-        const regionName = document.getElementById("widget_base-info_name") as HTMLSpanElement;
-        const regionType = document.getElementById("widget_base-info_type") as HTMLSpanElement;
-        hexLayer.polygonHoverCallbacks.push((baseId: number) => {
-            let i = bases.length;
-            while (i-- > 0) {
-                const base = bases[i];
-                if (base.id == baseId) {
-                    regionName.innerText = base.name;
-                    regionType.innerText = base.type_name;
-                    return;
-                }
-            }
+        /** Helper function for filtering dynamic layers from static ones */
+        function supportsBaseOwnership(object: any): object is SupportsBaseOwnership {
+            return "updateBaseOwnership" in object;
+        }
+        // Forward the base ownership map to all dynamic layers
+        this.renderer.forEachLayer((layer) => {
+            if (supportsBaseOwnership(layer))
+                layer.updateBaseOwnership(continentMap);
         });
     }
+
+    async switchContinent(continent: Continent): Promise<void> {
+        if (continent.code === this._continent?.code)
+            return;
+
+        // Create layers for the new target continent
+        const terrain = TerrainLayer.factory(continent, "terrain");
+        const hexes = BasePolygonsLayer.factory(continent, "hexes");
+        const lattice = LatticeLayer.factory(continent, "lattice");
+        const names = BaseNamesLayer.factory(continent, "names");
+
+        await Promise.all([terrain, hexes, lattice, names]).then(
+            (layers) => {
+                // Delete old layers
+                this.renderer.clearLayers();
+                // Update map size (required for camera)
+                this.renderer.setMapSize(continent.map_size);
+                this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
+                // Add new layers and force a redraw
+                layers.forEach((layer) => {
+                    this.renderer.addLayer(layer);
+                    layer.updateLayer();
+                });
+
+                // Update the current continent
+                this._continent = continent;
+            });
+    }
+
+    jumpTo(point: Point): void {
+        this.renderer?.jumpTo(point);
+    }
+
 }

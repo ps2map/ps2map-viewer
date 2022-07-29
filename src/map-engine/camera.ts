@@ -1,145 +1,165 @@
-/// <reference path="./support.ts" />
-/// <reference path="./types.ts" />
+interface Box {
+    readonly width: number;
+    readonly height: number;
+}
 
 /**
- * Map camera handler.
- * 
- * This class is responsible for tracking the camera position and target, and
- * provides methods for manipulating the camera in space.
+ * Camera object for a map renderer.
+ *
+ * This object is responsible for calculating the viewBox of the map, i.e. the
+ * parts of the map that are visible to the user. The viewBox is determined by
+ * the current camera position and zoom level, and the size of the viewport.
  */
-class MapCamera {
+class Camera {
+    private _viewportDimensions: Readonly<Box>;
+    private readonly _mapDimensions: Readonly<Box>;
+    private readonly _maxZoom: number;
+    private readonly _stepSize: number;
 
-    // Constants
+    private _zoomIndex: number = -1;
+    private _zoomLevels: Readonly<number[]> = [];
 
-    /** Maximum zoom level (4 CSS pixels per map pixel). */
-    private readonly maxZoom: number = 4.0
-    /** Zoom level step size (logarithmic scaling factor when zooming). */
-    private readonly zoomStep: number = 1.5;
+    target: Readonly<Point>;
 
-    // Derived and cached attributes
+    constructor(
+        mapDimensions: Readonly<Box>,
+        viewportDimensions: Readonly<Box>,
+        stepSize: number = 1.5,
+        maxZoom: number = 4.0,
+    ) {
+        this._mapDimensions = mapDimensions;
+        this._viewportDimensions = viewportDimensions;
+        this._stepSize = stepSize;
+        this._maxZoom = maxZoom;
 
-    /** Precalculated zoom levels available for the given map size. */
-    private zoom: number[];
-    private viewHeight: number;
-    private viewWidth: number;
+        // Calculate zoom levels for the given viewport and map
+        this._zoomLevels = this._calculateZoomLevels();
 
-    // Camera state
-
-    /** Current zoom level index within the `zoom` array. */
-    private zoomIndex: number = -1;
-    /**
-     * Current target of the camera.
-     * 
-     * This is the map location the centre of the camera is pointing at.
-     */
-    target: Point;
-
-    constructor(mapSize: number, viewportHeight: number, viewportWidth: number) {
-        this.viewHeight = viewportHeight;
-        this.viewWidth = viewportWidth;
-        // Calculate zoom factors
-        let zoom = this.maxZoom;
-        this.zoom = [this.maxZoom];
-        const stepInverse = 1 / this.zoomStep;
-        while (mapSize * zoom > Math.min(viewportHeight, viewportWidth)) {
-            zoom *= stepInverse;
-            this.zoom.push(Utils.roundTo(zoom, 2));
-        }
-        // Initial zoom level
-        this.zoomIndex = this.zoom.length - 1;
-        // Initial camera position
+        // Set default zoom and centre the camera
+        this._zoomIndex = this._zoomLevels.length - 1;
         this.target = {
-            x: mapSize * 0.5,
-            y: mapSize * 0.5
+            x: mapDimensions.width * 0.5,
+            y: mapDimensions.height * 0.5,
         };
     }
 
+    public getZoom(): number {
+        const zoom = this._zoomLevels[this._zoomIndex];
+        if (zoom === undefined)
+            throw new Error("Invalid zoom level");
+        return zoom;
+    }
+
     /**
-     * Increment or decrement the zoom level.
+     * Update the camera's zoom level.
      *
-     * If `direction` is zero, do nothing.
-     * @param direction Direction to bump the zoom level in
+     * A positive value will zoom in while a negative value will zoom out.
+     * Zoom levels are clamped according to the `maxZoom` property and map
+     * size. The new zoom level will be applied immediately and returned. A
+     * value of zero will do nothing but still apply zoom level clamping.
+     *
+     * @param value Zoom level change. Only is-zero and sign are used.
      * @returns New zoom level
      */
-    bumpZoomLevel(direction: number): number {
-        let index = this.zoomIndex;
-        // Bump zoom level
-        if (direction == 0)
-            return index;
-        if (direction < 0)
+    public bumpZoom(value: number): number {
+        // Update zoom level index
+        let index = this._zoomIndex;
+        if (value < 0)
             index--;
-        else if (direction > 0)
+        else if (value > 0)
             index++;
-        // Limit zoom range
+        // Clamp zoom level index
         if (index < 0)
             index = 0;
-        else if (index >= this.zoom.length)
-            index = this.zoom.length - 1;
+        else if (index >= this._zoomLevels.length)
+            index = this._zoomLevels.length - 1;
         // Update zoom level
-        this.zoomIndex = index;
-        return this.zoom[index];
+        this._zoomIndex = index;
+        // Array value can't be undefined due to clamping
+        return this._zoomLevels[index]!;
     }
 
     /**
-     * Returns teh current viewbox of the camera.
-     * @returns Current viewbox object.
+     * Return the current camera view box.
+     *
+     * The view box is the part of the map that is visible to the user.
      */
-    getViewbox(): Box {
-        // Calculate the lengths covered by the viewport in map units
-        const viewboxWidth = this.viewWidth / this.getZoom();
-        const viewboxHeight = this.viewHeight / this.getZoom();
-        // Get viewbox coordinates
+    public currentViewBox(): Readonly<ViewBox> {
+        // Calculate the map area covered by the viewport
+        const zoom = this.getZoom();
+        const height = this._viewportDimensions.height / zoom;
+        const width = this._viewportDimensions.width / zoom;
+        // Calculate the edges of the viewport in map coordinates
         return {
-            top: this.target.y + viewboxHeight * 0.5,
-            right: this.target.x + viewboxWidth * 0.5,
-            bottom: this.target.y - viewboxHeight * 0.5,
-            left: this.target.x - viewboxWidth * 0.5,
+            top: this.target.y + height * 0.5,
+            right: this.target.x + width * 0.5,
+            bottom: this.target.y - height * 0.5,
+            left: this.target.x - width * 0.5,
         };
     }
 
     /**
-     * Return the current zoom level of the camera.
-     * @returns Current map scaling factor.
+     * Jump to the given point on the map.
+     *
+     * @param point Point in map coordinates.
      */
-    getZoom(): number {
-        return this.zoom[this.zoomIndex];
+    public jumpTo(point: Readonly<Point>): void {
+        this.target = point;
     }
 
     /**
-     * Update the camera zoom level.
-     * 
-     * The value of `direction` is ignored, it will be treated as -1, 0, or 1
-     * depending on the sign.
-     * `viewX` and `viewY` are values between 0 and 1 representing the relative
-     * position of the zoom target. The origin lies in the top left corner of
-     * the camera frame.
-     * @param direction Zoom level change
-     * @param viewX Relative X position of the zoom target
-     * @param viewY Relative Y position of the zoom target
-     * @returns New camera target after the zoom operation
+     * Zoom the camera towards the given point.
+     *
+     * This method is a combination of `bumpZoom()` and `pan()`. The camera
+     * target will be adjusted to keep the map point corresponding to
+     * `viewportRelPos` in the same position in the viewport.
+     *
+     * @param viewportRelPos Relative position of the fixed point in viewport.
+     * @returns New camera target in map coordinates.
      */
-    zoomTo(direction: number, viewX: number = 0.5, viewY: number = 0.5): Point {
-        const oldZoom = this.getZoom()
-        const newZoom = this.bumpZoomLevel(direction)
-
-        const pixelDeltaX = (this.viewWidth / oldZoom) - (this.viewWidth / newZoom);
-        const pixelDeltaY = (this.viewHeight / oldZoom) - (this.viewHeight / newZoom);
-
-        // Depending on where the cursor is in the 0-1 camera view space, the
-        // pixel delta must be distributed between the two sides of the viewport
-        // in [-0.5, 0.5] range.
-        const sideRatioX = Utils.remap(viewX, 0.0, 1.0, -0.5, 0.5);
-        const sideRatioY = -Utils.remap(viewY, 0.0, 1.0, -0.5, 0.5);
-
-        // Calculate the new camera target based on the zoom offsets
-        const targetX = this.target.x + pixelDeltaX * sideRatioX;
-        const targetY = this.target.y + pixelDeltaY * sideRatioY;
-
-        // Update and return the camera target
+    public zoomTowards(value: number, viewportRelPos: Readonly<Point>): Point {
+        const oldZoom = this.getZoom();
+        const zoom = this.bumpZoom(value);
+        // Calculate the viewport size change for the zoom level change
+        const deltaX = (this._viewportDimensions.width / oldZoom)
+            - (this._viewportDimensions.width / zoom);
+        const deltaY = (this._viewportDimensions.height / oldZoom)
+            - (this._viewportDimensions.height / zoom);
+        // Bias the viewport change towards the fixed point
+        const ratioX = -0.5 + viewportRelPos.x;
+        const ratioY = +0.5 - viewportRelPos.y;  // TODO: Why is Y inverted?
+        // Calculate the new camera target
         this.target = {
-            x: targetX,
-            y: targetY
+            x: Math.round(this.target.x + deltaX * ratioX),
+            y: Math.round(this.target.y + deltaY * ratioY),
         };
         return this.target;
+    }
+
+    private _calculateZoomLevels(): Readonly<number[]> {
+        // Find the minor axis of the viewport and the major axis of the map
+        const minViewport = Math.min(
+            this._viewportDimensions.width,
+            this._viewportDimensions.height);
+        const maxMap = Math.max(
+            this._mapDimensions.width,
+            this._mapDimensions.height);
+
+        let zoomLevels: number[] = [this._maxZoom];
+
+        // If the viewport has no area, disable zoom
+        if (minViewport === 0)
+            return zoomLevels;
+
+        // Starting with the maximum zoom level, keep adding zoom levels until
+        // the map is smaller than the viewport
+        const factor = 1 / this._stepSize;
+        let zoom = this._maxZoom;
+        while (maxMap * zoom > minViewport) {
+            zoom *= factor;
+            const newZoom = Math.round((zoom + Number.EPSILON) * 100) / 100;
+            zoomLevels.push(newZoom);
+        }
+        return zoomLevels;
     }
 }

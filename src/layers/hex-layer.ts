@@ -1,35 +1,66 @@
+/// <reference path="../interfaces/index.ts" />
+/// <reference path="../rest/index.ts" />
 /// <reference path="../map-engine/static-layer.ts" />
+/// <reference path="./base.ts" />
 
 /**
- * Base outlines (aka. hexes) layer subclass.
- * 
- * This is a static layer used to interact with base hexes.
+ * Details for the "ps2map_basehover" custom event.
  */
-class HexLayer extends StaticLayer {
-    /** A list of callbacks to invoke when a base polygon is hovered. */
-    polygonHoverCallbacks: ((arg0: number, arg1: SVGPolygonElement) => void)[] = [];
+interface BaseHoverEvent {
+    baseId: number;
+    element: SVGPolygonElement;
+}
+
+/**
+ * A static layer rendering base polygons for a given continent.
+ *
+ * This will dispatch a "ps2map_basehover" event when the user mouse-overs a
+ * base polygon.
+ */
+class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     constructor(id: string, mapSize: number) {
         super(id, mapSize);
         this.element.classList.add("ps2map__base-hexes");
     }
 
-    svgFactory(data: string): SVGElement {
-        const factory = document.createElement("template");
-        factory.innerHTML = data;
-        // Extract the SVG node
-        const svg = factory.content.firstElementChild;
-        if (!(svg instanceof SVGElement))
-            throw "Unable to load contents from map hex SVG";
-        // Setup SVG element
-        svg.classList.add("ps2map__base-hexes__svg");
-        // Apply polygon hover fix to ensure hovered outlines are drawn on top
-        this.applyPolygonHoverFix(svg);
-        return svg;
+    static async factory(continent: Continent, id: string): Promise<BasePolygonsLayer> {
+        const layer = new BasePolygonsLayer(id, continent.map_size);
+        return fetchContinentOutlines(continent.code)
+            .then((svg) => {
+                svg.classList.add("ps2map__base-hexes__svg");
+                layer.element.appendChild(svg);
+                layer._applyPolygonHoverFix(svg);
+                return layer;
+            });
     }
 
-    private applyPolygonHoverFix(svg: SVGElement): void {
+    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+        const svg = this.element.firstElementChild as SVGElement | null;
+        if (!svg)
+            throw "Unable to find HexLayer SVG element";
+
+        const colours: any = {
+            0: "rgba(0, 0, 0, 1.0)",
+            1: "rgba(160, 77, 183, 1.0)",
+            2: "rgba(81, 123, 204, 1.0)",
+            3: "rgba(226, 25, 25, 1.0)",
+            4: "rgba(255, 255, 255, 1.0)",
+        }
+
+        baseOwnershipMap.forEach((owner, baseId) => {
+            const polygon = svg.querySelector(
+                `#${this._baseIdToPolygonId(baseId)}`) as SVGPolygonElement | null;
+            if (!polygon)
+                throw `Unable to find polygon for base ${baseId}`;
+            polygon.style.fill = colours[owner];
+        });
+    }
+
+    private _applyPolygonHoverFix(svg: SVGElement): void {
         svg.querySelectorAll("polygon").forEach((polygon) => {
+            // Make polygon ID unique
+            polygon.id = this._baseIdToPolygonId(polygon.id);
             // Event handler for applying hover effects
             const addHoverFx = () => {
                 // This moves the existing polygon to the top of the SVG to
@@ -47,12 +78,9 @@ class HexLayer extends StaticLayer {
                 polygon.addEventListener("touchcancel", removeHoverFx, {
                     passive: true
                 });
-                // Dispatch polygon hover callbacks
-                let i = this.polygonHoverCallbacks.length;
-                while (i-- > 0)
-                    this.polygonHoverCallbacks[i](parseInt(polygon.id), polygon);
-                // Apply hover
                 polygon.style.stroke = "#ffffff";
+                this.element.dispatchEvent(
+                    this._buildBaseHoverEvent(this._polygonIdToBaseId(polygon.id), polygon));
             };
             polygon.addEventListener("mouseenter", addHoverFx, {
                 passive: true
@@ -63,12 +91,32 @@ class HexLayer extends StaticLayer {
         });
     }
 
-    protected deferredLayerUpdate(viewbox: Box, zoom: number): void {
+    protected deferredLayerUpdate(_: ViewBox, zoom: number): void {
         const svg = this.element.firstElementChild as SVGElement | null;
-        if (svg != null) {
+        if (svg) {
             const strokeWith = 10 / 1.5 ** zoom;
             svg.style.setProperty(
                 "--ps2map__base-hexes__stroke-width", `${strokeWith}px`);
         }
+    }
+
+    private _buildBaseHoverEvent(baseId: number, element: SVGPolygonElement): CustomEvent<BaseHoverEvent> {
+        return new CustomEvent("ps2map_basehover", {
+            detail: {
+                baseId: baseId,
+                element: element
+            },
+            bubbles: true,
+            cancelable: true,
+        });
+    }
+
+    private _polygonIdToBaseId(id: string): number {
+        // Convert the string "base-outline-<baseId>" to a number
+        return parseInt(id.substring(id.lastIndexOf("-") + 1));
+    }
+
+    private _baseIdToPolygonId(baseId: number | string): string {
+        return `base-outline-${baseId}`;
     }
 }

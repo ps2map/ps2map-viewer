@@ -18,7 +18,7 @@ abstract class MapLayer {
     protected isVisible: boolean = true;
 
     /** Internal cache for deferred layer updates. */
-    private lastRedraw: [Box, number] | null = null;
+    private _lastRedraw: [ViewBox, number] | null = null;
 
     constructor(id: string, mapSize: number) {
         this.id = id;
@@ -30,19 +30,19 @@ abstract class MapLayer {
         this.element.style.height = this.element.style.width = `${mapSize}px`;
         // Add event listener for deferred updates
         this.element.addEventListener(
-            "transitionend", this.runDeferredLayerUpdate.bind(this), { passive: true });
+            "transitionend", this._runDeferredLayerUpdate.bind(this), { passive: true });
     }
 
     /**
      * External hook used by the map renderer to store redraw call arguments.
-     * 
-     * This is used to implement the StagedUpdateLayer class and should not be
-     * called from or modified in sub classes.
-     * @param viewbox New viewbox of the client
+     *
+     * This is used to support the runDeferredLayerUpdate method and should not
+     * be called from or modified in sub classes.
+     * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    setRedrawArgs(viewbox: Box, zoom: number): void {
-        this.lastRedraw = [viewbox, zoom];
+    setRedrawArgs(viewBox: ViewBox, zoom: number): void {
+        this._lastRedraw = [viewBox, zoom];
     }
 
     /**
@@ -50,7 +50,7 @@ abstract class MapLayer {
      * @param visible New visibility state to apply
      */
     setVisibility(visible: boolean): void {
-        if (this.isVisible == visible)
+        if (this.isVisible === visible)
             return;
         if (visible)
             this.element.style.removeProperty("display");
@@ -65,11 +65,11 @@ abstract class MapLayer {
     }
 
     /** Wrapper to run deferred layer updates from event listeners. */
-    private runDeferredLayerUpdate = Utils.rafDebounce(() => {
-        if (this.lastRedraw == null)
+    private _runDeferredLayerUpdate = Utils.rafDebounce(() => {
+        if (!this._lastRedraw)
             return;
-        const [viewbox, zoom] = this.lastRedraw;
-        this.deferredLayerUpdate(viewbox, zoom);
+        const [viewBox, zoom] = this._lastRedraw;
+        this.deferredLayerUpdate(viewBox, zoom);
     });
 
     /**
@@ -81,19 +81,19 @@ abstract class MapLayer {
      * Do not call `requestAnimationFrame()` as part of this method as timing
      * is the responsibility of the caller. Debouncing and other throttling
      * strategies are permitted.
-     * @param viewbox New viewbox of the client
+     * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    abstract redraw(viewbox: Box, zoom: number): void;
+    abstract redraw(viewBox: ViewBox, zoom: number): void;
 
     /**
      * Implementation of the deferred layer update.
-     * 
+     *
      * This is similar to `MapLayer.redraw()`, but only runs after all zooming
      * or panning animations ended. Use this hook for expensive layer updates
      * like visibility checks or DOM updates.
-     * @param viewbox New viewbox of the client
+     * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    protected deferredLayerUpdate(viewbox: Box, zoom: number): void { }
+    protected abstract deferredLayerUpdate(viewBox: ViewBox, zoom: number): void;
 }
