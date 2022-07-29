@@ -1282,12 +1282,12 @@ var BaseInfo = (function (_super) {
     function BaseInfo(viewport, map, tool_panel) {
         var _this = _super.call(this, viewport, map, tool_panel) || this;
         _this._onHover = _this._onHover.bind(_this);
-        StateManager.subscribe("user/baseHovered", _this._onHover);
+        StateManager.subscribe(State.user.baseHovered, _this._onHover);
         return _this;
     }
     BaseInfo.prototype.tearDown = function () {
         _super.prototype.tearDown.call(this);
-        StateManager.unsubscribe("user/baseHovered", this._onHover);
+        StateManager.unsubscribe(State.user.baseHovered, this._onHover);
     };
     BaseInfo.prototype._setUpToolPanel = function () {
         _super.prototype._setUpToolPanel.call(this);
@@ -1331,15 +1331,15 @@ document.addEventListener("DOMContentLoaded", function () {
         btn.classList.add("toolbar__button");
         btn.id = "tool-".concat(tool.id);
         btn.addEventListener("click", function () {
-            StateManager.dispatch("toolbox/setTool", { type: tool });
+            StateManager.dispatch(State.toolbox.setTool, { type: tool });
         });
         toolbar_container.appendChild(btn);
     });
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape")
-            StateManager.dispatch("toolbox/setTool", { type: Tool });
+            StateManager.dispatch(State.toolbox.setTool, { type: Tool });
     });
-    StateManager.dispatch("toolbox/setTool", { type: Tool });
+    StateManager.dispatch(State.toolbox.setTool, { type: Tool });
 });
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
@@ -1354,12 +1354,16 @@ var __assign = (this && this.__assign) || function () {
 };
 var State;
 (function (State) {
+    var map;
+    (function (map) {
+        map.baseCaptured = "map/baseCaptured";
+    })(map = State.map || (State.map = {}));
     State.defaultMapState = {
         baseOwnership: new Map()
     };
     function mapReducer(state, action, data) {
         switch (action) {
-            case "map/baseCaptured":
+            case State.map.baseCaptured:
                 return __assign(__assign({}, state), { baseOwnership: data });
             default:
                 return state;
@@ -1369,6 +1373,11 @@ var State;
 })(State || (State = {}));
 var State;
 (function (State) {
+    var toolbox;
+    (function (toolbox) {
+        toolbox.setup = "toolbox/setup";
+        toolbox.setTool = "toolbox/setTool";
+    })(toolbox = State.toolbox || (State.toolbox = {}));
     State.defaultToolState = {
         currentTool: null,
         targetMap: null,
@@ -1376,9 +1385,9 @@ var State;
     };
     function toolboxReducer(state, action, data) {
         switch (action) {
-            case "toolbox/setup":
+            case toolbox.setup:
                 return __assign(__assign(__assign({}, state), State.defaultToolState), { targetMap: data.map });
-            case "toolbox/setTool":
+            case toolbox.setTool:
                 if (state.currentTool)
                     state.currentTool.tearDown();
                 var cls_1 = data.type;
@@ -1403,6 +1412,12 @@ var State;
 })(State || (State = {}));
 var State;
 (function (State) {
+    var user;
+    (function (user) {
+        user.continentChanged = "user/continentChanged";
+        user.serverChanged = "user/serverChanged";
+        user.baseHovered = "user/baseHovered";
+    })(user = State.user || (State.user = {}));
     ;
     State.defaultUserState = {
         server: undefined,
@@ -1413,7 +1428,7 @@ var State;
         switch (action) {
             case "user/serverChanged":
                 return __assign(__assign({}, state), { server: data });
-            case "user/continentChanged":
+            case user.continentChanged:
                 return __assign(__assign({}, state), { continent: data });
             case "user/baseHovered":
                 return __assign(__assign({}, state), { hoveredBase: data });
@@ -1450,11 +1465,11 @@ document.addEventListener("DOMContentLoaded", function () {
     listener.subscribe(function (name, data) {
         StateManager.dispatch("map/".concat(name), data);
     });
-    StateManager.subscribe("map/baseCaptured", function (state) {
+    StateManager.subscribe(State.map.baseCaptured, function (state) {
         heroMap.updateBaseOwnership(state.map.baseOwnership);
         minimap.updateBaseOwnership(state.map.baseOwnership);
     });
-    StateManager.subscribe("user/continentChanged", function (state) {
+    StateManager.subscribe(State.user.continentChanged, function (state) {
         heroMap.switchContinent(state.user.continent).then(function () {
             heroMap.updateBaseOwnership(state.map.baseOwnership);
         });
@@ -1462,19 +1477,19 @@ document.addEventListener("DOMContentLoaded", function () {
             minimap.updateBaseOwnership(state.map.baseOwnership);
         });
     });
-    StateManager.subscribe("user/serverChanged", function (state) {
+    StateManager.subscribe(State.user.serverChanged, function (state) {
         listener.switchServer(state.user.server);
     });
-    StateManager.subscribe("user/baseHovered", function (state) {
+    StateManager.subscribe(State.user.baseHovered, function (state) {
         var names = heroMap.renderer.getLayer("names");
         names.setHoveredBase(state.user.hoveredBase);
     });
-    StateManager.dispatch("toolbox/setup", { map: heroMap });
+    StateManager.dispatch(State.toolbox.setup, { map: heroMap });
     heroMap.renderer.viewport.addEventListener("ps2map_basehover", function (event) {
         var evt = event.detail;
         var base = GameData.getInstance().getBase(evt.baseId);
         if (base)
-            StateManager.dispatch("user/baseHovered", base);
+            StateManager.dispatch(State.user.baseHovered, base);
     });
     document.addEventListener("ps2map_viewboxchanged", function (event) {
         var evt = event.detail;
@@ -1490,7 +1505,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .find(function (s) { return s.id === parseInt(server_picker.value); });
         if (!server)
             throw new Error("No server found with id ".concat(server_picker.value));
-        StateManager.dispatch("user/serverChanged", server);
+        StateManager.dispatch(State.user.serverChanged, server);
     });
     var continent_picker = document.getElementById("continent-picker");
     continent_picker.addEventListener("change", function () {
@@ -1498,7 +1513,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .find(function (c) { return c.id === parseInt(continent_picker.value); });
         if (!continent)
             throw new Error("No continent found with id ".concat(continent_picker.value));
-        StateManager.dispatch("user/continentChanged", continent);
+        StateManager.dispatch(State.user.continentChanged, continent);
     });
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
@@ -1521,8 +1536,8 @@ document.addEventListener("DOMContentLoaded", function () {
             option.text = cont.name;
             continent_picker.appendChild(option);
         }
-        StateManager.dispatch("user/serverChanged", servers[servers.length - 1]);
-        StateManager.dispatch("user/continentChanged", continents[continents.length - 1]);
+        StateManager.dispatch(State.user.serverChanged, servers[servers.length - 1]);
+        StateManager.dispatch(State.user.continentChanged, continents[continents.length - 1]);
     });
 });
 var StateManager = (function () {

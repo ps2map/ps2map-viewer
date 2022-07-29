@@ -2,6 +2,11 @@
 
 namespace State {
 
+    export namespace toolbox {
+        export const setup = "toolbox/setup";
+        export const setTool = "toolbox/setTool";
+    }
+
     export interface ToolBoxState {
         currentTool: Tool | null;
         targetMap: HeroMap | null;
@@ -21,13 +26,13 @@ namespace State {
         data: any
     ): ToolBoxState {
         switch (action) {
-            case "toolbox/setup":
+            case toolbox.setup:
                 return {
                     ...state,
                     ...defaultToolState,
                     targetMap: data.map,
                 };
-            case "toolbox/setTool":
+            case toolbox.setTool:
                 if (state.currentTool)
                     state.currentTool.tearDown();
 

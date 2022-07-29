@@ -15,15 +15,15 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.classList.add("toolbar__button");
         btn.id = `tool-${tool.id}`;
         btn.addEventListener("click", () => {
-            StateManager.dispatch("toolbox/setTool", { type: tool });
+            StateManager.dispatch(State.toolbox.setTool, { type: tool });
         });
         toolbar_container.appendChild(btn);
     });
     // Reset tool on ESC
     document.addEventListener("keydown", event => {
         if (event.key === "Escape")
-            StateManager.dispatch("toolbox/setTool", { type: Tool });
+            StateManager.dispatch(State.toolbox.setTool, { type: Tool });
     });
     // Reset tool to None on startup
-    StateManager.dispatch("toolbox/setTool", { type: Tool });
+    StateManager.dispatch(State.toolbox.setTool, { type: Tool });
 });

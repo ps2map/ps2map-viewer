@@ -105,7 +105,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
      *
      * This displays the name of the current base regardless of zoom level.
      */
-    setHoveredBase(base: Base | undefined): void {
+    setHoveredBase(base: Base | null): void {
         let i = this.features.length;
         while (i-- > 0) {
             const feat = this.features[i]!;

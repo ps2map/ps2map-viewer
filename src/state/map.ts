@@ -1,5 +1,9 @@
 namespace State {
 
+    export namespace map {
+        export const baseCaptured = "map/baseCaptured";
+    }
+
     export interface MapState {
         baseOwnership: Map<number, number>;
     }
@@ -11,7 +15,7 @@ namespace State {
     /** State reducer for "map/" actions. */
     export function mapReducer(state: MapState, action: string, data: any): MapState {
         switch (action) {
-            case "map/baseCaptured":
+            case State.map.baseCaptured:
                 return {
                     ...state,
                     baseOwnership: data

@@ -12,12 +12,12 @@ class BaseInfo extends Tool {
     ) {
         super(viewport, map, tool_panel);
         this._onHover = this._onHover.bind(this);
-        StateManager.subscribe("user/baseHovered", this._onHover);
+        StateManager.subscribe(State.user.baseHovered, this._onHover);
     }
 
     public tearDown(): void {
         super.tearDown();
-        StateManager.unsubscribe("user/baseHovered", this._onHover);
+        StateManager.unsubscribe(State.user.baseHovered, this._onHover);
     }
 
     protected _setUpToolPanel(): void {
