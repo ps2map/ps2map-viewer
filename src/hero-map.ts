@@ -4,7 +4,7 @@
 
 /**
  * Custom map controller for primary PlanetSide 2 continent map.
- * 
+ *
  * This also includes a mini-map because reasons.
  */
 class HeroMap {

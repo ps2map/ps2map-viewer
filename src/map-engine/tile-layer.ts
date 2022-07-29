@@ -21,11 +21,11 @@ class MapTile {
 
 /**
  * Tile-based MapLayer implementation.
- * 
+ *
  * Tile layers come in different scales and are made up of many small raster or
  * vector tiles. These are then shown or hidden depending on the camera
  * position and zoom level.
- * 
+ *
  * Tiles are generally all the same base size, but the map area they cover
  * changes with the current zoom level.
  */

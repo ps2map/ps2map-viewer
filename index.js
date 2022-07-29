@@ -400,6 +400,7 @@ var MapRenderer = (function () {
             _this._setPanLock(false);
             _this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
+            _this._layers.forEach(function (layer) { return layer.updateLayer(); });
         };
         document.addEventListener("mouseup", up);
         this.viewport.addEventListener("mousemove", drag, {
@@ -1219,301 +1220,168 @@ var MapListener = (function () {
     return MapListener;
 }());
 var Tool = (function () {
-    function Tool(viewport, map) {
-        this.map = map;
-        this.viewport = viewport;
-        this.tool_panel = document.getElementById("tool-panel");
+    function Tool(viewport, map, tool_panel) {
+        this._map = map;
+        this._viewport = viewport;
+        this._tool_panel = tool_panel;
+        this._setUpToolPanel();
     }
-    Tool.prototype.activate = function () {
-        dispatchEvent(new CustomEvent("tool-activated", {
-            detail: {
-                tool: this
-            }
-        }));
+    Tool.prototype.tearDown = function () {
+        this._tool_panel.innerHTML = "";
+        this._tool_panel.removeAttribute("style");
     };
-    Tool.prototype.deactivate = function () {
-        dispatchEvent(new CustomEvent("tool-deactivated", {
-            detail: {
-                tool: this
-            }
-        }));
-        this.tool_panel.innerHTML = "";
+    Tool.prototype._getMapPosition = function (event) {
+        var relX = (event.clientX - this._viewport.offsetLeft) / this._viewport.clientWidth;
+        var relY = 1 - (event.clientY - this._viewport.offsetTop) / this._viewport.clientHeight;
+        var viewBox = this._map.renderer.getViewBox();
+        var halfSize = this._map.renderer.getMapSize() * 0.5;
+        return {
+            x: -halfSize + viewBox.left + (viewBox.right - viewBox.left) * relX,
+            y: -halfSize + viewBox.bottom + (viewBox.top - viewBox.bottom) * relY
+        };
     };
-    Tool.getDisplayName = function () {
-        return "None";
-    };
-    Tool.getId = function () {
-        return "default";
-    };
-    Tool.prototype.getMapPosition = function (event) {
-        var clickRelX = (event.clientX - this.viewport.offsetLeft) / this.viewport.clientWidth;
-        var clickRelY = 1 - (event.clientY - this.viewport.offsetTop) / this.viewport.clientHeight;
-        var renderer = this.map.renderer;
-        var viewBox = renderer.getViewBox();
-        var xMap = -renderer.getMapSize() * 0.5 + viewBox.left + (viewBox.right - viewBox.left) * clickRelX;
-        var yMap = -renderer.getMapSize() * 0.5 + viewBox.bottom + (viewBox.top - viewBox.bottom) * clickRelY;
-        return [xMap, yMap];
-    };
+    Tool.prototype._setUpToolPanel = function () { };
+    Tool.id = "none";
+    Tool.displayName = "None";
+    Tool.defaultState = {};
     return Tool;
 }());
+var Cursor = (function (_super) {
+    __extends(Cursor, _super);
+    function Cursor(viewport, map, tool_panel) {
+        var _this = _super.call(this, viewport, map, tool_panel) || this;
+        _this._onMove = _this._onMove.bind(_this);
+        _this._viewport.addEventListener("mousemove", _this._onMove, { passive: true });
+        return _this;
+    }
+    Cursor.prototype.tearDown = function () {
+        _super.prototype.tearDown.call(this);
+        this._viewport.removeEventListener("mousemove", this._onMove);
+    };
+    Cursor.prototype._setUpToolPanel = function () {
+        _super.prototype._setUpToolPanel.call(this);
+        var x = Object.assign(document.createElement("span"), {
+            id: "tool-cursor_x",
+            textContent: "0.00"
+        });
+        var y = Object.assign(document.createElement("span"), {
+            id: "tool-cursor_y",
+            textContent: "0.00"
+        });
+        var frag = document.createDocumentFragment();
+        frag.appendChild(document.createTextNode("X:"));
+        frag.appendChild(x);
+        frag.appendChild(document.createTextNode(" Y:"));
+        frag.appendChild(y);
+        this._tool_panel.appendChild(frag);
+        Object.assign(this._tool_panel.style, {
+            display: "grid",
+            gridTemplateColumns: "1fr 3fr",
+            minWidth: "120px",
+            fontFamily: "Consolas, monospace",
+            fontSize: "18px",
+            justifyItems: "right"
+        });
+    };
+    Cursor.prototype._updateToolPanel = function (target) {
+        var x = document.getElementById("tool-cursor_x");
+        if (x)
+            x.textContent = target.x.toFixed(2);
+        var y = document.getElementById("tool-cursor_y");
+        if (y)
+            y.textContent = target.y.toFixed(2);
+    };
+    Cursor.prototype._onMove = function (event) {
+        this._updateToolPanel(this._getMapPosition(event));
+    };
+    Cursor.id = "cursor";
+    Cursor.displayName = "Map Cursor";
+    return Cursor;
+}(Tool));
 var BaseInfo = (function (_super) {
     __extends(BaseInfo, _super);
-    function BaseInfo() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this._callback = undefined;
+    function BaseInfo(viewport, map, tool_panel) {
+        var _this = _super.call(this, viewport, map, tool_panel) || this;
+        _this._onHover = _this._onHover.bind(_this);
+        StateManager.subscribe(State.user.baseHovered, _this._onHover);
         return _this;
     }
-    BaseInfo.prototype.activate = function () {
-        _super.prototype.activate.call(this);
-        this._callback = this._onHover.bind(this);
-        StateManager.subscribe("user/baseHovered", this._callback);
-        var continent = this.map.continent();
-        if (!continent)
+    BaseInfo.prototype.tearDown = function () {
+        _super.prototype.tearDown.call(this);
+        StateManager.unsubscribe(State.user.baseHovered, this._onHover);
+    };
+    BaseInfo.prototype._setUpToolPanel = function () {
+        _super.prototype._setUpToolPanel.call(this);
+        var frag = document.createDocumentFragment();
+        frag.appendChild(Object.assign(document.createElement("span"), {
+            id: "tool-base-name",
+            classList: "ps2map__tool__base-info__name"
+        }));
+        frag.appendChild(Object.assign(document.createElement("img"), {
+            id: "tool-base-icon",
+            classList: "ps2map__tool__base-info__type-icon"
+        }));
+        frag.appendChild(Object.assign(document.createElement("span"), {
+            id: "tool-base-type",
+            classList: "ps2map__tool__base-info__type"
+        }));
+        frag.appendChild(document.createElement("br"));
+        frag.appendChild(Object.assign(document.createElement("img"), {
+            id: "tool-base-resource-icon",
+            classList: "ps2map__tool__base-info__resource-icon"
+        }));
+        frag.appendChild(Object.assign(document.createElement("span"), {
+            id: "tool-base-resource-name",
+            classList: "ps2map__tool__base-info__resource-text"
+        }));
+        this._tool_panel.appendChild(frag);
+    };
+    BaseInfo.prototype._updateBaseInfo = function (base) {
+        if (!base) {
+            this._tool_panel.removeAttribute("style");
             return;
-        var parent = this.tool_panel;
-        if (parent)
-            parent.style.display = "block";
-    };
-    BaseInfo.prototype.deactivate = function () {
-        _super.prototype.deactivate.call(this);
-        if (this._callback)
-            StateManager.unsubscribe("user/baseHovered", this._callback);
-        var parent = this.tool_panel;
-        if (parent)
-            parent.removeAttribute("style");
-    };
-    BaseInfo.getDisplayName = function () {
-        return "Base Info";
-    };
-    BaseInfo.getId = function () {
-        return "base-info";
-    };
-    BaseInfo.prototype._onHover = function (event) {
-        var base = event.user.hoveredBase;
-        if (!base)
-            return;
-        this.tool_panel.innerHTML = "";
-        var name = document.createElement("span");
-        name.classList.add("ps2map__tool__base-info__name");
+        }
+        this._tool_panel.style.display = "block";
+        var name = document.getElementById("tool-base-name");
+        var typeIcon = document.getElementById("tool-base-icon");
+        var type = document.getElementById("tool-base-type");
+        var resourceIcon = document.getElementById("tool-base-resource-icon");
+        var resourceText = document.getElementById("tool-base-resource-name");
         name.textContent = base.name;
-        this.tool_panel.appendChild(name);
-        var type_icon = document.createElement("img");
-        type_icon.classList.add("ps2map__tool__base-info__type-icon");
-        type_icon.src = "img/icons/".concat(base.type_code, ".svg");
-        this.tool_panel.appendChild(type_icon);
-        var type = document.createElement("span");
-        type.classList.add("ps2map__tool__base-info__type");
         type.textContent = base.type_name;
-        this.tool_panel.appendChild(type);
+        typeIcon.src = "img/icons/".concat(base.type_code, ".svg");
         if (base.resource_code) {
-            this.tool_panel.appendChild(document.createElement("br"));
-            var resource_icon = document.createElement("img");
-            resource_icon.classList.add("ps2map__tool__base-info__resource-icon");
-            resource_icon.src = "img/icons/".concat(base.resource_code, ".png");
-            this.tool_panel.appendChild(resource_icon);
-            var resource_text = document.createElement("span");
-            resource_text.classList.add("ps2map__tool__base-info__resource-text");
-            resource_text.textContent = "".concat(base.resource_capture_amount, " ").concat(base.resource_name, " (").concat(base.resource_control_amount.toFixed(1), "/min)");
-            this.tool_panel.appendChild(resource_text);
+            resourceIcon.src = "img/icons/".concat(base.resource_code, ".png");
+            resourceText.textContent = "".concat(base.resource_capture_amount, " ").concat(base.resource_name, " (").concat(base.resource_control_amount.toFixed(1), "/min)");
         }
     };
+    BaseInfo.prototype._onHover = function (state) {
+        this._updateBaseInfo(state.user.hoveredBase);
+    };
+    BaseInfo.id = "base-info";
+    BaseInfo.displayName = "Base Info";
     return BaseInfo;
 }(Tool));
-var Crosshair = (function (_super) {
-    __extends(Crosshair, _super);
-    function Crosshair() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this._callback = undefined;
-        return _this;
-    }
-    Crosshair.prototype.activate = function () {
-        _super.prototype.activate.call(this);
-        this.viewport.style.cursor = "crosshair";
-        this._callback = this._onMove.bind(this);
-        this.viewport.addEventListener("mousemove", this._callback, { passive: true });
-        this._setupToolPanel();
-    };
-    Crosshair.prototype.deactivate = function () {
-        _super.prototype.deactivate.call(this);
-        if (this._callback)
-            this.viewport.removeEventListener("click", this._callback);
-        this.viewport.style.removeProperty("cursor");
-        var parent = this.tool_panel;
-        if (parent)
-            parent.removeAttribute("style");
-    };
-    Crosshair.getDisplayName = function () {
-        return "Crosshair";
-    };
-    Crosshair.getId = function () {
-        return "crosshair";
-    };
-    Crosshair.prototype._setupToolPanel = function () {
-        var parent = this.tool_panel;
-        if (!parent)
-            return;
-        parent.style.display = "grid";
-        parent.style.gridTemplateColumns = "1fr 1fr";
-        parent.style.gridTemplateRows = "1fr 1fr";
-        var x_label = document.createElement("span");
-        x_label.classList.add("ps2map__tool__crosshair__label");
-        x_label.textContent = "X";
-        parent.appendChild(x_label);
-        var x_value = document.createElement("span");
-        x_value.id = "tool-crosshair_x";
-        x_value.classList.add("ps2map__tool__crosshair__value");
-        parent.appendChild(x_value);
-        var y_label = document.createElement("span");
-        y_label.classList.add("ps2map__tool__crosshair__label");
-        y_label.textContent = "Y";
-        parent.appendChild(y_label);
-        var y_value = document.createElement("span");
-        y_value.id = "tool-crosshair_y";
-        y_value.classList.add("ps2map__tool__crosshair__value");
-        parent.appendChild(y_value);
-        this._updateToolPanel(0, 0);
-    };
-    Crosshair.prototype._updateToolPanel = function (x, y) {
-        var x_value = document.getElementById("tool-crosshair_x");
-        x_value.textContent = x.toFixed(2);
-        var y_value = document.getElementById("tool-crosshair_y");
-        y_value.textContent = y.toFixed(2);
-    };
-    Crosshair.prototype._onMove = function (event) {
-        var _a = this.getMapPosition(event), x = _a[0], y = _a[1];
-        this._updateToolPanel(x, y);
-    };
-    return Crosshair;
-}(Tool));
-var DevTools;
-(function (DevTools) {
-    var BaseMarkers = (function (_super) {
-        __extends(BaseMarkers, _super);
-        function BaseMarkers(viewport, map) {
-            var _this = _super.call(this, viewport, map) || this;
-            _this._placedBases = [];
-            _this._callback = undefined;
-            var btn = document.getElementById("export-bases");
-            if (btn)
-                btn.addEventListener("click", function () { return _this["export"](); });
-            return _this;
-        }
-        BaseMarkers.prototype.activate = function () {
-            _super.prototype.activate.call(this);
-            this.viewport.style.cursor = "crosshair";
-            this._callback = this._onClick.bind(this);
-            this.viewport.addEventListener("click", this._callback, { passive: true });
-        };
-        BaseMarkers.prototype.deactivate = function () {
-            _super.prototype.deactivate.call(this);
-            if (this._callback)
-                this.viewport.removeEventListener("click", this._callback);
-            this.viewport.style.removeProperty("cursor");
-        };
-        BaseMarkers.prototype.clear = function () {
-            this._placedBases = [];
-        };
-        BaseMarkers.prototype["export"] = function () {
-            var data = JSON.stringify(this._placedBases);
-            var blob = new Blob([data], { type: "application/json" });
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement("a");
-            a.href = url;
-            a.download = "bases.json";
-            a.click();
-        };
-        BaseMarkers.prototype._onClick = function (event) {
-            if (event.button !== 0)
-                return;
-            var pos = this.getMapPosition(event);
-            var baseIdStr = prompt("Base ID (aka. map_region_id)");
-            if (!baseIdStr)
-                return;
-            var baseId = parseInt(baseIdStr);
-            if (isNaN(baseId))
-                return;
-            var baseName = prompt("Base name");
-            if (!baseName)
-                return;
-            var typeIdStr = prompt("Base type ID\n\n" +
-                "1: No Man's Land\n" +
-                "2: Amp Station\n" +
-                "3: Bio Lab\n" +
-                "4: Tech Plant\n" +
-                "5: Large Outpost\n" +
-                "6: Small Outpost\n" +
-                "7: Warpgate\n" +
-                "8: Interlink\n" +
-                "9: Construction Outpost\n" +
-                "11: Containment Site\n" +
-                "12: Trident", "6");
-            if (!typeIdStr)
-                return;
-            var typeId = parseInt(typeIdStr);
-            if (isNaN(typeId))
-                return;
-            this._placedBases.push({
-                id: baseId,
-                name: baseName,
-                map_pos: [
-                    Math.round(pos[0] * 100) / 100,
-                    Math.round(pos[1] * 100) / 100
-                ],
-                type_id: typeId
-            });
-        };
-        BaseMarkers.getDisplayName = function () {
-            return "[Dev] Place Base Markers";
-        };
-        BaseMarkers.getId = function () {
-            return "base-markers";
-        };
-        return BaseMarkers;
-    }(Tool));
-    DevTools.BaseMarkers = BaseMarkers;
-})(DevTools || (DevTools = {}));
-var currentTool = undefined;
-var heroMap = undefined;
-var available_tools = [Tool, BaseInfo, Crosshair, DevTools.BaseMarkers];
-function setupToolbox(map) {
-    heroMap = map;
-}
-function setTool(tool) {
-    if (tool === void 0) { tool = undefined; }
-    currentTool === null || currentTool === void 0 ? void 0 : currentTool.deactivate();
-    if (!tool || currentTool instanceof tool)
-        tool = Tool;
-    var newTool = new tool(document.getElementById("hero-map"), heroMap);
-    newTool.activate();
-    currentTool = newTool;
-    document.querySelectorAll(".toolbar__button").forEach(function (btn) {
-        if (btn.id === "tool-".concat(tool === null || tool === void 0 ? void 0 : tool.getId()))
-            btn.classList.add("toolbar__button__active");
-        else
-            btn.classList.remove("toolbar__button__active");
-    });
-}
-function resetTool() {
-    setTool();
-}
+var available_tools = [Tool, Cursor, BaseInfo];
 document.addEventListener("DOMContentLoaded", function () {
     var toolbar_container = document.getElementById("toolbar-container");
     toolbar_container.innerHTML = "";
     available_tools.forEach(function (tool) {
         var btn = document.createElement("input");
         btn.type = "button";
-        btn.value = tool.getDisplayName();
+        btn.value = tool.displayName;
         btn.classList.add("toolbar__button");
-        btn.id = "tool-".concat(tool.getId());
+        btn.id = "tool-".concat(tool.id);
         btn.addEventListener("click", function () {
-            setTool(tool);
+            StateManager.dispatch(State.toolbox.setTool, { type: tool });
         });
         toolbar_container.appendChild(btn);
     });
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape")
-            resetTool();
+            StateManager.dispatch(State.toolbox.setTool, { type: Tool });
     });
+    StateManager.dispatch(State.toolbox.setTool, { type: Tool });
 });
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
@@ -1528,12 +1396,16 @@ var __assign = (this && this.__assign) || function () {
 };
 var State;
 (function (State) {
+    var map;
+    (function (map) {
+        map.baseCaptured = "map/baseCaptured";
+    })(map = State.map || (State.map = {}));
     State.defaultMapState = {
         baseOwnership: new Map()
     };
     function mapReducer(state, action, data) {
         switch (action) {
-            case "map/baseCaptured":
+            case State.map.baseCaptured:
                 return __assign(__assign({}, state), { baseOwnership: data });
             default:
                 return state;
@@ -1543,17 +1415,62 @@ var State;
 })(State || (State = {}));
 var State;
 (function (State) {
+    var toolbox;
+    (function (toolbox) {
+        toolbox.setup = "toolbox/setup";
+        toolbox.setTool = "toolbox/setTool";
+    })(toolbox = State.toolbox || (State.toolbox = {}));
+    State.defaultToolState = {
+        currentTool: null,
+        targetMap: null,
+        data: {}
+    };
+    function toolboxReducer(state, action, data) {
+        switch (action) {
+            case toolbox.setup:
+                return __assign(__assign(__assign({}, state), State.defaultToolState), { targetMap: data.map });
+            case toolbox.setTool:
+                if (state.currentTool)
+                    state.currentTool.tearDown();
+                var cls_1 = data.type;
+                if (!cls_1)
+                    cls_1 = Tool;
+                var tool = null;
+                var toolBar = document.getElementById("tool-panel");
+                if (toolBar && state.targetMap)
+                    tool = new cls_1(state.targetMap.renderer.viewport, state.targetMap, toolBar);
+                document.querySelectorAll(".toolbar__button").forEach(function (btn) {
+                    if (btn.id === "tool-".concat(cls_1.id))
+                        btn.classList.add("toolbar__button__active");
+                    else
+                        btn.classList.remove("toolbar__button__active");
+                });
+                return __assign(__assign({}, state), { currentTool: tool });
+            default:
+                return state;
+        }
+    }
+    State.toolboxReducer = toolboxReducer;
+})(State || (State = {}));
+var State;
+(function (State) {
+    var user;
+    (function (user) {
+        user.continentChanged = "user/continentChanged";
+        user.serverChanged = "user/serverChanged";
+        user.baseHovered = "user/baseHovered";
+    })(user = State.user || (State.user = {}));
     ;
     State.defaultUserState = {
         server: undefined,
         continent: undefined,
-        hoveredBase: undefined
+        hoveredBase: null
     };
     function userReducer(state, action, data) {
         switch (action) {
             case "user/serverChanged":
                 return __assign(__assign({}, state), { server: data });
-            case "user/continentChanged":
+            case user.continentChanged:
                 return __assign(__assign({}, state), { continent: data });
             case "user/baseHovered":
                 return __assign(__assign({}, state), { hoveredBase: data });
@@ -1568,6 +1485,7 @@ var State;
     function appReducer(state, action, data) {
         return {
             map: State.mapReducer(state.map, action, data),
+            tool: State.toolboxReducer(state.tool, action, data),
             user: State.userReducer(state.user, action, data)
         };
     }
@@ -1589,11 +1507,11 @@ document.addEventListener("DOMContentLoaded", function () {
     listener.subscribe(function (name, data) {
         StateManager.dispatch("map/".concat(name), data);
     });
-    StateManager.subscribe("map/baseCaptured", function (state) {
+    StateManager.subscribe(State.map.baseCaptured, function (state) {
         heroMap.updateBaseOwnership(state.map.baseOwnership);
         minimap.updateBaseOwnership(state.map.baseOwnership);
     });
-    StateManager.subscribe("user/continentChanged", function (state) {
+    StateManager.subscribe(State.user.continentChanged, function (state) {
         heroMap.switchContinent(state.user.continent).then(function () {
             heroMap.updateBaseOwnership(state.map.baseOwnership);
         });
@@ -1601,19 +1519,19 @@ document.addEventListener("DOMContentLoaded", function () {
             minimap.updateBaseOwnership(state.map.baseOwnership);
         });
     });
-    StateManager.subscribe("user/serverChanged", function (state) {
+    StateManager.subscribe(State.user.serverChanged, function (state) {
         listener.switchServer(state.user.server);
     });
-    StateManager.subscribe("user/baseHovered", function (state) {
+    StateManager.subscribe(State.user.baseHovered, function (state) {
         var names = heroMap.renderer.getLayer("names");
         names.setHoveredBase(state.user.hoveredBase);
     });
-    setupToolbox(heroMap);
+    StateManager.dispatch(State.toolbox.setup, { map: heroMap });
     heroMap.renderer.viewport.addEventListener("ps2map_basehover", function (event) {
         var evt = event.detail;
         var base = GameData.getInstance().getBase(evt.baseId);
         if (base)
-            StateManager.dispatch("user/baseHovered", base);
+            StateManager.dispatch(State.user.baseHovered, base);
     });
     document.addEventListener("ps2map_viewboxchanged", function (event) {
         var evt = event.detail;
@@ -1629,7 +1547,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .find(function (s) { return s.id === parseInt(server_picker.value); });
         if (!server)
             throw new Error("No server found with id ".concat(server_picker.value));
-        StateManager.dispatch("user/serverChanged", server);
+        StateManager.dispatch(State.user.serverChanged, server);
     });
     var continent_picker = document.getElementById("continent-picker");
     continent_picker.addEventListener("change", function () {
@@ -1637,7 +1555,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .find(function (c) { return c.id === parseInt(continent_picker.value); });
         if (!continent)
             throw new Error("No continent found with id ".concat(continent_picker.value));
-        StateManager.dispatch("user/continentChanged", continent);
+        StateManager.dispatch(State.user.continentChanged, continent);
     });
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
@@ -1660,8 +1578,8 @@ document.addEventListener("DOMContentLoaded", function () {
             option.text = cont.name;
             continent_picker.appendChild(option);
         }
-        StateManager.dispatch("user/serverChanged", servers[servers.length - 1]);
-        StateManager.dispatch("user/continentChanged", continents[continents.length - 1]);
+        StateManager.dispatch(State.user.serverChanged, servers[servers.length - 1]);
+        StateManager.dispatch(State.user.continentChanged, continents[continents.length - 1]);
     });
 });
 var StateManager = (function () {
@@ -1702,8 +1620,10 @@ var StateManager = (function () {
     };
     StateManager._state = {
         map: State.defaultMapState,
+        tool: State.defaultToolState,
         user: State.defaultUserState
     };
     StateManager._subscriptions = new Map();
     return StateManager;
 }());
+//# sourceMappingURL=index.js.map

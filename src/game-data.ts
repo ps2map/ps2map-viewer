@@ -2,7 +2,7 @@
 
 /**
  * Repository for static game data.
- * 
+ *
  * This class is implemented as a singleton and must be manually loaded upon
  * application startup using the async load() method. After loading, you can
  * retrieve the singleton instance using the getInstance() method.
@@ -53,7 +53,7 @@ class GameData {
 
     /**
      * Returns the singleton instance of the game data.
-     * 
+     *
      * This method must be called after the data has been loaded.
      */
     public static getInstance(): GameData {
@@ -85,4 +85,3 @@ class GameData {
         return loading;
     }
 }
-

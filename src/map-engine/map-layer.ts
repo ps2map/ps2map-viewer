@@ -35,7 +35,7 @@ abstract class MapLayer {
 
     /**
      * External hook used by the map renderer to store redraw call arguments.
-     * 
+     *
      * This is used to support the runDeferredLayerUpdate method and should not
      * be called from or modified in sub classes.
      * @param viewBox New view box of the client
@@ -88,7 +88,7 @@ abstract class MapLayer {
 
     /**
      * Implementation of the deferred layer update.
-     * 
+     *
      * This is similar to `MapLayer.redraw()`, but only runs after all zooming
      * or panning animations ended. Use this hook for expensive layer updates
      * like visibility checks or DOM updates.

@@ -13,7 +13,7 @@ interface BaseHoverEvent {
 
 /**
  * A static layer rendering base polygons for a given continent.
- * 
+ *
  * This will dispatch a "ps2map_basehover" event when the user mouse-overs a
  * base polygon.
  */

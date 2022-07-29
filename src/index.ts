@@ -3,7 +3,7 @@
 /// <reference path="./hero-map.ts" />
 /// <reference path="./minimap.ts" />
 /// <reference path="./listener.ts" />
-/// <reference path="./tools/index.ts" />
+/// <reference path="./toolbox/index.ts" />
 /// <reference path="./state/index.ts" />
 /// <reference path="./game-data.ts" />
 
@@ -18,11 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
         StateManager.dispatch(`map/${name}`, data);
     });
 
-    StateManager.subscribe("map/baseCaptured", (state) => {
+    StateManager.subscribe(State.map.baseCaptured, (state) => {
         heroMap.updateBaseOwnership(state.map.baseOwnership);
         minimap.updateBaseOwnership(state.map.baseOwnership);
     });
-    StateManager.subscribe("user/continentChanged", (state) => {
+    StateManager.subscribe(State.user.continentChanged, (state) => {
         heroMap.switchContinent(state.user.continent!).then(() => {
             heroMap.updateBaseOwnership(state.map.baseOwnership);
         });
@@ -30,23 +30,23 @@ document.addEventListener("DOMContentLoaded", () => {
             minimap.updateBaseOwnership(state.map.baseOwnership);
         });
     });
-    StateManager.subscribe("user/serverChanged", (state) => {
+    StateManager.subscribe(State.user.serverChanged, (state) => {
         listener.switchServer(state.user.server!);
     });
-    StateManager.subscribe("user/baseHovered", (state) => {
+    StateManager.subscribe(State.user.baseHovered, (state) => {
         const names = heroMap.renderer.getLayer("names") as BaseNamesLayer;
         names.setHoveredBase(state.user.hoveredBase);
     });
 
     // Set up toolbox
-    setupToolbox(heroMap);
+    StateManager.dispatch(State.toolbox.setup, { map: heroMap });
 
     // Hook up base hover event
     heroMap.renderer.viewport.addEventListener("ps2map_basehover", (event) => {
         const evt = (event as CustomEvent<BaseHoverEvent>).detail;
         const base = GameData.getInstance().getBase(evt.baseId);
         if (base)
-            StateManager.dispatch("user/baseHovered", base);
+            StateManager.dispatch(State.user.baseHovered, base);
     });
 
     // Set up minimap
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .find(s => s.id === parseInt(server_picker.value));
         if (!server)
             throw new Error(`No server found with id ${server_picker.value}`);
-        StateManager.dispatch("user/serverChanged", server);
+        StateManager.dispatch(State.user.serverChanged, server);
     });
     const continent_picker = document.getElementById("continent-picker") as HTMLSelectElement;
     continent_picker.addEventListener("change", () => {
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .find(c => c.id === parseInt(continent_picker.value));
         if (!continent)
             throw new Error(`No continent found with id ${continent_picker.value}`);
-        StateManager.dispatch("user/continentChanged", continent);
+        StateManager.dispatch(State.user.continentChanged, continent);
     });
 
     // Load game data
@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
             continent_picker.appendChild(option);
         }
         // Set default server and continent
-        StateManager.dispatch("user/serverChanged", servers[servers.length - 1]);
-        StateManager.dispatch("user/continentChanged", continents[continents.length - 1]);
+        StateManager.dispatch(State.user.serverChanged, servers[servers.length - 1]);
+        StateManager.dispatch(State.user.continentChanged, continents[continents.length - 1]);
     });
 });

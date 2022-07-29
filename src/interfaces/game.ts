@@ -1,6 +1,6 @@
 /**
  * Interface definition for static game data.
- * 
+ *
  * This data is generally loaded once and cached for future use.
  */
 
@@ -23,7 +23,7 @@ interface Continent {
 
 /**
  * A lattice link between two bases.
- * 
+ *
  * Lattice link data is ordered for consistency: base_id_a will always be
  * lower than base_b_id.
  */

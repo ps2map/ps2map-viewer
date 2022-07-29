@@ -63,5 +63,4 @@ class MapListener {
             this._pollBaseOwnership();
         }, 5000);
     }
-
 }

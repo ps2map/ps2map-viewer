@@ -200,6 +200,7 @@ class MapRenderer {
             this._setPanLock(false);
             this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
+            this._layers.forEach(layer => layer.updateLayer());
         };
 
         document.addEventListener("mouseup", up);
@@ -210,7 +211,7 @@ class MapRenderer {
 
     /**
      * Enable or disable the pan lock flag.
-     * 
+     *
      * Pan lock prevents the map from being zoomed while panning.
      * @param locked Whether the pan lock is active (i.e. zoom is disabled)
      */

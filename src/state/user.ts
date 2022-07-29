@@ -2,16 +2,22 @@
 
 namespace State {
 
+    export namespace user {
+        export const continentChanged = "user/continentChanged";
+        export const serverChanged = "user/serverChanged";
+        export const baseHovered = "user/baseHovered";
+    }
+
     export interface UserState {
         server: Server | undefined;
         continent: Continent | undefined;
-        hoveredBase: Base | undefined;
+        hoveredBase: Base | null;
     };
 
     export const defaultUserState: UserState = {
         server: undefined,
         continent: undefined,
-        hoveredBase: undefined,
+        hoveredBase: null,
     };
 
     /** State reducer for "user/" actions. */
@@ -22,7 +28,7 @@ namespace State {
                     ...state,
                     server: data
                 };
-            case "user/continentChanged":
+            case user.continentChanged:
                 return {
                     ...state,
                     continent: data
