@@ -39,6 +39,8 @@ class MapRenderer {
     private _isPanning: boolean = false;
     private _camera: Camera;
 
+    public allowPan = true;
+
     constructor(viewport: HTMLDivElement, mapSize: number) {
         // Set up DOM containers
         this.viewport = viewport;
@@ -173,7 +175,11 @@ class MapRenderer {
      * @param evtDown "mousedown" event starting the panning operation
      */
     private _mousePan(evtDown: MouseEvent): void {
+        // Never allow RMB panning
         if (evtDown.button === 2)
+            return;
+        // Only allow LMB panning if unlocked
+        if (!this.allowPan && evtDown.button === 0)
             return;
         this._setPanLock(true);
 
