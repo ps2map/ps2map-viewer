@@ -337,6 +337,9 @@ var MapRenderer = (function () {
     MapRenderer.prototype.getMapSize = function () {
         return this._mapSize;
     };
+    MapRenderer.prototype.getZoom = function () {
+        return this._camera.getZoom();
+    };
     MapRenderer.prototype.addLayer = function (layer) {
         if (layer.mapSize !== this._mapSize)
             throw "Map layer size must match the map renderer's.";
@@ -1404,7 +1407,7 @@ var Pen = (function (_super) {
         ctx.moveTo(mapSize * 0.5 + start.x, mapSize * 0.5 - start.y);
         ctx.strokeStyle = "rgb(255, 255, 0)";
         ctx.lineCap = "round";
-        ctx.lineWidth = 10;
+        ctx.lineWidth = layer.calculateStrokeWidth(this._map.renderer.getZoom());
         var drag = Utils.rafDebounce(function (evtDrag) {
             var last = _this._current[_this._current.length - 1];
             if (!last)
@@ -1636,7 +1639,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     StateManager.subscribe(State.user.canvasLineAdded, function (state) {
         var layer = heroMap.renderer.getLayer("canvas");
-        layer.update(state.user.canvas);
+        layer.update(state.user.canvas, heroMap.renderer.getZoom());
     });
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
@@ -1667,17 +1670,22 @@ var CanvasLayer = (function (_super) {
     __extends(CanvasLayer, _super);
     function CanvasLayer(id, mapSize) {
         var _this = _super.call(this, id, mapSize) || this;
+        _this._lines = [];
         _this.element.classList.add("ps2map__canvas");
         return _this;
     }
-    CanvasLayer.prototype.update = function (lines) {
+    CanvasLayer.prototype.calculateStrokeWidth = function (zoom) {
+        return 1.6 + 23.67 / Math.pow(2, zoom / 0.23);
+    };
+    CanvasLayer.prototype.update = function (lines, zoom) {
         var _this = this;
+        this._lines = lines;
         var canvas = this.getCanvas();
         var ctx = canvas.getContext("2d");
         if (!ctx)
             return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.lineWidth = 10;
+        ctx.lineWidth = this.calculateStrokeWidth(zoom);
         lines.forEach(function (line) {
             var point = line[0];
             if (!point)
@@ -1713,6 +1721,10 @@ var CanvasLayer = (function (_super) {
                 return [2, layer];
             });
         });
+    };
+    CanvasLayer.prototype.deferredLayerUpdate = function (_, zoom) {
+        console.log("deferredLayerUpdate");
+        this.update(this._lines, zoom);
     };
     return CanvasLayer;
 }(StaticLayer));

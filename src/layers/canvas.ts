@@ -3,18 +3,27 @@
 
 class CanvasLayer extends StaticLayer {
 
+    private _lines: Readonly<Point>[][] = [];
+
     constructor(id: string, mapSize: number) {
         super(id, mapSize);
         this.element.classList.add("ps2map__canvas");
     }
 
-    public update(lines: Readonly<Point>[][]): void {
+    public calculateStrokeWidth(zoom: number): number {
+        // NOTE: This formula is "magic"; suitable stroke widths were noted for
+        // each zoom level, then fitted to an exponential function.
+        return 1.6 + 23.67 / Math.pow(2, zoom / 0.23);
+    }
+
+    public update(lines: Readonly<Point>[][], zoom: number): void {
+        this._lines = lines;
         const canvas = this.getCanvas();
         const ctx = canvas.getContext("2d");
         if (!ctx)
             return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.lineWidth = 10;
+        ctx.lineWidth = this.calculateStrokeWidth(zoom);
         lines.forEach(line => {
             let point = line[0];
             if (!point)
@@ -43,10 +52,14 @@ class CanvasLayer extends StaticLayer {
         const canvas = document.createElement("canvas");
         if (!canvas.getContext)
             console.error("Unable to create canvas element");
-        // TODO: Add scaling?
         canvas.width = canvas.height = layer.mapSize;
         frag.appendChild(canvas);
         layer.element.appendChild(frag);
         return layer;
+    }
+
+    protected deferredLayerUpdate(_: ViewBox, zoom: number): void {
+        console.log("deferredLayerUpdate");
+        this.update(this._lines, zoom);
     }
 }

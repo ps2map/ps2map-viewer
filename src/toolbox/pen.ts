@@ -49,7 +49,7 @@ class Pen extends Tool {
         ctx.moveTo(mapSize * 0.5 + start.x, mapSize * 0.5 - start.y);
         ctx.strokeStyle = "rgb(255, 255, 0)";
         ctx.lineCap = "round";
-        ctx.lineWidth = 10;
+        ctx.lineWidth = layer.calculateStrokeWidth(this._map.renderer.getZoom());
 
         const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
             const last = this._current[this._current.length - 1];

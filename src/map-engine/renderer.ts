@@ -83,6 +83,10 @@ class MapRenderer {
         return this._mapSize;
     }
 
+    getZoom(): number {
+        return this._camera.getZoom();
+    }
+
     /**
      * Add a new map layer to the map.
      *
