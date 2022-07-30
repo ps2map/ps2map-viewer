@@ -60,7 +60,6 @@ class Cursor extends Tool {
     }
 
     private _onMove(event: MouseEvent): void {
-        this._updateToolPanel(this._getMapPosition(event));
+        this._updateToolPanel(event);
     }
-
 }

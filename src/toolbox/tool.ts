@@ -35,24 +35,6 @@ class Tool {
     }
 
     /**
-     * Helper method to get the clicked map coordinates from a mouse event.
-     * @param event The mouse event.
-     * @returns The clicked map coordinates.
-     */
-    protected _getMapPosition(event: MouseEvent): Point {
-        // Get relative click position within the viewport
-        const relX = (event.clientX - this._viewport.offsetLeft) / this._viewport.clientWidth;
-        const relY = 1 - (event.clientY - this._viewport.offsetTop) / this._viewport.clientHeight;
-        // Calculate corresponding map position
-        const viewBox = this._map.renderer.getViewBox();
-        const halfSize = this._map.renderer.getMapSize() * 0.5;
-        return {
-            x: -halfSize + viewBox.left + (viewBox.right - viewBox.left) * relX,
-            y: -halfSize + viewBox.bottom + (viewBox.top - viewBox.bottom) * relY,
-        };
-    }
-
-    /**
      * Populate the tool panel with tool-specific user interface elements.
      *
      * This is called automatically when the tool is created. The default

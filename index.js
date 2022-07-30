@@ -380,6 +380,19 @@ var MapRenderer = (function () {
             height: this.viewport.clientHeight
         });
     };
+    MapRenderer.prototype.screenToMap = function (screen) {
+        if (screen instanceof MouseEvent)
+            screen = { x: screen.clientX, y: screen.clientY };
+        var vp = this.viewport;
+        var relX = (screen.x - vp.offsetLeft) / vp.clientWidth;
+        var relY = (screen.y - vp.offsetTop) / vp.clientHeight;
+        var box = this._camera.currentViewBox();
+        var halfSize = this._mapSize * 0.5;
+        return {
+            x: -halfSize + box.left + (box.right - box.left) * relX,
+            y: -halfSize + box.top + (box.bottom - box.top) * (1 - relY)
+        };
+    };
     MapRenderer.prototype._mousePan = function (evtDown) {
         var _this = this;
         if (evtDown.button === 2)
@@ -1239,16 +1252,6 @@ var Tool = (function () {
         this._tool_panel.innerHTML = "";
         this._tool_panel.removeAttribute("style");
     };
-    Tool.prototype._getMapPosition = function (event) {
-        var relX = (event.clientX - this._viewport.offsetLeft) / this._viewport.clientWidth;
-        var relY = 1 - (event.clientY - this._viewport.offsetTop) / this._viewport.clientHeight;
-        var viewBox = this._map.renderer.getViewBox();
-        var halfSize = this._map.renderer.getMapSize() * 0.5;
-        return {
-            x: -halfSize + viewBox.left + (viewBox.right - viewBox.left) * relX,
-            y: -halfSize + viewBox.bottom + (viewBox.top - viewBox.bottom) * relY
-        };
-    };
     Tool.prototype._setUpToolPanel = function () { };
     Tool.id = "none";
     Tool.displayName = "None";
@@ -1300,7 +1303,7 @@ var Cursor = (function (_super) {
             y.textContent = target.y.toFixed(2);
     };
     Cursor.prototype._onMove = function (event) {
-        this._updateToolPanel(this._getMapPosition(event));
+        this._updateToolPanel(event);
     };
     Cursor.id = "cursor";
     Cursor.displayName = "Map Cursor";
@@ -1400,7 +1403,7 @@ var Pen = (function (_super) {
         layer.element.style.opacity = "0.75";
         var ctx = layer.getCanvas().getContext("2d");
         var mapSize = this._map.renderer.getMapSize();
-        var start = this._getMapPosition(event);
+        var start = this._map.renderer.screenToMap(event);
         ;
         this._current = [start];
         ctx.beginPath();
@@ -1412,7 +1415,7 @@ var Pen = (function (_super) {
             var last = _this._current[_this._current.length - 1];
             if (!last)
                 return;
-            var next = _this._getMapPosition(evtDrag);
+            var next = _this._map.renderer.screenToMap(evtDrag);
             var dist = Math.hypot(next.x - last.x, next.y - last.y);
             if (dist <= 4.0)
                 return;

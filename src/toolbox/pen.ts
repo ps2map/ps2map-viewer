@@ -42,7 +42,7 @@ class Pen extends Tool {
         const ctx = layer.getCanvas().getContext("2d")!;
         const mapSize = this._map.renderer.getMapSize();
 
-        const start = this._getMapPosition(event);;
+        const start = this._map.renderer.screenToMap(event);;
         this._current = [start];
 
         ctx.beginPath();
@@ -55,10 +55,10 @@ class Pen extends Tool {
             const last = this._current[this._current.length - 1];
             if (!last)
                 return;
-            const next = this._getMapPosition(evtDrag);
+            const next = this._map.renderer.screenToMap(evtDrag);
             // Get distance
             const dist = Math.hypot(next.x - last.x, next.y - last.y);
-            if (dist <= 4.0)
+            if (dist <= 4.0) // TODO: Make this configurable
                 return;
             ctx.moveTo(mapSize * 0.5 + last.x, mapSize * 0.5 - last.y);
             ctx.lineTo(mapSize * 0.5 + next.x, mapSize * 0.5 - next.y);
