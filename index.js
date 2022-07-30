@@ -1404,6 +1404,7 @@ var Pen = (function (_super) {
         ctx.beginPath();
         ctx.moveTo(mapSize * 0.5 + this._last.x, mapSize * 0.5 - this._last.y);
         ctx.strokeStyle = "rgb(255, 255, 0)";
+        ctx.lineCap = "round";
         ctx.lineWidth = 10;
         var drag = Utils.rafDebounce(function (evtDrag) {
             console.log("drag");
@@ -1413,7 +1414,9 @@ var Pen = (function (_super) {
                 console.log("ignoring small step:", dist);
                 return;
             }
+            ctx.moveTo(mapSize * 0.5 + _this._last.x, mapSize * 0.5 - _this._last.y);
             ctx.lineTo(mapSize * 0.5 + next.x, mapSize * 0.5 - next.y);
+            ctx.stroke();
             _this._last = next;
         });
         var up = function () {

@@ -49,6 +49,7 @@ class Pen extends Tool {
         ctx.beginPath();
         ctx.moveTo(mapSize * 0.5 + this._last.x, mapSize * 0.5 - this._last.y);
         ctx.strokeStyle = "rgb(255, 255, 0)";
+        ctx.lineCap = "round";
         ctx.lineWidth = 10;
 
         const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
@@ -61,7 +62,9 @@ class Pen extends Tool {
                 console.log("ignoring small step:", dist);
                 return;
             }
+            ctx.moveTo(mapSize * 0.5 + this._last.x, mapSize * 0.5 - this._last.y);
             ctx.lineTo(mapSize * 0.5 + next.x, mapSize * 0.5 - next.y);
+            ctx.stroke();
             this._last = next;
         });
 
