@@ -27,11 +27,9 @@ class Cursor extends Tool {
         // Dynamic elements        
         const x = Object.assign(document.createElement("span"), {
             id: "tool-cursor_x",
-            textContent: "0.00",
         });
         const y = Object.assign(document.createElement("span"), {
             id: "tool-cursor_y",
-            textContent: "0.00",
         });
         // Static elements
         const frag = document.createDocumentFragment();
@@ -49,6 +47,7 @@ class Cursor extends Tool {
             fontSize: "18px",
             justifyItems: "right",
         });
+        this._updateToolPanel({ x: 0, y: 0 });
     }
 
     private _updateToolPanel(target: Readonly<Point>): void {

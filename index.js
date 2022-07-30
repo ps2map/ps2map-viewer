@@ -1267,12 +1267,10 @@ var Cursor = (function (_super) {
     Cursor.prototype._setUpToolPanel = function () {
         _super.prototype._setUpToolPanel.call(this);
         var x = Object.assign(document.createElement("span"), {
-            id: "tool-cursor_x",
-            textContent: "0.00"
+            id: "tool-cursor_x"
         });
         var y = Object.assign(document.createElement("span"), {
-            id: "tool-cursor_y",
-            textContent: "0.00"
+            id: "tool-cursor_y"
         });
         var frag = document.createDocumentFragment();
         frag.appendChild(document.createTextNode("X:"));
@@ -1288,6 +1286,7 @@ var Cursor = (function (_super) {
             fontSize: "18px",
             justifyItems: "right"
         });
+        this._updateToolPanel({ x: 0, y: 0 });
     };
     Cursor.prototype._updateToolPanel = function (target) {
         var x = document.getElementById("tool-cursor_x");
