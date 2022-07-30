@@ -1371,7 +1371,7 @@ var Pen = (function (_super) {
     __extends(Pen, _super);
     function Pen(viewport, map, tool_panel) {
         var _this = _super.call(this, viewport, map, tool_panel) || this;
-        _this._last = { x: 0, y: 0 };
+        _this._current = [];
         map.renderer.allowPan = false;
         _this._onMouseDown = _this._onMouseDown.bind(_this);
         _this._viewport.addEventListener("mousedown", _this._onMouseDown, { passive: true });
@@ -1393,36 +1393,37 @@ var Pen = (function (_super) {
         var _this = this;
         if (event.button !== 0)
             return;
-        console.log("Mouse down");
         var layer = this._map.renderer.getLayer("canvas");
         layer.element.style.opacity = "0.75";
         var ctx = layer.getCanvas().getContext("2d");
         var mapSize = this._map.renderer.getMapSize();
-        this._last = this._getMapPosition(event);
+        var start = this._getMapPosition(event);
         ;
+        this._current = [start];
         ctx.beginPath();
-        ctx.moveTo(mapSize * 0.5 + this._last.x, mapSize * 0.5 - this._last.y);
+        ctx.moveTo(mapSize * 0.5 + start.x, mapSize * 0.5 - start.y);
         ctx.strokeStyle = "rgb(255, 255, 0)";
         ctx.lineCap = "round";
         ctx.lineWidth = 10;
         var drag = Utils.rafDebounce(function (evtDrag) {
-            console.log("drag");
-            var next = _this._getMapPosition(evtDrag);
-            var dist = Math.hypot(next.x - _this._last.x, next.y - _this._last.y);
-            if (dist <= 10) {
-                console.log("ignoring small step:", dist);
+            var last = _this._current[_this._current.length - 1];
+            if (!last)
                 return;
-            }
-            ctx.moveTo(mapSize * 0.5 + _this._last.x, mapSize * 0.5 - _this._last.y);
+            var next = _this._getMapPosition(evtDrag);
+            var dist = Math.hypot(next.x - last.x, next.y - last.y);
+            if (dist <= 4.0)
+                return;
+            ctx.moveTo(mapSize * 0.5 + last.x, mapSize * 0.5 - last.y);
             ctx.lineTo(mapSize * 0.5 + next.x, mapSize * 0.5 - next.y);
             ctx.stroke();
-            _this._last = next;
+            _this._current.push(next);
         });
         var up = function () {
-            console.log("up");
             ctx.stroke();
             _this._viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
+            StateManager.dispatch(State.user.canvasLineAdded, _this._current);
+            _this._current = [];
         };
         this._viewport.addEventListener("mousemove", drag, { passive: true });
         document.addEventListener("mouseup", up, { passive: true });
@@ -1521,6 +1522,15 @@ var State;
     }
     State.toolboxReducer = toolboxReducer;
 })(State || (State = {}));
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 var State;
 (function (State) {
     var user;
@@ -1528,21 +1538,28 @@ var State;
         user.continentChanged = "user/continentChanged";
         user.serverChanged = "user/serverChanged";
         user.baseHovered = "user/baseHovered";
+        user.canvasUpdated = "user/canvasUpdated";
+        user.canvasLineAdded = "user/canvasLineAdded";
     })(user = State.user || (State.user = {}));
     ;
     State.defaultUserState = {
         server: undefined,
         continent: undefined,
-        hoveredBase: null
+        hoveredBase: null,
+        canvas: []
     };
     function userReducer(state, action, data) {
         switch (action) {
-            case "user/serverChanged":
+            case user.serverChanged:
                 return __assign(__assign({}, state), { server: data });
             case user.continentChanged:
                 return __assign(__assign({}, state), { continent: data });
-            case "user/baseHovered":
+            case user.baseHovered:
                 return __assign(__assign({}, state), { hoveredBase: data });
+            case user.canvasLineAdded:
+                var newCanvas = __spreadArray([], state.canvas, true);
+                newCanvas.push(data);
+                return __assign(__assign({}, state), { canvas: newCanvas });
             default:
                 return state;
         }
@@ -1560,15 +1577,6 @@ var State;
     }
     State.appReducer = appReducer;
 })(State || (State = {}));
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
     var minimap = new Minimap(document.getElementById("minimap"));
@@ -1626,6 +1634,10 @@ document.addEventListener("DOMContentLoaded", function () {
             throw new Error("No continent found with id ".concat(continent_picker.value));
         StateManager.dispatch(State.user.continentChanged, continent);
     });
+    StateManager.subscribe(State.user.canvasLineAdded, function (state) {
+        var layer = heroMap.renderer.getLayer("canvas");
+        layer.update(state.user.canvas);
+    });
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
         var continents = __spreadArray([], gameData.continents(), true);
@@ -1658,6 +1670,28 @@ var CanvasLayer = (function (_super) {
         _this.element.classList.add("ps2map__canvas");
         return _this;
     }
+    CanvasLayer.prototype.update = function (lines) {
+        var _this = this;
+        var canvas = this.getCanvas();
+        var ctx = canvas.getContext("2d");
+        if (!ctx)
+            return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 10;
+        lines.forEach(function (line) {
+            var point = line[0];
+            if (!point)
+                return;
+            ctx.moveTo(_this.mapSize * 0.5 + point.x, _this.mapSize * 0.5 - point.y);
+            for (var i = 1; i < line.length; i++) {
+                point = line[i];
+                if (!point)
+                    return;
+                ctx.lineTo(_this.mapSize * 0.5 + point.x, _this.mapSize * 0.5 - point.y);
+            }
+            ctx.stroke();
+        });
+    };
     CanvasLayer.prototype.getCanvas = function () {
         var element = this.element.firstChild;
         if (!element)

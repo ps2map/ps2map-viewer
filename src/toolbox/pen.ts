@@ -5,7 +5,7 @@ class Pen extends Tool {
     static readonly id = "pen";
     static readonly displayName = "Pen";
 
-    private _last: Readonly<Point> = { x: 0, y: 0 };
+    private _current: Readonly<Point>[] = [];
 
     constructor(
         viewport: HTMLDivElement,
@@ -37,42 +37,41 @@ class Pen extends Tool {
     private _onMouseDown(event: MouseEvent): void {
         if (event.button !== 0)
             return;
-        console.log("Mouse down");
-
         const layer = this._map.renderer.getLayer("canvas") as CanvasLayer;
         layer.element.style.opacity = "0.75";
         const ctx = layer.getCanvas().getContext("2d")!;
         const mapSize = this._map.renderer.getMapSize();
 
-        this._last = this._getMapPosition(event);;
+        const start = this._getMapPosition(event);;
+        this._current = [start];
 
         ctx.beginPath();
-        ctx.moveTo(mapSize * 0.5 + this._last.x, mapSize * 0.5 - this._last.y);
+        ctx.moveTo(mapSize * 0.5 + start.x, mapSize * 0.5 - start.y);
         ctx.strokeStyle = "rgb(255, 255, 0)";
         ctx.lineCap = "round";
         ctx.lineWidth = 10;
 
         const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
-            console.log("drag");
-
+            const last = this._current[this._current.length - 1];
+            if (!last)
+                return;
             const next = this._getMapPosition(evtDrag);
             // Get distance
-            const dist = Math.hypot(next.x - this._last.x, next.y - this._last.y);
-            if (dist <= 10) {
-                console.log("ignoring small step:", dist);
+            const dist = Math.hypot(next.x - last.x, next.y - last.y);
+            if (dist <= 4.0)
                 return;
-            }
-            ctx.moveTo(mapSize * 0.5 + this._last.x, mapSize * 0.5 - this._last.y);
+            ctx.moveTo(mapSize * 0.5 + last.x, mapSize * 0.5 - last.y);
             ctx.lineTo(mapSize * 0.5 + next.x, mapSize * 0.5 - next.y);
             ctx.stroke();
-            this._last = next;
+            this._current.push(next);
         });
 
         const up = () => {
-            console.log("up");
             ctx.stroke();
             this._viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
+            StateManager.dispatch(State.user.canvasLineAdded, this._current);
+            this._current = [];
         };
 
         this._viewport.addEventListener(

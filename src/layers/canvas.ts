@@ -8,6 +8,28 @@ class CanvasLayer extends StaticLayer {
         this.element.classList.add("ps2map__canvas");
     }
 
+    public update(lines: Readonly<Point>[][]): void {
+        const canvas = this.getCanvas();
+        const ctx = canvas.getContext("2d");
+        if (!ctx)
+            return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 10;
+        lines.forEach(line => {
+            let point = line[0];
+            if (!point)
+                return;
+            ctx.moveTo(this.mapSize * 0.5 + point.x, this.mapSize * 0.5 - point.y);
+            for (let i = 1; i < line.length; i++) {
+                point = line[i];
+                if (!point)
+                    return;
+                ctx.lineTo(this.mapSize * 0.5 + point.x, this.mapSize * 0.5 - point.y);
+            }
+            ctx.stroke();
+        });
+    }
+
     public getCanvas(): HTMLCanvasElement {
         const element = this.element.firstChild as HTMLCanvasElement | null;
         if (!element)

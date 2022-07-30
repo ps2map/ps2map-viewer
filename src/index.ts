@@ -76,6 +76,11 @@ document.addEventListener("DOMContentLoaded", () => {
         StateManager.dispatch(State.user.continentChanged, continent);
     });
 
+    StateManager.subscribe(State.user.canvasLineAdded, state => {
+        const layer = heroMap.renderer.getLayer("canvas") as CanvasLayer;
+        layer.update(state.user.canvas);
+    });
+
     // Load game data
     GameData.load().then((gameData) => {
         const servers = [...gameData.servers()];
