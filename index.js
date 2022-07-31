@@ -1327,6 +1327,66 @@ var Tool = (function () {
     Tool.defaultState = {};
     return Tool;
 }());
+var CanvasTool = (function (_super) {
+    __extends(CanvasTool, _super);
+    function CanvasTool(viewport, map, tool_panel) {
+        var _this = _super.call(this, viewport, map, tool_panel) || this;
+        _this._isActive = false;
+        _this._context = null;
+        _this._halfMapSize = null;
+        map.renderer.allowPan = false;
+        _this._onDown = _this._onDown.bind(_this);
+        _this._onMove = _this._onMove.bind(_this);
+        _this._viewport.addEventListener("mousedown", _this._onDown, { passive: true });
+        _this._viewport.addEventListener("mousemove", _this._onMove, { passive: true });
+        _this._cursor = document.createElement("div");
+        _this._cursor.style.zIndex = "100";
+        _this._cursor.style.position = "absolute";
+        _this._cursor.style.pointerEvents = "none";
+        _this._setUpCursor();
+        _this._viewport.appendChild(_this._cursor);
+        return _this;
+    }
+    CanvasTool.prototype.tearDown = function () {
+        _super.prototype.tearDown.call(this);
+        this._map.renderer.allowPan = true;
+        this._viewport.removeEventListener("mousedown", this._onDown);
+        this._viewport.removeEventListener("mousemove", this._onMove);
+        this._viewport.removeChild(this._cursor);
+    };
+    CanvasTool.prototype._onDown = function (event) {
+        var _this = this;
+        if (event.button !== 0)
+            return;
+        var layer = this._map.renderer.getLayer("canvas");
+        this._context = layer.getCanvas().getContext("2d");
+        this._halfMapSize = this._map.renderer.getMapSize() * 0.5;
+        this._isActive = true;
+        this._action(this._context, this._getActionPos(event), this._getScaling());
+        var up = function () {
+            _this._isActive = false;
+            document.removeEventListener("mouseup", up);
+        };
+        document.addEventListener("mouseup", up, { passive: true });
+    };
+    CanvasTool.prototype._onMove = function (event) {
+        var box = this._viewport.getBoundingClientRect();
+        this._cursor.style.left = (event.clientX - box.left) + "px";
+        this._cursor.style.top = (event.clientY - box.top) + "px";
+        if (this._isActive && this._context)
+            this._action(this._context, this._getActionPos(event), this._getScaling());
+    };
+    CanvasTool.prototype._getActionPos = function (event) {
+        var pos = this._map.renderer.screenToMap(event);
+        if (!this._halfMapSize)
+            return { x: 0, y: 0 };
+        return { x: this._halfMapSize + pos.x, y: this._halfMapSize - pos.y };
+    };
+    CanvasTool.prototype._getScaling = function () {
+        return 1 / this._map.renderer.getZoom();
+    };
+    return CanvasTool;
+}(Tool));
 var Cursor = (function (_super) {
     __extends(Cursor, _super);
     function Cursor(viewport, map, tool_panel) {
@@ -1444,53 +1504,32 @@ var BaseInfo = (function (_super) {
 }(Tool));
 var Eraser = (function (_super) {
     __extends(Eraser, _super);
-    function Eraser(viewport, map, tool_panel) {
-        var _this = _super.call(this, viewport, map, tool_panel) || this;
-        _this._stroke = [];
-        map.renderer.allowPan = false;
-        _this._onMouseDown = _this._onMouseDown.bind(_this);
-        _this._viewport.addEventListener("mousedown", _this._onMouseDown, { passive: true });
+    function Eraser() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this._cssSize = 40;
         return _this;
     }
-    Eraser.prototype.tearDown = function () {
-        this._map.renderer.allowPan = true;
-        _super.prototype.tearDown.call(this);
-        this._viewport.removeEventListener("mousedown", this._onMouseDown);
+    Eraser.prototype._setUpCursor = function () {
+        var size = 40;
+        this._cursor.style.width = this._cursor.style.height = size + "px";
+        this._cursor.style.marginLeft = this._cursor.style.marginTop = (-size / 2) + "px";
+        this._cursor.style.border = "1px solid #fff";
+    };
+    Eraser.prototype._action = function (context, pos, scale) {
+        var size = this._cssSize * scale;
+        context.clearRect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
     };
     Eraser.prototype._setUpToolPanel = function () {
         _super.prototype._setUpToolPanel.call(this);
         var frag = document.createDocumentFragment();
-        frag.appendChild(document.createTextNode("Hold LMB to delete strokes, MMB to pan"));
+        frag.appendChild(document.createTextNode("Hold LMB to erase, MMB to pan"));
         this._tool_panel.appendChild(frag);
         this._tool_panel.style.display = "block";
-    };
-    Eraser.prototype._onMouseDown = function (event) {
-        var _this = this;
-        if (event.button !== 0)
-            return;
-        var last = this._map.renderer.screenToMap(event);
-        this._stroke = [last];
-        var drag = Utils.rafDebounce(function (evtDrag) {
-            var next = _this._map.renderer.screenToMap(evtDrag);
-            var dist = Math.hypot(next.x - last.x, next.y - last.y);
-            if (dist < 4.0)
-                return;
-            _this._stroke.push(next);
-            last = next;
-        });
-        var up = function () {
-            _this._viewport.removeEventListener("mousemove", drag);
-            document.removeEventListener("mouseup", up);
-            StateManager.dispatch(State.user.canvasStrokeErase, _this._stroke);
-            _this._stroke = [];
-        };
-        this._viewport.addEventListener("mousemove", drag, { passive: true });
-        document.addEventListener("mouseup", up, { passive: true });
     };
     Eraser.id = "eraser";
     Eraser.displayName = "Eraser";
     return Eraser;
-}(Tool));
+}(CanvasTool));
 var Pen = (function (_super) {
     __extends(Pen, _super);
     function Pen(viewport, map, tool_panel) {
