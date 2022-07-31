@@ -44,12 +44,15 @@ class HeroMap {
             return;
 
         // Create layers for the new target continent
-        const terrain = TerrainLayer.factory(continent, "terrain");
-        const hexes = BasePolygonsLayer.factory(continent, "hexes");
-        const lattice = LatticeLayer.factory(continent, "lattice");
-        const names = BaseNamesLayer.factory(continent, "names");
+        const allLayers = [
+            TerrainLayer.factory(continent, "terrain"),
+            BasePolygonsLayer.factory(continent, "hexes"),
+            LatticeLayer.factory(continent, "lattice"),
+            BaseNamesLayer.factory(continent, "names"),
+            CanvasLayer.factory(continent, "canvas"),
+        ];
 
-        await Promise.all([terrain, hexes, lattice, names]).then(
+        await Promise.all(allLayers).then(
             (layers) => {
                 // Delete old layers
                 this.renderer.clearLayers();
@@ -70,5 +73,4 @@ class HeroMap {
     jumpTo(point: Point): void {
         this.renderer?.jumpTo(point);
     }
-
 }

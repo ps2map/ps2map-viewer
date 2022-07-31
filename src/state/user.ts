@@ -12,31 +12,33 @@ namespace State {
         server: Server | undefined;
         continent: Continent | undefined;
         hoveredBase: Base | null;
+        canvas: Point[][];
     };
 
     export const defaultUserState: UserState = {
         server: undefined,
         continent: undefined,
         hoveredBase: null,
+        canvas: [],
     };
 
     /** State reducer for "user/" actions. */
     export function userReducer(state: UserState, action: string, data: any): UserState {
         switch (action) {
-            case "user/serverChanged":
+            case user.serverChanged:
                 return {
                     ...state,
-                    server: data
+                    server: data,
                 };
             case user.continentChanged:
                 return {
                     ...state,
-                    continent: data
+                    continent: data,
                 };
-            case "user/baseHovered":
+            case user.baseHovered:
                 return {
                     ...state,
-                    hoveredBase: data
+                    hoveredBase: data,
                 };
             default:
                 return state;

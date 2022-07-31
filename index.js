@@ -100,6 +100,75 @@ var GameData = (function () {
     GameData._loaded = false;
     return GameData;
 }());
+function _getPolyLineBboxes(line) {
+    var bboxes = [];
+    for (var i = 0; i < line.length - 1; i++) {
+        var p1 = line[i];
+        var p2 = line[i + 1];
+        if (p1 && p2) {
+            var bbox = {
+                minX: Math.min(p1.x, p2.x),
+                minY: Math.min(p1.y, p2.y),
+                maxX: Math.max(p1.x, p2.x),
+                maxY: Math.max(p1.y, p2.y)
+            };
+            bboxes.push(bbox);
+        }
+    }
+    return bboxes;
+}
+function _boundingBoxIntersect(a, b) {
+    return a.minX <= b.maxX && a.maxX >= b.minX && a.minY <= b.maxY && a.maxY >= b.minY;
+}
+function _lineIntersect(a, b) {
+    var a0 = a[0];
+    var a1 = a[1];
+    var b0 = b[0];
+    var b1 = b[1];
+    if (!a0 || !a1 || !b0 || !b1)
+        return false;
+    var det = (a1.x - a0.x) * (b1.y - b0.y) - (a1.y - a0.y) * (b1.x - b0.x);
+    if (det === 0)
+        return false;
+    var projA = ((b1.y - b0.y) * (b1.x - a0.x) + (b0.x - b1.x) * (b1.y - a0.y)) / det;
+    var projB = ((a0.y - a1.y) * (b1.x - a0.x) + (a1.x - a0.x) * (b1.y - a0.y)) / det;
+    return projA >= 0 && projA <= 1 && projB >= 0 && projB <= 1;
+}
+function polyLineStrokeErase(polylines, stroke) {
+    var eraserBboxes = _getPolyLineBboxes(stroke);
+    var remaining = [];
+    polylines.forEach(function (polyline) {
+        var deleted = false;
+        var _loop_1 = function (i) {
+            var p1 = polyline[i];
+            var p2 = polyline[i + 1];
+            if (p1 && p2) {
+                var bbox_1 = {
+                    minX: Math.min(p1.x, p2.x),
+                    minY: Math.min(p1.y, p2.y),
+                    maxX: Math.max(p1.x, p2.x),
+                    maxY: Math.max(p1.y, p2.y)
+                };
+                eraserBboxes.forEach(function (eraserBbox, i) {
+                    if (_boundingBoxIntersect(bbox_1, eraserBbox)
+                        && _lineIntersect([stroke[i], stroke[i + 1]], [p1, p2]))
+                        deleted = true;
+                });
+            }
+            if (deleted)
+                return "break";
+        };
+        for (var i = 0; i < polyline.length - 1; i++) {
+            var state_1 = _loop_1(i);
+            if (state_1 === "break")
+                break;
+        }
+        if (!deleted) {
+            remaining.push(polyline);
+        }
+    });
+    return remaining;
+}
 var Camera = (function () {
     function Camera(mapDimensions, viewportDimensions, stepSize, maxZoom) {
         if (stepSize === void 0) { stepSize = 1.5; }
@@ -296,6 +365,7 @@ var MapRenderer = (function () {
         this._mapSize = 1024;
         this._layers = [];
         this._isPanning = false;
+        this.allowPan = true;
         this._onZoom = Utils.rafDebounce(function (evt) {
             evt.preventDefault();
             if (_this._isPanning)
@@ -335,6 +405,9 @@ var MapRenderer = (function () {
     };
     MapRenderer.prototype.getMapSize = function () {
         return this._mapSize;
+    };
+    MapRenderer.prototype.getZoom = function () {
+        return this._camera.getZoom();
     };
     MapRenderer.prototype.addLayer = function (layer) {
         if (layer.mapSize !== this._mapSize)
@@ -376,9 +449,24 @@ var MapRenderer = (function () {
             height: this.viewport.clientHeight
         });
     };
+    MapRenderer.prototype.screenToMap = function (screen) {
+        if (screen instanceof MouseEvent)
+            screen = { x: screen.clientX, y: screen.clientY };
+        var vp = this.viewport;
+        var relX = (screen.x - vp.offsetLeft) / vp.clientWidth;
+        var relY = (screen.y - vp.offsetTop) / vp.clientHeight;
+        var box = this._camera.currentViewBox();
+        var halfSize = this._mapSize * 0.5;
+        return {
+            x: -halfSize + box.left + (box.right - box.left) * relX,
+            y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY)
+        };
+    };
     MapRenderer.prototype._mousePan = function (evtDown) {
         var _this = this;
         if (evtDown.button === 2)
+            return;
+        if (!this.allowPan && evtDown.button === 0)
             return;
         this._setPanLock(true);
         var panStart = {
@@ -1009,18 +1097,21 @@ var HeroMap = (function () {
     HeroMap.prototype.switchContinent = function (continent) {
         var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var terrain, hexes, lattice, names;
+            var allLayers;
             var _this = this;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         if (continent.code === ((_a = this._continent) === null || _a === void 0 ? void 0 : _a.code))
                             return [2];
-                        terrain = TerrainLayer.factory(continent, "terrain");
-                        hexes = BasePolygonsLayer.factory(continent, "hexes");
-                        lattice = LatticeLayer.factory(continent, "lattice");
-                        names = BaseNamesLayer.factory(continent, "names");
-                        return [4, Promise.all([terrain, hexes, lattice, names]).then(function (layers) {
+                        allLayers = [
+                            TerrainLayer.factory(continent, "terrain"),
+                            BasePolygonsLayer.factory(continent, "hexes"),
+                            LatticeLayer.factory(continent, "lattice"),
+                            BaseNamesLayer.factory(continent, "names"),
+                            CanvasLayer.factory(continent, "canvas"),
+                        ];
+                        return [4, Promise.all(allLayers).then(function (layers) {
                                 _this.renderer.clearLayers();
                                 _this.renderer.setMapSize(continent.map_size);
                                 _this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
@@ -1230,22 +1321,72 @@ var Tool = (function () {
         this._tool_panel.innerHTML = "";
         this._tool_panel.removeAttribute("style");
     };
-    Tool.prototype._getMapPosition = function (event) {
-        var relX = (event.clientX - this._viewport.offsetLeft) / this._viewport.clientWidth;
-        var relY = 1 - (event.clientY - this._viewport.offsetTop) / this._viewport.clientHeight;
-        var viewBox = this._map.renderer.getViewBox();
-        var halfSize = this._map.renderer.getMapSize() * 0.5;
-        return {
-            x: -halfSize + viewBox.left + (viewBox.right - viewBox.left) * relX,
-            y: -halfSize + viewBox.bottom + (viewBox.top - viewBox.bottom) * relY
-        };
-    };
     Tool.prototype._setUpToolPanel = function () { };
     Tool.id = "none";
     Tool.displayName = "None";
     Tool.defaultState = {};
     return Tool;
 }());
+var CanvasTool = (function (_super) {
+    __extends(CanvasTool, _super);
+    function CanvasTool(viewport, map, tool_panel) {
+        var _this = _super.call(this, viewport, map, tool_panel) || this;
+        _this._isActive = false;
+        _this._context = null;
+        _this._halfMapSize = null;
+        map.renderer.allowPan = false;
+        _this._onDown = _this._onDown.bind(_this);
+        _this._onMove = _this._onMove.bind(_this);
+        _this._viewport.addEventListener("mousedown", _this._onDown, { passive: true });
+        _this._viewport.addEventListener("mousemove", _this._onMove, { passive: true });
+        _this._cursor = document.createElement("div");
+        _this._cursor.style.zIndex = "100";
+        _this._cursor.style.position = "absolute";
+        _this._cursor.style.pointerEvents = "none";
+        _this._setUpCursor();
+        _this._viewport.appendChild(_this._cursor);
+        return _this;
+    }
+    CanvasTool.prototype.tearDown = function () {
+        _super.prototype.tearDown.call(this);
+        this._map.renderer.allowPan = true;
+        this._viewport.removeEventListener("mousedown", this._onDown);
+        this._viewport.removeEventListener("mousemove", this._onMove);
+        this._viewport.removeChild(this._cursor);
+    };
+    CanvasTool.prototype._onDown = function (event) {
+        var _this = this;
+        if (event.button !== 0)
+            return;
+        var layer = this._map.renderer.getLayer("canvas");
+        this._context = layer.getCanvas().getContext("2d");
+        this._halfMapSize = this._map.renderer.getMapSize() * 0.5;
+        this._isActive = true;
+        this._action(this._context, this._getActionPos(event), this._getScaling());
+        var up = function () {
+            _this._isActive = false;
+            document.removeEventListener("mouseup", up);
+        };
+        document.addEventListener("mouseup", up, { passive: true });
+    };
+    CanvasTool.prototype._onMove = function (event) {
+        var box = this._viewport.getBoundingClientRect();
+        this._cursor.style.left = (event.clientX - box.left) + "px";
+        this._cursor.style.top = (event.clientY - box.top) + "px";
+        if (this._isActive && this._context)
+            this._action(this._context, this._getActionPos(event), this._getScaling());
+    };
+    CanvasTool.prototype._getActionPos = function (event) {
+        var pos = this._map.renderer.screenToMap(event);
+        if (!this._halfMapSize)
+            return { x: 0, y: 0 };
+        return { x: this._halfMapSize + pos.x, y: this._halfMapSize - pos.y };
+    };
+    CanvasTool.prototype._getScaling = function () {
+        return 1 / this._map.renderer.getZoom();
+    };
+    return CanvasTool;
+}(Tool));
 var Cursor = (function (_super) {
     __extends(Cursor, _super);
     function Cursor(viewport, map, tool_panel) {
@@ -1261,12 +1402,10 @@ var Cursor = (function (_super) {
     Cursor.prototype._setUpToolPanel = function () {
         _super.prototype._setUpToolPanel.call(this);
         var x = Object.assign(document.createElement("span"), {
-            id: "tool-cursor_x",
-            textContent: "0.00"
+            id: "tool-cursor_x"
         });
         var y = Object.assign(document.createElement("span"), {
-            id: "tool-cursor_y",
-            textContent: "0.00"
+            id: "tool-cursor_y"
         });
         var frag = document.createDocumentFragment();
         frag.appendChild(document.createTextNode("X:"));
@@ -1282,6 +1421,7 @@ var Cursor = (function (_super) {
             fontSize: "18px",
             justifyItems: "right"
         });
+        this._updateToolPanel({ x: 0, y: 0 });
     };
     Cursor.prototype._updateToolPanel = function (target) {
         var x = document.getElementById("tool-cursor_x");
@@ -1292,7 +1432,7 @@ var Cursor = (function (_super) {
             y.textContent = target.y.toFixed(2);
     };
     Cursor.prototype._onMove = function (event) {
-        this._updateToolPanel(this._getMapPosition(event));
+        this._updateToolPanel(this._map.renderer.screenToMap(event));
     };
     Cursor.id = "cursor";
     Cursor.displayName = "Map Cursor";
@@ -1362,7 +1502,73 @@ var BaseInfo = (function (_super) {
     BaseInfo.displayName = "Base Info";
     return BaseInfo;
 }(Tool));
-var available_tools = [Tool, Cursor, BaseInfo];
+var Eraser = (function (_super) {
+    __extends(Eraser, _super);
+    function Eraser() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Eraser.prototype._setUpCursor = function () {
+        this._cursor.style.width = this._cursor.style.height = (Eraser.size + "px");
+        this._cursor.style.marginLeft = this._cursor.style.marginTop = ((-Eraser.size / 2) + "px");
+        this._cursor.style.border = "1px solid #fff";
+    };
+    Eraser.prototype._action = function (context, pos, scale) {
+        var size = Eraser.size * scale;
+        context.clearRect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
+    };
+    Eraser.prototype._setUpToolPanel = function () {
+        _super.prototype._setUpToolPanel.call(this);
+        var frag = document.createDocumentFragment();
+        frag.appendChild(document.createTextNode("Hold LMB to erase, MMB to pan"));
+        this._tool_panel.appendChild(frag);
+        this._tool_panel.style.display = "block";
+    };
+    Eraser.id = "eraser";
+    Eraser.displayName = "Eraser";
+    Eraser.size = 40;
+    return Eraser;
+}(CanvasTool));
+var Brush = (function (_super) {
+    __extends(Brush, _super);
+    function Brush() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Brush.prototype._setUpCursor = function () {
+        this._cursor.style.width = this._cursor.style.height = Brush.size + "px";
+        this._cursor.style.marginLeft = this._cursor.style.marginTop = (-Brush.size / 2) + "px";
+        this._cursor.style.border = "1px solid #fff";
+        this._cursor.style.borderRadius = Brush.size * 0.5 + "px";
+    };
+    Brush.prototype._action = function (context, pos, scale) {
+        context.fillStyle = Brush.color;
+        context.beginPath();
+        context.arc(pos.x, pos.y, Brush.size * scale * 0.5, 0, 2 * Math.PI, false);
+        context.fill();
+    };
+    Brush.prototype._setUpToolPanel = function () {
+        _super.prototype._setUpToolPanel.call(this);
+        var frag = document.createDocumentFragment();
+        frag.appendChild(document.createTextNode("Hold LMB to draw, MMB to pan"));
+        frag.appendChild(document.createElement("br"));
+        frag.appendChild(document.createTextNode("Color:"));
+        var picker = document.createElement("input");
+        picker.type = "color";
+        picker.value = "#ffff00";
+        picker.style.margin = "10px";
+        picker.addEventListener("change", function () {
+            Brush.color = picker.value;
+        });
+        frag.appendChild(picker);
+        this._tool_panel.appendChild(frag);
+        this._tool_panel.style.display = "block";
+    };
+    Brush.size = 10;
+    Brush.color = "rgb(255, 255, 0)";
+    Brush.id = "brush";
+    Brush.displayName = "Brush";
+    return Brush;
+}(CanvasTool));
+var available_tools = [Tool, Cursor, BaseInfo, Eraser, Brush];
 document.addEventListener("DOMContentLoaded", function () {
     var toolbar_container = document.getElementById("toolbar-container");
     toolbar_container.innerHTML = "";
@@ -1464,15 +1670,16 @@ var State;
     State.defaultUserState = {
         server: undefined,
         continent: undefined,
-        hoveredBase: null
+        hoveredBase: null,
+        canvas: []
     };
     function userReducer(state, action, data) {
         switch (action) {
-            case "user/serverChanged":
+            case user.serverChanged:
                 return __assign(__assign({}, state), { server: data });
             case user.continentChanged:
                 return __assign(__assign({}, state), { continent: data });
-            case "user/baseHovered":
+            case user.baseHovered:
                 return __assign(__assign({}, state), { hoveredBase: data });
             default:
                 return state;
@@ -1582,6 +1789,40 @@ document.addEventListener("DOMContentLoaded", function () {
         StateManager.dispatch(State.user.continentChanged, continents[continents.length - 1]);
     });
 });
+var CanvasLayer = (function (_super) {
+    __extends(CanvasLayer, _super);
+    function CanvasLayer(id, mapSize) {
+        var _this = _super.call(this, id, mapSize) || this;
+        _this.element.classList.add("ps2map__canvas");
+        return _this;
+    }
+    CanvasLayer.prototype.calculateStrokeWidth = function (zoom) {
+        return 1.6 + 23.67 / Math.pow(2, zoom / 0.23);
+    };
+    CanvasLayer.prototype.getCanvas = function () {
+        var element = this.element.firstChild;
+        if (!element)
+            throw "Unable to find canvas element";
+        return element;
+    };
+    CanvasLayer.factory = function (continent, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var layer, frag, canvas;
+            return __generator(this, function (_a) {
+                layer = new CanvasLayer(id, continent.map_size);
+                frag = document.createDocumentFragment();
+                canvas = document.createElement("canvas");
+                if (!canvas.getContext)
+                    console.error("Unable to create canvas element");
+                canvas.width = canvas.height = layer.mapSize;
+                frag.appendChild(canvas);
+                layer.element.appendChild(frag);
+                return [2, layer];
+            });
+        });
+    };
+    return CanvasLayer;
+}(StaticLayer));
 var StateManager = (function () {
     function StateManager() {
     }
