@@ -75,6 +75,16 @@ class MapRenderer {
         });
     }
 
+    getCanvasContext(): CanvasRenderingContext2D | null {
+        const layer = this.getLayer("canvas") as CanvasLayer | null;
+        if (layer === null)
+            throw "No canvas layer found.";
+        const canvas = layer.element.firstElementChild as HTMLCanvasElement | null;
+        if (!canvas)
+            return null;
+        return canvas.getContext("2d");
+    }
+
     getViewBox(): Readonly<ViewBox> {
         return this._camera.currentViewBox();
     }

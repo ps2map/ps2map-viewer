@@ -400,6 +400,15 @@ var MapRenderer = (function () {
             passive: true
         });
     }
+    MapRenderer.prototype.getCanvasContext = function () {
+        var layer = this.getLayer("canvas");
+        if (layer === null)
+            throw "No canvas layer found.";
+        var canvas = layer.element.firstElementChild;
+        if (!canvas)
+            return null;
+        return canvas.getContext("2d");
+    };
     MapRenderer.prototype.getViewBox = function () {
         return this._camera.currentViewBox();
     };
@@ -1358,8 +1367,7 @@ var CanvasTool = (function (_super) {
         var _this = this;
         if (event.button !== 0)
             return;
-        var layer = this._map.renderer.getLayer("canvas");
-        this._context = layer.getCanvas().getContext("2d");
+        this._context = this._map.renderer.getCanvasContext();
         this._halfMapSize = this._map.renderer.getMapSize() * 0.5;
         this._isActive = true;
         this._action(this._context, this._getActionPos(event), this._getScaling());
