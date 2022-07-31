@@ -26,7 +26,7 @@ class Minimap {
     private _baseOutlineSvg: SVGElement | undefined = undefined;
 
     /** CSS size of the minimap. */
-    private readonly _cssSize: number;
+    private _cssSize: number;
 
     private _minimapHexAlpha: number = 0.5;
     private _polygons: Map<number, SVGPolygonElement> = new Map();
@@ -45,6 +45,12 @@ class Minimap {
         this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), {
             passive: true
         });
+
+        const obj = new ResizeObserver(() => {
+            this._cssSize = this.element.clientWidth;
+            this.element.style.height = `${this._cssSize}px`;
+        });
+        obj.observe(this.element);
     }
 
     /** Update the viewBox displayed on the minimap. */

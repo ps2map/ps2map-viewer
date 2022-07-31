@@ -1145,6 +1145,7 @@ var HeroMap = (function () {
 }());
 var Minimap = (function () {
     function Minimap(element) {
+        var _this = this;
         this._mapSize = 0;
         this._baseOutlineSvg = undefined;
         this._minimapHexAlpha = 0.5;
@@ -1159,6 +1160,11 @@ var Minimap = (function () {
         this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), {
             passive: true
         });
+        var obj = new ResizeObserver(function () {
+            _this._cssSize = _this.element.clientWidth;
+            _this.element.style.height = "".concat(_this._cssSize, "px");
+        });
+        obj.observe(this.element);
     }
     Minimap.prototype.updateViewbox = function (viewBox) {
         var mapSize = this._mapSize;
@@ -1716,6 +1722,31 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 document.addEventListener("DOMContentLoaded", function () {
+    var grabber = document.getElementById("sidebar-selector");
+    grabber.addEventListener("mousedown", function (event) {
+        document.body.style.cursor = "col-resize";
+        var sidebar = document.getElementById("sidebar");
+        var initialWidth = sidebar.clientWidth;
+        var minwidth = document.body.clientWidth * 0.1;
+        var maxwidth = 512;
+        var startX = event.clientX;
+        var onMove = function (evt) {
+            var delta = evt.clientX - startX;
+            var newWidth = initialWidth + delta;
+            if (newWidth < minwidth)
+                newWidth = minwidth;
+            else if (newWidth > maxwidth)
+                newWidth = maxwidth;
+            document.body.style.setProperty("--sidebar-width", "".concat(newWidth, "px"));
+        };
+        var onUp = function () {
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+            document.body.style.removeProperty("cursor");
+        };
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+    });
     var heroMap = new HeroMap(document.getElementById("hero-map"));
     var minimap = new Minimap(document.getElementById("minimap"));
     var listener = new MapListener();
