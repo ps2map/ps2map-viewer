@@ -6,9 +6,6 @@ namespace State {
         export const continentChanged = "user/continentChanged";
         export const serverChanged = "user/serverChanged";
         export const baseHovered = "user/baseHovered";
-        export const canvasUpdated = "user/canvasUpdated";
-        export const canvasLineAdded = "user/canvasLineAdded";
-        export const canvasStrokeErase = "user/canvasStrokeErase";
     }
 
     export interface UserState {
@@ -42,18 +39,6 @@ namespace State {
                 return {
                     ...state,
                     hoveredBase: data,
-                };
-            case user.canvasLineAdded:
-                const newCanvas = [...state.canvas];
-                newCanvas.push(data);
-                return {
-                    ...state,
-                    canvas: newCanvas,
-                };
-            case user.canvasStrokeErase:
-                return {
-                    ...state,
-                    canvas: polyLineStrokeErase(state.canvas, data),
                 };
             default:
                 return state;

@@ -5,13 +5,13 @@ class Eraser extends CanvasTool {
     static readonly id = "eraser";
     static readonly displayName = "Eraser";
 
-    private readonly _cssSize = 40;
+    static size = 40;
 
     protected _setUpCursor(): void {
-        // TODO: Move to CSS variable
-        const size = 40;
-        this._cursor.style.width = this._cursor.style.height = size + "px";
-        this._cursor.style.marginLeft = this._cursor.style.marginTop = (-size / 2) + "px";
+        this._cursor.style.width = this._cursor.style.height = (
+            Eraser.size + "px");
+        this._cursor.style.marginLeft = this._cursor.style.marginTop = (
+            (-Eraser.size / 2) + "px");
         this._cursor.style.border = "1px solid #fff";
     }
 
@@ -20,7 +20,7 @@ class Eraser extends CanvasTool {
         pos: Point,
         scale: number,
     ): void {
-        const size = this._cssSize * scale;
+        const size = Eraser.size * scale;
         context.clearRect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
     }
 

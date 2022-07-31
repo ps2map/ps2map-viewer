@@ -1505,18 +1505,15 @@ var BaseInfo = (function (_super) {
 var Eraser = (function (_super) {
     __extends(Eraser, _super);
     function Eraser() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this._cssSize = 40;
-        return _this;
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     Eraser.prototype._setUpCursor = function () {
-        var size = 40;
-        this._cursor.style.width = this._cursor.style.height = size + "px";
-        this._cursor.style.marginLeft = this._cursor.style.marginTop = (-size / 2) + "px";
+        this._cursor.style.width = this._cursor.style.height = (Eraser.size + "px");
+        this._cursor.style.marginLeft = this._cursor.style.marginTop = ((-Eraser.size / 2) + "px");
         this._cursor.style.border = "1px solid #fff";
     };
     Eraser.prototype._action = function (context, pos, scale) {
-        var size = this._cssSize * scale;
+        var size = Eraser.size * scale;
         context.clearRect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
     };
     Eraser.prototype._setUpToolPanel = function () {
@@ -1528,73 +1525,39 @@ var Eraser = (function (_super) {
     };
     Eraser.id = "eraser";
     Eraser.displayName = "Eraser";
+    Eraser.size = 40;
     return Eraser;
 }(CanvasTool));
-var Pen = (function (_super) {
-    __extends(Pen, _super);
-    function Pen(viewport, map, tool_panel) {
-        var _this = _super.call(this, viewport, map, tool_panel) || this;
-        _this._current = [];
-        map.renderer.allowPan = false;
-        _this._onMouseDown = _this._onMouseDown.bind(_this);
-        _this._viewport.addEventListener("mousedown", _this._onMouseDown, { passive: true });
-        return _this;
+var Brush = (function (_super) {
+    __extends(Brush, _super);
+    function Brush() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    Pen.prototype.tearDown = function () {
-        this._map.renderer.allowPan = true;
-        _super.prototype.tearDown.call(this);
-        this._viewport.removeEventListener("mousedown", this._onMouseDown);
+    Brush.prototype._setUpCursor = function () {
+        this._cursor.style.width = this._cursor.style.height = Brush.size + "px";
+        this._cursor.style.marginLeft = this._cursor.style.marginTop = (-Brush.size / 2) + "px";
+        this._cursor.style.border = "1px solid #fff";
+        this._cursor.style.borderRadius = Brush.size * 0.5 + "px";
     };
-    Pen.prototype._setUpToolPanel = function () {
+    Brush.prototype._action = function (context, pos, scale) {
+        context.fillStyle = "rgb(255, 255, 0)";
+        context.beginPath();
+        context.arc(pos.x, pos.y, Brush.size * scale * 0.5, 0, 2 * Math.PI, false);
+        context.fill();
+    };
+    Brush.prototype._setUpToolPanel = function () {
         _super.prototype._setUpToolPanel.call(this);
         var frag = document.createDocumentFragment();
         frag.appendChild(document.createTextNode("Hold LMB to draw, MMB to pan"));
         this._tool_panel.appendChild(frag);
         this._tool_panel.style.display = "block";
     };
-    Pen.prototype._onMouseDown = function (event) {
-        var _this = this;
-        if (event.button !== 0)
-            return;
-        var layer = this._map.renderer.getLayer("canvas");
-        layer.element.style.opacity = "0.75";
-        var ctx = layer.getCanvas().getContext("2d");
-        var halfSize = this._map.renderer.getMapSize() * 0.5;
-        var start = this._map.renderer.screenToMap(event);
-        this._current = [start];
-        ctx.beginPath();
-        ctx.moveTo(halfSize + start.x, halfSize - start.y);
-        ctx.strokeStyle = "rgb(255, 255, 0)";
-        ctx.lineCap = "round";
-        ctx.lineWidth = layer.calculateStrokeWidth(this._map.renderer.getZoom());
-        var drag = Utils.rafDebounce(function (evtDrag) {
-            var last = _this._current[_this._current.length - 1];
-            if (!last)
-                return;
-            var next = _this._map.renderer.screenToMap(evtDrag);
-            var dist = Math.hypot(next.x - last.x, next.y - last.y);
-            if (dist <= 4.0)
-                return;
-            ctx.moveTo(halfSize + last.x, halfSize - last.y);
-            ctx.lineTo(halfSize + next.x, halfSize - next.y);
-            ctx.stroke();
-            _this._current.push(next);
-        });
-        var up = function () {
-            ctx.stroke();
-            _this._viewport.removeEventListener("mousemove", drag);
-            document.removeEventListener("mouseup", up);
-            StateManager.dispatch(State.user.canvasLineAdded, _this._current);
-            _this._current = [];
-        };
-        this._viewport.addEventListener("mousemove", drag, { passive: true });
-        document.addEventListener("mouseup", up, { passive: true });
-    };
-    Pen.id = "pen";
-    Pen.displayName = "Pen";
-    return Pen;
-}(Tool));
-var available_tools = [Tool, Cursor, BaseInfo, Eraser, Pen];
+    Brush.size = 10;
+    Brush.id = "brush";
+    Brush.displayName = "Brush";
+    return Brush;
+}(CanvasTool));
+var available_tools = [Tool, Cursor, BaseInfo, Eraser, Brush];
 document.addEventListener("DOMContentLoaded", function () {
     var toolbar_container = document.getElementById("toolbar-container");
     toolbar_container.innerHTML = "";
@@ -1684,15 +1647,6 @@ var State;
     }
     State.toolboxReducer = toolboxReducer;
 })(State || (State = {}));
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 var State;
 (function (State) {
     var user;
@@ -1700,9 +1654,6 @@ var State;
         user.continentChanged = "user/continentChanged";
         user.serverChanged = "user/serverChanged";
         user.baseHovered = "user/baseHovered";
-        user.canvasUpdated = "user/canvasUpdated";
-        user.canvasLineAdded = "user/canvasLineAdded";
-        user.canvasStrokeErase = "user/canvasStrokeErase";
     })(user = State.user || (State.user = {}));
     ;
     State.defaultUserState = {
@@ -1719,12 +1670,6 @@ var State;
                 return __assign(__assign({}, state), { continent: data });
             case user.baseHovered:
                 return __assign(__assign({}, state), { hoveredBase: data });
-            case user.canvasLineAdded:
-                var newCanvas = __spreadArray([], state.canvas, true);
-                newCanvas.push(data);
-                return __assign(__assign({}, state), { canvas: newCanvas });
-            case user.canvasStrokeErase:
-                return __assign(__assign({}, state), { canvas: polyLineStrokeErase(state.canvas, data) });
             default:
                 return state;
         }
@@ -1742,6 +1687,15 @@ var State;
     }
     State.appReducer = appReducer;
 })(State || (State = {}));
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = new HeroMap(document.getElementById("hero-map"));
     var minimap = new Minimap(document.getElementById("minimap"));
@@ -1799,14 +1753,6 @@ document.addEventListener("DOMContentLoaded", function () {
             throw new Error("No continent found with id ".concat(continent_picker.value));
         StateManager.dispatch(State.user.continentChanged, continent);
     });
-    StateManager.subscribe(State.user.canvasLineAdded, function (state) {
-        var layer = heroMap.renderer.getLayer("canvas");
-        layer.update(state.user.canvas, heroMap.renderer.getZoom());
-    });
-    StateManager.subscribe(State.user.canvasStrokeErase, function (state) {
-        var layer = heroMap.renderer.getLayer("canvas");
-        layer.update(state.user.canvas, heroMap.renderer.getZoom());
-    });
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
         var continents = __spreadArray([], gameData.continents(), true);
@@ -1836,35 +1782,11 @@ var CanvasLayer = (function (_super) {
     __extends(CanvasLayer, _super);
     function CanvasLayer(id, mapSize) {
         var _this = _super.call(this, id, mapSize) || this;
-        _this._lines = [];
         _this.element.classList.add("ps2map__canvas");
         return _this;
     }
     CanvasLayer.prototype.calculateStrokeWidth = function (zoom) {
         return 1.6 + 23.67 / Math.pow(2, zoom / 0.23);
-    };
-    CanvasLayer.prototype.update = function (lines, zoom) {
-        this._lines = lines;
-        var canvas = this.getCanvas();
-        var ctx = canvas.getContext("2d");
-        if (!ctx)
-            return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.lineWidth = this.calculateStrokeWidth(zoom);
-        var halfSize = this.mapSize * 0.5;
-        lines.forEach(function (line) {
-            var point = line[0];
-            if (!point)
-                return;
-            ctx.moveTo(halfSize + point.x, halfSize - point.y);
-            for (var i = 1; i < line.length; i++) {
-                point = line[i];
-                if (!point)
-                    return;
-                ctx.lineTo(halfSize + point.x, halfSize - point.y);
-            }
-            ctx.stroke();
-        });
     };
     CanvasLayer.prototype.getCanvas = function () {
         var element = this.element.firstChild;
@@ -1887,9 +1809,6 @@ var CanvasLayer = (function (_super) {
                 return [2, layer];
             });
         });
-    };
-    CanvasLayer.prototype.deferredLayerUpdate = function (_, zoom) {
-        this.update(this._lines, zoom);
     };
     return CanvasLayer;
 }(StaticLayer));
