@@ -80,6 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const layer = heroMap.renderer.getLayer("canvas") as CanvasLayer;
         layer.update(state.user.canvas, heroMap.renderer.getZoom());
     });
+    StateManager.subscribe(State.user.canvasStrokeErase, state => {
+        const layer = heroMap.renderer.getLayer("canvas") as CanvasLayer;
+        layer.update(state.user.canvas, heroMap.renderer.getZoom());
+    });
 
     // Load game data
     GameData.load().then((gameData) => {

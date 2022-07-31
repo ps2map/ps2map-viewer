@@ -8,6 +8,7 @@ namespace State {
         export const baseHovered = "user/baseHovered";
         export const canvasUpdated = "user/canvasUpdated";
         export const canvasLineAdded = "user/canvasLineAdded";
+        export const canvasStrokeErase = "user/canvasStrokeErase";
     }
 
     export interface UserState {
@@ -48,6 +49,11 @@ namespace State {
                 return {
                     ...state,
                     canvas: newCanvas,
+                };
+            case user.canvasStrokeErase:
+                return {
+                    ...state,
+                    canvas: polyLineStrokeErase(state.canvas, data),
                 };
             default:
                 return state;

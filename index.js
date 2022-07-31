@@ -100,6 +100,75 @@ var GameData = (function () {
     GameData._loaded = false;
     return GameData;
 }());
+function _getPolyLineBboxes(line) {
+    var bboxes = [];
+    for (var i = 0; i < line.length - 1; i++) {
+        var p1 = line[i];
+        var p2 = line[i + 1];
+        if (p1 && p2) {
+            var bbox = {
+                minX: Math.min(p1.x, p2.x),
+                minY: Math.min(p1.y, p2.y),
+                maxX: Math.max(p1.x, p2.x),
+                maxY: Math.max(p1.y, p2.y)
+            };
+            bboxes.push(bbox);
+        }
+    }
+    return bboxes;
+}
+function _boundingBoxIntersect(a, b) {
+    return a.minX <= b.maxX && a.maxX >= b.minX && a.minY <= b.maxY && a.maxY >= b.minY;
+}
+function _lineIntersect(a, b) {
+    var a0 = a[0];
+    var a1 = a[1];
+    var b0 = b[0];
+    var b1 = b[1];
+    if (!a0 || !a1 || !b0 || !b1)
+        return false;
+    var det = (a1.x - a0.x) * (b1.y - b0.y) - (a1.y - a0.y) * (b1.x - b0.x);
+    if (det === 0)
+        return false;
+    var projA = ((b1.y - b0.y) * (b1.x - a0.x) + (b0.x - b1.x) * (b1.y - a0.y)) / det;
+    var projB = ((a0.y - a1.y) * (b1.x - a0.x) + (a1.x - a0.x) * (b1.y - a0.y)) / det;
+    return projA >= 0 && projA <= 1 && projB >= 0 && projB <= 1;
+}
+function polyLineStrokeErase(polylines, stroke) {
+    var eraserBboxes = _getPolyLineBboxes(stroke);
+    var remaining = [];
+    polylines.forEach(function (polyline) {
+        var deleted = false;
+        var _loop_1 = function (i) {
+            var p1 = polyline[i];
+            var p2 = polyline[i + 1];
+            if (p1 && p2) {
+                var bbox_1 = {
+                    minX: Math.min(p1.x, p2.x),
+                    minY: Math.min(p1.y, p2.y),
+                    maxX: Math.max(p1.x, p2.x),
+                    maxY: Math.max(p1.y, p2.y)
+                };
+                eraserBboxes.forEach(function (eraserBbox, i) {
+                    if (_boundingBoxIntersect(bbox_1, eraserBbox)
+                        && _lineIntersect([stroke[i], stroke[i + 1]], [p1, p2]))
+                        deleted = true;
+                });
+            }
+            if (deleted)
+                return "break";
+        };
+        for (var i = 0; i < polyline.length - 1; i++) {
+            var state_1 = _loop_1(i);
+            if (state_1 === "break")
+                break;
+        }
+        if (!deleted) {
+            remaining.push(polyline);
+        }
+    });
+    return remaining;
+}
 var Camera = (function () {
     function Camera(mapDimensions, viewportDimensions, stepSize, maxZoom) {
         if (stepSize === void 0) { stepSize = 1.5; }
@@ -1373,6 +1442,55 @@ var BaseInfo = (function (_super) {
     BaseInfo.displayName = "Base Info";
     return BaseInfo;
 }(Tool));
+var Eraser = (function (_super) {
+    __extends(Eraser, _super);
+    function Eraser(viewport, map, tool_panel) {
+        var _this = _super.call(this, viewport, map, tool_panel) || this;
+        _this._stroke = [];
+        map.renderer.allowPan = false;
+        _this._onMouseDown = _this._onMouseDown.bind(_this);
+        _this._viewport.addEventListener("mousedown", _this._onMouseDown, { passive: true });
+        return _this;
+    }
+    Eraser.prototype.tearDown = function () {
+        this._map.renderer.allowPan = true;
+        _super.prototype.tearDown.call(this);
+        this._viewport.removeEventListener("mousedown", this._onMouseDown);
+    };
+    Eraser.prototype._setUpToolPanel = function () {
+        _super.prototype._setUpToolPanel.call(this);
+        var frag = document.createDocumentFragment();
+        frag.appendChild(document.createTextNode("Hold LMB to delete strokes, MMB to pan"));
+        this._tool_panel.appendChild(frag);
+        this._tool_panel.style.display = "block";
+    };
+    Eraser.prototype._onMouseDown = function (event) {
+        var _this = this;
+        if (event.button !== 0)
+            return;
+        var last = this._map.renderer.screenToMap(event);
+        this._stroke = [last];
+        var drag = Utils.rafDebounce(function (evtDrag) {
+            var next = _this._map.renderer.screenToMap(evtDrag);
+            var dist = Math.hypot(next.x - last.x, next.y - last.y);
+            if (dist < 4.0)
+                return;
+            _this._stroke.push(next);
+            last = next;
+        });
+        var up = function () {
+            _this._viewport.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", up);
+            StateManager.dispatch(State.user.canvasStrokeErase, _this._stroke);
+            _this._stroke = [];
+        };
+        this._viewport.addEventListener("mousemove", drag, { passive: true });
+        document.addEventListener("mouseup", up, { passive: true });
+    };
+    Eraser.id = "eraser";
+    Eraser.displayName = "Eraser";
+    return Eraser;
+}(Tool));
 var Pen = (function (_super) {
     __extends(Pen, _super);
     function Pen(viewport, map, tool_panel) {
@@ -1404,7 +1522,6 @@ var Pen = (function (_super) {
         var ctx = layer.getCanvas().getContext("2d");
         var halfSize = this._map.renderer.getMapSize() * 0.5;
         var start = this._map.renderer.screenToMap(event);
-        ;
         this._current = [start];
         ctx.beginPath();
         ctx.moveTo(halfSize + start.x, halfSize - start.y);
@@ -1438,7 +1555,7 @@ var Pen = (function (_super) {
     Pen.displayName = "Pen";
     return Pen;
 }(Tool));
-var available_tools = [Tool, Cursor, BaseInfo, Pen];
+var available_tools = [Tool, Cursor, BaseInfo, Eraser, Pen];
 document.addEventListener("DOMContentLoaded", function () {
     var toolbar_container = document.getElementById("toolbar-container");
     toolbar_container.innerHTML = "";
@@ -1546,6 +1663,7 @@ var State;
         user.baseHovered = "user/baseHovered";
         user.canvasUpdated = "user/canvasUpdated";
         user.canvasLineAdded = "user/canvasLineAdded";
+        user.canvasStrokeErase = "user/canvasStrokeErase";
     })(user = State.user || (State.user = {}));
     ;
     State.defaultUserState = {
@@ -1566,6 +1684,8 @@ var State;
                 var newCanvas = __spreadArray([], state.canvas, true);
                 newCanvas.push(data);
                 return __assign(__assign({}, state), { canvas: newCanvas });
+            case user.canvasStrokeErase:
+                return __assign(__assign({}, state), { canvas: polyLineStrokeErase(state.canvas, data) });
             default:
                 return state;
         }
@@ -1641,6 +1761,10 @@ document.addEventListener("DOMContentLoaded", function () {
         StateManager.dispatch(State.user.continentChanged, continent);
     });
     StateManager.subscribe(State.user.canvasLineAdded, function (state) {
+        var layer = heroMap.renderer.getLayer("canvas");
+        layer.update(state.user.canvas, heroMap.renderer.getZoom());
+    });
+    StateManager.subscribe(State.user.canvasStrokeErase, function (state) {
         var layer = heroMap.renderer.getLayer("canvas");
         layer.update(state.user.canvas, heroMap.renderer.getZoom());
     });
