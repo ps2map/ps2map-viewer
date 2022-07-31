@@ -40,13 +40,13 @@ class Pen extends Tool {
         const layer = this._map.renderer.getLayer("canvas") as CanvasLayer;
         layer.element.style.opacity = "0.75";
         const ctx = layer.getCanvas().getContext("2d")!;
-        const mapSize = this._map.renderer.getMapSize();
+        const halfSize = this._map.renderer.getMapSize() * 0.5;
 
-        const start = this._map.renderer.screenToMap(event);;
+        const start = this._map.renderer.screenToMap(event);
         this._current = [start];
 
         ctx.beginPath();
-        ctx.moveTo(mapSize * 0.5 + start.x, mapSize * 0.5 - start.y);
+        ctx.moveTo(halfSize + start.x, halfSize - start.y);
         ctx.strokeStyle = "rgb(255, 255, 0)";
         ctx.lineCap = "round";
         ctx.lineWidth = layer.calculateStrokeWidth(this._map.renderer.getZoom());
@@ -60,8 +60,8 @@ class Pen extends Tool {
             const dist = Math.hypot(next.x - last.x, next.y - last.y);
             if (dist <= 4.0) // TODO: Make this configurable
                 return;
-            ctx.moveTo(mapSize * 0.5 + last.x, mapSize * 0.5 - last.y);
-            ctx.lineTo(mapSize * 0.5 + next.x, mapSize * 0.5 - next.y);
+            ctx.moveTo(halfSize + last.x, halfSize - last.y);
+            ctx.lineTo(halfSize + next.x, halfSize - next.y);
             ctx.stroke();
             this._current.push(next);
         });

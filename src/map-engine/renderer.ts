@@ -181,7 +181,7 @@ class MapRenderer {
         return {
             x: -halfSize + box.left + (box.right - box.left) * relX,
             // (1 - relY) takes care of the Y axis inversion
-            y: -halfSize + box.top + (box.bottom - box.top) * (1 - relY),
+            y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY),
         };
     }
 

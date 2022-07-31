@@ -390,7 +390,7 @@ var MapRenderer = (function () {
         var halfSize = this._mapSize * 0.5;
         return {
             x: -halfSize + box.left + (box.right - box.left) * relX,
-            y: -halfSize + box.top + (box.bottom - box.top) * (1 - relY)
+            y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY)
         };
     };
     MapRenderer.prototype._mousePan = function (evtDown) {
@@ -1303,7 +1303,7 @@ var Cursor = (function (_super) {
             y.textContent = target.y.toFixed(2);
     };
     Cursor.prototype._onMove = function (event) {
-        this._updateToolPanel(event);
+        this._updateToolPanel(this._map.renderer.screenToMap(event));
     };
     Cursor.id = "cursor";
     Cursor.displayName = "Map Cursor";
@@ -1402,12 +1402,12 @@ var Pen = (function (_super) {
         var layer = this._map.renderer.getLayer("canvas");
         layer.element.style.opacity = "0.75";
         var ctx = layer.getCanvas().getContext("2d");
-        var mapSize = this._map.renderer.getMapSize();
+        var halfSize = this._map.renderer.getMapSize() * 0.5;
         var start = this._map.renderer.screenToMap(event);
         ;
         this._current = [start];
         ctx.beginPath();
-        ctx.moveTo(mapSize * 0.5 + start.x, mapSize * 0.5 - start.y);
+        ctx.moveTo(halfSize + start.x, halfSize - start.y);
         ctx.strokeStyle = "rgb(255, 255, 0)";
         ctx.lineCap = "round";
         ctx.lineWidth = layer.calculateStrokeWidth(this._map.renderer.getZoom());
@@ -1419,8 +1419,8 @@ var Pen = (function (_super) {
             var dist = Math.hypot(next.x - last.x, next.y - last.y);
             if (dist <= 4.0)
                 return;
-            ctx.moveTo(mapSize * 0.5 + last.x, mapSize * 0.5 - last.y);
-            ctx.lineTo(mapSize * 0.5 + next.x, mapSize * 0.5 - next.y);
+            ctx.moveTo(halfSize + last.x, halfSize - last.y);
+            ctx.lineTo(halfSize + next.x, halfSize - next.y);
             ctx.stroke();
             _this._current.push(next);
         });
@@ -1681,7 +1681,6 @@ var CanvasLayer = (function (_super) {
         return 1.6 + 23.67 / Math.pow(2, zoom / 0.23);
     };
     CanvasLayer.prototype.update = function (lines, zoom) {
-        var _this = this;
         this._lines = lines;
         var canvas = this.getCanvas();
         var ctx = canvas.getContext("2d");
@@ -1689,16 +1688,17 @@ var CanvasLayer = (function (_super) {
             return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.lineWidth = this.calculateStrokeWidth(zoom);
+        var halfSize = this.mapSize * 0.5;
         lines.forEach(function (line) {
             var point = line[0];
             if (!point)
                 return;
-            ctx.moveTo(_this.mapSize * 0.5 + point.x, _this.mapSize * 0.5 - point.y);
+            ctx.moveTo(halfSize + point.x, halfSize - point.y);
             for (var i = 1; i < line.length; i++) {
                 point = line[i];
                 if (!point)
                     return;
-                ctx.lineTo(_this.mapSize * 0.5 + point.x, _this.mapSize * 0.5 - point.y);
+                ctx.lineTo(halfSize + point.x, halfSize - point.y);
             }
             ctx.stroke();
         });
@@ -1726,7 +1726,6 @@ var CanvasLayer = (function (_super) {
         });
     };
     CanvasLayer.prototype.deferredLayerUpdate = function (_, zoom) {
-        console.log("deferredLayerUpdate");
         this.update(this._lines, zoom);
     };
     return CanvasLayer;

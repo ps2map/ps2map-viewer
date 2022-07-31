@@ -24,16 +24,17 @@ class CanvasLayer extends StaticLayer {
             return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.lineWidth = this.calculateStrokeWidth(zoom);
+        const halfSize = this.mapSize * 0.5;
         lines.forEach(line => {
             let point = line[0];
             if (!point)
                 return;
-            ctx.moveTo(this.mapSize * 0.5 + point.x, this.mapSize * 0.5 - point.y);
+            ctx.moveTo(halfSize + point.x, halfSize - point.y);
             for (let i = 1; i < line.length; i++) {
                 point = line[i];
                 if (!point)
                     return;
-                ctx.lineTo(this.mapSize * 0.5 + point.x, this.mapSize * 0.5 - point.y);
+                ctx.lineTo(halfSize + point.x, halfSize - point.y);
             }
             ctx.stroke();
         });
@@ -59,7 +60,6 @@ class CanvasLayer extends StaticLayer {
     }
 
     protected deferredLayerUpdate(_: ViewBox, zoom: number): void {
-        console.log("deferredLayerUpdate");
         this.update(this._lines, zoom);
     }
 }

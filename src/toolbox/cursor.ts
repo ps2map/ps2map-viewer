@@ -60,6 +60,6 @@ class Cursor extends Tool {
     }
 
     private _onMove(event: MouseEvent): void {
-        this._updateToolPanel(event);
+        this._updateToolPanel(this._map.renderer.screenToMap(event));
     }
 }
