@@ -1658,7 +1658,7 @@ var State;
         toolbox.setup = "toolbox/setup";
         toolbox.setTool = "toolbox/setTool";
     })(toolbox = State.toolbox || (State.toolbox = {}));
-    State.defaultToolState = {
+    State.defaultToolboxState = {
         currentTool: null,
         targetMap: null,
         data: {}
@@ -1666,7 +1666,7 @@ var State;
     function toolboxReducer(state, action, data) {
         switch (action) {
             case toolbox.setup:
-                return __assign(__assign(__assign({}, state), State.defaultToolState), { targetMap: data.map });
+                return __assign(__assign(__assign({}, state), State.defaultToolboxState), { targetMap: data.map });
             case toolbox.setTool:
                 if (state.currentTool)
                     state.currentTool.tearDown();
@@ -1724,7 +1724,7 @@ var State;
     function appReducer(state, action, data) {
         return {
             map: State.mapReducer(state.map, action, data),
-            tool: State.toolboxReducer(state.tool, action, data),
+            toolbox: State.toolboxReducer(state.toolbox, action, data),
             user: State.userReducer(state.user, action, data)
         };
     }
@@ -1922,7 +1922,7 @@ var StateManager = (function () {
     };
     StateManager._state = {
         map: State.defaultMapState,
-        tool: State.defaultToolState,
+        toolbox: State.defaultToolboxState,
         user: State.defaultUserState
     };
     StateManager._subscriptions = new Map();

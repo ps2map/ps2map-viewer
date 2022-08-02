@@ -3,7 +3,7 @@
 class StateManager {
     private static _state: State.AppState = {
         map: State.defaultMapState,
-        tool: State.defaultToolState,
+        toolbox: State.defaultToolboxState,
         user: State.defaultUserState,
     };
     private static _subscriptions: Map<string, ((state: State.AppState) => void)[]> = new Map();

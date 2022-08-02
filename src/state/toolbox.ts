@@ -13,7 +13,7 @@ namespace State {
         data: any;
     }
 
-    export const defaultToolState: ToolBoxState = {
+    export const defaultToolboxState: ToolBoxState = {
         currentTool: null,
         targetMap: null,
         data: {},
@@ -29,7 +29,7 @@ namespace State {
             case toolbox.setup:
                 return {
                     ...state,
-                    ...defaultToolState,
+                    ...defaultToolboxState,
                     targetMap: data.map,
                 };
             case toolbox.setTool:
