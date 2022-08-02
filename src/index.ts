@@ -73,7 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Set up toolbox
-    StateManager.dispatch(State.toolbox.setup, { map: heroMap });
+    StateManager.dispatch(State.toolbox.setup, heroMap);
+    StateManager.dispatch(State.toolbox.setTool, Tool.id);
 
     // Hook up base hover event
     heroMap.renderer.viewport.addEventListener("ps2map_basehover", (event) => {

@@ -7,8 +7,11 @@ class Brush extends CanvasTool {
 
     static readonly id = "brush";
     static readonly displayName = "Brush";
+    static readonly hotkey = "b";
 
     protected _setUpCursor(): void {
+        if (!this._cursor)
+            return;
         this._cursor.style.width = this._cursor.style.height = Brush.size + "px";
         this._cursor.style.marginLeft = this._cursor.style.marginTop = (-Brush.size / 2) + "px";
         this._cursor.style.border = "1px solid #fff";

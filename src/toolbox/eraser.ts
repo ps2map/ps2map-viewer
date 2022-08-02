@@ -4,10 +4,13 @@ class Eraser extends CanvasTool {
 
     static readonly id = "eraser";
     static readonly displayName = "Eraser";
+    static readonly hotkey = "e";
 
     static size = 40;
 
     protected _setUpCursor(): void {
+        if (!this._cursor)
+            return;
         this._cursor.style.width = this._cursor.style.height = (
             Eraser.size + "px");
         this._cursor.style.marginLeft = this._cursor.style.marginTop = (
