@@ -8,15 +8,13 @@ namespace State {
     }
 
     export interface ToolBoxState {
-        currentTool: Tool | null;
-        targetMap: HeroMap | null;
-        data: any;
+        current: string | null;
+        map: HeroMap | null;
     }
 
     export const defaultToolboxState: ToolBoxState = {
-        currentTool: null,
-        targetMap: null,
-        data: {},
+        current: null,
+        map: null,
     };
 
     /** State reducer for "tool/" actions. */
@@ -30,33 +28,12 @@ namespace State {
                 return {
                     ...state,
                     ...defaultToolboxState,
-                    targetMap: data.map,
+                    map: data,
                 };
             case toolbox.setTool:
-                if (state.currentTool)
-                    state.currentTool.tearDown();
-
-                let cls: typeof Tool = data.type;
-                if (!cls)
-                    cls = Tool;
-                let tool: Tool | null = null;
-
-                const toolBar = document.getElementById("tool-panel") as HTMLDivElement;
-                if (toolBar && state.targetMap)
-                    tool = new cls(
-                        state.targetMap.renderer.viewport,
-                        state.targetMap,
-                        toolBar,
-                    );
-                document.querySelectorAll(".toolbar__button").forEach(btn => {
-                    if (btn.id === `tool-${cls.id}`)
-                        btn.classList.add("toolbar__button__active");
-                    else
-                        btn.classList.remove("toolbar__button__active");
-                });
                 return {
                     ...state,
-                    currentTool: tool,
+                    current: data,
                 };
             default:
                 return state;

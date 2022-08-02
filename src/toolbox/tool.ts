@@ -14,24 +14,35 @@ class Tool {
     protected readonly _viewport: HTMLDivElement;
     protected readonly _tool_panel: HTMLDivElement;
 
+    private _isActive = false;
+
     constructor(viewport: HTMLDivElement, map: HeroMap, tool_panel: HTMLDivElement) {
         this._map = map;
         this._viewport = viewport;
         this._tool_panel = tool_panel;
+    }
 
+    public activate(): void {
+        this._isActive = true;
         this._setUpToolPanel();
     }
 
-    /**
-     * Clean-up method called when the tool is deactivated.
-     *
-     * Consider this a "destructor" for the tool that must be called to ensure
-     * that the tool is properly deactivated without leaving any orphaned GUI
-     * elements or event listeners in the DOM.
-     */
-    public tearDown(): void {
+    public deactivate(): void {
+        this._isActive = false;
         this._tool_panel.innerHTML = "";
         this._tool_panel.removeAttribute("style");
+    }
+
+    public isActive(): boolean {
+        return this._isActive;
+    }
+
+    public getId(): string {
+        // This code is written for ES3, which breaks a lot of the "typeof" and
+        // "instanceof" helpers since they all return "object". This method
+        // lets us find out what subclass an instance is of by comparing this
+        // method's return value to the static "id" field of the classes.
+        return Tool.id;
     }
 
     /**
@@ -53,9 +64,9 @@ class Tool {
  */
 abstract class CanvasTool extends Tool {
 
-    protected readonly _cursor: HTMLDivElement;
+    protected _cursor: HTMLDivElement | null = null;
 
-    private _isActive = false;
+    private _mouseDown = false;
     private _context: CanvasRenderingContext2D | null = null;
     private _halfMapSize: number | null = null;
 
@@ -65,10 +76,14 @@ abstract class CanvasTool extends Tool {
         tool_panel: HTMLDivElement,
     ) {
         super(viewport, map, tool_panel);
-        map.renderer.allowPan = false;
 
         this._onDown = this._onDown.bind(this);
         this._onMove = this._onMove.bind(this);
+    }
+
+    public activate(): void {
+        super.activate();
+        this._map.renderer.allowPan = false;
         this._viewport.addEventListener("mousedown", this._onDown, { passive: true });
         this._viewport.addEventListener("mousemove", this._onMove, { passive: true });
         // Create custom cursor
@@ -80,12 +95,13 @@ abstract class CanvasTool extends Tool {
         this._viewport.appendChild(this._cursor);
     }
 
-    public tearDown(): void {
-        super.tearDown();
+    public deactivate(): void {
+        super.deactivate();
         this._map.renderer.allowPan = true;
         this._viewport.removeEventListener("mousedown", this._onDown);
         this._viewport.removeEventListener("mousemove", this._onMove);
-        this._viewport.removeChild(this._cursor);
+        if (this._cursor)
+            this._viewport.removeChild(this._cursor);
     }
 
     protected abstract _setUpCursor(): void;
@@ -108,7 +124,7 @@ abstract class CanvasTool extends Tool {
         this._context = this._map.renderer.getCanvasContext()!;
         this._halfMapSize = this._map.renderer.getMapSize() * 0.5;
 
-        this._isActive = true;
+        this._mouseDown = true;
         this._action(
             this._context,
             this._getActionPos(event),
@@ -116,7 +132,7 @@ abstract class CanvasTool extends Tool {
 
         // Set up global event listener for mouse up
         const up = () => {
-            this._isActive = false;
+            this._mouseDown = false;
             document.removeEventListener("mouseup", up);
         };
         document.addEventListener("mouseup", up, { passive: true });
@@ -124,11 +140,13 @@ abstract class CanvasTool extends Tool {
 
     private _onMove(event: MouseEvent): void {
         // Update cursor position
-        const box = this._viewport.getBoundingClientRect();
-        this._cursor.style.left = (event.clientX - box.left) + "px";
-        this._cursor.style.top = (event.clientY - box.top) + "px";
+        if (this._cursor) {
+            const box = this._viewport.getBoundingClientRect();
+            this._cursor.style.left = (event.clientX - box.left) + "px";
+            this._cursor.style.top = (event.clientY - box.top) + "px";
+        }
         // Run action if tool is active (i.e. LMB is pressed)
-        if (this._isActive && this._context)
+        if (this._mouseDown && this._context)
             this._action(
                 this._context,
                 this._getActionPos(event),

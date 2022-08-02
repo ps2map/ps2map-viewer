@@ -1341,14 +1341,25 @@ var MapListener = (function () {
 }());
 var Tool = (function () {
     function Tool(viewport, map, tool_panel) {
+        this._isActive = false;
         this._map = map;
         this._viewport = viewport;
         this._tool_panel = tool_panel;
-        this._setUpToolPanel();
     }
-    Tool.prototype.tearDown = function () {
+    Tool.prototype.activate = function () {
+        this._isActive = true;
+        this._setUpToolPanel();
+    };
+    Tool.prototype.deactivate = function () {
+        this._isActive = false;
         this._tool_panel.innerHTML = "";
         this._tool_panel.removeAttribute("style");
+    };
+    Tool.prototype.isActive = function () {
+        return this._isActive;
+    };
+    Tool.prototype.getId = function () {
+        return Tool.id;
     };
     Tool.prototype._setUpToolPanel = function () { };
     Tool.id = "none";
@@ -1360,28 +1371,33 @@ var CanvasTool = (function (_super) {
     __extends(CanvasTool, _super);
     function CanvasTool(viewport, map, tool_panel) {
         var _this = _super.call(this, viewport, map, tool_panel) || this;
-        _this._isActive = false;
+        _this._cursor = null;
+        _this._mouseDown = false;
         _this._context = null;
         _this._halfMapSize = null;
-        map.renderer.allowPan = false;
         _this._onDown = _this._onDown.bind(_this);
         _this._onMove = _this._onMove.bind(_this);
-        _this._viewport.addEventListener("mousedown", _this._onDown, { passive: true });
-        _this._viewport.addEventListener("mousemove", _this._onMove, { passive: true });
-        _this._cursor = document.createElement("div");
-        _this._cursor.style.zIndex = "100";
-        _this._cursor.style.position = "absolute";
-        _this._cursor.style.pointerEvents = "none";
-        _this._setUpCursor();
-        _this._viewport.appendChild(_this._cursor);
         return _this;
     }
-    CanvasTool.prototype.tearDown = function () {
-        _super.prototype.tearDown.call(this);
+    CanvasTool.prototype.activate = function () {
+        _super.prototype.activate.call(this);
+        this._map.renderer.allowPan = false;
+        this._viewport.addEventListener("mousedown", this._onDown, { passive: true });
+        this._viewport.addEventListener("mousemove", this._onMove, { passive: true });
+        this._cursor = document.createElement("div");
+        this._cursor.style.zIndex = "100";
+        this._cursor.style.position = "absolute";
+        this._cursor.style.pointerEvents = "none";
+        this._setUpCursor();
+        this._viewport.appendChild(this._cursor);
+    };
+    CanvasTool.prototype.deactivate = function () {
+        _super.prototype.deactivate.call(this);
         this._map.renderer.allowPan = true;
         this._viewport.removeEventListener("mousedown", this._onDown);
         this._viewport.removeEventListener("mousemove", this._onMove);
-        this._viewport.removeChild(this._cursor);
+        if (this._cursor)
+            this._viewport.removeChild(this._cursor);
     };
     CanvasTool.prototype._onDown = function (event) {
         var _this = this;
@@ -1389,19 +1405,21 @@ var CanvasTool = (function (_super) {
             return;
         this._context = this._map.renderer.getCanvasContext();
         this._halfMapSize = this._map.renderer.getMapSize() * 0.5;
-        this._isActive = true;
+        this._mouseDown = true;
         this._action(this._context, this._getActionPos(event), this._getScaling());
         var up = function () {
-            _this._isActive = false;
+            _this._mouseDown = false;
             document.removeEventListener("mouseup", up);
         };
         document.addEventListener("mouseup", up, { passive: true });
     };
     CanvasTool.prototype._onMove = function (event) {
-        var box = this._viewport.getBoundingClientRect();
-        this._cursor.style.left = (event.clientX - box.left) + "px";
-        this._cursor.style.top = (event.clientY - box.top) + "px";
-        if (this._isActive && this._context)
+        if (this._cursor) {
+            var box = this._viewport.getBoundingClientRect();
+            this._cursor.style.left = (event.clientX - box.left) + "px";
+            this._cursor.style.top = (event.clientY - box.top) + "px";
+        }
+        if (this._mouseDown && this._context)
             this._action(this._context, this._getActionPos(event), this._getScaling());
     };
     CanvasTool.prototype._getActionPos = function (event) {
@@ -1420,11 +1438,14 @@ var Cursor = (function (_super) {
     function Cursor(viewport, map, tool_panel) {
         var _this = _super.call(this, viewport, map, tool_panel) || this;
         _this._onMove = _this._onMove.bind(_this);
-        _this._viewport.addEventListener("mousemove", _this._onMove, { passive: true });
         return _this;
     }
-    Cursor.prototype.tearDown = function () {
-        _super.prototype.tearDown.call(this);
+    Cursor.prototype.activate = function () {
+        _super.prototype.activate.call(this);
+        this._viewport.addEventListener("mousemove", this._onMove, { passive: true });
+    };
+    Cursor.prototype.deactivate = function () {
+        _super.prototype.deactivate.call(this);
         this._viewport.removeEventListener("mousemove", this._onMove);
     };
     Cursor.prototype._setUpToolPanel = function () {
@@ -1472,11 +1493,14 @@ var BaseInfo = (function (_super) {
     function BaseInfo(viewport, map, tool_panel) {
         var _this = _super.call(this, viewport, map, tool_panel) || this;
         _this._onHover = _this._onHover.bind(_this);
-        StateManager.subscribe(State.user.baseHovered, _this._onHover);
         return _this;
     }
-    BaseInfo.prototype.tearDown = function () {
-        _super.prototype.tearDown.call(this);
+    BaseInfo.prototype.activate = function () {
+        _super.prototype.activate.call(this);
+        StateManager.subscribe(State.user.baseHovered, this._onHover);
+    };
+    BaseInfo.prototype.deactivate = function () {
+        _super.prototype.deactivate.call(this);
         StateManager.unsubscribe(State.user.baseHovered, this._onHover);
     };
     BaseInfo.prototype._setUpToolPanel = function () {
@@ -1538,6 +1562,8 @@ var Eraser = (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     Eraser.prototype._setUpCursor = function () {
+        if (!this._cursor)
+            return;
         this._cursor.style.width = this._cursor.style.height = (Eraser.size + "px");
         this._cursor.style.marginLeft = this._cursor.style.marginTop = ((-Eraser.size / 2) + "px");
         this._cursor.style.border = "1px solid #fff";
@@ -1565,6 +1591,8 @@ var Brush = (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     Brush.prototype._setUpCursor = function () {
+        if (!this._cursor)
+            return;
         this._cursor.style.width = this._cursor.style.height = Brush.size + "px";
         this._cursor.style.marginLeft = this._cursor.style.marginTop = (-Brush.size / 2) + "px";
         this._cursor.style.border = "1px solid #fff";
@@ -1600,26 +1628,59 @@ var Brush = (function (_super) {
     Brush.hotkey = "b";
     return Brush;
 }(CanvasTool));
-var available_tools = [Tool, Cursor, BaseInfo, Eraser, Brush];
 document.addEventListener("DOMContentLoaded", function () {
+    var availableTools = [Tool, Cursor, BaseInfo, Eraser, Brush];
+    var toolInstances = new Map();
     var toolbar_container = document.getElementById("toolbar-container");
     toolbar_container.innerHTML = "";
-    available_tools.forEach(function (tool) {
+    availableTools.forEach(function (tool) {
         var btn = document.createElement("input");
         btn.type = "button";
         btn.value = tool.displayName;
         btn.classList.add("toolbar__button");
         btn.id = "tool-".concat(tool.id);
         btn.addEventListener("click", function () {
-            StateManager.dispatch(State.toolbox.setTool, { type: tool });
+            StateManager.dispatch(State.toolbox.setTool, tool.id);
         });
         toolbar_container.appendChild(btn);
     });
     document.addEventListener("keydown", function (event) {
+        var tool = "";
         if (event.key === "Escape")
-            StateManager.dispatch(State.toolbox.setTool, { type: Tool });
+            tool = "none";
+        else
+            availableTools.forEach(function (t) {
+                if (event.key === t.hotkey)
+                    tool = t.hotkey === null ? "none" : t.id;
+            });
+        if (!tool)
+            return;
+        StateManager.dispatch(State.toolbox.setTool, tool);
     });
-    StateManager.dispatch(State.toolbox.setTool, { type: Tool });
+    StateManager.subscribe(State.toolbox.setTool, function (state) {
+        if (!toolInstances.has(state.toolbox.current || "")) {
+            var map_1 = state.toolbox.map;
+            if (!map_1)
+                return;
+            var toolPanel_1 = document.getElementById("tool-panel");
+            availableTools.forEach(function (tool) {
+                if (tool.id === state.toolbox.current)
+                    toolInstances.set(tool.id, new tool(map_1.renderer.viewport, map_1, toolPanel_1));
+            });
+        }
+        toolInstances.forEach(function (instance, id) {
+            if (instance.isActive() && id !== state.toolbox.current)
+                instance.deactivate();
+            if (!instance.isActive() && id === state.toolbox.current)
+                instance.activate();
+        });
+        document.querySelectorAll(".toolbar__button").forEach(function (btn) {
+            if (btn.id === "tool-".concat(state.toolbox.current))
+                btn.classList.add("toolbar__button__active");
+            else
+                btn.classList.remove("toolbar__button__active");
+        });
+    });
 });
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
@@ -1659,31 +1720,15 @@ var State;
         toolbox.setTool = "toolbox/setTool";
     })(toolbox = State.toolbox || (State.toolbox = {}));
     State.defaultToolboxState = {
-        currentTool: null,
-        targetMap: null,
-        data: {}
+        current: null,
+        map: null
     };
     function toolboxReducer(state, action, data) {
         switch (action) {
             case toolbox.setup:
-                return __assign(__assign(__assign({}, state), State.defaultToolboxState), { targetMap: data.map });
+                return __assign(__assign(__assign({}, state), State.defaultToolboxState), { map: data });
             case toolbox.setTool:
-                if (state.currentTool)
-                    state.currentTool.tearDown();
-                var cls_1 = data.type;
-                if (!cls_1)
-                    cls_1 = Tool;
-                var tool = null;
-                var toolBar = document.getElementById("tool-panel");
-                if (toolBar && state.targetMap)
-                    tool = new cls_1(state.targetMap.renderer.viewport, state.targetMap, toolBar);
-                document.querySelectorAll(".toolbar__button").forEach(function (btn) {
-                    if (btn.id === "tool-".concat(cls_1.id))
-                        btn.classList.add("toolbar__button__active");
-                    else
-                        btn.classList.remove("toolbar__button__active");
-                });
-                return __assign(__assign({}, state), { currentTool: tool });
+                return __assign(__assign({}, state), { current: data });
             default:
                 return state;
         }
@@ -1794,7 +1839,8 @@ document.addEventListener("DOMContentLoaded", function () {
         var names = heroMap.renderer.getLayer("names");
         names.setHoveredBase(state.user.hoveredBase);
     });
-    StateManager.dispatch(State.toolbox.setup, { map: heroMap });
+    StateManager.dispatch(State.toolbox.setup, heroMap);
+    StateManager.dispatch(State.toolbox.setTool, Tool.id);
     heroMap.renderer.viewport.addEventListener("ps2map_basehover", function (event) {
         var evt = event.detail;
         var base = GameData.getInstance().getBase(evt.baseId);

@@ -13,12 +13,16 @@ class Cursor extends Tool {
     ) {
         super(viewport, map, tool_panel);
         this._onMove = this._onMove.bind(this);
+    }
+
+    public activate(): void {
+        super.activate();
         this._viewport.addEventListener(
             "mousemove", this._onMove, { passive: true });
     }
 
-    public tearDown(): void {
-        super.tearDown();
+    public deactivate(): void {
+        super.deactivate();
         this._viewport.removeEventListener("mousemove", this._onMove);
     }
 
