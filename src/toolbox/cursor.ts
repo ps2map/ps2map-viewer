@@ -4,6 +4,7 @@ class Cursor extends Tool {
 
     static readonly id = "cursor";
     static readonly displayName = "Map Cursor";
+    static readonly hotkey = "q";
 
     constructor(
         viewport: HTMLDivElement,

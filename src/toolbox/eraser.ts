@@ -4,6 +4,7 @@ class Eraser extends CanvasTool {
 
     static readonly id = "eraser";
     static readonly displayName = "Eraser";
+    static readonly hotkey = "e";
 
     static size = 40;
 

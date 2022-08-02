@@ -7,6 +7,7 @@ class Brush extends CanvasTool {
 
     static readonly id = "brush";
     static readonly displayName = "Brush";
+    static readonly hotkey = "b";
 
     protected _setUpCursor(): void {
         this._cursor.style.width = this._cursor.style.height = Brush.size + "px";

@@ -1353,7 +1353,7 @@ var Tool = (function () {
     Tool.prototype._setUpToolPanel = function () { };
     Tool.id = "none";
     Tool.displayName = "None";
-    Tool.defaultState = {};
+    Tool.hotkey = null;
     return Tool;
 }());
 var CanvasTool = (function (_super) {
@@ -1464,6 +1464,7 @@ var Cursor = (function (_super) {
     };
     Cursor.id = "cursor";
     Cursor.displayName = "Map Cursor";
+    Cursor.hotkey = "q";
     return Cursor;
 }(Tool));
 var BaseInfo = (function (_super) {
@@ -1528,6 +1529,7 @@ var BaseInfo = (function (_super) {
     };
     BaseInfo.id = "base-info";
     BaseInfo.displayName = "Base Info";
+    BaseInfo.hotkey = "q";
     return BaseInfo;
 }(Tool));
 var Eraser = (function (_super) {
@@ -1553,6 +1555,7 @@ var Eraser = (function (_super) {
     };
     Eraser.id = "eraser";
     Eraser.displayName = "Eraser";
+    Eraser.hotkey = "e";
     Eraser.size = 40;
     return Eraser;
 }(CanvasTool));
@@ -1594,6 +1597,7 @@ var Brush = (function (_super) {
     Brush.color = "rgb(255, 255, 0)";
     Brush.id = "brush";
     Brush.displayName = "Brush";
+    Brush.hotkey = "b";
     return Brush;
 }(CanvasTool));
 var available_tools = [Tool, Cursor, BaseInfo, Eraser, Brush];
