@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const grabber = document.getElementById("sidebar-selector") as HTMLDivElement;
     grabber.addEventListener("mousedown", (event: MouseEvent) => {
         document.body.style.cursor = "col-resize";
+        const box = minimap.element.firstElementChild as HTMLDivElement;
+        box.style.transition = "none";
 
         const sidebar = document.getElementById("sidebar") as HTMLDivElement;
         let initialWidth = sidebar.clientWidth;
@@ -34,6 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
             document.body.style.removeProperty("cursor");
+            const box = minimap.element.firstElementChild as HTMLDivElement;
+            box.style.removeProperty("transition");
         };
 
         document.addEventListener("mousemove", onMove);

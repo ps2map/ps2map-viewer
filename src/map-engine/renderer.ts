@@ -75,6 +75,8 @@ class MapRenderer {
             this._anchor.style.left = `${width * 0.5}px`;
             this._anchor.style.top = `${height * 0.5}px`;
             this._camera.updateViewportSize({ width, height });
+            this.viewport.dispatchEvent(
+                this._buildViewBoxChangedEvent(this._camera.currentViewBox()));
         });
         obj.observe(this.viewport);
     }

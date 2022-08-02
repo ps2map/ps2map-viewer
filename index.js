@@ -410,6 +410,7 @@ var MapRenderer = (function () {
             _this._anchor.style.left = "".concat(width * 0.5, "px");
             _this._anchor.style.top = "".concat(height * 0.5, "px");
             _this._camera.updateViewportSize({ width: width, height: height });
+            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this._camera.currentViewBox()));
         });
         obj.observe(this.viewport);
     }
@@ -1738,6 +1739,8 @@ document.addEventListener("DOMContentLoaded", function () {
     var grabber = document.getElementById("sidebar-selector");
     grabber.addEventListener("mousedown", function (event) {
         document.body.style.cursor = "col-resize";
+        var box = minimap.element.firstElementChild;
+        box.style.transition = "none";
         var sidebar = document.getElementById("sidebar");
         var initialWidth = sidebar.clientWidth;
         var minwidth = document.body.clientWidth * 0.1;
@@ -1756,6 +1759,8 @@ document.addEventListener("DOMContentLoaded", function () {
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
             document.body.style.removeProperty("cursor");
+            var box = minimap.element.firstElementChild;
+            box.style.removeProperty("transition");
         };
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
