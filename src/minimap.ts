@@ -139,7 +139,7 @@ class Minimap {
      * @param evtDown Position the mouse was clicked at
      */
     private _jumpToPosition(evtDown: MouseEvent): void {
-        if (this._mapSize === 0)
+        if (this._mapSize === 0 || evtDown.button !== 0)
             return;
         // Continuous "mousemove" callback
         const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {

@@ -1252,7 +1252,7 @@ var Minimap = (function () {
     };
     Minimap.prototype._jumpToPosition = function (evtDown) {
         var _this = this;
-        if (this._mapSize === 0)
+        if (this._mapSize === 0 || evtDown.button !== 0)
             return;
         var drag = Utils.rafDebounce(function (evtDrag) {
             var rect = _this.element.getBoundingClientRect();
