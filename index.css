@@ -110,3 +110,7 @@ body {
     cursor: col-resize;
     user-select: none;
 }
+
+#sidebar-selector:hover {
+    background-color: #666666;
+}
