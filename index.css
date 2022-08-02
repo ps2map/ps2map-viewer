@@ -107,7 +107,6 @@ body {
     width: 4px;
     left: calc(var(--sidebar-width) - 4px);
     top: 0;
-    background-color: yellow;
     cursor: col-resize;
     user-select: none;
 }
