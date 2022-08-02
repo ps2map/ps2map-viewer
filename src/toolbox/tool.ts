@@ -105,8 +105,7 @@ abstract class CanvasTool extends Tool {
         if (event.button !== 0)
             return;
 
-        const layer = this._map.renderer.getLayer("canvas") as CanvasLayer;
-        this._context = layer.getCanvas().getContext("2d")!;
+        this._context = this._map.renderer.getCanvasContext()!;
         this._halfMapSize = this._map.renderer.getMapSize() * 0.5;
 
         this._isActive = true;

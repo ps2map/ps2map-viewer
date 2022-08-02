@@ -10,6 +10,40 @@
 /** Initialisation hook for components that need to be run on DOM load. */
 document.addEventListener("DOMContentLoaded", () => {
 
+    const grabber = document.getElementById("sidebar-selector") as HTMLDivElement;
+    grabber.addEventListener("mousedown", (event: MouseEvent) => {
+        document.body.style.cursor = "col-resize";
+        const box = minimap.element.firstElementChild as HTMLDivElement;
+        box.style.transition = "none";
+
+        const sidebar = document.getElementById("sidebar") as HTMLDivElement;
+        let initialWidth = sidebar.clientWidth;
+        const minwidth = document.body.clientWidth * 0.1;
+        const maxwidth = 512;
+
+        const startX = event.clientX;
+        const onMove = (evt: MouseEvent) => {
+            const delta = evt.clientX - startX;
+            let newWidth = initialWidth + delta;
+            if (newWidth < minwidth)
+                newWidth = minwidth;
+            else if (newWidth > maxwidth)
+                newWidth = maxwidth;
+            document.body.style.setProperty("--sidebar-width", `${newWidth}px`);
+        };
+
+        const onUp = () => {
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+            document.body.style.removeProperty("cursor");
+            const box = minimap.element.firstElementChild as HTMLDivElement;
+            box.style.removeProperty("transition");
+        };
+
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+    });
+
     const heroMap = new HeroMap(document.getElementById("hero-map") as HTMLDivElement);
     const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
 

@@ -99,3 +99,15 @@ body {
     padding: 10px;
     background-color: #333333;
 }
+
+#sidebar-selector {
+    position: absolute;
+    z-index: 100;
+    height: 100%;
+    width: 4px;
+    left: calc(var(--sidebar-width) - 4px);
+    top: 0;
+    background-color: yellow;
+    cursor: col-resize;
+    user-select: none;
+}
