@@ -1671,9 +1671,10 @@ document.addEventListener("DOMContentLoaded", function () {
         toolInstances.forEach(function (instance, id) {
             if (instance.isActive() && id !== state.toolbox.current)
                 instance.deactivate();
-            if (!instance.isActive() && id === state.toolbox.current)
-                instance.activate();
         });
+        var current = toolInstances.get(state.toolbox.current || "");
+        if (current && !current.isActive())
+            current.activate();
         document.querySelectorAll(".toolbar__button").forEach(function (btn) {
             if (btn.id === "tool-".concat(state.toolbox.current))
                 btn.classList.add("toolbar__button__active");

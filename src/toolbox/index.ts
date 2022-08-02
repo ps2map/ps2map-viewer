@@ -55,9 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
         toolInstances.forEach((instance, id) => {
             if (instance.isActive() && id !== state.toolbox.current)
                 instance.deactivate();
-            if (!instance.isActive() && id === state.toolbox.current)
-                instance.activate();
         });
+        const current = toolInstances.get(state.toolbox.current || "");
+        if (current && !current.isActive())
+            current.activate();
         document.querySelectorAll(".toolbar__button").forEach(btn => {
             if (btn.id === `tool-${state.toolbox.current}`)
                 btn.classList.add("toolbar__button__active");
