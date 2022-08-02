@@ -33,13 +33,10 @@ class MapRenderer {
     /** Collection of map layers added to the map renderer. */
     private _layers: MapLayer[] = [];
 
-    // Current map panning offset - TODO: maybe merge into camera target?
-    private _panOffsetX: number;
-    private _panOffsetY: number;
-    private _isPanning: boolean = false;
     private _camera: Camera;
 
     public allowPan = true;
+    private _isPanning: boolean = false;
 
     constructor(viewport: HTMLDivElement, mapSize: number) {
         // Set up DOM containers
@@ -61,10 +58,8 @@ class MapRenderer {
 
         this.setMapSize(mapSize);
 
-        this._panOffsetX = this.viewport.clientWidth * 0.5;
-        this._panOffsetY = this.viewport.clientHeight * 0.5;
-        this._anchor.style.left = `${this._panOffsetX}px`;
-        this._anchor.style.top = `${this._panOffsetY}px`;
+        this._anchor.style.left = `${this.viewport.clientWidth * 0.5}px`;
+        this._anchor.style.top = `${this.viewport.clientHeight * 0.5}px`;
 
         // Attach event listeners
         this.viewport.addEventListener("wheel", this._onZoom.bind(this), {
@@ -73,6 +68,15 @@ class MapRenderer {
         this.viewport.addEventListener("mousedown", this._mousePan.bind(this), {
             passive: true
         });
+
+        const obj = new ResizeObserver(() => {
+            const width = this.viewport.clientWidth;
+            const height = this.viewport.clientHeight;
+            this._anchor.style.left = `${width * 0.5}px`;
+            this._anchor.style.top = `${height * 0.5}px`;
+            this._camera.updateViewportSize({ width, height });
+        });
+        obj.observe(this.viewport);
     }
 
     getCanvasContext(): CanvasRenderingContext2D | null {

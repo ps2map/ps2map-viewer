@@ -216,6 +216,13 @@ var Camera = (function () {
             left: this.target.x - width * 0.5
         };
     };
+    Camera.prototype.updateViewportSize = function (viewportDimensions) {
+        this._viewportDimensions = viewportDimensions;
+        var zoomIndex = this._zoomIndex;
+        this._zoomLevels = this._calculateZoomLevels();
+        this._zoomIndex = zoomIndex;
+        this.zoomTowards(0, { x: 0.5, y: 0.5 });
+    };
     Camera.prototype.jumpTo = function (point) {
         this.target = point;
     };
@@ -364,8 +371,8 @@ var MapRenderer = (function () {
         var _this = this;
         this._mapSize = 1024;
         this._layers = [];
-        this._isPanning = false;
         this.allowPan = true;
+        this._isPanning = false;
         this._onZoom = Utils.rafDebounce(function (evt) {
             evt.preventDefault();
             if (_this._isPanning)
@@ -389,16 +396,22 @@ var MapRenderer = (function () {
             height: this.viewport.clientHeight
         });
         this.setMapSize(mapSize);
-        this._panOffsetX = this.viewport.clientWidth * 0.5;
-        this._panOffsetY = this.viewport.clientHeight * 0.5;
-        this._anchor.style.left = "".concat(this._panOffsetX, "px");
-        this._anchor.style.top = "".concat(this._panOffsetY, "px");
+        this._anchor.style.left = "".concat(this.viewport.clientWidth * 0.5, "px");
+        this._anchor.style.top = "".concat(this.viewport.clientHeight * 0.5, "px");
         this.viewport.addEventListener("wheel", this._onZoom.bind(this), {
             passive: false
         });
         this.viewport.addEventListener("mousedown", this._mousePan.bind(this), {
             passive: true
         });
+        var obj = new ResizeObserver(function () {
+            var width = _this.viewport.clientWidth;
+            var height = _this.viewport.clientHeight;
+            _this._anchor.style.left = "".concat(width * 0.5, "px");
+            _this._anchor.style.top = "".concat(height * 0.5, "px");
+            _this._camera.updateViewportSize({ width: width, height: height });
+        });
+        obj.observe(this.viewport);
     }
     MapRenderer.prototype.getCanvasContext = function () {
         var layer = this.getLayer("canvas");
