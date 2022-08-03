@@ -4,6 +4,7 @@ class BaseInfo extends Tool {
 
     static readonly id = "base-info";
     static readonly displayName = "Base Info";
+    static readonly hotkey = "q";
 
     constructor(
         viewport: HTMLDivElement,
@@ -12,11 +13,15 @@ class BaseInfo extends Tool {
     ) {
         super(viewport, map, tool_panel);
         this._onHover = this._onHover.bind(this);
+    }
+
+    public activate(): void {
+        super.activate();
         StateManager.subscribe(State.user.baseHovered, this._onHover);
     }
 
-    public tearDown(): void {
-        super.tearDown();
+    public deactivate(): void {
+        super.deactivate();
         StateManager.unsubscribe(State.user.baseHovered, this._onHover);
     }
 

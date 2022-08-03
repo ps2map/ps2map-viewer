@@ -4,6 +4,7 @@ class Cursor extends Tool {
 
     static readonly id = "cursor";
     static readonly displayName = "Map Cursor";
+    static readonly hotkey = "q";
 
     constructor(
         viewport: HTMLDivElement,
@@ -12,12 +13,16 @@ class Cursor extends Tool {
     ) {
         super(viewport, map, tool_panel);
         this._onMove = this._onMove.bind(this);
+    }
+
+    public activate(): void {
+        super.activate();
         this._viewport.addEventListener(
             "mousemove", this._onMove, { passive: true });
     }
 
-    public tearDown(): void {
-        super.tearDown();
+    public deactivate(): void {
+        super.deactivate();
         this._viewport.removeEventListener("mousemove", this._onMove);
     }
 
@@ -27,11 +32,9 @@ class Cursor extends Tool {
         // Dynamic elements        
         const x = Object.assign(document.createElement("span"), {
             id: "tool-cursor_x",
-            textContent: "0.00",
         });
         const y = Object.assign(document.createElement("span"), {
             id: "tool-cursor_y",
-            textContent: "0.00",
         });
         // Static elements
         const frag = document.createDocumentFragment();
@@ -49,6 +52,7 @@ class Cursor extends Tool {
             fontSize: "18px",
             justifyItems: "right",
         });
+        this._updateToolPanel({ x: 0, y: 0 });
     }
 
     private _updateToolPanel(target: Readonly<Point>): void {
@@ -61,7 +65,6 @@ class Cursor extends Tool {
     }
 
     private _onMove(event: MouseEvent): void {
-        this._updateToolPanel(this._getMapPosition(event));
+        this._updateToolPanel(this._map.renderer.screenToMap(event));
     }
-
 }

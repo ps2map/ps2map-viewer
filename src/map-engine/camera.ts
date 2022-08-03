@@ -98,6 +98,14 @@ class Camera {
         };
     }
 
+    public updateViewportSize(viewportDimensions: Readonly<Box>): void {
+        this._viewportDimensions = viewportDimensions;
+        const zoomIndex = this._zoomIndex;
+        this._zoomLevels = this._calculateZoomLevels();
+        this._zoomIndex = zoomIndex;
+        this.zoomTowards(0, { x: 0.5, y: 0.5 }); // Updates camera target
+    }
+
     /**
      * Jump to the given point on the map.
      *
