@@ -1407,8 +1407,9 @@ var CanvasTool = (function (_super) {
         this._halfMapSize = this._map.renderer.getMapSize() * 0.5;
         this._mouseDown = true;
         this._action(this._context, this._getActionPos(event), this._getScaling());
-        var up = function () {
+        var up = function (evt) {
             _this._mouseDown = false;
+            _this._action(_this._context, _this._getActionPos(evt), _this._getScaling());
             document.removeEventListener("mouseup", up);
         };
         document.addEventListener("mouseup", up, { passive: true });
@@ -1588,7 +1589,9 @@ var Eraser = (function (_super) {
 var Brush = (function (_super) {
     __extends(Brush, _super);
     function Brush() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this._last = null;
+        return _this;
     }
     Brush.prototype._setUpCursor = function () {
         if (!this._cursor)
@@ -1599,10 +1602,27 @@ var Brush = (function (_super) {
         this._cursor.style.borderRadius = Brush.size * 0.5 + "px";
     };
     Brush.prototype._action = function (context, pos, scale) {
+        var lineWeight = Brush.size * scale;
         context.fillStyle = Brush.color;
+        context.strokeStyle = Brush.color;
         context.beginPath();
-        context.arc(pos.x, pos.y, Brush.size * scale * 0.5, 0, 2 * Math.PI, false);
-        context.fill();
+        if (!this._last) {
+            context.arc(pos.x, pos.y, lineWeight * 0.5, 0, 2 * Math.PI, false);
+            this._last = pos;
+        }
+        else {
+            context.lineWidth = lineWeight;
+            context.lineCap = "round";
+            if (this._mouseDown) {
+                context.moveTo(this._last.x, this._last.y);
+                context.lineTo(pos.x, pos.y);
+                context.stroke();
+                this._last = pos;
+            }
+            else {
+                this._last = null;
+            }
+        }
     };
     Brush.prototype._setUpToolPanel = function () {
         _super.prototype._setUpToolPanel.call(this);

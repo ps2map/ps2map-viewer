@@ -65,8 +65,8 @@ class Tool {
 abstract class CanvasTool extends Tool {
 
     protected _cursor: HTMLDivElement | null = null;
+    protected _mouseDown = false;
 
-    private _mouseDown = false;
     private _context: CanvasRenderingContext2D | null = null;
     private _halfMapSize: number | null = null;
 
@@ -131,8 +131,12 @@ abstract class CanvasTool extends Tool {
             this._getScaling());
 
         // Set up global event listener for mouse up
-        const up = () => {
+        const up = (evt: MouseEvent) => {
             this._mouseDown = false;
+            this._action(
+                this._context!,
+                this._getActionPos(evt),
+                this._getScaling());
             document.removeEventListener("mouseup", up);
         };
         document.addEventListener("mouseup", up, { passive: true });

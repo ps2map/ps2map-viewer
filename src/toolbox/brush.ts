@@ -9,6 +9,8 @@ class Brush extends CanvasTool {
     static readonly displayName = "Brush";
     static readonly hotkey = "b";
 
+    private _last: Readonly<Point> | null = null;
+
     protected _setUpCursor(): void {
         if (!this._cursor)
             return;
@@ -23,10 +25,32 @@ class Brush extends CanvasTool {
         pos: Point,
         scale: number,
     ): void {
+        const lineWeight = Brush.size * scale;
         context.fillStyle = Brush.color;
+        context.strokeStyle = Brush.color;
         context.beginPath();
-        context.arc(pos.x, pos.y, Brush.size * scale * 0.5, 0, 2 * Math.PI, false);
-        context.fill();
+
+        // First point in a stroke
+        if (!this._last) {
+            context.arc(pos.x, pos.y, lineWeight * 0.5, 0, 2 * Math.PI, false);
+            this._last = pos;
+        }
+        else {
+            // Subsequent points in a stroke
+            context.lineWidth = lineWeight;
+            context.lineCap = "round";
+            if (this._mouseDown) {
+                context.moveTo(this._last.x, this._last.y);
+                context.lineTo(pos.x, pos.y);
+                context.stroke();
+                this._last = pos;
+            }
+            // Last point in a stroke
+            else {
+                // Don't draw anything, just reset the "_last" marker
+                this._last = null;
+            }
+        }
     }
 
     protected _setUpToolPanel(): void {
