@@ -50,6 +50,23 @@ var GameData = (function () {
                 return this._bases[i];
         return undefined;
     };
+    GameData.prototype.setActiveContinent = function (continent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                this._bases = [];
+                if (continent)
+                    return [2, fetchBasesForContinent(continent.id)
+                            .then(function (bases) {
+                            _this._bases = bases;
+                            console.log("Loaded ".concat(_this._bases.length, " bases"));
+                        })];
+                else
+                    return [2, Promise.resolve()];
+                return [2];
+            });
+        });
+    };
     GameData.load = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -82,15 +99,6 @@ var GameData = (function () {
                     instance._servers = servers;
                     _this._instance = instance;
                     _this._loaded = true;
-                    return instance;
-                }).then(function (instance) {
-                    instance._continents.forEach(function (c) {
-                        fetchBasesForContinent(c.id)
-                            .then(function (bases) {
-                            var _a;
-                            (_a = instance._bases).push.apply(_a, bases);
-                        });
-                    });
                     return instance;
                 });
                 return [2, loading];
@@ -1846,11 +1854,14 @@ document.addEventListener("DOMContentLoaded", function () {
         minimap.updateBaseOwnership(state.map.baseOwnership);
     });
     StateManager.subscribe(State.user.continentChanged, function (state) {
-        heroMap.switchContinent(state.user.continent).then(function () {
-            heroMap.updateBaseOwnership(state.map.baseOwnership);
-        });
-        minimap.switchContinent(state.user.continent).then(function () {
-            minimap.updateBaseOwnership(state.map.baseOwnership);
+        GameData.getInstance().setActiveContinent(state.user.continent)
+            .then(function () {
+            heroMap.switchContinent(state.user.continent).then(function () {
+                heroMap.updateBaseOwnership(state.map.baseOwnership);
+            });
+            minimap.switchContinent(state.user.continent).then(function () {
+                minimap.updateBaseOwnership(state.map.baseOwnership);
+            });
         });
     });
     StateManager.subscribe(State.user.serverChanged, function (state) {

@@ -57,12 +57,15 @@ document.addEventListener("DOMContentLoaded", () => {
         minimap.updateBaseOwnership(state.map.baseOwnership);
     });
     StateManager.subscribe(State.user.continentChanged, (state) => {
-        heroMap.switchContinent(state.user.continent!).then(() => {
-            heroMap.updateBaseOwnership(state.map.baseOwnership);
-        });
-        minimap.switchContinent(state.user.continent!).then(() => {
-            minimap.updateBaseOwnership(state.map.baseOwnership);
-        });
+        GameData.getInstance().setActiveContinent(state.user.continent)
+            .then(() => {
+                heroMap.switchContinent(state.user.continent!).then(() => {
+                    heroMap.updateBaseOwnership(state.map.baseOwnership);
+                });
+                minimap.switchContinent(state.user.continent!).then(() => {
+                    minimap.updateBaseOwnership(state.map.baseOwnership);
+                });
+            });
     });
     StateManager.subscribe(State.user.serverChanged, (state) => {
         listener.switchServer(state.user.server!);

@@ -38,6 +38,20 @@ class GameData {
         return undefined;
     }
 
+    public async setActiveContinent(
+        continent: Continent | undefined
+    ): Promise<void> {
+        this._bases = [];
+        if (continent)
+            return fetchBasesForContinent(continent.id)
+                .then(bases => {
+                    this._bases = bases;
+                    console.log(`Loaded ${this._bases.length} bases`);
+                });
+        else
+            return Promise.resolve();
+    }
+
     /**
      * Loads the game data from the API.
      */
@@ -72,14 +86,6 @@ class GameData {
                 instance._servers = servers;
                 this._instance = instance;
                 this._loaded = true;
-                return instance;
-            }).then((instance) => {
-                instance._continents.forEach(c => {
-                    fetchBasesForContinent(c.id)
-                        .then(bases => {
-                            instance._bases.push(...bases);
-                        });
-                });
                 return instance;
             });
         return loading;
