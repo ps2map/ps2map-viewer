@@ -50,6 +50,15 @@ var GameData = (function () {
                 return this._bases[i];
         return undefined;
     };
+    GameData.prototype.getFaction = function (id) {
+        switch (id) {
+            case 0: return { code: "ns" };
+            case 1: return { code: "vs" };
+            case 2: return { code: "nc" };
+            case 3: return { code: "tr" };
+            default: throw new Error("Invalid faction ID ".concat(id));
+        }
+    };
     GameData.prototype.setActiveContinent = function (continent) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
@@ -692,20 +701,26 @@ var BasePolygonsLayer = (function (_super) {
     };
     BasePolygonsLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
         var _this = this;
-        var colours = {
-            0: "rgba(0, 0, 0, 1.0)",
-            1: "rgba(160, 77, 183, 1.0)",
-            2: "rgba(81, 123, 204, 1.0)",
-            3: "rgba(226, 25, 25, 1.0)",
-            4: "rgba(255, 255, 255, 1.0)"
-        };
         baseOwnershipMap.forEach(function (owner, baseId) {
-            var polygon = _this.svg.querySelector("#".concat(_this._baseIdToPolygonId(baseId)));
-            if (polygon)
-                polygon.style.fill = colours[owner];
-            else
+            var query = "#".concat(_this._baseIdToPolygonId(baseId));
+            var polygon = _this.svg.querySelector(query);
+            if (polygon) {
+                if (owner !== 0) {
+                    polygon.style.removeProperty("display");
+                    polygon.style.fill = "var(".concat(_this._factionIdToCssVar(owner), ")");
+                }
+                else {
+                    polygon.style.display = "none";
+                }
+            }
+            else {
                 console.warn("Could not find polygon for base ".concat(baseId));
+            }
         });
+    };
+    BasePolygonsLayer.prototype._factionIdToCssVar = function (factionId) {
+        var code = GameData.getInstance().getFaction(factionId).code;
+        return "--ps2map__faction-".concat(code, "-colour");
     };
     BasePolygonsLayer.prototype._initialisePolygons = function (svg) {
         var _this = this;
@@ -773,29 +788,25 @@ var LatticeLayer = (function (_super) {
     };
     LatticeLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
         var _this = this;
-        var colours = {
-            0: "rgba(0, 0, 0, 0.25)",
-            1: "rgba(120, 37, 143, 1.0)",
-            2: "rgba(41, 83, 164, 1.0)",
-            3: "rgba(186, 25, 25, 1.0)",
-            4: "rgba(50, 50, 50, 1.0)"
-        };
         baseOwnershipMap.forEach(function (_, baseId) {
             var links = _this._links.filter(function (l) { return l.base_a_id === baseId || l.base_b_id === baseId; });
             links.forEach(function (link) {
                 var ownerA = baseOwnershipMap.get(link.base_a_id);
                 var ownerB = baseOwnershipMap.get(link.base_b_id);
-                if (!ownerA || !ownerB)
-                    return;
                 var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
                 var element = _this.element.querySelector(id);
-                if (element)
-                    if (ownerA === ownerB)
-                        element.style.stroke = colours[ownerA];
-                    else if (ownerA === 0 || ownerB === 0)
-                        element.style.stroke = colours[0];
-                    else
-                        element.style.stroke = "orange";
+                if (element) {
+                    var colour = "var(--ps2map__lattice-disabled)";
+                    if (ownerA === undefined || ownerB === undefined) {
+                    }
+                    else if (ownerA === ownerB) {
+                        if (ownerA !== 0)
+                            colour = "var(".concat(_this._factionIdToCssVar(ownerA), ")");
+                    }
+                    else if (ownerA !== 0 && ownerB !== 0)
+                        colour = "var(--ps2map__lattice-contested)";
+                    element.style.stroke = colour;
+                }
             });
         });
     };
@@ -816,6 +827,10 @@ var LatticeLayer = (function (_super) {
         path.setAttribute("x2", (link.map_pos_b_x + this.mapSize * 0.5).toFixed());
         path.setAttribute("y2", (-link.map_pos_b_y + this.mapSize * 0.5).toFixed());
         return path;
+    };
+    LatticeLayer.prototype._factionIdToCssVar = function (factionId) {
+        var code = GameData.getInstance().getFaction(factionId).code;
+        return "--ps2map__faction-".concat(code, "-colour");
     };
     return LatticeLayer;
 }(StaticLayer));

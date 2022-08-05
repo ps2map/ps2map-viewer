@@ -26,15 +26,6 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
     }
 
     public updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-
-        const colours: any = {
-            0: "rgba(0, 0, 0, 0.25)",
-            1: "rgba(120, 37, 143, 1.0)",
-            2: "rgba(41, 83, 164, 1.0)",
-            3: "rgba(186, 25, 25, 1.0)",
-            4: "rgba(50, 50, 50, 1.0)",
-        };
-
         baseOwnershipMap.forEach((_, baseId) => {
             // For each base, get the links that connect to it
             const links = this._links.filter(
@@ -43,19 +34,31 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
             links.forEach(link => {
                 const ownerA = baseOwnershipMap.get(link.base_a_id);
                 const ownerB = baseOwnershipMap.get(link.base_b_id);
-                if (!ownerA || !ownerB)
-                    return;
 
                 // Retrieve the SVG element of the link
                 const id = `#lattice-link-${link.base_a_id}-${link.base_b_id}`;
                 const element = this.element.querySelector<SVGLineElement>(id);
-                if (element)
-                    if (ownerA === ownerB)
-                        element.style.stroke = colours[ownerA];
-                    else if (ownerA === 0 || ownerB === 0)
-                        element.style.stroke = colours[0];
-                    else
-                        element.style.stroke = "orange";
+                if (element) {
+                    // Link to disabled base (greyed out)
+                    let colour = "var(--ps2map__lattice-disabled)";
+                    if (ownerA === undefined || ownerB === undefined) {
+                        // Keep at default (disabled)
+                    }
+                    // If both bases are owned by the same non-neutral faction,
+                    // use the faction's colour
+                    else if (ownerA === ownerB) {
+                        if (ownerA !== 0)
+                            colour = `var(${this._factionIdToCssVar(ownerA)})`;
+                    }
+                    // else
+                    //     colour = 
+
+                    // If the bases are owned by different non-neutral
+                    // factions, flag is as contested
+                    else if (ownerA !== 0 && ownerB !== 0)
+                        colour = "var(--ps2map__lattice-contested)";
+                    element.style.stroke = colour;
+                }
             });
         });
     }
@@ -83,5 +86,18 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
         path.setAttribute("x2", (link.map_pos_b_x + this.mapSize * 0.5).toFixed());
         path.setAttribute("y2", (-link.map_pos_b_y + this.mapSize * 0.5).toFixed());
         return path;
+    }
+
+    /**
+     * Return the CSS variable name for the given faction.
+     * 
+    * @param factionId - The faction ID to get the colour for.
+    * @returns The CSS variable name for the faction's colour.
+     */
+    private _factionIdToCssVar(factionId: number): string {
+        // TODO: This function is identical to the one in hex-layer.ts, but a
+        // shared inheritance is not trivial - to be revisited.
+        const code = GameData.getInstance().getFaction(factionId).code;
+        return `--ps2map__faction-${code}-colour`;
     }
 }

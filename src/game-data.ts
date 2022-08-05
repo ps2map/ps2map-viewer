@@ -38,6 +38,16 @@ class GameData {
         return undefined;
     }
 
+    public getFaction(id: number): { [key: string]: string } {
+        switch (id) {
+            case 0: return { code: "ns" };
+            case 1: return { code: "vs" };
+            case 2: return { code: "nc" };
+            case 3: return { code: "tr" };
+            default: throw new Error(`Invalid faction ID ${id}`);
+        }
+    }
+
     public async setActiveContinent(
         continent: Continent | undefined
     ): Promise<void> {

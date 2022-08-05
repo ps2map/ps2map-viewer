@@ -43,25 +43,37 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
             });
     }
 
-    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-        const colours: any = {
-            0: "rgba(0, 0, 0, 1.0)",
-            1: "rgba(160, 77, 183, 1.0)",
-            2: "rgba(81, 123, 204, 1.0)",
-            3: "rgba(226, 25, 25, 1.0)",
-            4: "rgba(255, 255, 255, 1.0)",
-        }
-
+    public updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
         baseOwnershipMap.forEach((owner, baseId) => {
-            const polygon = this.svg.querySelector<SVGPolygonElement>(
-                `#${this._baseIdToPolygonId(baseId)}`);
-            if (polygon)
-                polygon.style.fill = colours[owner];
-            else
+            const query = `#${this._baseIdToPolygonId(baseId)}`;
+            const polygon = this.svg.querySelector<SVGPolygonElement>(query);
+            if (polygon) {
+                if (owner !== 0) {
+                    polygon.style.removeProperty("display");
+                    polygon.style.fill = `var(${this._factionIdToCssVar(owner)})`;
+                }
+                else {
+                    polygon.style.display = "none";
+                }
+
+            }
+            else {
                 // TODO: This should not be logged at all; remove this once
                 // Oshur map data is fixed.
                 console.warn(`Could not find polygon for base ${baseId}`);
+            }
         });
+    }
+
+    /**
+     * Return the CSS variable name for the given faction.
+     * 
+    * @param factionId - The faction ID to get the colour for.
+    * @returns The CSS variable name for the faction's colour.
+     */
+    private _factionIdToCssVar(factionId: number): string {
+        const code = GameData.getInstance().getFaction(factionId).code;
+        return `--ps2map__faction-${code}-colour`;
     }
 
     /**
