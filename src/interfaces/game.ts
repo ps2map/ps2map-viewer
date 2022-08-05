@@ -1,10 +1,9 @@
-/**
- * Interface definition for static game data.
- *
- * This data is generally loaded once and cached for future use.
- */
+// API payload interfaces fpr game objects.
+//
+// These payloads are generally only sent for initial application load, or
+// when the user loads a new map.
 
-/** A game server for which live map data can be displayed. */
+/** A PS2 game server, such as Cobalt, Connery, or SolTech. */
 interface Server {
     readonly id: number;
     readonly name: string;
@@ -12,7 +11,7 @@ interface Server {
     readonly platform: string;
 }
 
-/** A continent for which map data can be shown. */
+/** A playable continent with available map data. */
 interface Continent {
     readonly id: number;
     readonly name: string;
@@ -22,10 +21,11 @@ interface Continent {
 }
 
 /**
- * A lattice link between two bases.
+ * A link between two bases in the game lattice.
  *
- * Lattice link data is ordered for consistency: base_id_a will always be
- * lower than base_b_id.
+ * @remarks
+ * The unique base IDs are sorted in ascending order, base_a_id < base_b_id.
+ * For convenience, this payload also contains the map positions of both bases.
  */
 interface LatticeLink {
     readonly base_a_id: number;
@@ -36,7 +36,14 @@ interface LatticeLink {
     readonly map_pos_b_y: number;
 }
 
-/** Detailed base data for a facility. */
+/**
+ * A base on a continent in the game.
+ *
+ * @remarks
+ * Not all bases provide outfit resources. The resource_name and resource_code
+ * fields are only defined for bases whose resource_*_amount fields are greater
+ * than zero.
+ */
 interface Base {
     readonly id: number;
     readonly continent_id: number;

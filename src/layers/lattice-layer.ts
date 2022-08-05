@@ -3,32 +3,29 @@
 /// <reference path="../map-engine/static-layer.ts" />
 /// <reference path="./base.ts" />
 
-/**
- * A static layer rendering lattice links for a given continent.
- */
+/** A static layer rendering lattice links for a given continent. */
 class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
 
     private _links: LatticeLink[] = [];
 
-    constructor(id: string, mapSize: number) {
+    private constructor(id: string, mapSize: number) {
         super(id, mapSize);
         this.element.classList.add("ps2map__lattice");
     }
 
-    static async factory(continent: Continent, id: string): Promise<LatticeLayer> {
-        const layer = new LatticeLayer(id, continent.map_size);
+    static async factory(continent: Continent, id: string
+    ): Promise<LatticeLayer> {
         return fetchContinentLattice(continent.id)
-            .then((links) => {
-                layer._links = [];
-                let i = links.length;
-                while (i-- > 0)
-                    layer._links.push(links[i]!)
-                layer._createLatticeSvg();
+            .then(links => {
+                const layer = new LatticeLayer(id, continent.map_size);
+                layer._links = links;
+                layer.element.innerHTML = "";
+                layer.element.appendChild(layer._createLatticeSvg());
                 return layer;
             });
     }
 
-    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+    public updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
 
         const colours: any = {
             0: "rgba(0, 0, 0, 0.25)",
@@ -39,10 +36,11 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
         };
 
         baseOwnershipMap.forEach((_, baseId) => {
+            // For each base, get the links that connect to it
             const links = this._links.filter(
                 l => l.base_a_id === baseId || l.base_b_id === baseId);
-            links.forEach((link) => {
-                // Get ownership for both bases
+            // For each link, check the ownership of its adjacent bases
+            links.forEach(link => {
                 const ownerA = baseOwnershipMap.get(link.base_a_id);
                 const ownerB = baseOwnershipMap.get(link.base_b_id);
                 if (!ownerA || !ownerB)
@@ -50,33 +48,30 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
 
                 // Retrieve the SVG element of the link
                 const id = `#lattice-link-${link.base_a_id}-${link.base_b_id}`;
-                const element = this.element.querySelector(id) as SVGLineElement | null;
-                if (!element)
-                    return;
-
-                // Set the stroke colour
-                if (ownerA === ownerB)
-                    element.style.stroke = colours[ownerA];
-                else if (ownerA === 0 || ownerB === 0)
-                    element.style.stroke = colours[0];
-                else
-                    element.style.stroke = "orange";
+                const element = this.element.querySelector<SVGLineElement>(id);
+                if (element)
+                    if (ownerA === ownerB)
+                        element.style.stroke = colours[ownerA];
+                    else if (ownerA === 0 || ownerB === 0)
+                        element.style.stroke = colours[0];
+                    else
+                        element.style.stroke = "orange";
             });
         });
     }
 
-    private _createLatticeSvg(): void {
-        this.element.innerHTML = "";
+    /** Create an empty SVG element to place lattice links into. */
+    private _createLatticeSvg(): SVGElement {
         const svg = document.createElementNS(
             "http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("viewBox", `0 0 ${this.mapSize} ${this.mapSize}`);
-
-        this._links.forEach((link) => {
+        this._links.forEach(link => {
             svg.appendChild(this._createLatticeLink(link));
         });
-        this.element.appendChild(svg);
+        return svg;
     }
 
+    /** Create a lattice link for the contained SVG element. */
     private _createLatticeLink(link: LatticeLink): SVGElement {
         const path = document.createElementNS(
             "http://www.w3.org/2000/svg", "line");

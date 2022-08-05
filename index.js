@@ -573,6 +573,38 @@ var MapRenderer = (function () {
     };
     return MapRenderer;
 }());
+var SupportsBaseOwnership = (function () {
+    function SupportsBaseOwnership() {
+    }
+    return SupportsBaseOwnership;
+}());
+var CanvasLayer = (function (_super) {
+    __extends(CanvasLayer, _super);
+    function CanvasLayer(id, mapSize, canvas) {
+        var _this = _super.call(this, id, mapSize) || this;
+        _this.canvas = canvas;
+        _this.element.classList.add("ps2map__canvas");
+        return _this;
+    }
+    CanvasLayer.factory = function (continent, id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var canvas, layer;
+            return __generator(this, function (_a) {
+                canvas = document.createElement("canvas");
+                if (!canvas.getContext)
+                    throw "HTML Canvas not supported";
+                canvas.width = canvas.height = continent.map_size;
+                layer = new CanvasLayer(id, continent.map_size, canvas);
+                layer.element.appendChild(canvas);
+                return [2, layer];
+            });
+        });
+    };
+    CanvasLayer.prototype.calculateStrokeWidth = function (zoom) {
+        return 1.6 + 23.67 / Math.pow(2, zoom / 0.23);
+    };
+    return CanvasLayer;
+}(StaticLayer));
 var UrlGen = (function () {
     function UrlGen() {
     }
@@ -636,29 +668,23 @@ function fetchContinentOutlines(continentCode) {
         return svg;
     });
 }
-var SupportsBaseOwnership = (function () {
-    function SupportsBaseOwnership() {
-    }
-    return SupportsBaseOwnership;
-}());
-;
 var BasePolygonsLayer = (function (_super) {
     __extends(BasePolygonsLayer, _super);
-    function BasePolygonsLayer(id, mapSize) {
+    function BasePolygonsLayer(id, mapSize, svg) {
         var _this = _super.call(this, id, mapSize) || this;
+        _this.svg = svg;
         _this.element.classList.add("ps2map__base-hexes");
         return _this;
     }
     BasePolygonsLayer.factory = function (continent, id) {
         return __awaiter(this, void 0, void 0, function () {
-            var layer;
             return __generator(this, function (_a) {
-                layer = new BasePolygonsLayer(id, continent.map_size);
                 return [2, fetchContinentOutlines(continent.code)
                         .then(function (svg) {
+                        var layer = new BasePolygonsLayer(id, continent.map_size, svg);
                         svg.classList.add("ps2map__base-hexes__svg");
                         layer.element.appendChild(svg);
-                        layer._applyPolygonHoverFix(svg);
+                        layer._initialisePolygons(svg);
                         return layer;
                     })];
             });
@@ -666,9 +692,6 @@ var BasePolygonsLayer = (function (_super) {
     };
     BasePolygonsLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
         var _this = this;
-        var svg = this.element.firstElementChild;
-        if (!svg)
-            throw "Unable to find HexLayer SVG element";
         var colours = {
             0: "rgba(0, 0, 0, 1.0)",
             1: "rgba(160, 77, 183, 1.0)",
@@ -677,28 +700,25 @@ var BasePolygonsLayer = (function (_super) {
             4: "rgba(255, 255, 255, 1.0)"
         };
         baseOwnershipMap.forEach(function (owner, baseId) {
-            var polygon = svg.querySelector("#".concat(_this._baseIdToPolygonId(baseId)));
-            if (!polygon)
-                throw "Unable to find polygon for base ".concat(baseId);
-            polygon.style.fill = colours[owner];
+            var polygon = _this.svg.querySelector("#".concat(_this._baseIdToPolygonId(baseId)));
+            if (polygon)
+                polygon.style.fill = colours[owner];
+            else
+                console.warn("Could not find polygon for base ".concat(baseId));
         });
     };
-    BasePolygonsLayer.prototype._applyPolygonHoverFix = function (svg) {
+    BasePolygonsLayer.prototype._initialisePolygons = function (svg) {
         var _this = this;
         svg.querySelectorAll("polygon").forEach(function (polygon) {
             polygon.id = _this._baseIdToPolygonId(polygon.id);
             var addHoverFx = function () {
                 svg.appendChild(polygon);
-                var removeHoverFx = function () { return polygon.style.removeProperty("stroke"); };
-                polygon.addEventListener("mouseleave", removeHoverFx, {
-                    passive: true
-                });
-                polygon.addEventListener("touchend", removeHoverFx, {
-                    passive: true
-                });
-                polygon.addEventListener("touchcancel", removeHoverFx, {
-                    passive: true
-                });
+                var removeHoverFx = function () {
+                    polygon.style.removeProperty("stroke");
+                };
+                polygon.addEventListener("mouseleave", removeHoverFx, { passive: true });
+                polygon.addEventListener("touchend", removeHoverFx, { passive: true });
+                polygon.addEventListener("touchcancel", removeHoverFx, { passive: true });
                 polygon.style.stroke = "#ffffff";
                 _this.element.dispatchEvent(_this._buildBaseHoverEvent(_this._polygonIdToBaseId(polygon.id), polygon));
             };
@@ -711,18 +731,12 @@ var BasePolygonsLayer = (function (_super) {
         });
     };
     BasePolygonsLayer.prototype.deferredLayerUpdate = function (_, zoom) {
-        var svg = this.element.firstElementChild;
-        if (svg) {
-            var strokeWith = 10 / Math.pow(1.5, zoom);
-            svg.style.setProperty("--ps2map__base-hexes__stroke-width", "".concat(strokeWith, "px"));
-        }
+        var strokeWith = 10 / Math.pow(1.5, zoom);
+        this.svg.style.setProperty("--ps2map__base-hexes__stroke-width", "".concat(strokeWith, "px"));
     };
     BasePolygonsLayer.prototype._buildBaseHoverEvent = function (baseId, element) {
         return new CustomEvent("ps2map_basehover", {
-            detail: {
-                baseId: baseId,
-                element: element
-            },
+            detail: { baseId: baseId, element: element },
             bubbles: true,
             cancelable: true
         });
@@ -745,16 +759,13 @@ var LatticeLayer = (function (_super) {
     }
     LatticeLayer.factory = function (continent, id) {
         return __awaiter(this, void 0, void 0, function () {
-            var layer;
             return __generator(this, function (_a) {
-                layer = new LatticeLayer(id, continent.map_size);
                 return [2, fetchContinentLattice(continent.id)
                         .then(function (links) {
-                        layer._links = [];
-                        var i = links.length;
-                        while (i-- > 0)
-                            layer._links.push(links[i]);
-                        layer._createLatticeSvg();
+                        var layer = new LatticeLayer(id, continent.map_size);
+                        layer._links = links;
+                        layer.element.innerHTML = "";
+                        layer.element.appendChild(layer._createLatticeSvg());
                         return layer;
                     })];
             });
@@ -778,26 +789,24 @@ var LatticeLayer = (function (_super) {
                     return;
                 var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
                 var element = _this.element.querySelector(id);
-                if (!element)
-                    return;
-                if (ownerA === ownerB)
-                    element.style.stroke = colours[ownerA];
-                else if (ownerA === 0 || ownerB === 0)
-                    element.style.stroke = colours[0];
-                else
-                    element.style.stroke = "orange";
+                if (element)
+                    if (ownerA === ownerB)
+                        element.style.stroke = colours[ownerA];
+                    else if (ownerA === 0 || ownerB === 0)
+                        element.style.stroke = colours[0];
+                    else
+                        element.style.stroke = "orange";
             });
         });
     };
     LatticeLayer.prototype._createLatticeSvg = function () {
         var _this = this;
-        this.element.innerHTML = "";
         var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("viewBox", "0 0 ".concat(this.mapSize, " ").concat(this.mapSize));
         this._links.forEach(function (link) {
             svg.appendChild(_this._createLatticeLink(link));
         });
-        this.element.appendChild(svg);
+        return svg;
     };
     LatticeLayer.prototype._createLatticeLink = function (link) {
         var path = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -1928,40 +1937,6 @@ document.addEventListener("DOMContentLoaded", function () {
         StateManager.dispatch(State.user.continentChanged, continents[continents.length - 1]);
     });
 });
-var CanvasLayer = (function (_super) {
-    __extends(CanvasLayer, _super);
-    function CanvasLayer(id, mapSize) {
-        var _this = _super.call(this, id, mapSize) || this;
-        _this.element.classList.add("ps2map__canvas");
-        return _this;
-    }
-    CanvasLayer.prototype.calculateStrokeWidth = function (zoom) {
-        return 1.6 + 23.67 / Math.pow(2, zoom / 0.23);
-    };
-    CanvasLayer.prototype.getCanvas = function () {
-        var element = this.element.firstChild;
-        if (!element)
-            throw "Unable to find canvas element";
-        return element;
-    };
-    CanvasLayer.factory = function (continent, id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var layer, frag, canvas;
-            return __generator(this, function (_a) {
-                layer = new CanvasLayer(id, continent.map_size);
-                frag = document.createDocumentFragment();
-                canvas = document.createElement("canvas");
-                if (!canvas.getContext)
-                    console.error("Unable to create canvas element");
-                canvas.width = canvas.height = layer.mapSize;
-                frag.appendChild(canvas);
-                layer.element.appendChild(frag);
-                return [2, layer];
-            });
-        });
-    };
-    return CanvasLayer;
-}(StaticLayer));
 var StateManager = (function () {
     function StateManager() {
     }

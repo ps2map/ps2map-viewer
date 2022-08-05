@@ -4,7 +4,10 @@
 /// <reference path="./base.ts" />
 
 /**
- * Details for the "ps2map_basehover" custom event.
+ * Custom DOM event details dispatched when the user hovers a base.
+ * 
+ * @param baseId - ID of the base that was hovered.
+ * @param element - The SVG polygon associated with this base.
  */
 interface BaseHoverEvent {
     baseId: number;
@@ -19,27 +22,28 @@ interface BaseHoverEvent {
  */
 class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
-    constructor(id: string, mapSize: number) {
+    readonly svg: SVGElement;
+
+    private constructor(id: string, mapSize: number, svg: SVGElement) {
         super(id, mapSize);
+        this.svg = svg;
         this.element.classList.add("ps2map__base-hexes");
     }
 
-    static async factory(continent: Continent, id: string): Promise<BasePolygonsLayer> {
-        const layer = new BasePolygonsLayer(id, continent.map_size);
+    static async factory(continent: Continent, id: string
+    ): Promise<BasePolygonsLayer> {
         return fetchContinentOutlines(continent.code)
-            .then((svg) => {
+            .then(svg => {
+                const layer = new BasePolygonsLayer(
+                    id, continent.map_size, svg);
                 svg.classList.add("ps2map__base-hexes__svg");
                 layer.element.appendChild(svg);
-                layer._applyPolygonHoverFix(svg);
+                layer._initialisePolygons(svg);
                 return layer;
             });
     }
 
     updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-        const svg = this.element.firstElementChild as SVGElement | null;
-        if (!svg)
-            throw "Unable to find HexLayer SVG element";
-
         const colours: any = {
             0: "rgba(0, 0, 0, 1.0)",
             1: "rgba(160, 77, 183, 1.0)",
@@ -49,38 +53,55 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
         }
 
         baseOwnershipMap.forEach((owner, baseId) => {
-            const polygon = svg.querySelector(
-                `#${this._baseIdToPolygonId(baseId)}`) as SVGPolygonElement | null;
-            if (!polygon)
-                throw `Unable to find polygon for base ${baseId}`;
-            polygon.style.fill = colours[owner];
+            const polygon = this.svg.querySelector<SVGPolygonElement>(
+                `#${this._baseIdToPolygonId(baseId)}`);
+            if (polygon)
+                polygon.style.fill = colours[owner];
+            else
+                // TODO: This should not be logged at all; remove this once
+                // Oshur map data is fixed.
+                console.warn(`Could not find polygon for base ${baseId}`);
         });
     }
 
-    private _applyPolygonHoverFix(svg: SVGElement): void {
-        svg.querySelectorAll("polygon").forEach((polygon) => {
-            // Make polygon ID unique
+    /**
+     * Create hover event listeners for all base polygons.
+     * 
+     * This also updates the polygon's IDs to be unique within the app by
+     * replacing them with "base-outline-<baseId>".
+     * 
+     * @param svg - The SVG element containing the base polygons.
+     * @returns A promise that resolves when all polygons have been updated.
+     */
+    private _initialisePolygons(svg: SVGElement): void {
+        svg.querySelectorAll("polygon").forEach(polygon => {
             polygon.id = this._baseIdToPolygonId(polygon.id);
+
             // Event handler for applying hover effects
             const addHoverFx = () => {
                 // This moves the existing polygon to the top of the SVG to
                 // make sure the hover effect does not get overshadowed by
-                // neighbouring polygons.
+                // neighbouring polygons. This does *not* create a duplicate
+                // and should be safe per the SVG spec.
                 svg.appendChild(polygon);
-                // Event handler for removing hover effects
-                const removeHoverFx = () => polygon.style.removeProperty("stroke");
-                polygon.addEventListener("mouseleave", removeHoverFx, {
-                    passive: true
-                });
-                polygon.addEventListener("touchend", removeHoverFx, {
-                    passive: true
-                });
-                polygon.addEventListener("touchcancel", removeHoverFx, {
-                    passive: true
-                });
+
+                // Set up event handler for removing hover effects
+                const removeHoverFx = () => {
+                    polygon.style.removeProperty("stroke")
+                };
+                polygon.addEventListener(
+                    "mouseleave", removeHoverFx, { passive: true });
+                polygon.addEventListener(
+                    "touchend", removeHoverFx, { passive: true });
+                polygon.addEventListener(
+                    "touchcancel", removeHoverFx, { passive: true });
+
+                // Apply the hover styling itself
                 polygon.style.stroke = "#ffffff";
-                this.element.dispatchEvent(
-                    this._buildBaseHoverEvent(this._polygonIdToBaseId(polygon.id), polygon));
+
+                // Dispatch the custom hover event
+                this.element.dispatchEvent(this._buildBaseHoverEvent(
+                    this._polygonIdToBaseId(polygon.id), polygon));
             };
             polygon.addEventListener("mouseenter", addHoverFx, {
                 passive: true
@@ -92,30 +113,45 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
     }
 
     protected deferredLayerUpdate(_: ViewBox, zoom: number): void {
-        const svg = this.element.firstElementChild as SVGElement | null;
-        if (svg) {
-            const strokeWith = 10 / 1.5 ** zoom;
-            svg.style.setProperty(
-                "--ps2map__base-hexes__stroke-width", `${strokeWith}px`);
-        }
+        const strokeWith = 10 / 1.5 ** zoom;
+        this.svg.style.setProperty(
+            "--ps2map__base-hexes__stroke-width", `${strokeWith}px`);
     }
 
+    /**
+     * Factory method for creating custom base hover events.
+     * 
+     * @param baseId - ID of the base that was hovered.
+     * @param element - The SVG polygon associated with this base.
+     * @returns A custom base hover event, ready to be dispatched.
+     */
     private _buildBaseHoverEvent(baseId: number, element: SVGPolygonElement): CustomEvent<BaseHoverEvent> {
         return new CustomEvent("ps2map_basehover", {
-            detail: {
-                baseId: baseId,
-                element: element
-            },
+            detail: { baseId, element },
             bubbles: true,
             cancelable: true,
         });
     }
 
+    /**
+     * Convert a polygon ID to a base ID.
+     * 
+     * This function performs no validation on the input.
+     * 
+     * @param id - Polygon ID to convert.
+     * @returns The corresponding base ID.
+     */
     private _polygonIdToBaseId(id: string): number {
         // Convert the string "base-outline-<baseId>" to a number
         return parseInt(id.substring(id.lastIndexOf("-") + 1));
     }
 
+    /**
+     * Convert a base ID to a polygon ID.
+     * 
+     * @param baseId - Base ID to convert.
+     * @returns The polygon ID for the given base.
+     */
     private _baseIdToPolygonId(baseId: number | string): string {
         return `base-outline-${baseId}`;
     }
