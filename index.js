@@ -694,6 +694,13 @@ var BasePolygonsLayer = (function (_super) {
                         svg.classList.add("ps2map__base-hexes__svg");
                         layer.element.appendChild(svg);
                         layer._initialisePolygons(svg);
+                        var data = GameData.getInstance();
+                        layer.element.querySelectorAll("polygon").forEach(function (element) {
+                            var _a;
+                            var baseId = layer._polygonIdToBaseId(element.id);
+                            if (((_a = data.getBase(baseId)) === null || _a === void 0 ? void 0 : _a.type_code) === undefined)
+                                element.remove();
+                        });
                         return layer;
                     })];
             });

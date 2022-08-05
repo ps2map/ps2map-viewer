@@ -39,6 +39,13 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
                 svg.classList.add("ps2map__base-hexes__svg");
                 layer.element.appendChild(svg);
                 layer._initialisePolygons(svg);
+                // Remove "no man's land" hexes like the "Shattered Warp Gate"
+                const data = GameData.getInstance();
+                layer.element.querySelectorAll("polygon").forEach(element => {
+                    const baseId = layer._polygonIdToBaseId(element.id);
+                    if (data.getBase(baseId)?.type_code === undefined)
+                        element.remove();
+                });
                 return layer;
             });
     }
