@@ -50,9 +50,6 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
                         if (ownerA !== 0)
                             colour = `var(${this._factionIdToCssVar(ownerA)})`;
                     }
-                    // else
-                    //     colour = 
-
                     // If the bases are owned by different non-neutral
                     // factions, flag is as contested
                     else if (ownerA !== 0 && ownerB !== 0)
@@ -78,13 +75,15 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
     private _createLatticeLink(link: LatticeLink): SVGElement {
         const path = document.createElementNS(
             "http://www.w3.org/2000/svg", "line");
-        path.setAttribute("id", `lattice-link-${link.base_a_id}-${link.base_b_id}`);
+        path.setAttribute(
+            "id", `lattice-link-${link.base_a_id}-${link.base_b_id}`);
 
         // Game and database use inverted Y coordinates
-        path.setAttribute("x1", (link.map_pos_a_x + this.mapSize * 0.5).toFixed());
-        path.setAttribute("y1", (-link.map_pos_a_y + this.mapSize * 0.5).toFixed());
-        path.setAttribute("x2", (link.map_pos_b_x + this.mapSize * 0.5).toFixed());
-        path.setAttribute("y2", (-link.map_pos_b_y + this.mapSize * 0.5).toFixed());
+        const mapOffset = this.mapSize * 0.5;
+        path.setAttribute("x1", (link.map_pos_a_x + mapOffset).toFixed());
+        path.setAttribute("y1", (-link.map_pos_a_y + mapOffset).toFixed());
+        path.setAttribute("x2", (link.map_pos_b_x + mapOffset).toFixed());
+        path.setAttribute("y2", (-link.map_pos_b_y + mapOffset).toFixed());
         return path;
     }
 

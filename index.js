@@ -714,7 +714,8 @@ var BasePolygonsLayer = (function (_super) {
             if (polygon) {
                 if (owner !== 0) {
                     polygon.style.removeProperty("display");
-                    polygon.style.fill = "var(".concat(_this._factionIdToCssVar(owner), ")");
+                    polygon.style.fill =
+                        "var(".concat(_this._factionIdToCssVar(owner), ")");
                 }
                 else {
                     polygon.style.display = "none";
@@ -829,10 +830,11 @@ var LatticeLayer = (function (_super) {
     LatticeLayer.prototype._createLatticeLink = function (link) {
         var path = document.createElementNS("http://www.w3.org/2000/svg", "line");
         path.setAttribute("id", "lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id));
-        path.setAttribute("x1", (link.map_pos_a_x + this.mapSize * 0.5).toFixed());
-        path.setAttribute("y1", (-link.map_pos_a_y + this.mapSize * 0.5).toFixed());
-        path.setAttribute("x2", (link.map_pos_b_x + this.mapSize * 0.5).toFixed());
-        path.setAttribute("y2", (-link.map_pos_b_y + this.mapSize * 0.5).toFixed());
+        var mapOffset = this.mapSize * 0.5;
+        path.setAttribute("x1", (link.map_pos_a_x + mapOffset).toFixed());
+        path.setAttribute("y1", (-link.map_pos_a_y + mapOffset).toFixed());
+        path.setAttribute("x2", (link.map_pos_b_x + mapOffset).toFixed());
+        path.setAttribute("y2", (-link.map_pos_b_y + mapOffset).toFixed());
         return path;
     };
     LatticeLayer.prototype._factionIdToCssVar = function (factionId) {
@@ -944,8 +946,8 @@ var BaseNamesLayer = (function (_super) {
         var i = this.features.length;
         while (i-- > 0) {
             var feat = this.features[i];
-            feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) * ".concat(unzoom, ")) ") +
-                "scale(".concat(unzoom, ", ").concat(unzoom, ")"));
+            feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) " +
+                "* ".concat(unzoom, ")) scale(").concat(unzoom, ", ").concat(unzoom, ")"));
             if (!feat.forceVisible)
                 if (zoom >= feat.minZoom)
                     feat.element.innerText = feat.text;

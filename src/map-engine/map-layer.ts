@@ -29,8 +29,8 @@ abstract class MapLayer {
         this.element.classList.add("ps2map__layer");
         this.element.style.height = this.element.style.width = `${mapSize}px`;
         // Add event listener for deferred updates
-        this.element.addEventListener(
-            "transitionend", this._runDeferredLayerUpdate.bind(this), { passive: true });
+        this.element.addEventListener("transitionend",
+            this._runDeferredLayerUpdate.bind(this), { passive: true });
     }
 
     /**
@@ -95,5 +95,8 @@ abstract class MapLayer {
      * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    protected abstract deferredLayerUpdate(viewBox: ViewBox, zoom: number): void;
+    protected abstract deferredLayerUpdate(
+        viewBox: ViewBox,
+        zoom: number,
+    ): void;
 }

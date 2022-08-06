@@ -34,7 +34,8 @@ class BaseNameFeature {
 class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
     features: BaseNameFeature[] = []
 
-    static async factory(continent: Continent, id: string): Promise<BaseNamesLayer> {
+    static async factory(continent: Continent, id: string
+    ): Promise<BaseNamesLayer> {
         const layer = new BaseNamesLayer(id, continent.map_size);
         return fetchBasesForContinent(continent.id)
             .then((bases: Base[]) => {
@@ -88,13 +89,15 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
             element.style.left = `${this.mapSize * 0.5 + pos.x}px`;
             element.style.bottom = `${this.mapSize * 0.5 + pos.y}px`;
 
-            element.classList.add(`ps2map__base-names__icon__${baseInfo.type_code}`)
+            element.classList.add(
+                `ps2map__base-names__icon__${baseInfo.type_code}`)
 
             let minZoom = 0;
             if (baseInfo.type_code === "small-outpost") minZoom = 0.60
             if (baseInfo.type_code === "large-outpost") minZoom = 0.45;
 
-            features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
+            features.push(new BaseNameFeature(
+                pos, baseInfo.id, baseInfo.name, element, minZoom));
             this.element.appendChild(element);
         }
         this.features = features;
@@ -127,8 +130,8 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         while (i-- > 0) {
             const feat = this.features[i]!;
             feat.element.style.transform = (
-                `translate(-50%, calc(var(--ps2map__base-icon-size) * ${unzoom})) ` +
-                `scale(${unzoom}, ${unzoom})`);
+                `translate(-50%, calc(var(--ps2map__base-icon-size) ` +
+                `* ${unzoom})) scale(${unzoom}, ${unzoom})`);
             if (!feat.forceVisible)
                 if (zoom >= feat.minZoom)
                     feat.element.innerText = feat.text;

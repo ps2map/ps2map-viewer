@@ -14,7 +14,8 @@ class TerrainLayer extends TileLayer {
         this.element.classList.add("ps2map__terrain");
     }
 
-    static async factory(continent: Continent, id: string): Promise<TerrainLayer> {
+    static async factory(continent: Continent, id: string
+    ): Promise<TerrainLayer> {
         const layer = new TerrainLayer(id, continent.map_size);
         layer._setContinent(continent.code);
         layer.updateLayer();
@@ -118,10 +119,10 @@ class TerrainLayer extends TileLayer {
             // Base case for all map sizes
             return 4;
         if (lod === 1 || mapSize <= 1024)
-            // Past LOD0, very small maps (e.g. old Tutorial) do not scale past 8
+            // Past LOD0, very small maps (e.g. Tutorial1) do not scale past 8
             return 8;
         if (lod === 2 || mapSize <= 2048)
-            // Past LOD1, small maps (e.g. VR training or Nexus) do not scale past 16
+            // Past LOD1, small maps (e.g. Nexus) do not scale past 16
             return 16;
         // LOD3 base case for large maps (i.e. Koltyr and up)
         return 32;

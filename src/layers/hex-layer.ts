@@ -57,12 +57,12 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
             if (polygon) {
                 if (owner !== 0) {
                     polygon.style.removeProperty("display");
-                    polygon.style.fill = `var(${this._factionIdToCssVar(owner)})`;
+                    polygon.style.fill =
+                        `var(${this._factionIdToCssVar(owner)})`;
                 }
                 else {
                     polygon.style.display = "none";
                 }
-
             }
             else {
                 // TODO: This should not be logged at all; remove this once
@@ -144,7 +144,8 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
      * @param element - The SVG polygon associated with this base.
      * @returns A custom base hover event, ready to be dispatched.
      */
-    private _buildBaseHoverEvent(baseId: number, element: SVGPolygonElement): CustomEvent<BaseHoverEvent> {
+    private _buildBaseHoverEvent(baseId: number, element: SVGPolygonElement
+    ): CustomEvent<BaseHoverEvent> {
         return new CustomEvent("ps2map_basehover", {
             detail: { baseId, element },
             bubbles: true,
