@@ -601,7 +601,7 @@ var CanvasLayer = (function (_super) {
             return __generator(this, function (_a) {
                 canvas = document.createElement("canvas");
                 if (!canvas.getContext)
-                    throw "HTML Canvas not supported";
+                    return [2, Promise.reject("HTML Canvas not supported")];
                 canvas.width = canvas.height = continent.map_size;
                 layer = new CanvasLayer(id, continent.map_size, canvas);
                 layer.element.appendChild(canvas);

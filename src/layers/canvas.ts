@@ -17,7 +17,7 @@ class CanvasLayer extends StaticLayer {
         // and let the caller handle the lack of canvas support.
         const canvas = document.createElement("canvas");
         if (!canvas.getContext)
-            throw "HTML Canvas not supported";
+            return Promise.reject("HTML Canvas not supported");
         canvas.width = canvas.height = continent.map_size;
 
         const layer = new CanvasLayer(id, continent.map_size, canvas);
