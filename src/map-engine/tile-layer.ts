@@ -35,16 +35,21 @@ abstract class TileLayer extends MapLayer {
     /** Map tiles for the current grid. */
     protected tiles: MapTile[] = [];
 
-    constructor(id: string, mapSize: number, initialLod: number) {
-        super(id, mapSize);
+    private _sizeNum: number;
+
+    constructor(id: string, size: Box, initialLod: number) {
+        if (size.height !== size.width)
+            throw new Error("Non-square tile layers are not supported.");
+        super(id, size);
         this.lod = initialLod;
+        this._sizeNum = size.width;
     }
 
     /** Generate new tiles for the given grid size. */
     protected defineTiles(gridSize: number): void {
         const newTiles: MapTile[] = [];
-        const tileSize = this.mapSize / gridSize;
-        const baseSize = this.mapSize / gridSize;
+        const tileSize = this._sizeNum / gridSize;
+        const baseSize = this._sizeNum / gridSize;
         // Y loop has to count negative as it is populated top-to-bototm
         let y = gridSize;
         while (y-- > 0)
@@ -123,12 +128,12 @@ abstract class TileLayer extends MapLayer {
         const targetX = (viewBox.right + viewBox.left) * 0.5;
         const targetY = (viewBox.top + viewBox.bottom) * 0.5;
         // Initial offset to move the centre of the SVG to its CSS origin
-        const halfMapSize = this.mapSize * 0.5;
-        let offsetX = -halfMapSize;
-        let offsetY = -halfMapSize;
+        const halfSize = this._sizeNum * 0.5;
+        let offsetX = -halfSize;
+        let offsetY = -halfSize;
         // Another offset to shift the view box target to the origin
-        offsetX += (halfMapSize - targetX) * zoom;
-        offsetY -= (halfMapSize - targetY) * zoom; // -1 to fix Y axis origin
+        offsetX += (halfSize - targetX) * zoom;
+        offsetY -= (halfSize - targetY) * zoom; // -1 to fix Y axis origin
         // Apply transform
         this.element.style.transform = (
             `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);

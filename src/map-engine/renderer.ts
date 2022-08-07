@@ -32,23 +32,19 @@ class MapRenderer {
     public allowPan = true;
     private _isPanning: boolean = false;
 
-    constructor(viewport: HTMLDivElement, mapSize: number) {
+    constructor(viewport: HTMLDivElement, mapSize: Box) {
         // Set up DOM containers
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this._anchor = document.createElement("div");
-        this.layers = new LayerManager(this._anchor, mapSize)
+        this.layers = new LayerManager(this._anchor, mapSize);
         this.viewport.appendChild(this._anchor);
 
         // Set up camera
-        this._camera = new Camera(
-            { // Map dimensions
-                width: mapSize, height: mapSize
-            },
-            { // Viewport dimensions
-                width: this.viewport.clientWidth,
-                height: this.viewport.clientHeight,
-            });
+        this._camera = new Camera(mapSize, {
+            width: this.viewport.clientWidth,
+            height: this.viewport.clientHeight,
+        });
 
         this.setMapSize(mapSize);
 
@@ -69,8 +65,7 @@ class MapRenderer {
             this._anchor.style.left = `${width * 0.5}px`;
             this._anchor.style.top = `${height * 0.5}px`;
             this._camera.updateViewportSize(
-                { width: this.getMapSize(), height: this.getMapSize() },
-                { width, height });
+                this.getMapSize(), { width, height });
             this.viewport.dispatchEvent(
                 this._buildViewBoxChangedEvent(this._camera.viewBox()));
         });
@@ -93,7 +88,7 @@ class MapRenderer {
         return this._camera.viewBox();
     }
 
-    getMapSize(): number {
+    getMapSize(): Box {
         return this.layers.mapSize;
     }
 
@@ -118,14 +113,14 @@ class MapRenderer {
      * map renderer.
      * @param value New map size to apply.
      */
-    setMapSize(value: number): void {
+    setMapSize(value: Box): void {
         if (!this.layers.isEmpty())
             throw new Error("Cannot change map size while layers are present");
         this.layers = new LayerManager(this._anchor, value);
         // Create a new camera as zoom levels depend on map size
         this._camera = new Camera(
             { // Map dimensions
-                width: value, height: value
+                width: value.width, height: value.height,
             },
             { // Viewport dimensions
                 width: this.viewport.clientWidth,
@@ -154,11 +149,12 @@ class MapRenderer {
         const relY = (screen.y - vp.offsetTop) / vp.clientHeight;
         // Interpolate the relative position within the view box
         const box = this._camera.viewBox();
-        const halfSize = this.layers.mapSize * 0.5;
+        const halfSizeX = this.layers.mapSize.width * 0.5;
+        const halfSizeY = this.layers.mapSize.height * 0.5;
         return {
-            x: -halfSize + box.left + (box.right - box.left) * relX,
+            x: -halfSizeX + box.left + (box.right - box.left) * relX,
             // (1 - relY) takes care of the Y axis inversion
-            y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY),
+            y: -halfSizeY + box.bottom + (box.top - box.bottom) * (1 - relY),
         };
     }
 
@@ -267,13 +263,13 @@ class MapRenderer {
         const mapSize = this.layers.mapSize;
         // Constrain pan limits
         if (targetX < 0) targetX = 0;
-        if (targetX > mapSize) targetX = mapSize;
+        if (targetX > mapSize.width) targetX = mapSize.width;
         if (targetY < 0) targetY = 0;
-        if (targetY > mapSize) targetY = mapSize;
+        if (targetY > mapSize.height) targetY = mapSize.height;
         // Update camera
         this._camera.target = {
             x: targetX,
-            y: targetY
+            y: targetY,
         };
     }
 

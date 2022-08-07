@@ -8,7 +8,7 @@ class HeroMap extends MapRenderer {
     private _continent: Continent | undefined = undefined;
 
     constructor(viewport: HTMLDivElement) {
-        super(viewport, 0);
+        super(viewport, { width: 0, height: 0 });
     }
 
     continent(): Continent { return this._continent!; }
@@ -60,7 +60,10 @@ class HeroMap extends MapRenderer {
                 // Delete old layers
                 this.layers.clear();
                 // Update map size (required for camera)
-                this.setMapSize(continent.map_size);
+                this.setMapSize({
+                    width: continent.map_size,
+                    height: continent.map_size,
+                });
                 this.jumpTo({
                     x: continent.map_size / 2,
                     y: continent.map_size / 2

@@ -5,19 +5,19 @@
  * removing map layers, showing and hiding them, and retrieving them.
  */
 class LayerManager {
-    readonly mapSize: number;
+    readonly mapSize: Box;
 
     private readonly _anchor: HTMLElement;
     private _layers: MapLayer[] = [];
 
-    constructor(anchor: HTMLElement, mapSize: number) {
+    constructor(anchor: HTMLElement, mapSize: Box) {
         this.mapSize = mapSize;
         this._anchor = anchor;
         anchor.classList.add("ps2map__anchor");
     }
 
     addLayer(layer: MapLayer): void {
-        if (layer.mapSize !== this.mapSize)
+        if (layer.size == this.mapSize)
             throw new Error(`Size of added layer "${layer.id}" does not ` +
                 `match current map size.`);
         // Check if a layer with the same id already exists.

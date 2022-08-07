@@ -32,11 +32,16 @@ class BaseNameFeature {
 
 /** Base name and icon layer subclass. */
 class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
-    features: BaseNameFeature[] = []
+    features: BaseNameFeature[] = [];
+
+    private constructor(id: string, size: Box) {
+        super(id, size);
+    }
 
     static async factory(continent: Continent, id: string
     ): Promise<BaseNamesLayer> {
-        const layer = new BaseNamesLayer(id, continent.map_size);
+        const size = { width: continent.map_size, height: continent.map_size };
+        const layer = new BaseNamesLayer(id, size);
         return fetchBasesForContinent(continent.id)
             .then((bases: Base[]) => {
                 layer._loadBaseInfo(bases);
@@ -86,8 +91,8 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
                 name += ` ${baseInfo.type_name}`;
             element.innerText = `${name}`;
             element.classList.add("ps2map__base-names__icon")
-            element.style.left = `${this.mapSize * 0.5 + pos.x}px`;
-            element.style.bottom = `${this.mapSize * 0.5 + pos.y}px`;
+            element.style.left = `${this.size.width * 0.5 + pos.x}px`;
+            element.style.bottom = `${this.size.height * 0.5 + pos.y}px`;
 
             element.classList.add(
                 `ps2map__base-names__icon__${baseInfo.type_code}`)

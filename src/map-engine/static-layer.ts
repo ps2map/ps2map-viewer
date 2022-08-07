@@ -8,8 +8,8 @@
  * checks or optimisations are used whatsoever - avoid them when possible.
  */
 class StaticLayer extends MapLayer {
-    constructor(id: string, mapSize: number) {
-        super(id, mapSize);
+    constructor(id: string, size: Box) {
+        super(id, size);
     }
 
     protected deferredLayerUpdate(_: ViewBox, __: number): void { }
@@ -18,12 +18,13 @@ class StaticLayer extends MapLayer {
         const targetX = (viewBox.right + viewBox.left) * 0.5;
         const targetY = (viewBox.top + viewBox.bottom) * 0.5;
         // Initial offset to move the centre of the SVG to its CSS origin
-        const halfMapSize = this.mapSize * 0.5;
-        let offsetX = -halfMapSize;
-        let offsetY = -halfMapSize;
+        const halfSizeX = this.size.width * 0.5;
+        const halfSizeY = this.size.height * 0.5;
+        let offsetX = -halfSizeX;
+        let offsetY = -halfSizeY;
         // Another offset to shift the view box target to the origin
-        offsetX += (halfMapSize - targetX) * zoom;
-        offsetY -= (halfMapSize - targetY) * zoom; // -1 to fix Y axis origin
+        offsetX += (halfSizeX - targetX) * zoom;
+        offsetY -= (halfSizeY - targetY) * zoom; // -1 to fix Y axis origin
         // Apply transform
         this.element.style.transform = (
             `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);

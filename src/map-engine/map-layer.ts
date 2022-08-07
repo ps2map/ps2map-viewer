@@ -10,7 +10,7 @@ abstract class MapLayer {
     /** Unique identifier for this layer and the DOM element it represents. */
     readonly id: string;
     /** Base size of the map layer in CSS pixels. */
-    readonly mapSize: number;
+    readonly size: Box;
     /** DOM element containing the layer's features. */
     readonly element: HTMLDivElement;
 
@@ -20,14 +20,15 @@ abstract class MapLayer {
     /** Internal cache for deferred layer updates. */
     private _lastRedraw: [ViewBox, number] | null = null;
 
-    constructor(id: string, mapSize: number) {
+    constructor(id: string, size: Box) {
         this.id = id;
-        this.mapSize = mapSize;
+        this.size = size;
         // Create content element
         this.element = document.createElement("div");
         this.element.id = id;
         this.element.classList.add("ps2map__layer");
-        this.element.style.height = this.element.style.width = `${mapSize}px`;
+        this.element.style.height = `${size.height}px`;
+        this.element.style.width = `${size.width}px`;
         // Add event listener for deferred updates
         this.element.addEventListener("transitionend",
             this._runDeferredLayerUpdate.bind(this), { passive: true });

@@ -5,7 +5,7 @@
 
 /**
  * Custom DOM event details dispatched when the user hovers a base.
- * 
+ *
  * @param baseId - ID of the base that was hovered.
  * @param element - The SVG polygon associated with this base.
  */
@@ -24,8 +24,8 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     readonly svg: SVGElement;
 
-    private constructor(id: string, mapSize: number, svg: SVGElement) {
-        super(id, mapSize);
+    private constructor(id: string, size: Box, svg: SVGElement) {
+        super(id, size);
         this.svg = svg;
         this.element.classList.add("ps2map__base-hexes");
     }
@@ -34,8 +34,11 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
     ): Promise<BasePolygonsLayer> {
         return fetchContinentOutlines(continent.code)
             .then(svg => {
-                const layer = new BasePolygonsLayer(
-                    id, continent.map_size, svg);
+                const size = {
+                    width: continent.map_size,
+                    height: continent.map_size,
+                };
+                const layer = new BasePolygonsLayer(id, size, svg);
                 svg.classList.add("ps2map__base-hexes__svg");
                 layer.element.appendChild(svg);
                 layer._initialisePolygons(svg);
@@ -74,7 +77,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     /**
      * Return the CSS variable name for the given faction.
-     * 
+     *
     * @param factionId - The faction ID to get the colour for.
     * @returns The CSS variable name for the faction's colour.
      */
@@ -85,10 +88,10 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     /**
      * Create hover event listeners for all base polygons.
-     * 
+     *
      * This also updates the polygon's IDs to be unique within the app by
      * replacing them with "base-outline-<baseId>".
-     * 
+     *
      * @param svg - The SVG element containing the base polygons.
      * @returns A promise that resolves when all polygons have been updated.
      */
@@ -122,12 +125,10 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
                 this.element.dispatchEvent(this._buildBaseHoverEvent(
                     this._polygonIdToBaseId(polygon.id), polygon));
             };
-            polygon.addEventListener("mouseenter", addHoverFx, {
-                passive: true
-            });
-            polygon.addEventListener("touchstart", addHoverFx, {
-                passive: true
-            });
+            polygon.addEventListener(
+                "mouseenter", addHoverFx, { passive: true });
+            polygon.addEventListener(
+                "touchstart", addHoverFx, { passive: true });
         });
     }
 
@@ -139,7 +140,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     /**
      * Factory method for creating custom base hover events.
-     * 
+     *
      * @param baseId - ID of the base that was hovered.
      * @param element - The SVG polygon associated with this base.
      * @returns A custom base hover event, ready to be dispatched.
@@ -155,9 +156,9 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     /**
      * Convert a polygon ID to a base ID.
-     * 
+     *
      * This function performs no validation on the input.
-     * 
+     *
      * @param id - Polygon ID to convert.
      * @returns The corresponding base ID.
      */
@@ -168,7 +169,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
     /**
      * Convert a base ID to a polygon ID.
-     * 
+     *
      * @param baseId - Base ID to convert.
      * @returns The polygon ID for the given base.
      */

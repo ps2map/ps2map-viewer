@@ -289,7 +289,7 @@ var Camera = (function () {
     return Camera;
 }());
 var MapLayer = (function () {
-    function MapLayer(id, mapSize) {
+    function MapLayer(id, size) {
         var _this = this;
         this.isVisible = true;
         this._lastRedraw = null;
@@ -300,11 +300,12 @@ var MapLayer = (function () {
             _this.deferredLayerUpdate(viewBox, zoom);
         });
         this.id = id;
-        this.mapSize = mapSize;
+        this.size = size;
         this.element = document.createElement("div");
         this.element.id = id;
         this.element.classList.add("ps2map__layer");
-        this.element.style.height = this.element.style.width = "".concat(mapSize, "px");
+        this.element.style.height = "".concat(size.height, "px");
+        this.element.style.width = "".concat(size.width, "px");
         this.element.addEventListener("transitionend", this._runDeferredLayerUpdate.bind(this), { passive: true });
     }
     MapLayer.prototype.setRedrawArgs = function (viewBox, zoom) {
@@ -332,7 +333,7 @@ var LayerManager = (function () {
         anchor.classList.add("ps2map__anchor");
     }
     LayerManager.prototype.addLayer = function (layer) {
-        if (layer.mapSize !== this.mapSize)
+        if (layer.size == this.mapSize)
             throw new Error("Size of added layer \"".concat(layer.id, "\" does not ") +
                 "match current map size.");
         if (this._layers.some(function (l) { return l.id === layer.id; }))
@@ -428,9 +429,7 @@ var MapRenderer = (function () {
         this._anchor = document.createElement("div");
         this.layers = new LayerManager(this._anchor, mapSize);
         this.viewport.appendChild(this._anchor);
-        this._camera = new Camera({
-            width: mapSize, height: mapSize
-        }, {
+        this._camera = new Camera(mapSize, {
             width: this.viewport.clientWidth,
             height: this.viewport.clientHeight
         });
@@ -448,7 +447,7 @@ var MapRenderer = (function () {
             var height = _this.viewport.clientHeight;
             _this._anchor.style.left = "".concat(width * 0.5, "px");
             _this._anchor.style.top = "".concat(height * 0.5, "px");
-            _this._camera.updateViewportSize({ width: _this.getMapSize(), height: _this.getMapSize() }, { width: width, height: height });
+            _this._camera.updateViewportSize(_this.getMapSize(), { width: width, height: height });
             _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this._camera.viewBox()));
         });
         obj.observe(this.viewport);
@@ -481,7 +480,7 @@ var MapRenderer = (function () {
             throw new Error("Cannot change map size while layers are present");
         this.layers = new LayerManager(this._anchor, value);
         this._camera = new Camera({
-            width: value, height: value
+            width: value.width, height: value.height
         }, {
             width: this.viewport.clientWidth,
             height: this.viewport.clientHeight
@@ -494,10 +493,11 @@ var MapRenderer = (function () {
         var relX = (screen.x - vp.offsetLeft) / vp.clientWidth;
         var relY = (screen.y - vp.offsetTop) / vp.clientHeight;
         var box = this._camera.viewBox();
-        var halfSize = this.layers.mapSize * 0.5;
+        var halfSizeX = this.layers.mapSize.width * 0.5;
+        var halfSizeY = this.layers.mapSize.height * 0.5;
         return {
-            x: -halfSize + box.left + (box.right - box.left) * relX,
-            y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY)
+            x: -halfSizeX + box.left + (box.right - box.left) * relX,
+            y: -halfSizeY + box.bottom + (box.top - box.bottom) * (1 - relY)
         };
     };
     MapRenderer.prototype._mousePan = function (evtDown) {
@@ -554,12 +554,12 @@ var MapRenderer = (function () {
         var mapSize = this.layers.mapSize;
         if (targetX < 0)
             targetX = 0;
-        if (targetX > mapSize)
-            targetX = mapSize;
+        if (targetX > mapSize.width)
+            targetX = mapSize.width;
         if (targetY < 0)
             targetY = 0;
-        if (targetY > mapSize)
-            targetY = mapSize;
+        if (targetY > mapSize.height)
+            targetY = mapSize.height;
         this._camera.target = {
             x: targetX,
             y: targetY
@@ -589,18 +589,19 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var StaticLayer = (function (_super) {
     __extends(StaticLayer, _super);
-    function StaticLayer(id, mapSize) {
-        return _super.call(this, id, mapSize) || this;
+    function StaticLayer(id, size) {
+        return _super.call(this, id, size) || this;
     }
     StaticLayer.prototype.deferredLayerUpdate = function (_, __) { };
     StaticLayer.prototype.redraw = function (viewBox, zoom) {
         var targetX = (viewBox.right + viewBox.left) * 0.5;
         var targetY = (viewBox.top + viewBox.bottom) * 0.5;
-        var halfMapSize = this.mapSize * 0.5;
-        var offsetX = -halfMapSize;
-        var offsetY = -halfMapSize;
-        offsetX += (halfMapSize - targetX) * zoom;
-        offsetY -= (halfMapSize - targetY) * zoom;
+        var halfSizeX = this.size.width * 0.5;
+        var halfSizeY = this.size.height * 0.5;
+        var offsetX = -halfSizeX;
+        var offsetY = -halfSizeY;
+        offsetX += (halfSizeX - targetX) * zoom;
+        offsetY -= (halfSizeY - targetY) * zoom;
         this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
     };
     return StaticLayer;
@@ -612,21 +613,22 @@ var SupportsBaseOwnership = (function () {
 }());
 var CanvasLayer = (function (_super) {
     __extends(CanvasLayer, _super);
-    function CanvasLayer(id, mapSize, canvas) {
-        var _this = _super.call(this, id, mapSize) || this;
+    function CanvasLayer(id, size, canvas) {
+        var _this = _super.call(this, id, size) || this;
         _this.canvas = canvas;
         _this.element.classList.add("ps2map__canvas");
         return _this;
     }
     CanvasLayer.factory = function (continent, id) {
         return __awaiter(this, void 0, void 0, function () {
-            var canvas, layer;
+            var canvas, size, layer;
             return __generator(this, function (_a) {
                 canvas = document.createElement("canvas");
                 if (!canvas.getContext)
                     return [2, Promise.reject("HTML Canvas not supported")];
                 canvas.width = canvas.height = continent.map_size;
-                layer = new CanvasLayer(id, continent.map_size, canvas);
+                size = { width: continent.map_size, height: continent.map_size };
+                layer = new CanvasLayer(id, size, canvas);
                 layer.element.appendChild(canvas);
                 return [2, layer];
             });
@@ -702,8 +704,8 @@ function fetchContinentOutlines(continentCode) {
 }
 var BasePolygonsLayer = (function (_super) {
     __extends(BasePolygonsLayer, _super);
-    function BasePolygonsLayer(id, mapSize, svg) {
-        var _this = _super.call(this, id, mapSize) || this;
+    function BasePolygonsLayer(id, size, svg) {
+        var _this = _super.call(this, id, size) || this;
         _this.svg = svg;
         _this.element.classList.add("ps2map__base-hexes");
         return _this;
@@ -713,7 +715,11 @@ var BasePolygonsLayer = (function (_super) {
             return __generator(this, function (_a) {
                 return [2, fetchContinentOutlines(continent.code)
                         .then(function (svg) {
-                        var layer = new BasePolygonsLayer(id, continent.map_size, svg);
+                        var size = {
+                            width: continent.map_size,
+                            height: continent.map_size
+                        };
+                        var layer = new BasePolygonsLayer(id, size, svg);
                         svg.classList.add("ps2map__base-hexes__svg");
                         layer.element.appendChild(svg);
                         layer._initialisePolygons(svg);
@@ -768,12 +774,8 @@ var BasePolygonsLayer = (function (_super) {
                 polygon.style.stroke = "#ffffff";
                 _this.element.dispatchEvent(_this._buildBaseHoverEvent(_this._polygonIdToBaseId(polygon.id), polygon));
             };
-            polygon.addEventListener("mouseenter", addHoverFx, {
-                passive: true
-            });
-            polygon.addEventListener("touchstart", addHoverFx, {
-                passive: true
-            });
+            polygon.addEventListener("mouseenter", addHoverFx, { passive: true });
+            polygon.addEventListener("touchstart", addHoverFx, { passive: true });
         });
     };
     BasePolygonsLayer.prototype.deferredLayerUpdate = function (_, zoom) {
@@ -797,8 +799,8 @@ var BasePolygonsLayer = (function (_super) {
 }(StaticLayer));
 var LatticeLayer = (function (_super) {
     __extends(LatticeLayer, _super);
-    function LatticeLayer(id, mapSize) {
-        var _this = _super.call(this, id, mapSize) || this;
+    function LatticeLayer(id, size) {
+        var _this = _super.call(this, id, size) || this;
         _this._links = [];
         _this.element.classList.add("ps2map__lattice");
         return _this;
@@ -808,7 +810,11 @@ var LatticeLayer = (function (_super) {
             return __generator(this, function (_a) {
                 return [2, fetchContinentLattice(continent.id)
                         .then(function (links) {
-                        var layer = new LatticeLayer(id, continent.map_size);
+                        var size = {
+                            width: continent.map_size,
+                            height: continent.map_size
+                        };
+                        var layer = new LatticeLayer(id, size);
                         layer._links = links;
                         layer.element.innerHTML = "";
                         layer.element.appendChild(layer._createLatticeSvg());
@@ -844,7 +850,7 @@ var LatticeLayer = (function (_super) {
     LatticeLayer.prototype._createLatticeSvg = function () {
         var _this = this;
         var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("viewBox", "0 0 ".concat(this.mapSize, " ").concat(this.mapSize));
+        svg.setAttribute("viewBox", "0 0 ".concat(this.size.width, " ").concat(this.size.height));
         this._links.forEach(function (link) {
             svg.appendChild(_this._createLatticeLink(link));
         });
@@ -853,11 +859,12 @@ var LatticeLayer = (function (_super) {
     LatticeLayer.prototype._createLatticeLink = function (link) {
         var path = document.createElementNS("http://www.w3.org/2000/svg", "line");
         path.setAttribute("id", "lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id));
-        var mapOffset = this.mapSize * 0.5;
-        path.setAttribute("x1", (link.map_pos_a_x + mapOffset).toFixed());
-        path.setAttribute("y1", (-link.map_pos_a_y + mapOffset).toFixed());
-        path.setAttribute("x2", (link.map_pos_b_x + mapOffset).toFixed());
-        path.setAttribute("y2", (-link.map_pos_b_y + mapOffset).toFixed());
+        var offsetX = this.size.width * 0.5;
+        var offsetY = this.size.height * 0.5;
+        path.setAttribute("x1", (link.map_pos_a_x + offsetX).toFixed());
+        path.setAttribute("y1", (-link.map_pos_a_y + offsetY).toFixed());
+        path.setAttribute("x2", (link.map_pos_b_x + offsetX).toFixed());
+        path.setAttribute("y2", (-link.map_pos_b_y + offsetY).toFixed());
         return path;
     };
     LatticeLayer.prototype._factionIdToCssVar = function (factionId) {
@@ -881,16 +888,17 @@ var BaseNameFeature = (function () {
 }());
 var BaseNamesLayer = (function (_super) {
     __extends(BaseNamesLayer, _super);
-    function BaseNamesLayer() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
+    function BaseNamesLayer(id, size) {
+        var _this = _super.call(this, id, size) || this;
         _this.features = [];
         return _this;
     }
     BaseNamesLayer.factory = function (continent, id) {
         return __awaiter(this, void 0, void 0, function () {
-            var layer;
+            var size, layer;
             return __generator(this, function (_a) {
-                layer = new BaseNamesLayer(id, continent.map_size);
+                size = { width: continent.map_size, height: continent.map_size };
+                layer = new BaseNamesLayer(id, size);
                 return [2, fetchBasesForContinent(continent.id)
                         .then(function (bases) {
                         layer._loadBaseInfo(bases);
@@ -936,8 +944,8 @@ var BaseNamesLayer = (function (_super) {
                 name_1 += " ".concat(baseInfo.type_name);
             element.innerText = "".concat(name_1);
             element.classList.add("ps2map__base-names__icon");
-            element.style.left = "".concat(this.mapSize * 0.5 + pos.x, "px");
-            element.style.bottom = "".concat(this.mapSize * 0.5 + pos.y, "px");
+            element.style.left = "".concat(this.size.width * 0.5 + pos.x, "px");
+            element.style.bottom = "".concat(this.size.height * 0.5 + pos.y, "px");
             element.classList.add("ps2map__base-names__icon__".concat(baseInfo.type_code));
             var minZoom = 0;
             if (baseInfo.type_code === "small-outpost")
@@ -992,16 +1000,20 @@ var MapTile = (function () {
 }());
 var TileLayer = (function (_super) {
     __extends(TileLayer, _super);
-    function TileLayer(id, mapSize, initialLod) {
-        var _this = _super.call(this, id, mapSize) || this;
+    function TileLayer(id, size, initialLod) {
+        var _this = this;
+        if (size.height !== size.width)
+            throw new Error("Non-square tile layers are not supported.");
+        _this = _super.call(this, id, size) || this;
         _this.tiles = [];
         _this.lod = initialLod;
+        _this._sizeNum = size.width;
         return _this;
     }
     TileLayer.prototype.defineTiles = function (gridSize) {
         var newTiles = [];
-        var tileSize = this.mapSize / gridSize;
-        var baseSize = this.mapSize / gridSize;
+        var tileSize = this._sizeNum / gridSize;
+        var baseSize = this._sizeNum / gridSize;
         var y = gridSize;
         while (y-- > 0)
             for (var x = 0; x < gridSize; x++) {
@@ -1044,28 +1056,30 @@ var TileLayer = (function (_super) {
     TileLayer.prototype.redraw = function (viewBox, zoom) {
         var targetX = (viewBox.right + viewBox.left) * 0.5;
         var targetY = (viewBox.top + viewBox.bottom) * 0.5;
-        var halfMapSize = this.mapSize * 0.5;
-        var offsetX = -halfMapSize;
-        var offsetY = -halfMapSize;
-        offsetX += (halfMapSize - targetX) * zoom;
-        offsetY -= (halfMapSize - targetY) * zoom;
+        var halfSize = this._sizeNum * 0.5;
+        var offsetX = -halfSize;
+        var offsetY = -halfSize;
+        offsetX += (halfSize - targetX) * zoom;
+        offsetY -= (halfSize - targetY) * zoom;
         this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
     };
     return TileLayer;
 }(MapLayer));
 var TerrainLayer = (function (_super) {
     __extends(TerrainLayer, _super);
-    function TerrainLayer(id, mapSize) {
-        var _this = _super.call(this, id, mapSize, 3) || this;
+    function TerrainLayer() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
         _this._code = "";
-        _this.element.classList.add("ps2map__terrain");
         return _this;
     }
     TerrainLayer.factory = function (continent, id) {
         return __awaiter(this, void 0, void 0, function () {
-            var layer;
+            var size, initialLod, layer;
             return __generator(this, function (_a) {
-                layer = new TerrainLayer(id, continent.map_size);
+                size = { width: continent.map_size, height: continent.map_size };
+                initialLod = 3;
+                layer = new TerrainLayer(id, size, initialLod);
+                layer.element.classList.add("ps2map__terrain");
                 layer._setContinent(continent.code);
                 layer.updateLayer();
                 return [2, layer];
@@ -1077,7 +1091,7 @@ var TerrainLayer = (function (_super) {
             return;
         this._code = code;
         this.element.style.backgroundImage = ("url(".concat(UrlGen.mapBackground(code), ")"));
-        var gridSize = this._mapTilesPerAxis(this.mapSize, this.lod);
+        var gridSize = this._mapTilesPerAxis(this.size.width, this.lod);
         this.defineTiles(gridSize);
     };
     TerrainLayer.prototype._calculateLod = function (zoom) {
@@ -1091,7 +1105,7 @@ var TerrainLayer = (function (_super) {
         return 0;
     };
     TerrainLayer.prototype.createTile = function (pos, gridSize) {
-        var mapStep = this.mapSize / gridSize;
+        var mapStep = this.size.width / gridSize;
         var box = {
             left: mapStep * pos.x,
             right: mapStep * (pos.x + 1),
@@ -1120,28 +1134,28 @@ var TerrainLayer = (function (_super) {
         return UrlGen.terrainTile(this._code, tilePos, lod);
     };
     TerrainLayer.prototype._gridPosToTilePos = function (pos, lod) {
-        var min = this._mapGridLimits(this.mapSize, lod)[0];
-        var stepSize = this._mapStepSize(this.mapSize, lod);
+        var min = this._mapGridLimits(this.size.width, lod)[0];
+        var stepSize = this._mapStepSize(this.size.width, lod);
         return [min + (stepSize * pos.x), min + (stepSize * pos.y)];
     };
-    TerrainLayer.prototype._mapStepSize = function (mapSize, lod) {
+    TerrainLayer.prototype._mapStepSize = function (size, lod) {
         if (lod === 0)
             return 4;
-        if (lod === 1 || mapSize <= 1024)
+        if (lod === 1 || size <= 1024)
             return 8;
-        if (lod === 2 || mapSize <= 2048)
+        if (lod === 2 || size <= 2048)
             return 16;
         return 32;
     };
-    TerrainLayer.prototype._mapTileCount = function (mapSize, lod) {
-        return Math.ceil(Math.pow(4, (Math.floor(Math.log2(mapSize)) - 8 - lod)));
+    TerrainLayer.prototype._mapTileCount = function (size, lod) {
+        return Math.ceil(Math.pow(4, (Math.floor(Math.log2(size)) - 8 - lod)));
     };
-    TerrainLayer.prototype._mapTilesPerAxis = function (mapSize, lod) {
-        return Math.floor(Math.sqrt(this._mapTileCount(mapSize, lod)));
+    TerrainLayer.prototype._mapTilesPerAxis = function (size, lod) {
+        return Math.floor(Math.sqrt(this._mapTileCount(size, lod)));
     };
-    TerrainLayer.prototype._mapGridLimits = function (mapSize, lod) {
-        var stepSize = this._mapStepSize(mapSize, lod);
-        var tilesPerAxis = this._mapTilesPerAxis(mapSize, lod);
+    TerrainLayer.prototype._mapGridLimits = function (size, lod) {
+        var stepSize = this._mapStepSize(size, lod);
+        var tilesPerAxis = this._mapTilesPerAxis(size, lod);
         var halfSize = stepSize * Math.floor(tilesPerAxis / 2);
         if (halfSize <= 0)
             return [-stepSize, -stepSize];
@@ -1151,7 +1165,7 @@ var TerrainLayer = (function (_super) {
         var newLod = this._calculateLod(zoom);
         if (this.lod !== newLod) {
             this.lod = newLod;
-            this.defineTiles(this._mapTilesPerAxis(this.mapSize, newLod));
+            this.defineTiles(this._mapTilesPerAxis(this.size.width, newLod));
         }
         this.updateTileVisibility(viewBox);
     };
@@ -1160,7 +1174,7 @@ var TerrainLayer = (function (_super) {
 var HeroMap = (function (_super) {
     __extends(HeroMap, _super);
     function HeroMap(viewport) {
-        var _this = _super.call(this, viewport, 0) || this;
+        var _this = _super.call(this, viewport, { width: 0, height: 0 }) || this;
         _this._continent = undefined;
         return _this;
     }
@@ -1208,7 +1222,10 @@ var HeroMap = (function (_super) {
                         ];
                         return [4, Promise.all(allLayers).then(function (layers) {
                                 _this.layers.clear();
-                                _this.setMapSize(continent.map_size);
+                                _this.setMapSize({
+                                    width: continent.map_size,
+                                    height: continent.map_size
+                                });
                                 _this.jumpTo({
                                     x: continent.map_size / 2,
                                     y: continent.map_size / 2
@@ -1475,7 +1492,7 @@ var CanvasTool = (function (_super) {
         if (event.button !== 0)
             return;
         this._context = this._map.getCanvasContext();
-        this._halfMapSize = this._map.getMapSize() * 0.5;
+        this._halfMapSize = this._map.getMapSize().width * 0.5;
         this._mouseDown = true;
         this._action(this._context, this._getActionPos(event), this._getScaling());
         var up = function (evt) {

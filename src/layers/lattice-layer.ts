@@ -8,8 +8,8 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
 
     private _links: LatticeLink[] = [];
 
-    private constructor(id: string, mapSize: number) {
-        super(id, mapSize);
+    private constructor(id: string, size: Box) {
+        super(id, size);
         this.element.classList.add("ps2map__lattice");
     }
 
@@ -17,7 +17,11 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
     ): Promise<LatticeLayer> {
         return fetchContinentLattice(continent.id)
             .then(links => {
-                const layer = new LatticeLayer(id, continent.map_size);
+                const size = {
+                    width: continent.map_size,
+                    height: continent.map_size,
+                };
+                const layer = new LatticeLayer(id, size);
                 layer._links = links;
                 layer.element.innerHTML = "";
                 layer.element.appendChild(layer._createLatticeSvg());
@@ -64,7 +68,8 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
     private _createLatticeSvg(): SVGElement {
         const svg = document.createElementNS(
             "http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("viewBox", `0 0 ${this.mapSize} ${this.mapSize}`);
+        svg.setAttribute(
+            "viewBox", `0 0 ${this.size.width} ${this.size.height}`);
         this._links.forEach(link => {
             svg.appendChild(this._createLatticeLink(link));
         });
@@ -79,11 +84,12 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
             "id", `lattice-link-${link.base_a_id}-${link.base_b_id}`);
 
         // Game and database use inverted Y coordinates
-        const mapOffset = this.mapSize * 0.5;
-        path.setAttribute("x1", (link.map_pos_a_x + mapOffset).toFixed());
-        path.setAttribute("y1", (-link.map_pos_a_y + mapOffset).toFixed());
-        path.setAttribute("x2", (link.map_pos_b_x + mapOffset).toFixed());
-        path.setAttribute("y2", (-link.map_pos_b_y + mapOffset).toFixed());
+        const offsetX = this.size.width * 0.5;
+        const offsetY = this.size.height * 0.5;
+        path.setAttribute("x1", (link.map_pos_a_x + offsetX).toFixed());
+        path.setAttribute("y1", (-link.map_pos_a_y + offsetY).toFixed());
+        path.setAttribute("x2", (link.map_pos_b_x + offsetX).toFixed());
+        path.setAttribute("y2", (-link.map_pos_b_y + offsetY).toFixed());
         return path;
     }
 

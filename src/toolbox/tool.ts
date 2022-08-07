@@ -122,7 +122,7 @@ abstract class CanvasTool extends Tool {
             return;
 
         this._context = this._map.getCanvasContext()!;
-        this._halfMapSize = this._map.getMapSize() * 0.5;
+        this._halfMapSize = this._map.getMapSize().width * 0.5;
 
         this._mouseDown = true;
         this._action(

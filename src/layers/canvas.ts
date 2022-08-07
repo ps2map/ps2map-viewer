@@ -5,8 +5,8 @@ class CanvasLayer extends StaticLayer {
 
     public readonly canvas: HTMLCanvasElement;
 
-    private constructor(id: string, mapSize: number, canvas: HTMLCanvasElement) {
-        super(id, mapSize);
+    private constructor(id: string, size: Box, canvas: HTMLCanvasElement) {
+        super(id, size);
         this.canvas = canvas;
         this.element.classList.add("ps2map__canvas");
     }
@@ -20,7 +20,8 @@ class CanvasLayer extends StaticLayer {
             return Promise.reject("HTML Canvas not supported");
         canvas.width = canvas.height = continent.map_size;
 
-        const layer = new CanvasLayer(id, continent.map_size, canvas);
+        const size = { width: continent.map_size, height: continent.map_size };
+        const layer = new CanvasLayer(id, size, canvas);
         layer.element.appendChild(canvas);
         return layer;
     }
