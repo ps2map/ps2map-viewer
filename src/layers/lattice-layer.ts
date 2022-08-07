@@ -95,7 +95,7 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
 
     /**
      * Return the CSS variable name for the given faction.
-     * 
+     *
     * @param factionId - The faction ID to get the colour for.
     * @returns The CSS variable name for the faction's colour.
      */

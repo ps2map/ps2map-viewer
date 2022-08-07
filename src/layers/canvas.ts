@@ -11,7 +11,7 @@ class CanvasLayer extends StaticLayer {
         this.element.classList.add("ps2map__canvas");
     }
 
-    static async factory(continent: Continent, id: string
+    static async factory(continent: Continent, id: string,
     ): Promise<CanvasLayer> {
         // Attempt to create an HTML canvas. If this fails, fail the promise
         // and let the caller handle the lack of canvas support.
@@ -28,7 +28,7 @@ class CanvasLayer extends StaticLayer {
 
     /**
      * Return the appropriate stroke width for the current zoom level.
-     * 
+     *
      * @remarks
      * This function is quite magic and tied to the zoom level calculation
      * logic. This keeps the stroke width consistent across zoom levels.

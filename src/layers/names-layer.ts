@@ -74,7 +74,8 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         while (i-- > 0) {
             const baseInfo = bases[i]!;
             if (baseInfo.type_code === "no-mans-land")
-                continue; // "No man's land" bases do not get icons
+                // "No man's land" bases do not get icons
+                continue;
             const pos = {
                 x: baseInfo.map_pos[0],
                 y: baseInfo.map_pos[1]
@@ -82,13 +83,12 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
             const element = document.createElement("div");
             let name = baseInfo.name;
             // Append the facility type for primary bases
-            if (baseInfo.type_code === "amp-station" ||
-                baseInfo.type_code === "bio-lab" ||
-                baseInfo.type_code === "interlink" ||
-                baseInfo.type_code === "tech-plant" ||
-                baseInfo.type_code === "trident")
+            ["amp-station", "bio-lab", "interlink", "tech-plant", "trident"]
+                .forEach(type => {
+                    if (baseInfo.type_code === type)
+                        name += ` ${baseInfo.type_name}`;
+                });
 
-                name += ` ${baseInfo.type_name}`;
             element.innerText = `${name}`;
             element.classList.add("ps2map__base-names__icon")
             element.style.left = `${this.size.width * 0.5 + pos.x}px`;

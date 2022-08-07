@@ -899,26 +899,25 @@ var BaseNamesLayer = (function (_super) {
     BaseNamesLayer.prototype._loadBaseInfo = function (bases) {
         var features = [];
         var i = bases.length;
-        while (i-- > 0) {
+        var _loop_2 = function () {
             var baseInfo = bases[i];
             if (baseInfo.type_code === "no-mans-land")
-                continue;
+                return "continue";
             var pos = {
                 x: baseInfo.map_pos[0],
                 y: baseInfo.map_pos[1]
             };
             var element = document.createElement("div");
             var name_1 = baseInfo.name;
-            if (baseInfo.type_code === "amp-station" ||
-                baseInfo.type_code === "bio-lab" ||
-                baseInfo.type_code === "interlink" ||
-                baseInfo.type_code === "tech-plant" ||
-                baseInfo.type_code === "trident")
-                name_1 += " ".concat(baseInfo.type_name);
+            ["amp-station", "bio-lab", "interlink", "tech-plant", "trident"]
+                .forEach(function (type) {
+                if (baseInfo.type_code === type)
+                    name_1 += " ".concat(baseInfo.type_name);
+            });
             element.innerText = "".concat(name_1);
             element.classList.add("ps2map__base-names__icon");
-            element.style.left = "".concat(this.size.width * 0.5 + pos.x, "px");
-            element.style.bottom = "".concat(this.size.height * 0.5 + pos.y, "px");
+            element.style.left = "".concat(this_1.size.width * 0.5 + pos.x, "px");
+            element.style.bottom = "".concat(this_1.size.height * 0.5 + pos.y, "px");
             element.classList.add("ps2map__base-names__icon__".concat(baseInfo.type_code));
             var minZoom = 0;
             if (baseInfo.type_code === "small-outpost")
@@ -926,7 +925,11 @@ var BaseNamesLayer = (function (_super) {
             if (baseInfo.type_code === "large-outpost")
                 minZoom = 0.45;
             features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
-            this.element.appendChild(element);
+            this_1.element.appendChild(element);
+        };
+        var this_1 = this;
+        while (i-- > 0) {
+            _loop_2();
         }
         this.features = features;
     };
@@ -1207,7 +1210,7 @@ var HeroMap = (function (_super) {
                                 var size = continent.map_size;
                                 _this.setMapSize({ width: size, height: size });
                                 _this.camera.resetZoom();
-                                _this.jumpTo({ x: size / 2, y: size / 2 });
+                                _this.jumpTo({ x: size * 0.5, y: size * 0.5 });
                                 layers.forEach(function (layer) {
                                     _this.layers.addLayer(layer);
                                     layer.updateLayer();

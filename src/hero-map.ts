@@ -75,7 +75,7 @@ class HeroMap extends MapEngine {
                 const size = continent.map_size;
                 this.setMapSize({ width: size, height: size });
                 this.camera.resetZoom();
-                this.jumpTo({ x: size / 2, y: size / 2 });
+                this.jumpTo({ x: size * 0.5, y: size * 0.5 });
                 // Add new layers and force a redraw
                 layers.forEach(layer => {
                     this.layers.addLayer(layer);
