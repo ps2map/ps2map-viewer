@@ -35,7 +35,7 @@ abstract class TileLayer extends MapLayer {
     /** Map tiles for the current grid. */
     protected tiles: MapTile[] = [];
 
-    private _sizeNum: number;
+    private readonly _sizeNum: number;
 
     constructor(id: string, size: Box, initialLod: number) {
         if (size.height !== size.width)
@@ -55,10 +55,7 @@ abstract class TileLayer extends MapLayer {
         while (y-- > 0)
             // X loop is positive, left-to-right
             for (let x = 0; x < gridSize; x++) {
-                const pos: GridPos = {
-                    x: x,
-                    y: y
-                };
+                const pos: GridPos = { x, y };
                 const tile = this.createTile(pos, gridSize);
                 tile.element.style.height = tile.element.style.width = (
                     `${tileSize.toFixed()}px`);
@@ -105,18 +102,14 @@ abstract class TileLayer extends MapLayer {
     protected updateTileVisibility(viewBox: ViewBox): void {
         // Process all tiles to determine which ones are active
         const activeTiles: HTMLElement[] = [];
-        let i = this.tiles.length;
-        while (i-- > 0) {
-            const tile = this.tiles[i]!;
+        this.tiles.forEach(tile => {
             if (this.tileIsVisible(tile, viewBox))
                 activeTiles.push(tile.element);
-        }
+        });
         // Load active tiles
         requestAnimationFrame(() => {
             this.element.innerHTML = "";
-            i = activeTiles.length;
-            while (i-- > 0)
-                this.element.append(activeTiles[i]!);
+            activeTiles.forEach(tile => this.element.appendChild(tile));
         });
 
     }
@@ -134,7 +127,7 @@ abstract class TileLayer extends MapLayer {
         let offsetY = -halfSize;
         // Another offset to shift the view box target to the origin
         offsetX += (halfSize - targetX) * zoom;
-        offsetY -= (halfSize - targetY) * zoom; // -1 to fix Y axis origin
+        offsetY -= (halfSize - targetY) * zoom;
         // Apply transform
         this.element.style.transform = (
             `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);

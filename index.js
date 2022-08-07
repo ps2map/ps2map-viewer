@@ -44,11 +44,7 @@ var GameData = (function () {
     GameData.prototype.continents = function () { return this._continents; };
     GameData.prototype.servers = function () { return this._servers; };
     GameData.prototype.getBase = function (id) {
-        var i = this._bases.length;
-        while (i-- > 0)
-            if (this._bases[i].id === id)
-                return this._bases[i];
-        return undefined;
+        return this._bases.find(function (b) { return b.id === id; });
     };
     GameData.prototype.getFaction = function (id) {
         switch (id) {
@@ -950,10 +946,7 @@ var TileLayer = (function (_super) {
         var y = gridSize;
         while (y-- > 0)
             for (var x = 0; x < gridSize; x++) {
-                var pos = {
-                    x: x,
-                    y: y
-                };
+                var pos = { x: x, y: y };
                 var tile = this.createTile(pos, gridSize);
                 tile.element.style.height = tile.element.style.width = ("".concat(tileSize.toFixed(), "px"));
                 tile.element.style.left = "".concat(pos.x * baseSize, "px");
@@ -971,17 +964,13 @@ var TileLayer = (function (_super) {
     TileLayer.prototype.updateTileVisibility = function (viewBox) {
         var _this = this;
         var activeTiles = [];
-        var i = this.tiles.length;
-        while (i-- > 0) {
-            var tile = this.tiles[i];
-            if (this.tileIsVisible(tile, viewBox))
+        this.tiles.forEach(function (tile) {
+            if (_this.tileIsVisible(tile, viewBox))
                 activeTiles.push(tile.element);
-        }
+        });
         requestAnimationFrame(function () {
             _this.element.innerHTML = "";
-            i = activeTiles.length;
-            while (i-- > 0)
-                _this.element.append(activeTiles[i]);
+            activeTiles.forEach(function (tile) { return _this.element.appendChild(tile); });
         });
     };
     TileLayer.prototype.deferredLayerUpdate = function (viewBox, _) {
@@ -1201,9 +1190,7 @@ var Minimap = (function () {
         this._viewBoxElement = document.createElement("div");
         this._viewBoxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this._viewBoxElement);
-        this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), {
-            passive: true
-        });
+        this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), { passive: true });
         var obj = new ResizeObserver(function () {
             _this._cssSize = _this.element.clientWidth;
             _this.element.style.height = "".concat(_this._cssSize, "px");
@@ -1244,7 +1231,8 @@ var Minimap = (function () {
     };
     Minimap.prototype.switchContinent = function (continent) {
         return __awaiter(this, void 0, void 0, function () {
-            var svg, polygons, i, poly;
+            var svg;
+            var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4, fetchContinentOutlines(continent.code)];
@@ -1259,13 +1247,10 @@ var Minimap = (function () {
                         svg.classList.add("ps2map__minimap__hexes");
                         this._baseOutlineSvg = svg;
                         this.element.appendChild(this._baseOutlineSvg);
-                        polygons = svg.querySelectorAll("polygon");
-                        i = polygons.length;
-                        while (i-- > 0) {
-                            poly = polygons[i];
-                            this._polygons.set(parseInt(poly.id), poly);
-                            poly.id = this._polygonIdFromBaseId(poly.id);
-                        }
+                        svg.querySelectorAll("polygon").forEach(function (poly) {
+                            _this._polygons.set(parseInt(poly.id, 10), poly);
+                            poly.id = _this._polygonIdFromBaseId(poly.id);
+                        });
                         return [2];
                 }
             });
@@ -1273,11 +1258,7 @@ var Minimap = (function () {
     };
     Minimap.prototype._buildMinimapJumpEvent = function (target) {
         return new CustomEvent("ps2map_minimapjump", {
-            detail: {
-                target: target
-            },
-            bubbles: true,
-            cancelable: true
+            detail: { target: target }, bubbles: true, cancelable: true
         });
     };
     Minimap.prototype._jumpToPosition = function (evtDown) {
@@ -1299,9 +1280,7 @@ var Minimap = (function () {
             document.removeEventListener("mouseup", up);
         };
         document.addEventListener("mouseup", up);
-        this.element.addEventListener("mousemove", drag, {
-            passive: true
-        });
+        this.element.addEventListener("mousemove", drag, { passive: true });
         drag(evtDown);
     };
     Minimap.prototype._polygonIdFromBaseId = function (baseId) {
@@ -1843,16 +1822,17 @@ document.addEventListener("DOMContentLoaded", function () {
         box.style.transition = "none";
         var sidebar = document.getElementById("sidebar");
         var initialWidth = sidebar.clientWidth;
-        var minwidth = document.body.clientWidth * 0.1;
-        var maxwidth = 512;
+        var minWidth = 0.1;
+        minWidth *= document.body.clientWidth;
+        var maxWidth = 512;
         var startX = event.clientX;
         var onMove = function (evt) {
             var delta = evt.clientX - startX;
             var newWidth = initialWidth + delta;
-            if (newWidth < minwidth)
-                newWidth = minwidth;
-            else if (newWidth > maxwidth)
-                newWidth = maxwidth;
+            if (newWidth < minWidth)
+                newWidth = minWidth;
+            else if (newWidth > maxWidth)
+                newWidth = maxWidth;
             document.body.style.setProperty("--sidebar-width", "".concat(newWidth, "px"));
         };
         var onUp = function () {
@@ -1879,17 +1859,20 @@ document.addEventListener("DOMContentLoaded", function () {
         var mapSize = cont ? cont.map_size : 0;
         GameData.getInstance().setActiveContinent(state.user.continent)
             .then(function () {
-            heroMap.switchContinent(state.user.continent).then(function () {
-                heroMap.updateBaseOwnership(state.map.baseOwnership);
-                heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
-            });
-            minimap.switchContinent(state.user.continent).then(function () {
-                minimap.updateBaseOwnership(state.map.baseOwnership);
-            });
+            if (state.user.continent) {
+                heroMap.switchContinent(state.user.continent).then(function () {
+                    heroMap.updateBaseOwnership(state.map.baseOwnership);
+                    heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
+                });
+                minimap.switchContinent(state.user.continent).then(function () {
+                    minimap.updateBaseOwnership(state.map.baseOwnership);
+                });
+            }
         });
     });
     StateManager.subscribe(State.user.serverChanged, function (state) {
-        listener.switchServer(state.user.server);
+        if (state.user.server)
+            listener.switchServer(state.user.server);
     });
     StateManager.subscribe(State.user.baseHovered, function (state) {
         var names = heroMap.getLayer("names");
@@ -1912,43 +1895,39 @@ document.addEventListener("DOMContentLoaded", function () {
         var evt = event.detail;
         heroMap.jumpTo(evt.target);
     }, { passive: true });
-    var server_picker = document.getElementById("server-picker");
-    server_picker.addEventListener("change", function () {
+    var serverPicker = document.getElementById("server-picker");
+    serverPicker.addEventListener("change", function () {
         var server = GameData.getInstance().servers()
-            .find(function (s) { return s.id === parseInt(server_picker.value); });
+            .find(function (s) { return s.id === parseInt(serverPicker.value, 10); });
         if (!server)
-            throw new Error("No server found with id ".concat(server_picker.value));
+            throw new Error("No server found with id ".concat(serverPicker.value));
         StateManager.dispatch(State.user.serverChanged, server);
     });
-    var continent_picker = document.getElementById("continent-picker");
-    continent_picker.addEventListener("change", function () {
+    var continentPicker = document.getElementById("continent-picker");
+    continentPicker.addEventListener("change", function () {
         var continent = GameData.getInstance().continents()
-            .find(function (c) { return c.id === parseInt(continent_picker.value); });
+            .find(function (c) { return c.id === parseInt(continentPicker.value, 10); });
         if (!continent)
-            throw new Error("No continent found with id ".concat(continent_picker.value));
+            throw new Error("No continent found with id ".concat(continentPicker.value));
         StateManager.dispatch(State.user.continentChanged, continent);
     });
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
         var continents = __spreadArray([], gameData.continents(), true);
         servers.sort(function (a, b) { return b.name.localeCompare(a.name); });
-        var i = servers.length;
-        while (i-- > 0) {
-            var server = servers[i];
+        servers.forEach(function (server) {
             var option = document.createElement("option");
             option.value = server.id.toString();
             option.text = server.name;
-            server_picker.appendChild(option);
-        }
+            serverPicker.appendChild(option);
+        });
         continents.sort(function (a, b) { return b.name.localeCompare(a.name); });
-        i = continents.length;
-        while (i-- > 0) {
-            var cont = continents[i];
+        continents.forEach(function (cont) {
             var option = document.createElement("option");
             option.value = cont.id.toString();
             option.text = cont.name;
-            continent_picker.appendChild(option);
-        }
+            continentPicker.appendChild(option);
+        });
         StateManager.dispatch(State.user.serverChanged, servers[servers.length - 1]);
         StateManager.dispatch(State.user.continentChanged, continents[continents.length - 1]);
     });

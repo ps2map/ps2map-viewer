@@ -28,7 +28,7 @@ class Minimap {
     /** CSS size of the minimap. */
     private _cssSize: number;
 
-    private _minimapHexAlpha: number = 0.5;
+    private readonly _minimapHexAlpha: number = 0.5;
     private _polygons: Map<number, SVGPolygonElement> = new Map();
 
     constructor(element: HTMLDivElement) {
@@ -42,9 +42,8 @@ class Minimap {
         this.element.appendChild(this._viewBoxElement);
 
         // Attach event listener
-        this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), {
-            passive: true
-        });
+        this.element.addEventListener(
+            "mousedown", this._jumpToPosition.bind(this), { passive: true });
 
         const obj = new ResizeObserver(() => {
             this._cssSize = this.element.clientWidth;
@@ -61,7 +60,7 @@ class Minimap {
             top: (viewBox.top + mapSize * 0.5) / mapSize,
             left: (viewBox.left + mapSize * 0.5) / mapSize,
             bottom: (viewBox.bottom + mapSize * 0.5) / mapSize,
-            right: (viewBox.right + mapSize * 0.5) / mapSize
+            right: (viewBox.right + mapSize * 0.5) / mapSize,
         };
         const relHeight = relViewBox.top - relViewBox.bottom;
         const relWidth = relViewBox.right - relViewBox.left;
@@ -114,23 +113,16 @@ class Minimap {
         this.element.appendChild(this._baseOutlineSvg);
 
         // Add the polygons to the local cache
-        const polygons = svg.querySelectorAll("polygon");
-        let i = polygons.length;
-        while (i-- > 0) {
-            const poly = polygons[i]!;
-            this._polygons.set(parseInt(poly.id), poly);
+        svg.querySelectorAll("polygon").forEach(poly => {
+            this._polygons.set(parseInt(poly.id, 10), poly);
             // Update polygon IDs to be unique
             poly.id = this._polygonIdFromBaseId(poly.id);
-        }
+        });
     }
 
     private _buildMinimapJumpEvent(target: Point): CustomEvent<MinimapJumpEvent> {
         return new CustomEvent("ps2map_minimapjump", {
-            detail: {
-                target: target
-            },
-            bubbles: true,
-            cancelable: true,
+            detail: { target }, bubbles: true, cancelable: true,
         });
     }
 
@@ -150,7 +142,7 @@ class Minimap {
             // Calculate target cursor position
             const target: Point = {
                 x: Math.round(relX * this._mapSize),
-                y: Math.round((1 - relY) * this._mapSize)
+                y: Math.round((1 - relY) * this._mapSize),
             };
             this.element.dispatchEvent(this._buildMinimapJumpEvent(target));
         });
@@ -161,14 +153,12 @@ class Minimap {
         };
         // Add listeners
         document.addEventListener("mouseup", up);
-        this.element.addEventListener("mousemove", drag, {
-            passive: true
-        });
+        this.element.addEventListener("mousemove", drag, { passive: true });
         // Manually invoke the "drag" callback once to handle single click pans
         drag(evtDown);
     }
 
     private _polygonIdFromBaseId(baseId: number | string): string {
-        return `minimap-baseId-${baseId}`
+        return `minimap-baseId-${baseId}`;
     }
 }
