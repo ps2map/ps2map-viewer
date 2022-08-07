@@ -3,13 +3,12 @@
 /// <reference path="./layers/index.ts" />
 
 /** Custom map controller for primary PlanetSide 2 continent map. */
-class HeroMap {
+class HeroMap extends MapRenderer {
 
-    readonly renderer: MapRenderer;
     private _continent: Continent | undefined = undefined;
 
     constructor(viewport: HTMLDivElement) {
-        this.renderer = new MapRenderer(viewport, 0);
+        super(viewport, 0);
     }
 
     continent(): Continent { return this._continent!; }
@@ -30,7 +29,7 @@ class HeroMap {
             return "updateBaseOwnership" in object;
         }
         // Forward the base ownership map to all dynamic layers
-        this.renderer.layerManager.forEachLayer((layer) => {
+        this.layerManager.forEachLayer((layer) => {
             if (supportsBaseOwnership(layer))
                 layer.updateBaseOwnership(continentMap);
         });
@@ -52,25 +51,21 @@ class HeroMap {
         await Promise.all(allLayers).then(
             (layers) => {
                 // Delete old layers
-                this.renderer.layerManager.clear();
+                this.layerManager.clear();
                 // Update map size (required for camera)
-                this.renderer.setMapSize(continent.map_size);
+                this.setMapSize(continent.map_size);
                 this.jumpTo({
                     x: continent.map_size / 2,
                     y: continent.map_size / 2
                 });
                 // Add new layers and force a redraw
                 layers.forEach((layer) => {
-                    this.renderer.layerManager.addLayer(layer);
+                    this.layerManager.addLayer(layer);
                     layer.updateLayer();
                 });
 
                 // Update the current continent
                 this._continent = continent;
             });
-    }
-
-    jumpTo(point: Point): void {
-        this.renderer?.jumpTo(point);
     }
 }

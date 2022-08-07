@@ -83,7 +83,7 @@ abstract class CanvasTool extends Tool {
 
     public activate(): void {
         super.activate();
-        this._map.renderer.allowPan = false;
+        this._map.allowPan = false;
         this._viewport.addEventListener("mousedown", this._onDown, { passive: true });
         this._viewport.addEventListener("mousemove", this._onMove, { passive: true });
         // Create custom cursor
@@ -97,7 +97,7 @@ abstract class CanvasTool extends Tool {
 
     public deactivate(): void {
         super.deactivate();
-        this._map.renderer.allowPan = true;
+        this._map.allowPan = true;
         this._viewport.removeEventListener("mousedown", this._onDown);
         this._viewport.removeEventListener("mousemove", this._onMove);
         if (this._cursor)
@@ -121,8 +121,8 @@ abstract class CanvasTool extends Tool {
         if (event.button !== 0)
             return;
 
-        this._context = this._map.renderer.getCanvasContext()!;
-        this._halfMapSize = this._map.renderer.getMapSize() * 0.5;
+        this._context = this._map.getCanvasContext()!;
+        this._halfMapSize = this._map.getMapSize() * 0.5;
 
         this._mouseDown = true;
         this._action(
@@ -158,13 +158,13 @@ abstract class CanvasTool extends Tool {
     }
 
     private _getActionPos(event: MouseEvent): Point {
-        const pos = this._map.renderer.screenToMap(event);
+        const pos = this._map.screenToMap(event);
         if (!this._halfMapSize)
             return { x: 0, y: 0 };
         return { x: this._halfMapSize + pos.x, y: this._halfMapSize - pos.y };
     }
 
     private _getScaling(): number {
-        return 1 / this._map.renderer.getZoom();
+        return 1 / this._map.getZoom();
     }
 }

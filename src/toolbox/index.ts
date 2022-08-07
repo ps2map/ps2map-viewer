@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (tool.id === state.toolbox.current)
                     toolInstances.set(
                         tool.id,
-                        new tool(map.renderer.viewport, map, toolPanel));
+                        new tool(map.viewport, map, toolPanel));
             });
         }
         toolInstances.forEach((instance, id) => {

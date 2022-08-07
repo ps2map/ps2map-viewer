@@ -1157,10 +1157,12 @@ var TerrainLayer = (function (_super) {
     };
     return TerrainLayer;
 }(TileLayer));
-var HeroMap = (function () {
+var HeroMap = (function (_super) {
+    __extends(HeroMap, _super);
     function HeroMap(viewport) {
-        this._continent = undefined;
-        this.renderer = new MapRenderer(viewport, 0);
+        var _this = _super.call(this, viewport, 0) || this;
+        _this._continent = undefined;
+        return _this;
     }
     HeroMap.prototype.continent = function () { return this._continent; };
     HeroMap.prototype.updateBaseOwnership = function (baseOwnershipMap) {
@@ -1176,7 +1178,7 @@ var HeroMap = (function () {
         function supportsBaseOwnership(object) {
             return "updateBaseOwnership" in object;
         }
-        this.renderer.layerManager.forEachLayer(function (layer) {
+        this.layerManager.forEachLayer(function (layer) {
             if (supportsBaseOwnership(layer))
                 layer.updateBaseOwnership(continentMap);
         });
@@ -1199,14 +1201,14 @@ var HeroMap = (function () {
                             CanvasLayer.factory(continent, "canvas"),
                         ];
                         return [4, Promise.all(allLayers).then(function (layers) {
-                                _this.renderer.layerManager.clear();
-                                _this.renderer.setMapSize(continent.map_size);
+                                _this.layerManager.clear();
+                                _this.setMapSize(continent.map_size);
                                 _this.jumpTo({
                                     x: continent.map_size / 2,
                                     y: continent.map_size / 2
                                 });
                                 layers.forEach(function (layer) {
-                                    _this.renderer.layerManager.addLayer(layer);
+                                    _this.layerManager.addLayer(layer);
                                     layer.updateLayer();
                                 });
                                 _this._continent = continent;
@@ -1218,12 +1220,8 @@ var HeroMap = (function () {
             });
         });
     };
-    HeroMap.prototype.jumpTo = function (point) {
-        var _a;
-        (_a = this.renderer) === null || _a === void 0 ? void 0 : _a.jumpTo(point);
-    };
     return HeroMap;
-}());
+}(MapRenderer));
 var Minimap = (function () {
     function Minimap(element) {
         var _this = this;
@@ -1448,7 +1446,7 @@ var CanvasTool = (function (_super) {
     }
     CanvasTool.prototype.activate = function () {
         _super.prototype.activate.call(this);
-        this._map.renderer.allowPan = false;
+        this._map.allowPan = false;
         this._viewport.addEventListener("mousedown", this._onDown, { passive: true });
         this._viewport.addEventListener("mousemove", this._onMove, { passive: true });
         this._cursor = document.createElement("div");
@@ -1460,7 +1458,7 @@ var CanvasTool = (function (_super) {
     };
     CanvasTool.prototype.deactivate = function () {
         _super.prototype.deactivate.call(this);
-        this._map.renderer.allowPan = true;
+        this._map.allowPan = true;
         this._viewport.removeEventListener("mousedown", this._onDown);
         this._viewport.removeEventListener("mousemove", this._onMove);
         if (this._cursor)
@@ -1470,8 +1468,8 @@ var CanvasTool = (function (_super) {
         var _this = this;
         if (event.button !== 0)
             return;
-        this._context = this._map.renderer.getCanvasContext();
-        this._halfMapSize = this._map.renderer.getMapSize() * 0.5;
+        this._context = this._map.getCanvasContext();
+        this._halfMapSize = this._map.getMapSize() * 0.5;
         this._mouseDown = true;
         this._action(this._context, this._getActionPos(event), this._getScaling());
         var up = function (evt) {
@@ -1491,13 +1489,13 @@ var CanvasTool = (function (_super) {
             this._action(this._context, this._getActionPos(event), this._getScaling());
     };
     CanvasTool.prototype._getActionPos = function (event) {
-        var pos = this._map.renderer.screenToMap(event);
+        var pos = this._map.screenToMap(event);
         if (!this._halfMapSize)
             return { x: 0, y: 0 };
         return { x: this._halfMapSize + pos.x, y: this._halfMapSize - pos.y };
     };
     CanvasTool.prototype._getScaling = function () {
-        return 1 / this._map.renderer.getZoom();
+        return 1 / this._map.getZoom();
     };
     return CanvasTool;
 }(Tool));
@@ -1549,7 +1547,7 @@ var Cursor = (function (_super) {
             y.textContent = target.y.toFixed(2);
     };
     Cursor.prototype._onMove = function (event) {
-        this._updateToolPanel(this._map.renderer.screenToMap(event));
+        this._updateToolPanel(this._map.screenToMap(event));
     };
     Cursor.id = "cursor";
     Cursor.displayName = "Map Cursor";
@@ -1752,7 +1750,7 @@ document.addEventListener("DOMContentLoaded", function () {
             var toolPanel_1 = document.getElementById("tool-panel");
             availableTools.forEach(function (tool) {
                 if (tool.id === state.toolbox.current)
-                    toolInstances.set(tool.id, new tool(map_1.renderer.viewport, map_1, toolPanel_1));
+                    toolInstances.set(tool.id, new tool(map_1.viewport, map_1, toolPanel_1));
             });
         }
         toolInstances.forEach(function (instance, id) {
@@ -1919,7 +1917,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(function () {
             heroMap.switchContinent(state.user.continent).then(function () {
                 heroMap.updateBaseOwnership(state.map.baseOwnership);
-                heroMap.renderer.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
+                heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
             });
             minimap.switchContinent(state.user.continent).then(function () {
                 minimap.updateBaseOwnership(state.map.baseOwnership);
@@ -1930,13 +1928,13 @@ document.addEventListener("DOMContentLoaded", function () {
         listener.switchServer(state.user.server);
     });
     StateManager.subscribe(State.user.baseHovered, function (state) {
-        var names = heroMap.renderer.layerManager.getLayer("names");
+        var names = heroMap.layerManager.getLayer("names");
         if (names)
             names.setHoveredBase(state.user.hoveredBase);
     });
     StateManager.dispatch(State.toolbox.setup, heroMap);
     StateManager.dispatch(State.toolbox.setTool, Tool.id);
-    heroMap.renderer.viewport.addEventListener("ps2map_basehover", function (event) {
+    heroMap.viewport.addEventListener("ps2map_basehover", function (event) {
         var evt = event.detail;
         var base = GameData.getInstance().getBase(evt.baseId);
         if (base)

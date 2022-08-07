@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(() => {
                 heroMap.switchContinent(state.user.continent!).then(() => {
                     heroMap.updateBaseOwnership(state.map.baseOwnership);
-                    heroMap.renderer.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
+                    heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
                 });
                 minimap.switchContinent(state.user.continent!).then(() => {
                     minimap.updateBaseOwnership(state.map.baseOwnership);
@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
         listener.switchServer(state.user.server!);
     });
     StateManager.subscribe(State.user.baseHovered, (state) => {
-        const names = heroMap.renderer.layerManager.getLayer<BaseNamesLayer>("names");
+        const names = heroMap.layerManager.getLayer<BaseNamesLayer>("names");
         if (names)
             names.setHoveredBase(state.user.hoveredBase);
     });
@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
     StateManager.dispatch(State.toolbox.setTool, Tool.id);
 
     // Hook up base hover event
-    heroMap.renderer.viewport.addEventListener("ps2map_basehover", (event) => {
+    heroMap.viewport.addEventListener("ps2map_basehover", (event) => {
         const evt = (event as CustomEvent<BaseHoverEvent>).detail;
         const base = GameData.getInstance().getBase(evt.baseId);
         if (base)
