@@ -57,10 +57,13 @@ document.addEventListener("DOMContentLoaded", () => {
         minimap.updateBaseOwnership(state.map.baseOwnership);
     });
     StateManager.subscribe(State.user.continentChanged, (state) => {
+        const cont = state.user.continent;
+        const mapSize = cont ? cont.map_size : 0;
         GameData.getInstance().setActiveContinent(state.user.continent)
             .then(() => {
                 heroMap.switchContinent(state.user.continent!).then(() => {
                     heroMap.updateBaseOwnership(state.map.baseOwnership);
+                    heroMap.renderer.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
                 });
                 minimap.switchContinent(state.user.continent!).then(() => {
                     minimap.updateBaseOwnership(state.map.baseOwnership);
@@ -71,8 +74,9 @@ document.addEventListener("DOMContentLoaded", () => {
         listener.switchServer(state.user.server!);
     });
     StateManager.subscribe(State.user.baseHovered, (state) => {
-        const names = heroMap.renderer.getLayer("names") as BaseNamesLayer;
-        names.setHoveredBase(state.user.hoveredBase);
+        const names = heroMap.renderer.layerManager.getLayer<BaseNamesLayer>("names");
+        if (names)
+            names.setHoveredBase(state.user.hoveredBase);
     });
 
     // Set up toolbox

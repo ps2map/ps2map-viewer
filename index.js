@@ -311,39 +311,50 @@ var MapLayer = (function () {
     };
     return MapLayer;
 }());
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var StaticLayer = (function (_super) {
-    __extends(StaticLayer, _super);
-    function StaticLayer(id, mapSize) {
-        return _super.call(this, id, mapSize) || this;
+var LayerManager = (function () {
+    function LayerManager(anchor, mapSize) {
+        this._layers = [];
+        this.mapSize = mapSize;
+        this._anchor = anchor;
+        anchor.classList.add("ps2map__anchor");
     }
-    StaticLayer.prototype.deferredLayerUpdate = function (_, __) { };
-    StaticLayer.prototype.redraw = function (viewBox, zoom) {
-        var targetX = (viewBox.right + viewBox.left) * 0.5;
-        var targetY = (viewBox.top + viewBox.bottom) * 0.5;
-        var halfMapSize = this.mapSize * 0.5;
-        var offsetX = -halfMapSize;
-        var offsetY = -halfMapSize;
-        offsetX += (halfMapSize - targetX) * zoom;
-        offsetY -= (halfMapSize - targetY) * zoom;
-        this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
+    LayerManager.prototype.addLayer = function (layer) {
+        if (layer.mapSize !== this.mapSize)
+            throw new Error("Size of added layer \"".concat(layer.id, "\" does not ") +
+                "match current map size.");
+        if (this._layers.some(function (l) { return l.id === layer.id; }))
+            throw new Error("A layer with the id \"".concat(layer.id, "\" already exists."));
+        this._layers.push(layer);
+        this._anchor.appendChild(layer.element);
     };
-    return StaticLayer;
-}(MapLayer));
+    LayerManager.prototype.clear = function () {
+        this._anchor.innerHTML = "";
+        this._layers = [];
+    };
+    LayerManager.prototype.forEachLayer = function (callback) {
+        this._layers.forEach(callback);
+    };
+    LayerManager.prototype.getLayer = function (id) {
+        var layer = this._layers.find(function (l) { return l.id === id; });
+        if (layer instanceof MapLayer)
+            return layer;
+        return null;
+    };
+    LayerManager.prototype.isEmpty = function () {
+        return this._layers.length === 0;
+    };
+    LayerManager.prototype.removeLayer = function (id) {
+        var layer = this.getLayer(id);
+        if (layer) {
+            this._layers = this._layers.filter(function (l) { return l !== layer; });
+            this._anchor.removeChild(layer.element);
+        }
+    };
+    LayerManager.prototype.updateAll = function () {
+        this._layers.forEach(function (layer) { return layer.updateLayer(); });
+    };
+    return LayerManager;
+}());
 var Utils;
 (function (Utils) {
     function clamp(value, min, max) {
@@ -386,8 +397,6 @@ var Utils;
 var MapRenderer = (function () {
     function MapRenderer(viewport, mapSize) {
         var _this = this;
-        this._mapSize = 1024;
-        this._layers = [];
         this.allowPan = true;
         this._isPanning = false;
         this._onZoom = Utils.rafDebounce(function (evt) {
@@ -404,7 +413,7 @@ var MapRenderer = (function () {
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this._anchor = document.createElement("div");
-        this._anchor.classList.add("ps2map__anchor");
+        this.layerManager = new LayerManager(this._anchor, mapSize);
         this.viewport.appendChild(this._anchor);
         this._camera = new Camera({
             width: mapSize, height: mapSize
@@ -432,9 +441,9 @@ var MapRenderer = (function () {
         obj.observe(this.viewport);
     }
     MapRenderer.prototype.getCanvasContext = function () {
-        var layer = this.getLayer("canvas");
+        var layer = this.layerManager.getLayer("canvas");
         if (layer === null)
-            throw "No canvas layer found.";
+            throw new Error("No canvas layer found");
         var canvas = layer.element.firstElementChild;
         if (!canvas)
             return null;
@@ -444,34 +453,10 @@ var MapRenderer = (function () {
         return this._camera.currentViewBox();
     };
     MapRenderer.prototype.getMapSize = function () {
-        return this._mapSize;
+        return this.layerManager.mapSize;
     };
     MapRenderer.prototype.getZoom = function () {
         return this._camera.getZoom();
-    };
-    MapRenderer.prototype.addLayer = function (layer) {
-        if (layer.mapSize !== this._mapSize)
-            throw "Map layer size must match the map renderer's.";
-        this._layers.push(layer);
-        this._anchor.appendChild(layer.element);
-        this._redraw(this.getViewBox(), this._camera.getZoom());
-    };
-    MapRenderer.prototype.getLayer = function (id) {
-        for (var _i = 0, _a = this._layers; _i < _a.length; _i++) {
-            var layer = _a[_i];
-            if (layer.id === id)
-                return layer;
-        }
-        return undefined;
-    };
-    MapRenderer.prototype.clearLayers = function () {
-        this._anchor.innerText = "";
-        this._layers = [];
-    };
-    MapRenderer.prototype.forEachLayer = function (callback) {
-        var i = this._layers.length;
-        while (i-- > 0)
-            callback(this._layers[i]);
     };
     MapRenderer.prototype.jumpTo = function (target) {
         this._camera.jumpTo(target);
@@ -479,9 +464,9 @@ var MapRenderer = (function () {
         this._redraw(this.getViewBox(), this._camera.getZoom());
     };
     MapRenderer.prototype.setMapSize = function (value) {
-        if (this._layers.length > 0)
-            throw "Remove all map layers before changing map size.";
-        this._mapSize = value;
+        if (!this.layerManager.isEmpty())
+            throw new Error("Cannot change map size while layers are present");
+        this.layerManager = new LayerManager(this._anchor, value);
         this._camera = new Camera({
             width: value, height: value
         }, {
@@ -496,7 +481,7 @@ var MapRenderer = (function () {
         var relX = (screen.x - vp.offsetLeft) / vp.clientWidth;
         var relY = (screen.y - vp.offsetTop) / vp.clientHeight;
         var box = this._camera.currentViewBox();
-        var halfSize = this._mapSize * 0.5;
+        var halfSize = this.layerManager.mapSize * 0.5;
         return {
             x: -halfSize + box.left + (box.right - box.left) * relX,
             y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY)
@@ -528,44 +513,40 @@ var MapRenderer = (function () {
             _this._setPanLock(false);
             _this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
-            _this._layers.forEach(function (layer) { return layer.updateLayer(); });
+            _this.layerManager.updateAll();
         };
         document.addEventListener("mouseup", up);
-        this.viewport.addEventListener("mousemove", drag, {
-            passive: true
-        });
+        this.viewport.addEventListener("mousemove", drag, { passive: true });
     };
     MapRenderer.prototype._setPanLock = function (locked) {
         this._isPanning = locked;
-        var i = this._layers.length;
-        while (i-- > 0) {
-            var element = this._layers[i].element;
+        this.layerManager.forEachLayer(function (layer) {
+            var element = layer.element;
             if (locked)
                 element.style.transition = "transform 0ms ease-out";
             else
                 element.style.removeProperty("transition");
-        }
+        });
     };
     MapRenderer.prototype._redraw = function (viewBox, zoom) {
-        var i = this._layers.length;
-        while (i-- > 0) {
-            var layer = this._layers[i];
+        this.layerManager.forEachLayer(function (layer) {
             layer.redraw(viewBox, zoom);
             layer.setRedrawArgs(viewBox, zoom);
-        }
+        });
         this._anchor.dispatchEvent(this._buildViewBoxChangedEvent(viewBox));
     };
     MapRenderer.prototype._constrainMapTarget = function () {
         var targetX = this._camera.target.x;
         var targetY = this._camera.target.y;
+        var mapSize = this.layerManager.mapSize;
         if (targetX < 0)
             targetX = 0;
-        if (targetX > this._mapSize)
-            targetX = this._mapSize;
+        if (targetX > mapSize)
+            targetX = mapSize;
         if (targetY < 0)
             targetY = 0;
-        if (targetY > this._mapSize)
-            targetY = this._mapSize;
+        if (targetY > mapSize)
+            targetY = mapSize;
         this._camera.target = {
             x: targetX,
             y: targetY
@@ -573,15 +554,44 @@ var MapRenderer = (function () {
     };
     MapRenderer.prototype._buildViewBoxChangedEvent = function (viewBox) {
         return new CustomEvent("ps2map_viewboxchanged", {
-            detail: {
-                viewBox: viewBox
-            },
-            bubbles: true,
-            cancelable: true
+            detail: { viewBox: viewBox }, bubbles: true, cancelable: true
         });
     };
     return MapRenderer;
 }());
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var StaticLayer = (function (_super) {
+    __extends(StaticLayer, _super);
+    function StaticLayer(id, mapSize) {
+        return _super.call(this, id, mapSize) || this;
+    }
+    StaticLayer.prototype.deferredLayerUpdate = function (_, __) { };
+    StaticLayer.prototype.redraw = function (viewBox, zoom) {
+        var targetX = (viewBox.right + viewBox.left) * 0.5;
+        var targetY = (viewBox.top + viewBox.bottom) * 0.5;
+        var halfMapSize = this.mapSize * 0.5;
+        var offsetX = -halfMapSize;
+        var offsetY = -halfMapSize;
+        offsetX += (halfMapSize - targetX) * zoom;
+        offsetY -= (halfMapSize - targetY) * zoom;
+        this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
+    };
+    return StaticLayer;
+}(MapLayer));
 var SupportsBaseOwnership = (function () {
     function SupportsBaseOwnership() {
     }
@@ -1153,7 +1163,7 @@ var HeroMap = (function () {
         function supportsBaseOwnership(object) {
             return "updateBaseOwnership" in object;
         }
-        this.renderer.forEachLayer(function (layer) {
+        this.renderer.layerManager.forEachLayer(function (layer) {
             if (supportsBaseOwnership(layer))
                 layer.updateBaseOwnership(continentMap);
         });
@@ -1176,11 +1186,14 @@ var HeroMap = (function () {
                             CanvasLayer.factory(continent, "canvas"),
                         ];
                         return [4, Promise.all(allLayers).then(function (layers) {
-                                _this.renderer.clearLayers();
+                                _this.renderer.layerManager.clear();
                                 _this.renderer.setMapSize(continent.map_size);
-                                _this.jumpTo({ x: continent.map_size / 2, y: continent.map_size / 2 });
+                                _this.jumpTo({
+                                    x: continent.map_size / 2,
+                                    y: continent.map_size / 2
+                                });
                                 layers.forEach(function (layer) {
-                                    _this.renderer.addLayer(layer);
+                                    _this.renderer.layerManager.addLayer(layer);
                                     layer.updateLayer();
                                 });
                                 _this._continent = continent;
@@ -1887,10 +1900,13 @@ document.addEventListener("DOMContentLoaded", function () {
         minimap.updateBaseOwnership(state.map.baseOwnership);
     });
     StateManager.subscribe(State.user.continentChanged, function (state) {
+        var cont = state.user.continent;
+        var mapSize = cont ? cont.map_size : 0;
         GameData.getInstance().setActiveContinent(state.user.continent)
             .then(function () {
             heroMap.switchContinent(state.user.continent).then(function () {
                 heroMap.updateBaseOwnership(state.map.baseOwnership);
+                heroMap.renderer.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
             });
             minimap.switchContinent(state.user.continent).then(function () {
                 minimap.updateBaseOwnership(state.map.baseOwnership);
@@ -1901,8 +1917,9 @@ document.addEventListener("DOMContentLoaded", function () {
         listener.switchServer(state.user.server);
     });
     StateManager.subscribe(State.user.baseHovered, function (state) {
-        var names = heroMap.renderer.getLayer("names");
-        names.setHoveredBase(state.user.hoveredBase);
+        var names = heroMap.renderer.layerManager.getLayer("names");
+        if (names)
+            names.setHoveredBase(state.user.hoveredBase);
     });
     StateManager.dispatch(State.toolbox.setup, heroMap);
     StateManager.dispatch(State.toolbox.setTool, Tool.id);

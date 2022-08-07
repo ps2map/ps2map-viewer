@@ -1,6 +1,5 @@
 /// <reference path="./camera.ts" />
-/// <reference path="./map-layer.ts" />
-/// <reference path="./static-layer.ts" />
+/// <reference path="./layer-manager.ts" />
 /// <reference path="./support.ts" />
 /// <reference path="./types.ts" />
 
@@ -25,15 +24,10 @@ interface ViewBoxChangedEvent {
 class MapRenderer {
     /** User-provided viewport element. Everything happens within this. */
     readonly viewport: HTMLDivElement;
-
-    /** Helper element used to centre map layers in the viewport. */
-    private readonly _anchor: HTMLDivElement;
-    /** The base map size for the current map. */
-    private _mapSize: number = 1024;
-    /** Collection of map layers added to the map renderer. */
-    private _layers: MapLayer[] = [];
+    public layerManager: LayerManager;
 
     private _camera: Camera;
+    private _anchor: HTMLElement;
 
     public allowPan = true;
     private _isPanning: boolean = false;
@@ -43,7 +37,7 @@ class MapRenderer {
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this._anchor = document.createElement("div");
-        this._anchor.classList.add("ps2map__anchor")
+        this.layerManager = new LayerManager(this._anchor, mapSize)
         this.viewport.appendChild(this._anchor);
 
         // Set up camera
@@ -82,9 +76,11 @@ class MapRenderer {
     }
 
     getCanvasContext(): CanvasRenderingContext2D | null {
-        const layer = this.getLayer("canvas") as CanvasLayer | null;
+        const layer = this.layerManager.getLayer<CanvasLayer>("canvas");
         if (layer === null)
-            throw "No canvas layer found.";
+            // TODO: Should this even be an error? Not all browsers support
+            // canvas layers, this could just return null.
+            throw new Error("No canvas layer found");
         const canvas = layer.element.firstElementChild as HTMLCanvasElement | null;
         if (!canvas)
             return null;
@@ -96,48 +92,11 @@ class MapRenderer {
     }
 
     getMapSize(): number {
-        return this._mapSize;
+        return this.layerManager.mapSize;
     }
 
     getZoom(): number {
         return this._camera.getZoom();
-    }
-
-    /**
-     * Add a new map layer to the map.
-     *
-     * The map size of the layer must match the map renderer's.
-     * @param layer Map layer to add.
-     */
-    addLayer(layer: MapLayer): void {
-        if (layer.mapSize !== this._mapSize)
-            throw "Map layer size must match the map renderer's.";
-        this._layers.push(layer);
-        this._anchor.appendChild(layer.element);
-        this._redraw(this.getViewBox(), this._camera.getZoom());
-    }
-
-    /**
-     * Retrieve an existing layer by its unique ID.
-     * @param id ID of the layer to retrieve
-     * @returns Layer with the given name, or null if not found.
-     */
-    getLayer(id: string): MapLayer | undefined {
-        for (const layer of this._layers)
-            if (layer.id === id)
-                return layer;
-        return undefined;
-    }
-
-    clearLayers(): void {
-        this._anchor.innerText = "";
-        this._layers = [];
-    }
-
-    forEachLayer(callback: (layer: MapLayer) => void): void {
-        let i = this._layers.length;
-        while (i-- > 0)
-            callback(this._layers[i]!);
     }
 
     /**
@@ -158,9 +117,9 @@ class MapRenderer {
      * @param value New map size to apply.
      */
     setMapSize(value: number): void {
-        if (this._layers.length > 0)
-            throw "Remove all map layers before changing map size.";
-        this._mapSize = value;
+        if (!this.layerManager.isEmpty())
+            throw new Error("Cannot change map size while layers are present");
+        this.layerManager = new LayerManager(this._anchor, value);
         // Create a new camera as zoom levels depend on map size
         this._camera = new Camera(
             { // Map dimensions
@@ -193,7 +152,7 @@ class MapRenderer {
         const relY = (screen.y - vp.offsetTop) / vp.clientHeight;
         // Interpolate the relative position within the view box
         const box = this._camera.currentViewBox();
-        const halfSize = this._mapSize * 0.5;
+        const halfSize = this.layerManager.mapSize * 0.5;
         return {
             x: -halfSize + box.left + (box.right - box.left) * relX,
             // (1 - relY) takes care of the Y axis inversion
@@ -255,13 +214,11 @@ class MapRenderer {
             this._setPanLock(false);
             this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
-            this._layers.forEach(layer => layer.updateLayer());
+            this.layerManager.updateAll();
         };
 
         document.addEventListener("mouseup", up);
-        this.viewport.addEventListener("mousemove", drag, {
-            passive: true
-        });
+        this.viewport.addEventListener("mousemove", drag, { passive: true });
     }
 
     /**
@@ -273,14 +230,13 @@ class MapRenderer {
     private _setPanLock(locked: boolean): void {
         this._isPanning = locked;
         // Disable CSS transitions while panning
-        let i = this._layers.length;
-        while (i-- > 0) {
-            const element = this._layers[i]!.element;
+        this.layerManager.forEachLayer(layer => {
+            const element = layer.element;
             if (locked)
                 element.style.transition = "transform 0ms ease-out";
             else
                 element.style.removeProperty("transition");
-        }
+        });
     }
 
     /**
@@ -290,12 +246,10 @@ class MapRenderer {
      */
     private _redraw(viewBox: ViewBox, zoom: number): void {
         // Apply new zoom level and schedule map layer updates
-        let i = this._layers.length;
-        while (i-- > 0) {
-            const layer = this._layers[i]!;
+        this.layerManager.forEachLayer(layer => {
             layer.redraw(viewBox, zoom);
             layer.setRedrawArgs(viewBox, zoom);
-        }
+        });
         this._anchor.dispatchEvent(
             this._buildViewBoxChangedEvent(viewBox));
     }
@@ -308,11 +262,12 @@ class MapRenderer {
     private _constrainMapTarget(): void {
         let targetX = this._camera.target.x;
         let targetY = this._camera.target.y;
+        const mapSize = this.layerManager.mapSize;
         // Constrain pan limits
         if (targetX < 0) targetX = 0;
-        if (targetX > this._mapSize) targetX = this._mapSize;
+        if (targetX > mapSize) targetX = mapSize;
         if (targetY < 0) targetY = 0;
-        if (targetY > this._mapSize) targetY = this._mapSize;
+        if (targetY > mapSize) targetY = mapSize;
         // Update camera
         this._camera.target = {
             x: targetX,
@@ -322,11 +277,7 @@ class MapRenderer {
 
     private _buildViewBoxChangedEvent(viewBox: ViewBox): CustomEvent<ViewBoxChangedEvent> {
         return new CustomEvent("ps2map_viewboxchanged", {
-            detail: {
-                viewBox: viewBox
-            },
-            bubbles: true,
-            cancelable: true,
+            detail: { viewBox }, bubbles: true, cancelable: true,
         });
     }
 }
