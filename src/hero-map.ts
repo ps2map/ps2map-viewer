@@ -1,17 +1,27 @@
-/// <reference path="./map-engine/renderer.ts" />
+/// <reference path="./map-engine/index.ts" />
 /// <reference path="./interfaces/index.ts" />
 /// <reference path="./layers/index.ts" />
 
 /** Custom map controller for primary PlanetSide 2 continent map. */
-class HeroMap extends MapRenderer {
+class HeroMap extends MapEngine {
 
     private _continent: Continent | undefined = undefined;
 
     constructor(viewport: HTMLDivElement) {
-        super(viewport, { width: 0, height: 0 });
+        super(viewport);
     }
 
     continent(): Continent { return this._continent!; }
+
+    getCanvasContext(): CanvasRenderingContext2D {
+        const elem = this.viewport.querySelector<HTMLCanvasElement>("canvas");
+        if (!elem)
+            throw new Error("No canvas element found");
+        const ctx = elem.getContext("2d");
+        if (!ctx)
+            throw new Error("Failed to get canvas context");
+        return ctx;
+    }
 
     public getLayer<Type extends MapLayer>(id: string): Type {
         const layer = this.layers.getLayer(id);
@@ -31,12 +41,12 @@ class HeroMap extends MapRenderer {
                 continentMap.set(baseId, owner);
         });
         /** Helper function for filtering dynamic layers from static ones */
-        function supportsBaseOwnership(object: any
+        function supportsBaseOwnership(object: any,
         ): object is SupportsBaseOwnership {
             return "updateBaseOwnership" in object;
         }
         // Forward the base ownership map to all dynamic layers
-        this.layers.forEachLayer((layer) => {
+        this.layers.forEachLayer(layer => {
             if (supportsBaseOwnership(layer))
                 layer.updateBaseOwnership(continentMap);
         });
@@ -55,21 +65,19 @@ class HeroMap extends MapRenderer {
             CanvasLayer.factory(continent, "canvas"),
         ];
 
+        // TODO: Only change map size if the continent size changed
+
         await Promise.all(allLayers).then(
-            (layers) => {
+            layers => {
                 // Delete old layers
                 this.layers.clear();
                 // Update map size (required for camera)
-                this.setMapSize({
-                    width: continent.map_size,
-                    height: continent.map_size,
-                });
-                this.jumpTo({
-                    x: continent.map_size / 2,
-                    y: continent.map_size / 2
-                });
+                const size = continent.map_size;
+                this.setMapSize({ width: size, height: size });
+                this.camera.resetZoom();
+                this.jumpTo({ x: size / 2, y: size / 2 });
                 // Add new layers and force a redraw
-                layers.forEach((layer) => {
+                layers.forEach(layer => {
                     this.layers.addLayer(layer);
                     layer.updateLayer();
                 });
@@ -77,5 +85,12 @@ class HeroMap extends MapRenderer {
                 // Update the current continent
                 this._continent = continent;
             });
+
+        // TODO: Add and call "centre camera" utility
+    }
+
+    jumpTo(point: Point): void {
+        this.camera.jumpTo(point);
+        this._redraw(this.camera.viewBox(), this.camera.zoom());
     }
 }

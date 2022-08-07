@@ -112,6 +112,16 @@ class Camera {
     }
 
     /**
+     * Reset the camera zoom to either extreme.
+     *
+     * @param max If true, the maximum zoom level will be used. Otherwise the
+     *           minimum zoom level will be used.
+     */
+    public resetZoom(max: boolean = false): void {
+        this._zoomIndex = max ? 0 : this._zoomLevels.length - 1;
+    }
+
+    /**
      * Update the camera for a new viewport size.
      *
      * This method should be called in response to DOM size changes and will

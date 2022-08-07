@@ -241,6 +241,10 @@ var Camera = (function () {
             throw new Error("Invalid zoom level");
         return zoom;
     };
+    Camera.prototype.resetZoom = function (max) {
+        if (max === void 0) { max = false; }
+        this._zoomIndex = max ? 0 : this._zoomLevels.length - 1;
+    };
     Camera.prototype.updateViewportSize = function (mapSize, viewportSize) {
         this._viewportSize = viewportSize;
         var zoomIndex = this._zoomIndex;
@@ -408,9 +412,10 @@ var Utils;
     }
     Utils.rectanglesIntersect = rectanglesIntersect;
 })(Utils || (Utils = {}));
-var MapRenderer = (function () {
-    function MapRenderer(viewport, mapSize) {
+var MapEngine = (function () {
+    function MapEngine(viewport) {
         var _this = this;
+        this._mapSize = { width: 0, height: 0 };
         this.allowPan = true;
         this._isPanning = false;
         this._onZoom = Utils.rafDebounce(function (evt) {
@@ -420,87 +425,60 @@ var MapRenderer = (function () {
             var view = _this.viewport.getBoundingClientRect();
             var relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
             var relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
-            _this._camera.zoomTowards(evt.deltaY, { x: relX, y: relY });
+            _this.camera.zoomTowards(evt.deltaY, { x: relX, y: relY });
             _this._constrainMapTarget();
-            _this._redraw(_this.getViewBox(), _this._camera.zoom());
+            _this._redraw(_this.camera.viewBox(), _this.camera.zoom());
         });
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this._anchor = document.createElement("div");
-        this.layers = new LayerManager(this._anchor, mapSize);
+        this.layers = new LayerManager(this._anchor, this._mapSize);
         this.viewport.appendChild(this._anchor);
-        this._camera = new Camera(mapSize, {
-            width: this.viewport.clientWidth,
-            height: this.viewport.clientHeight
-        });
-        this.setMapSize(mapSize);
         this._anchor.style.left = "".concat(this.viewport.clientWidth * 0.5, "px");
         this._anchor.style.top = "".concat(this.viewport.clientHeight * 0.5, "px");
-        this.viewport.addEventListener("wheel", this._onZoom.bind(this), {
-            passive: false
+        this.camera = new Camera(this._mapSize, {
+            width: viewport.clientWidth,
+            height: viewport.clientHeight
         });
-        this.viewport.addEventListener("mousedown", this._mousePan.bind(this), {
-            passive: true
-        });
-        var obj = new ResizeObserver(function () {
+        var observer = new ResizeObserver(function () {
             var width = _this.viewport.clientWidth;
             var height = _this.viewport.clientHeight;
-            _this._anchor.style.left = "".concat(width * 0.5, "px");
-            _this._anchor.style.top = "".concat(height * 0.5, "px");
-            _this._camera.updateViewportSize(_this.getMapSize(), { width: width, height: height });
-            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this._camera.viewBox()));
+            _this.camera.updateViewportSize(_this._mapSize, { width: width, height: height });
+            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this.camera.viewBox()));
         });
-        obj.observe(this.viewport);
+        observer.observe(this.viewport);
+        this.viewport.addEventListener("wheel", this._onZoom.bind(this), { passive: false });
+        this.viewport.addEventListener("mousedown", this._mousePan.bind(this), { passive: true });
     }
-    MapRenderer.prototype.getCanvasContext = function () {
-        var layer = this.layers.getLayer("canvas");
-        if (layer === null)
-            throw new Error("No canvas layer found");
-        var canvas = layer.element.firstElementChild;
-        if (!canvas)
-            return null;
-        return canvas.getContext("2d");
+    MapEngine.prototype.getZoom = function () {
+        return this.camera.zoom();
     };
-    MapRenderer.prototype.getViewBox = function () {
-        return this._camera.viewBox();
+    MapEngine.prototype.getMapSize = function () {
+        return this._mapSize;
     };
-    MapRenderer.prototype.getMapSize = function () {
-        return this.layers.mapSize;
-    };
-    MapRenderer.prototype.getZoom = function () {
-        return this._camera.zoom();
-    };
-    MapRenderer.prototype.jumpTo = function (target) {
-        this._camera.jumpTo(target);
-        this._constrainMapTarget();
-        this._redraw(this.getViewBox(), this._camera.zoom());
-    };
-    MapRenderer.prototype.setMapSize = function (value) {
-        if (!this.layers.isEmpty())
-            throw new Error("Cannot change map size while layers are present");
-        this.layers = new LayerManager(this._anchor, value);
-        this._camera = new Camera({
-            width: value.width, height: value.height
-        }, {
+    MapEngine.prototype.setMapSize = function (mapSize) {
+        if (mapSize === this._mapSize)
+            return;
+        this.layers.clear();
+        this.layers = new LayerManager(this._anchor, mapSize);
+        this.camera.updateViewportSize(mapSize, {
             width: this.viewport.clientWidth,
             height: this.viewport.clientHeight
         });
+        this._mapSize = mapSize;
     };
-    MapRenderer.prototype.screenToMap = function (screen) {
-        if (screen instanceof MouseEvent)
-            screen = { x: screen.clientX, y: screen.clientY };
+    MapEngine.prototype.screenToMap = function (screen) {
         var vp = this.viewport;
         var relX = (screen.x - vp.offsetLeft) / vp.clientWidth;
         var relY = (screen.y - vp.offsetTop) / vp.clientHeight;
-        var box = this._camera.viewBox();
-        var halfSizeX = this.layers.mapSize.width * 0.5;
-        var halfSizeY = this.layers.mapSize.height * 0.5;
+        var box = this.camera.viewBox();
+        var halfSize = this.layers.mapSize.height * 0.5;
         return {
-            x: -halfSizeX + box.left + (box.right - box.left) * relX,
-            y: -halfSizeY + box.bottom + (box.top - box.bottom) * (1 - relY)
+            x: -halfSize + box.left + (box.right - box.left) * relX,
+            y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY)
         };
     };
-    MapRenderer.prototype._mousePan = function (evtDown) {
+    MapEngine.prototype._mousePan = function (evtDown) {
         var _this = this;
         if (evtDown.button === 2)
             return;
@@ -508,19 +486,19 @@ var MapRenderer = (function () {
             return;
         this._setPanLock(true);
         var panStart = {
-            x: this._camera.target.x,
-            y: this._camera.target.y
+            x: this.camera.target.x,
+            y: this.camera.target.y
         };
-        var zoom = this._camera.zoom();
+        var zoom = this.camera.zoom();
         var startX = evtDown.clientX;
         var startY = evtDown.clientY;
         var drag = Utils.rafDebounce(function (evtDrag) {
-            _this._camera.jumpTo({
+            _this.camera.jumpTo({
                 x: panStart.x - (evtDrag.clientX - startX) / zoom,
                 y: panStart.y + (evtDrag.clientY - startY) / zoom
             });
             _this._constrainMapTarget();
-            _this._redraw(_this.getViewBox(), zoom);
+            _this._redraw(_this.camera.viewBox(), zoom);
         });
         var up = function () {
             _this._setPanLock(false);
@@ -531,26 +509,9 @@ var MapRenderer = (function () {
         document.addEventListener("mouseup", up);
         this.viewport.addEventListener("mousemove", drag, { passive: true });
     };
-    MapRenderer.prototype._setPanLock = function (locked) {
-        this._isPanning = locked;
-        this.layers.forEachLayer(function (layer) {
-            var element = layer.element;
-            if (locked)
-                element.style.transition = "transform 0ms ease-out";
-            else
-                element.style.removeProperty("transition");
-        });
-    };
-    MapRenderer.prototype._redraw = function (viewBox, zoom) {
-        this.layers.forEachLayer(function (layer) {
-            layer.redraw(viewBox, zoom);
-            layer.setRedrawArgs(viewBox, zoom);
-        });
-        this._anchor.dispatchEvent(this._buildViewBoxChangedEvent(viewBox));
-    };
-    MapRenderer.prototype._constrainMapTarget = function () {
-        var targetX = this._camera.target.x;
-        var targetY = this._camera.target.y;
+    MapEngine.prototype._constrainMapTarget = function () {
+        var targetX = this.camera.target.x;
+        var targetY = this.camera.target.y;
         var mapSize = this.layers.mapSize;
         if (targetX < 0)
             targetX = 0;
@@ -560,17 +521,31 @@ var MapRenderer = (function () {
             targetY = 0;
         if (targetY > mapSize.height)
             targetY = mapSize.height;
-        this._camera.target = {
-            x: targetX,
-            y: targetY
-        };
+        this.camera.target = { x: targetX, y: targetY };
     };
-    MapRenderer.prototype._buildViewBoxChangedEvent = function (viewBox) {
+    MapEngine.prototype._setPanLock = function (locked) {
+        this._isPanning = locked;
+        this.layers.forEachLayer(function (layer) {
+            var element = layer.element;
+            if (locked)
+                element.style.transition = "transform 0ms ease-out";
+            else
+                element.style.removeProperty("transition");
+        });
+    };
+    MapEngine.prototype._buildViewBoxChangedEvent = function (viewBox) {
         return new CustomEvent("ps2map_viewboxchanged", {
             detail: { viewBox: viewBox }, bubbles: true, cancelable: true
         });
     };
-    return MapRenderer;
+    MapEngine.prototype._redraw = function (viewBox, zoom) {
+        this.layers.forEachLayer(function (layer) {
+            layer.redraw(viewBox, zoom);
+            layer.setRedrawArgs(viewBox, zoom);
+        });
+        this._anchor.dispatchEvent(this._buildViewBoxChangedEvent(viewBox));
+    };
+    return MapEngine;
 }());
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -1174,11 +1149,20 @@ var TerrainLayer = (function (_super) {
 var HeroMap = (function (_super) {
     __extends(HeroMap, _super);
     function HeroMap(viewport) {
-        var _this = _super.call(this, viewport, { width: 0, height: 0 }) || this;
+        var _this = _super.call(this, viewport) || this;
         _this._continent = undefined;
         return _this;
     }
     HeroMap.prototype.continent = function () { return this._continent; };
+    HeroMap.prototype.getCanvasContext = function () {
+        var elem = this.viewport.querySelector("canvas");
+        if (!elem)
+            throw new Error("No canvas element found");
+        var ctx = elem.getContext("2d");
+        if (!ctx)
+            throw new Error("Failed to get canvas context");
+        return ctx;
+    };
     HeroMap.prototype.getLayer = function (id) {
         var layer = this.layers.getLayer(id);
         if (!layer)
@@ -1222,14 +1206,10 @@ var HeroMap = (function (_super) {
                         ];
                         return [4, Promise.all(allLayers).then(function (layers) {
                                 _this.layers.clear();
-                                _this.setMapSize({
-                                    width: continent.map_size,
-                                    height: continent.map_size
-                                });
-                                _this.jumpTo({
-                                    x: continent.map_size / 2,
-                                    y: continent.map_size / 2
-                                });
+                                var size = continent.map_size;
+                                _this.setMapSize({ width: size, height: size });
+                                _this.camera.resetZoom();
+                                _this.jumpTo({ x: size / 2, y: size / 2 });
                                 layers.forEach(function (layer) {
                                     _this.layers.addLayer(layer);
                                     layer.updateLayer();
@@ -1243,8 +1223,12 @@ var HeroMap = (function (_super) {
             });
         });
     };
+    HeroMap.prototype.jumpTo = function (point) {
+        this.camera.jumpTo(point);
+        this._redraw(this.camera.viewBox(), this.camera.zoom());
+    };
     return HeroMap;
-}(MapRenderer));
+}(MapEngine));
 var Minimap = (function () {
     function Minimap(element) {
         var _this = this;
@@ -1917,7 +1901,6 @@ document.addEventListener("DOMContentLoaded", function () {
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
             document.body.style.removeProperty("cursor");
-            var box = minimap.element.firstElementChild;
             box.style.removeProperty("transition");
         };
         document.addEventListener("mousemove", onMove);
@@ -2012,6 +1995,11 @@ document.addEventListener("DOMContentLoaded", function () {
         StateManager.dispatch(State.user.continentChanged, continents[continents.length - 1]);
     });
 });
+var MapRenderer = (function () {
+    function MapRenderer() {
+    }
+    return MapRenderer;
+}());
 var StateManager = (function () {
     function StateManager() {
     }
