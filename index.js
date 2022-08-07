@@ -292,7 +292,7 @@ var MapLayer = (function () {
         var _this = this;
         this.isVisible = true;
         this._lastRedraw = null;
-        this._runDeferredLayerUpdate = Utils.rafDebounce(function () {
+        this._runDeferredLayerUpdate = rafDebounce(function () {
             if (!_this._lastRedraw)
                 return;
             var _a = _this._lastRedraw, viewBox = _a[0], zoom = _a[1];
@@ -377,58 +377,19 @@ var LayerManager = (function () {
     };
     return LayerManager;
 }());
-var Utils;
-(function (Utils) {
-    function clamp(value, min, max) {
-        if (max <= min)
-            return min;
-        if (value < min)
-            return min;
-        if (value > max)
-            return max;
-        return value;
-    }
-    Utils.clamp = clamp;
-    function rafDebounce(target) {
-        var isScheduled = false;
-        var handle = 0;
-        function wrapper() {
-            var args = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                args[_i] = arguments[_i];
-            }
-            if (isScheduled)
-                cancelAnimationFrame(handle);
-            handle = requestAnimationFrame(function () {
-                target.apply(wrapper, args);
-                isScheduled = false;
-            });
-            isScheduled = true;
-        }
-        return wrapper;
-    }
-    Utils.rafDebounce = rafDebounce;
-    function rectanglesIntersect(a, b) {
-        return (a.left < b.right
-            && a.right > b.left
-            && a.top > b.bottom
-            && a.bottom < b.top);
-    }
-    Utils.rectanglesIntersect = rectanglesIntersect;
-})(Utils || (Utils = {}));
 var MapEngine = (function () {
     function MapEngine(viewport) {
         var _this = this;
         this._mapSize = { width: 0, height: 0 };
         this.allowPan = true;
         this._isPanning = false;
-        this._onZoom = Utils.rafDebounce(function (evt) {
+        this._onZoom = rafDebounce(function (evt) {
             evt.preventDefault();
             if (_this._isPanning)
                 return;
             var view = _this.viewport.getBoundingClientRect();
-            var relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
-            var relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
+            var relX = (evt.clientX - view.left) / view.width;
+            var relY = (evt.clientY - view.top) / view.height;
             _this.camera.zoomTowards(evt.deltaY, { x: relX, y: relY });
             _this._constrainMapTarget();
             _this.renderer.redraw();
@@ -492,7 +453,7 @@ var MapEngine = (function () {
         var zoom = this.camera.zoom();
         var startX = evtDown.clientX;
         var startY = evtDown.clientY;
-        var drag = Utils.rafDebounce(function (evtDrag) {
+        var drag = rafDebounce(function (evtDrag) {
             _this.camera.jumpTo({
                 x: panStart.x - (evtDrag.clientX - startX) / zoom,
                 y: panStart.y + (evtDrag.clientY - startY) / zoom
@@ -1004,7 +965,8 @@ var TileLayer = (function (_super) {
         this.tiles = newTiles;
     };
     TileLayer.prototype.tileIsVisible = function (tile, viewBox) {
-        return Utils.rectanglesIntersect(tile.box, viewBox);
+        return (tile.box.left < viewBox.right && tile.box.right > viewBox.left
+            && tile.box.top > viewBox.bottom && tile.box.bottom < viewBox.top);
     };
     TileLayer.prototype.updateTileVisibility = function (viewBox) {
         var _this = this;
@@ -1323,7 +1285,7 @@ var Minimap = (function () {
         var _this = this;
         if (this._mapSize === 0 || evtDown.button !== 0)
             return;
-        var drag = Utils.rafDebounce(function (evtDrag) {
+        var drag = rafDebounce(function (evtDrag) {
             var rect = _this.element.getBoundingClientRect();
             var relX = (evtDrag.clientX - rect.left) / (rect.width);
             var relY = (evtDrag.clientY - rect.top) / (rect.height);
@@ -2018,6 +1980,24 @@ var MapRenderer = (function () {
     };
     return MapRenderer;
 }());
+function rafDebounce(target) {
+    var isScheduled = false;
+    var handle = 0;
+    function wrapper() {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        if (isScheduled)
+            cancelAnimationFrame(handle);
+        handle = requestAnimationFrame(function () {
+            target.apply(wrapper, args);
+            isScheduled = false;
+        });
+        isScheduled = true;
+    }
+    return wrapper;
+}
 var StateManager = (function () {
     function StateManager() {
     }

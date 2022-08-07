@@ -142,7 +142,7 @@ class Minimap {
         if (this._mapSize === 0 || evtDown.button !== 0)
             return;
         // Continuous "mousemove" callback
-        const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
+        const drag = rafDebounce((evtDrag: MouseEvent) => {
             // Get relative cursor position
             const rect = this.element.getBoundingClientRect();
             const relX = (evtDrag.clientX - rect.left) / (rect.width);

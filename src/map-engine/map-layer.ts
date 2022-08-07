@@ -66,7 +66,7 @@ abstract class MapLayer {
     }
 
     /** Wrapper to run deferred layer updates from event listeners. */
-    private readonly _runDeferredLayerUpdate = Utils.rafDebounce(() => {
+    private readonly _runDeferredLayerUpdate = rafDebounce(() => {
         if (!this._lastRedraw)
             return;
         const [viewBox, zoom] = this._lastRedraw;

@@ -1,6 +1,5 @@
 /// <reference path="./camera.ts" />
 /// <reference path="./layer-manager.ts" />
-/// <reference path="./support.ts" />
 /// <reference path="./types.ts" />
 
 /** Details for the "ps2map_viewboxchanged" custom event. */
@@ -98,15 +97,15 @@ class MapEngine {
      * Event callback for mouse-wheel zoom
      * @param evt Wheel event to process
      */
-    private readonly _onZoom = Utils.rafDebounce((evt: WheelEvent) => {
+    private readonly _onZoom = rafDebounce((evt: WheelEvent) => {
         evt.preventDefault();
         // Only allow zoom interactions when pan is not active - this avoids
         // camera target sync issues
         if (this._isPanning) return;
         // Get the viewport-relative cursor position
         const view = this.viewport.getBoundingClientRect();
-        const relX = Utils.clamp((evt.clientX - view.left) / view.width, 0.0, 1.0);
-        const relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
+        const relX = (evt.clientX - view.left) / view.width;
+        const relY = (evt.clientY - view.top) / view.height;
         // Update the camera target and view box
         this.camera.zoomTowards(evt.deltaY, { x: relX, y: relY });
         this._constrainMapTarget();
@@ -136,7 +135,7 @@ class MapEngine {
         const startY = evtDown.clientY;
 
         // Continuous "mousemove" callback
-        const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
+        const drag = rafDebounce((evtDrag: MouseEvent) => {
             this.camera.jumpTo({
                 x: panStart.x - (evtDrag.clientX - startX) / zoom,
                 y: panStart.y + (evtDrag.clientY - startY) / zoom,

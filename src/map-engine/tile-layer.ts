@@ -94,7 +94,8 @@ abstract class TileLayer extends MapLayer {
      * @returns true if the tile is in view, otherwise false
      */
     protected tileIsVisible(tile: MapTile, viewBox: ViewBox): boolean {
-        return Utils.rectanglesIntersect(tile.box, viewBox);
+        return (tile.box.left < viewBox.right && tile.box.right > viewBox.left
+            && tile.box.top > viewBox.bottom && tile.box.bottom < viewBox.top);
     }
 
     /**
