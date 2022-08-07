@@ -187,23 +187,39 @@ function polyLineStrokeErase(polylines, stroke) {
     return remaining;
 }
 var Camera = (function () {
-    function Camera(mapDimensions, viewportDimensions, stepSize, maxZoom) {
-        if (stepSize === void 0) { stepSize = 1.5; }
-        if (maxZoom === void 0) { maxZoom = 4.0; }
-        this._zoomIndex = -1;
+    function Camera(mapSize, viewportSize, stepSize, maxZoom) {
+        if (stepSize === void 0) { stepSize = undefined; }
+        if (maxZoom === void 0) { maxZoom = undefined; }
+        this._maxZoom = 4.0;
+        this._stepSize = 1.5;
         this._zoomLevels = [];
-        this._mapDimensions = mapDimensions;
-        this._viewportDimensions = viewportDimensions;
-        this._stepSize = stepSize;
-        this._maxZoom = maxZoom;
-        this._zoomLevels = this._calculateZoomLevels();
+        this._zoomIndex = -1;
+        this._viewportSize = viewportSize;
+        if (stepSize !== undefined)
+            this._stepSize = stepSize;
+        if (maxZoom !== undefined)
+            this._maxZoom = maxZoom;
+        this._zoomLevels = this._calculateZoomLevels(mapSize);
         this._zoomIndex = this._zoomLevels.length - 1;
+        var factor = 0.5;
         this.target = {
-            x: mapDimensions.width * 0.5,
-            y: mapDimensions.height * 0.5
+            x: mapSize.width * factor,
+            y: mapSize.height * factor
         };
     }
-    Camera.prototype.getZoom = function () {
+    Camera.prototype.viewBox = function () {
+        var zoom = this.zoom();
+        var half = 0.5;
+        var halfViewboxHeight = this._viewportSize.height * half / zoom;
+        var halfViewboxWidth = this._viewportSize.width * half / zoom;
+        return {
+            top: this.target.y + halfViewboxHeight,
+            right: this.target.x + halfViewboxWidth,
+            bottom: this.target.y - halfViewboxHeight,
+            left: this.target.x - halfViewboxWidth
+        };
+    };
+    Camera.prototype.zoom = function () {
         var zoom = this._zoomLevels[this._zoomIndex];
         if (zoom === undefined)
             throw new Error("Invalid zoom level");
@@ -220,56 +236,53 @@ var Camera = (function () {
         else if (index >= this._zoomLevels.length)
             index = this._zoomLevels.length - 1;
         this._zoomIndex = index;
-        return this._zoomLevels[index];
+        var zoom = this._zoomLevels[index];
+        if (zoom === undefined)
+            throw new Error("Invalid zoom level");
+        return zoom;
     };
-    Camera.prototype.currentViewBox = function () {
-        var zoom = this.getZoom();
-        var height = this._viewportDimensions.height / zoom;
-        var width = this._viewportDimensions.width / zoom;
-        return {
-            top: this.target.y + height * 0.5,
-            right: this.target.x + width * 0.5,
-            bottom: this.target.y - height * 0.5,
-            left: this.target.x - width * 0.5
-        };
-    };
-    Camera.prototype.updateViewportSize = function (viewportDimensions) {
-        this._viewportDimensions = viewportDimensions;
+    Camera.prototype.updateViewportSize = function (mapSize, viewportSize) {
+        this._viewportSize = viewportSize;
         var zoomIndex = this._zoomIndex;
-        this._zoomLevels = this._calculateZoomLevels();
+        this._zoomLevels = this._calculateZoomLevels(mapSize);
         this._zoomIndex = zoomIndex;
-        this.zoomTowards(0, { x: 0.5, y: 0.5 });
     };
     Camera.prototype.jumpTo = function (point) {
         this.target = point;
     };
     Camera.prototype.zoomTowards = function (value, viewportRelPos) {
-        var oldZoom = this.getZoom();
+        var oldZoom = this.zoom();
         var zoom = this.bumpZoom(value);
-        var deltaX = (this._viewportDimensions.width / oldZoom)
-            - (this._viewportDimensions.width / zoom);
-        var deltaY = (this._viewportDimensions.height / oldZoom)
-            - (this._viewportDimensions.height / zoom);
-        var ratioX = -0.5 + viewportRelPos.x;
-        var ratioY = +0.5 - viewportRelPos.y;
+        var deltaX = (this._viewportSize.width / oldZoom)
+            - (this._viewportSize.width / zoom);
+        var deltaY = (this._viewportSize.height / oldZoom)
+            - (this._viewportSize.height / zoom);
+        var half = 0.5;
+        var ratioX = -half + viewportRelPos.x;
+        var ratioY = half - viewportRelPos.y;
         this.target = {
             x: Math.round(this.target.x + deltaX * ratioX),
             y: Math.round(this.target.y + deltaY * ratioY)
         };
         return this.target;
     };
-    Camera.prototype._calculateZoomLevels = function () {
-        var minViewport = Math.min(this._viewportDimensions.width, this._viewportDimensions.height);
-        var maxMap = Math.max(this._mapDimensions.width, this._mapDimensions.height);
+    Camera.prototype._calculateZoomLevels = function (mapDimensions) {
+        var minViewport = Math.min(this._viewportSize.width, this._viewportSize.height);
+        var maxMap = Math.max(mapDimensions.width, mapDimensions.height);
         var zoomLevels = [this._maxZoom];
         if (minViewport === 0)
             return zoomLevels;
+        var base = 10;
+        var numDecimals = 2;
+        var round = function (value) {
+            var scale = Math.pow(base, numDecimals);
+            return Math.round((value + Number.EPSILON) * scale) / scale;
+        };
         var factor = 1 / this._stepSize;
         var zoom = this._maxZoom;
         while (maxMap * zoom > minViewport) {
             zoom *= factor;
-            var newZoom = Math.round((zoom + Number.EPSILON) * 100) / 100;
-            zoomLevels.push(newZoom);
+            zoomLevels.push(round(zoom));
         }
         return zoomLevels;
     };
@@ -408,7 +421,7 @@ var MapRenderer = (function () {
             var relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
             _this._camera.zoomTowards(evt.deltaY, { x: relX, y: relY });
             _this._constrainMapTarget();
-            _this._redraw(_this.getViewBox(), _this._camera.getZoom());
+            _this._redraw(_this.getViewBox(), _this._camera.zoom());
         });
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
@@ -435,8 +448,8 @@ var MapRenderer = (function () {
             var height = _this.viewport.clientHeight;
             _this._anchor.style.left = "".concat(width * 0.5, "px");
             _this._anchor.style.top = "".concat(height * 0.5, "px");
-            _this._camera.updateViewportSize({ width: width, height: height });
-            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this._camera.currentViewBox()));
+            _this._camera.updateViewportSize({ width: _this.getMapSize(), height: _this.getMapSize() }, { width: width, height: height });
+            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this._camera.viewBox()));
         });
         obj.observe(this.viewport);
     }
@@ -450,18 +463,18 @@ var MapRenderer = (function () {
         return canvas.getContext("2d");
     };
     MapRenderer.prototype.getViewBox = function () {
-        return this._camera.currentViewBox();
+        return this._camera.viewBox();
     };
     MapRenderer.prototype.getMapSize = function () {
         return this.layerManager.mapSize;
     };
     MapRenderer.prototype.getZoom = function () {
-        return this._camera.getZoom();
+        return this._camera.zoom();
     };
     MapRenderer.prototype.jumpTo = function (target) {
         this._camera.jumpTo(target);
         this._constrainMapTarget();
-        this._redraw(this.getViewBox(), this._camera.getZoom());
+        this._redraw(this.getViewBox(), this._camera.zoom());
     };
     MapRenderer.prototype.setMapSize = function (value) {
         if (!this.layerManager.isEmpty())
@@ -480,7 +493,7 @@ var MapRenderer = (function () {
         var vp = this.viewport;
         var relX = (screen.x - vp.offsetLeft) / vp.clientWidth;
         var relY = (screen.y - vp.offsetTop) / vp.clientHeight;
-        var box = this._camera.currentViewBox();
+        var box = this._camera.viewBox();
         var halfSize = this.layerManager.mapSize * 0.5;
         return {
             x: -halfSize + box.left + (box.right - box.left) * relX,
@@ -498,7 +511,7 @@ var MapRenderer = (function () {
             x: this._camera.target.x,
             y: this._camera.target.y
         };
-        var zoom = this._camera.getZoom();
+        var zoom = this._camera.zoom();
         var startX = evtDown.clientX;
         var startY = evtDown.clientY;
         var drag = Utils.rafDebounce(function (evtDrag) {

@@ -68,9 +68,11 @@ class MapRenderer {
             const height = this.viewport.clientHeight;
             this._anchor.style.left = `${width * 0.5}px`;
             this._anchor.style.top = `${height * 0.5}px`;
-            this._camera.updateViewportSize({ width, height });
+            this._camera.updateViewportSize(
+                { width: this.getMapSize(), height: this.getMapSize() },
+                { width, height });
             this.viewport.dispatchEvent(
-                this._buildViewBoxChangedEvent(this._camera.currentViewBox()));
+                this._buildViewBoxChangedEvent(this._camera.viewBox()));
         });
         obj.observe(this.viewport);
     }
@@ -88,7 +90,7 @@ class MapRenderer {
     }
 
     getViewBox(): Readonly<ViewBox> {
-        return this._camera.currentViewBox();
+        return this._camera.viewBox();
     }
 
     getMapSize(): number {
@@ -96,7 +98,7 @@ class MapRenderer {
     }
 
     getZoom(): number {
-        return this._camera.getZoom();
+        return this._camera.zoom();
     }
 
     /**
@@ -106,7 +108,7 @@ class MapRenderer {
     jumpTo(target: Point): void {
         this._camera.jumpTo(target);
         this._constrainMapTarget();
-        this._redraw(this.getViewBox(), this._camera.getZoom());
+        this._redraw(this.getViewBox(), this._camera.zoom());
     }
 
     /**
@@ -151,7 +153,7 @@ class MapRenderer {
         const relX = (screen.x - vp.offsetLeft) / vp.clientWidth;
         const relY = (screen.y - vp.offsetTop) / vp.clientHeight;
         // Interpolate the relative position within the view box
-        const box = this._camera.currentViewBox();
+        const box = this._camera.viewBox();
         const halfSize = this.layerManager.mapSize * 0.5;
         return {
             x: -halfSize + box.left + (box.right - box.left) * relX,
@@ -176,7 +178,7 @@ class MapRenderer {
         // Update the camera target and view box
         this._camera.zoomTowards(evt.deltaY, { x: relX, y: relY });
         this._constrainMapTarget();
-        this._redraw(this.getViewBox(), this._camera.getZoom());
+        this._redraw(this.getViewBox(), this._camera.zoom());
     });
 
     /** Event callback for mouse map panning.
@@ -195,7 +197,7 @@ class MapRenderer {
             x: this._camera.target.x,
             y: this._camera.target.y
         };
-        const zoom = this._camera.getZoom();
+        const zoom = this._camera.zoom();
         const startX = evtDown.clientX;
         const startY = evtDown.clientY;
 
