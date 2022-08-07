@@ -1112,7 +1112,6 @@ var HeroMap = (function (_super) {
         _this._continent = undefined;
         return _this;
     }
-    HeroMap.prototype.continent = function () { return this._continent; };
     HeroMap.prototype.getCanvasContext = function () {
         var elem = this.viewport.querySelector("canvas");
         if (!elem)

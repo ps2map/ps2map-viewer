@@ -11,8 +11,6 @@ class HeroMap extends MapEngine {
         super(viewport);
     }
 
-    continent(): Continent { return this._continent!; }
-
     getCanvasContext(): CanvasRenderingContext2D {
         const elem = this.viewport.querySelector<HTMLCanvasElement>("canvas");
         if (!elem)
