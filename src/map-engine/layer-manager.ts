@@ -25,7 +25,8 @@ class LayerManager {
     }
 
     addLayer(layer: MapLayer): void {
-        if (layer.size == this.mapSize)
+        if (layer.size.width !== this.mapSize.width &&
+            layer.size.height !== this.mapSize.height)
             throw new Error(`Size of added layer "${layer.id}" does not ` +
                 `match current map size.`);
         // Check if a layer with the same id already exists.

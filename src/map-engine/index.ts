@@ -123,7 +123,7 @@ class MapEngine {
 
         const panStart = {
             x: this.camera.target.x,
-            y: this.camera.target.y
+            y: this.camera.target.y,
         };
         const zoom = this.camera.zoom();
         const startX = evtDown.clientX;
@@ -133,7 +133,7 @@ class MapEngine {
         const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
             this.camera.jumpTo({
                 x: panStart.x - (evtDrag.clientX - startX) / zoom,
-                y: panStart.y + (evtDrag.clientY - startY) / zoom
+                y: panStart.y + (evtDrag.clientY - startY) / zoom,
             });
             this._constrainMapTarget();
             this._redraw(this.camera.viewBox(), zoom);

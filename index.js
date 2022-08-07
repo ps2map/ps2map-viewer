@@ -68,7 +68,6 @@ var GameData = (function () {
                     return [2, fetchBasesForContinent(continent.id)
                             .then(function (bases) {
                             _this._bases = bases;
-                            console.log("Loaded ".concat(_this._bases.length, " bases"));
                         })];
                 else
                     return [2, Promise.resolve()];
@@ -95,22 +94,18 @@ var GameData = (function () {
     };
     GameData._loadInternal = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var continents, servers, loading;
             var _this = this;
             return __generator(this, function (_a) {
-                continents = fetchContinents();
-                servers = fetchServers();
-                loading = Promise.all([continents, servers])
-                    .then(function (_a) {
-                    var continents = _a[0], servers = _a[1];
-                    var instance = new GameData();
-                    instance._continents = continents;
-                    instance._servers = servers;
-                    _this._instance = instance;
-                    _this._loaded = true;
-                    return instance;
-                });
-                return [2, loading];
+                return [2, Promise.all([fetchContinents(), fetchServers()])
+                        .then(function (_a) {
+                        var continents = _a[0], servers = _a[1];
+                        var instance = new GameData();
+                        instance._continents = continents;
+                        instance._servers = servers;
+                        _this._instance = instance;
+                        _this._loaded = true;
+                        return instance;
+                    })];
             });
         });
     };
@@ -342,7 +337,8 @@ var LayerManager = (function () {
         this.anchor = anchor;
     }
     LayerManager.prototype.addLayer = function (layer) {
-        if (layer.size == this.mapSize)
+        if (layer.size.width !== this.mapSize.width &&
+            layer.size.height !== this.mapSize.height)
             throw new Error("Size of added layer \"".concat(layer.id, "\" does not ") +
                 "match current map size.");
         if (this._layers.some(function (l) { return l.id === layer.id; }))

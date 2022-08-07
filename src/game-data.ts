@@ -56,7 +56,6 @@ class GameData {
             return fetchBasesForContinent(continent.id)
                 .then(bases => {
                     this._bases = bases;
-                    console.log(`Loaded ${this._bases.length} bases`);
                 });
         else
             return Promise.resolve();
@@ -87,9 +86,7 @@ class GameData {
     }
 
     private static async _loadInternal(): Promise<GameData> {
-        const continents = fetchContinents();
-        const servers = fetchServers();
-        const loading = Promise.all([continents, servers])
+        return Promise.all([fetchContinents(), fetchServers()])
             .then(([continents, servers]) => {
                 const instance = new GameData();
                 instance._continents = continents;
@@ -98,6 +95,5 @@ class GameData {
                 this._loaded = true;
                 return instance;
             });
-        return loading;
     }
 }
