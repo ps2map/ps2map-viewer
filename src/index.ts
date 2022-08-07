@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
         listener.switchServer(state.user.server!);
     });
     StateManager.subscribe(State.user.baseHovered, (state) => {
-        const names = heroMap.layerManager.getLayer<BaseNamesLayer>("names");
+        const names = heroMap.getLayer<BaseNamesLayer>("names");
         if (names)
             names.setHoveredBase(state.user.hoveredBase);
     });

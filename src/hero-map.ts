@@ -13,6 +13,13 @@ class HeroMap extends MapRenderer {
 
     continent(): Continent { return this._continent!; }
 
+    public getLayer<Type extends MapLayer>(id: string): Type {
+        const layer = this.layers.getLayer(id);
+        if (!layer)
+            throw new Error(`Layer '${id}' does not exist`);
+        return layer as Type;
+    }
+
     updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
         const data = GameData.getInstance();
         // Filter the base ownership map to only include bases that are in the
@@ -29,7 +36,7 @@ class HeroMap extends MapRenderer {
             return "updateBaseOwnership" in object;
         }
         // Forward the base ownership map to all dynamic layers
-        this.layerManager.forEachLayer((layer) => {
+        this.layers.forEachLayer((layer) => {
             if (supportsBaseOwnership(layer))
                 layer.updateBaseOwnership(continentMap);
         });
@@ -51,7 +58,7 @@ class HeroMap extends MapRenderer {
         await Promise.all(allLayers).then(
             (layers) => {
                 // Delete old layers
-                this.layerManager.clear();
+                this.layers.clear();
                 // Update map size (required for camera)
                 this.setMapSize(continent.map_size);
                 this.jumpTo({
@@ -60,7 +67,7 @@ class HeroMap extends MapRenderer {
                 });
                 // Add new layers and force a redraw
                 layers.forEach((layer) => {
-                    this.layerManager.addLayer(layer);
+                    this.layers.addLayer(layer);
                     layer.updateLayer();
                 });
 

@@ -426,7 +426,7 @@ var MapRenderer = (function () {
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this._anchor = document.createElement("div");
-        this.layerManager = new LayerManager(this._anchor, mapSize);
+        this.layers = new LayerManager(this._anchor, mapSize);
         this.viewport.appendChild(this._anchor);
         this._camera = new Camera({
             width: mapSize, height: mapSize
@@ -454,7 +454,7 @@ var MapRenderer = (function () {
         obj.observe(this.viewport);
     }
     MapRenderer.prototype.getCanvasContext = function () {
-        var layer = this.layerManager.getLayer("canvas");
+        var layer = this.layers.getLayer("canvas");
         if (layer === null)
             throw new Error("No canvas layer found");
         var canvas = layer.element.firstElementChild;
@@ -466,7 +466,7 @@ var MapRenderer = (function () {
         return this._camera.viewBox();
     };
     MapRenderer.prototype.getMapSize = function () {
-        return this.layerManager.mapSize;
+        return this.layers.mapSize;
     };
     MapRenderer.prototype.getZoom = function () {
         return this._camera.zoom();
@@ -477,9 +477,9 @@ var MapRenderer = (function () {
         this._redraw(this.getViewBox(), this._camera.zoom());
     };
     MapRenderer.prototype.setMapSize = function (value) {
-        if (!this.layerManager.isEmpty())
+        if (!this.layers.isEmpty())
             throw new Error("Cannot change map size while layers are present");
-        this.layerManager = new LayerManager(this._anchor, value);
+        this.layers = new LayerManager(this._anchor, value);
         this._camera = new Camera({
             width: value, height: value
         }, {
@@ -494,7 +494,7 @@ var MapRenderer = (function () {
         var relX = (screen.x - vp.offsetLeft) / vp.clientWidth;
         var relY = (screen.y - vp.offsetTop) / vp.clientHeight;
         var box = this._camera.viewBox();
-        var halfSize = this.layerManager.mapSize * 0.5;
+        var halfSize = this.layers.mapSize * 0.5;
         return {
             x: -halfSize + box.left + (box.right - box.left) * relX,
             y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY)
@@ -526,14 +526,14 @@ var MapRenderer = (function () {
             _this._setPanLock(false);
             _this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
-            _this.layerManager.updateAll();
+            _this.layers.updateAll();
         };
         document.addEventListener("mouseup", up);
         this.viewport.addEventListener("mousemove", drag, { passive: true });
     };
     MapRenderer.prototype._setPanLock = function (locked) {
         this._isPanning = locked;
-        this.layerManager.forEachLayer(function (layer) {
+        this.layers.forEachLayer(function (layer) {
             var element = layer.element;
             if (locked)
                 element.style.transition = "transform 0ms ease-out";
@@ -542,7 +542,7 @@ var MapRenderer = (function () {
         });
     };
     MapRenderer.prototype._redraw = function (viewBox, zoom) {
-        this.layerManager.forEachLayer(function (layer) {
+        this.layers.forEachLayer(function (layer) {
             layer.redraw(viewBox, zoom);
             layer.setRedrawArgs(viewBox, zoom);
         });
@@ -551,7 +551,7 @@ var MapRenderer = (function () {
     MapRenderer.prototype._constrainMapTarget = function () {
         var targetX = this._camera.target.x;
         var targetY = this._camera.target.y;
-        var mapSize = this.layerManager.mapSize;
+        var mapSize = this.layers.mapSize;
         if (targetX < 0)
             targetX = 0;
         if (targetX > mapSize)
@@ -1165,6 +1165,12 @@ var HeroMap = (function (_super) {
         return _this;
     }
     HeroMap.prototype.continent = function () { return this._continent; };
+    HeroMap.prototype.getLayer = function (id) {
+        var layer = this.layers.getLayer(id);
+        if (!layer)
+            throw new Error("Layer '".concat(id, "' does not exist"));
+        return layer;
+    };
     HeroMap.prototype.updateBaseOwnership = function (baseOwnershipMap) {
         var _this = this;
         var data = GameData.getInstance();
@@ -1178,7 +1184,7 @@ var HeroMap = (function (_super) {
         function supportsBaseOwnership(object) {
             return "updateBaseOwnership" in object;
         }
-        this.layerManager.forEachLayer(function (layer) {
+        this.layers.forEachLayer(function (layer) {
             if (supportsBaseOwnership(layer))
                 layer.updateBaseOwnership(continentMap);
         });
@@ -1201,14 +1207,14 @@ var HeroMap = (function (_super) {
                             CanvasLayer.factory(continent, "canvas"),
                         ];
                         return [4, Promise.all(allLayers).then(function (layers) {
-                                _this.layerManager.clear();
+                                _this.layers.clear();
                                 _this.setMapSize(continent.map_size);
                                 _this.jumpTo({
                                     x: continent.map_size / 2,
                                     y: continent.map_size / 2
                                 });
                                 layers.forEach(function (layer) {
-                                    _this.layerManager.addLayer(layer);
+                                    _this.layers.addLayer(layer);
                                     layer.updateLayer();
                                 });
                                 _this._continent = continent;
@@ -1928,7 +1934,7 @@ document.addEventListener("DOMContentLoaded", function () {
         listener.switchServer(state.user.server);
     });
     StateManager.subscribe(State.user.baseHovered, function (state) {
-        var names = heroMap.layerManager.getLayer("names");
+        var names = heroMap.getLayer("names");
         if (names)
             names.setHoveredBase(state.user.hoveredBase);
     });

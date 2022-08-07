@@ -24,7 +24,7 @@ interface ViewBoxChangedEvent {
 class MapRenderer {
     /** User-provided viewport element. Everything happens within this. */
     readonly viewport: HTMLDivElement;
-    public layerManager: LayerManager;
+    protected layers: LayerManager;
 
     private _camera: Camera;
     private _anchor: HTMLElement;
@@ -37,7 +37,7 @@ class MapRenderer {
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this._anchor = document.createElement("div");
-        this.layerManager = new LayerManager(this._anchor, mapSize)
+        this.layers = new LayerManager(this._anchor, mapSize)
         this.viewport.appendChild(this._anchor);
 
         // Set up camera
@@ -78,7 +78,7 @@ class MapRenderer {
     }
 
     getCanvasContext(): CanvasRenderingContext2D | null {
-        const layer = this.layerManager.getLayer<CanvasLayer>("canvas");
+        const layer = this.layers.getLayer<CanvasLayer>("canvas");
         if (layer === null)
             // TODO: Should this even be an error? Not all browsers support
             // canvas layers, this could just return null.
@@ -94,7 +94,7 @@ class MapRenderer {
     }
 
     getMapSize(): number {
-        return this.layerManager.mapSize;
+        return this.layers.mapSize;
     }
 
     getZoom(): number {
@@ -119,9 +119,9 @@ class MapRenderer {
      * @param value New map size to apply.
      */
     setMapSize(value: number): void {
-        if (!this.layerManager.isEmpty())
+        if (!this.layers.isEmpty())
             throw new Error("Cannot change map size while layers are present");
-        this.layerManager = new LayerManager(this._anchor, value);
+        this.layers = new LayerManager(this._anchor, value);
         // Create a new camera as zoom levels depend on map size
         this._camera = new Camera(
             { // Map dimensions
@@ -154,7 +154,7 @@ class MapRenderer {
         const relY = (screen.y - vp.offsetTop) / vp.clientHeight;
         // Interpolate the relative position within the view box
         const box = this._camera.viewBox();
-        const halfSize = this.layerManager.mapSize * 0.5;
+        const halfSize = this.layers.mapSize * 0.5;
         return {
             x: -halfSize + box.left + (box.right - box.left) * relX,
             // (1 - relY) takes care of the Y axis inversion
@@ -216,7 +216,7 @@ class MapRenderer {
             this._setPanLock(false);
             this.viewport.removeEventListener("mousemove", drag);
             document.removeEventListener("mouseup", up);
-            this.layerManager.updateAll();
+            this.layers.updateAll();
         };
 
         document.addEventListener("mouseup", up);
@@ -232,7 +232,7 @@ class MapRenderer {
     private _setPanLock(locked: boolean): void {
         this._isPanning = locked;
         // Disable CSS transitions while panning
-        this.layerManager.forEachLayer(layer => {
+        this.layers.forEachLayer(layer => {
             const element = layer.element;
             if (locked)
                 element.style.transition = "transform 0ms ease-out";
@@ -248,7 +248,7 @@ class MapRenderer {
      */
     private _redraw(viewBox: ViewBox, zoom: number): void {
         // Apply new zoom level and schedule map layer updates
-        this.layerManager.forEachLayer(layer => {
+        this.layers.forEachLayer(layer => {
             layer.redraw(viewBox, zoom);
             layer.setRedrawArgs(viewBox, zoom);
         });
@@ -264,7 +264,7 @@ class MapRenderer {
     private _constrainMapTarget(): void {
         let targetX = this._camera.target.x;
         let targetY = this._camera.target.y;
-        const mapSize = this.layerManager.mapSize;
+        const mapSize = this.layers.mapSize;
         // Constrain pan limits
         if (targetX < 0) targetX = 0;
         if (targetX > mapSize) targetX = mapSize;
