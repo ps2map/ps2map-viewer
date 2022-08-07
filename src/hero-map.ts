@@ -41,7 +41,7 @@ class HeroMap extends MapEngine {
                 continentMap.set(baseId, owner);
         });
         /** Helper function for filtering dynamic layers from static ones */
-        function supportsBaseOwnership(object: any,
+        function supportsBaseOwnership(object: object,
         ): object is SupportsBaseOwnership {
             return "updateBaseOwnership" in object;
         }

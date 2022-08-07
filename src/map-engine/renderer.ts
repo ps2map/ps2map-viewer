@@ -51,11 +51,11 @@ class MapRenderer {
  * arguments.
  * @param target The callback to run as part of the animation frame
  */
-function rafDebounce<T extends (...args: any) => void>(target: T): T {
+function rafDebounce<T extends (...args: never) => void>(target: T): T {
     let isScheduled: boolean = false;
     let handle: number = 0;
 
-    function wrapper(...args: any): void {
+    function wrapper(...args: never): void {
         if (isScheduled)
             cancelAnimationFrame(handle);
         handle = requestAnimationFrame(() => {
@@ -64,5 +64,5 @@ function rafDebounce<T extends (...args: any) => void>(target: T): T {
         });
         isScheduled = true;
     }
-    return wrapper as any;
+    return wrapper as T;
 }
