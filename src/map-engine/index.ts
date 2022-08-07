@@ -14,8 +14,6 @@ class MapEngine {
     readonly camera: Camera;
     layers: LayerManager;
 
-    private readonly _anchor: HTMLElement;
-
     protected _mapSize: Box = { width: 0, height: 0 };
 
     public allowPan = true;
@@ -24,18 +22,11 @@ class MapEngine {
     constructor(viewport: HTMLDivElement) {
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
-        this._anchor = document.createElement("div");
-        this.layers = new LayerManager(this._anchor, this._mapSize);
-        this.viewport.appendChild(this._anchor);
+        this.layers = new LayerManager(viewport, this._mapSize);
 
-        this._anchor.style.left = `${this.viewport.clientWidth * 0.5}px`;
-        this._anchor.style.top = `${this.viewport.clientHeight * 0.5}px`;
-
-        this.camera = new Camera(this._mapSize, {
-            width: viewport.clientWidth,
-            height: viewport.clientHeight,
-        });
-
+        this.camera = new Camera(
+            this._mapSize,
+            { width: viewport.clientWidth, height: viewport.clientHeight });
         const observer = new ResizeObserver(() => {
             const width = this.viewport.clientWidth;
             const height = this.viewport.clientHeight;
@@ -65,7 +56,7 @@ class MapEngine {
             return;
         // Discard all layers and recreate the layer manager
         this.layers.clear();
-        this.layers = new LayerManager(this._anchor, mapSize);
+        this.layers = new LayerManager(this.viewport, mapSize);
         // Update camera for new map size
         this.camera.updateViewportSize(mapSize, {
             width: this.viewport.clientWidth,
@@ -213,7 +204,7 @@ class MapEngine {
             layer.redraw(viewBox, zoom);
             layer.setRedrawArgs(viewBox, zoom);
         });
-        this._anchor.dispatchEvent(
+        this.viewport.dispatchEvent(
             this._buildViewBoxChangedEvent(viewBox));
     }
 }

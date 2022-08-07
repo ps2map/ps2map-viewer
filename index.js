@@ -330,11 +330,16 @@ var MapLayer = (function () {
     return MapLayer;
 }());
 var LayerManager = (function () {
-    function LayerManager(anchor, mapSize) {
+    function LayerManager(viewport, mapSize) {
         this._layers = [];
         this.mapSize = mapSize;
-        this._anchor = anchor;
-        anchor.classList.add("ps2map__anchor");
+        var anchor = document.createElement("div");
+        anchor.style.position = "absolute";
+        anchor.style.left = "50%";
+        anchor.style.top = "50%";
+        anchor.style.transform = "translate(-50%, -50%)";
+        viewport.appendChild(anchor);
+        this.anchor = anchor;
     }
     LayerManager.prototype.addLayer = function (layer) {
         if (layer.size == this.mapSize)
@@ -343,10 +348,10 @@ var LayerManager = (function () {
         if (this._layers.some(function (l) { return l.id === layer.id; }))
             throw new Error("A layer with the id \"".concat(layer.id, "\" already exists."));
         this._layers.push(layer);
-        this._anchor.appendChild(layer.element);
+        this.anchor.appendChild(layer.element);
     };
     LayerManager.prototype.clear = function () {
-        this._anchor.innerHTML = "";
+        this.anchor.innerHTML = "";
         this._layers = [];
     };
     LayerManager.prototype.forEachLayer = function (callback) {
@@ -365,7 +370,7 @@ var LayerManager = (function () {
         var layer = this.getLayer(id);
         if (layer) {
             this._layers = this._layers.filter(function (l) { return l !== layer; });
-            this._anchor.removeChild(layer.element);
+            this.anchor.removeChild(layer.element);
         }
     };
     LayerManager.prototype.updateAll = function () {
@@ -431,15 +436,8 @@ var MapEngine = (function () {
         });
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
-        this._anchor = document.createElement("div");
-        this.layers = new LayerManager(this._anchor, this._mapSize);
-        this.viewport.appendChild(this._anchor);
-        this._anchor.style.left = "".concat(this.viewport.clientWidth * 0.5, "px");
-        this._anchor.style.top = "".concat(this.viewport.clientHeight * 0.5, "px");
-        this.camera = new Camera(this._mapSize, {
-            width: viewport.clientWidth,
-            height: viewport.clientHeight
-        });
+        this.layers = new LayerManager(viewport, this._mapSize);
+        this.camera = new Camera(this._mapSize, { width: viewport.clientWidth, height: viewport.clientHeight });
         var observer = new ResizeObserver(function () {
             var width = _this.viewport.clientWidth;
             var height = _this.viewport.clientHeight;
@@ -460,7 +458,7 @@ var MapEngine = (function () {
         if (mapSize === this._mapSize)
             return;
         this.layers.clear();
-        this.layers = new LayerManager(this._anchor, mapSize);
+        this.layers = new LayerManager(this.viewport, mapSize);
         this.camera.updateViewportSize(mapSize, {
             width: this.viewport.clientWidth,
             height: this.viewport.clientHeight
@@ -543,7 +541,7 @@ var MapEngine = (function () {
             layer.redraw(viewBox, zoom);
             layer.setRedrawArgs(viewBox, zoom);
         });
-        this._anchor.dispatchEvent(this._buildViewBoxChangedEvent(viewBox));
+        this.viewport.dispatchEvent(this._buildViewBoxChangedEvent(viewBox));
     };
     return MapEngine;
 }());

@@ -10,10 +10,6 @@
     overflow: hidden;
 }
 
-.ps2map__anchor {
-    position: absolute;
-}
-
 .ps2map__layer {
     pointer-events: none;
     position: absolute;

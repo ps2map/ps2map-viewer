@@ -5,15 +5,23 @@
  * removing map layers, showing and hiding them, and retrieving them.
  */
 class LayerManager {
+    readonly anchor: HTMLElement;
     readonly mapSize: Box;
 
-    private readonly _anchor: HTMLElement;
     private _layers: MapLayer[] = [];
 
-    constructor(anchor: HTMLElement, mapSize: Box) {
+    constructor(viewport: HTMLDivElement, mapSize: Box) {
         this.mapSize = mapSize;
-        this._anchor = anchor;
-        anchor.classList.add("ps2map__anchor");
+        const anchor = document.createElement("div");
+
+        // Centre anchor in parent element
+        anchor.style.position = "absolute";
+        anchor.style.left = "50%";
+        anchor.style.top = "50%";
+        anchor.style.transform = "translate(-50%, -50%)";
+
+        viewport.appendChild(anchor);
+        this.anchor = anchor;
     }
 
     addLayer(layer: MapLayer): void {
@@ -24,11 +32,11 @@ class LayerManager {
         if (this._layers.some(l => l.id === layer.id))
             throw new Error(`A layer with the id "${layer.id}" already exists.`);
         this._layers.push(layer);
-        this._anchor.appendChild(layer.element);
+        this.anchor.appendChild(layer.element);
     }
 
     clear(): void {
-        this._anchor.innerHTML = "";
+        this.anchor.innerHTML = "";
         this._layers = [];
     }
 
@@ -51,7 +59,7 @@ class LayerManager {
         const layer = this.getLayer(id);
         if (layer) {
             this._layers = this._layers.filter(l => l !== layer);
-            this._anchor.removeChild(layer.element);
+            this.anchor.removeChild(layer.element);
         }
     }
 
