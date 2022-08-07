@@ -12,6 +12,7 @@ class MapEngine {
     readonly viewport: HTMLDivElement;
 
     readonly camera: Camera;
+    readonly renderer: MapRenderer;
     layers: LayerManager;
 
     protected _mapSize: Box = { width: 0, height: 0 };
@@ -27,6 +28,8 @@ class MapEngine {
         this.camera = new Camera(
             this._mapSize,
             { width: viewport.clientWidth, height: viewport.clientHeight });
+        this.renderer = new MapRenderer(this.camera, this.layers);
+
         const observer = new ResizeObserver(() => {
             const width = this.viewport.clientWidth;
             const height = this.viewport.clientHeight;
@@ -57,6 +60,7 @@ class MapEngine {
         // Discard all layers and recreate the layer manager
         this.layers.clear();
         this.layers = new LayerManager(this.viewport, mapSize);
+        this.renderer.updateLayerManager(this.layers);
         // Update camera for new map size
         this.camera.updateViewportSize(mapSize, {
             width: this.viewport.clientWidth,
@@ -106,7 +110,9 @@ class MapEngine {
         // Update the camera target and view box
         this.camera.zoomTowards(evt.deltaY, { x: relX, y: relY });
         this._constrainMapTarget();
-        this._redraw(this.camera.viewBox(), this.camera.zoom());
+        this.renderer.redraw();
+        this.viewport.dispatchEvent(
+            this._buildViewBoxChangedEvent(this.camera.viewBox()));
     });
 
     /** Event callback for mouse map panning.
@@ -136,7 +142,9 @@ class MapEngine {
                 y: panStart.y + (evtDrag.clientY - startY) / zoom,
             });
             this._constrainMapTarget();
-            this._redraw(this.camera.viewBox(), zoom);
+            this.renderer.redraw();
+            this.viewport.dispatchEvent(
+                this._buildViewBoxChangedEvent(this.camera.viewBox()));
         });
 
         // Global "mouseup" callback
@@ -191,20 +199,5 @@ class MapEngine {
         return new CustomEvent("ps2map_viewboxchanged", {
             detail: { viewBox }, bubbles: true, cancelable: true,
         });
-    }
-
-    /**
-    * Repaint the map layers and any auxiliary callbacks.
-    * @param viewBox View box to dispatch
-    * @param zoom Zoom level to use
-    */
-    protected _redraw(viewBox: ViewBox, zoom: number): void {
-        // Apply new zoom level and schedule map layer updates
-        this.layers.forEachLayer(layer => {
-            layer.redraw(viewBox, zoom);
-            layer.setRedrawArgs(viewBox, zoom);
-        });
-        this.viewport.dispatchEvent(
-            this._buildViewBoxChangedEvent(viewBox));
     }
 }

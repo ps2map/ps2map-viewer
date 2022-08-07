@@ -36,6 +36,10 @@ class LayerManager {
         this.anchor.appendChild(layer.element);
     }
 
+    allLayers(): MapLayer[] {
+        return this._layers;
+    }
+
     clear(): void {
         this.anchor.innerHTML = "";
         this._layers = [];

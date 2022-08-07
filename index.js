@@ -346,6 +346,9 @@ var LayerManager = (function () {
         this._layers.push(layer);
         this.anchor.appendChild(layer.element);
     };
+    LayerManager.prototype.allLayers = function () {
+        return this._layers;
+    };
     LayerManager.prototype.clear = function () {
         this.anchor.innerHTML = "";
         this._layers = [];
@@ -428,12 +431,14 @@ var MapEngine = (function () {
             var relY = Utils.clamp((evt.clientY - view.top) / view.height, 0.0, 1.0);
             _this.camera.zoomTowards(evt.deltaY, { x: relX, y: relY });
             _this._constrainMapTarget();
-            _this._redraw(_this.camera.viewBox(), _this.camera.zoom());
+            _this.renderer.redraw();
+            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this.camera.viewBox()));
         });
         this.viewport = viewport;
         this.viewport.classList.add("ps2map__viewport");
         this.layers = new LayerManager(viewport, this._mapSize);
         this.camera = new Camera(this._mapSize, { width: viewport.clientWidth, height: viewport.clientHeight });
+        this.renderer = new MapRenderer(this.camera, this.layers);
         var observer = new ResizeObserver(function () {
             var width = _this.viewport.clientWidth;
             var height = _this.viewport.clientHeight;
@@ -455,6 +460,7 @@ var MapEngine = (function () {
             return;
         this.layers.clear();
         this.layers = new LayerManager(this.viewport, mapSize);
+        this.renderer.updateLayerManager(this.layers);
         this.camera.updateViewportSize(mapSize, {
             width: this.viewport.clientWidth,
             height: this.viewport.clientHeight
@@ -492,7 +498,8 @@ var MapEngine = (function () {
                 y: panStart.y + (evtDrag.clientY - startY) / zoom
             });
             _this._constrainMapTarget();
-            _this._redraw(_this.camera.viewBox(), zoom);
+            _this.renderer.redraw();
+            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this.camera.viewBox()));
         });
         var up = function () {
             _this._setPanLock(false);
@@ -531,13 +538,6 @@ var MapEngine = (function () {
         return new CustomEvent("ps2map_viewboxchanged", {
             detail: { viewBox: viewBox }, bubbles: true, cancelable: true
         });
-    };
-    MapEngine.prototype._redraw = function (viewBox, zoom) {
-        this.layers.forEachLayer(function (layer) {
-            layer.redraw(viewBox, zoom);
-            layer.setRedrawArgs(viewBox, zoom);
-        });
-        this.viewport.dispatchEvent(this._buildViewBoxChangedEvent(viewBox));
     };
     return MapEngine;
 }());
@@ -1222,7 +1222,7 @@ var HeroMap = (function (_super) {
     };
     HeroMap.prototype.jumpTo = function (point) {
         this.camera.jumpTo(point);
-        this._redraw(this.camera.viewBox(), this.camera.zoom());
+        this.renderer.redraw();
     };
     return HeroMap;
 }(MapEngine));
@@ -1993,8 +1993,29 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 var MapRenderer = (function () {
-    function MapRenderer() {
+    function MapRenderer(camera, layers) {
+        this._camera = camera;
+        this._layers = layers;
     }
+    MapRenderer.prototype.redraw = function (layers) {
+        if (layers === void 0) { layers = undefined; }
+        var layersToRedraw = [];
+        if (layers === undefined)
+            layersToRedraw = this._layers.allLayers();
+        else if (layers.length !== undefined)
+            layersToRedraw = layers;
+        else
+            layersToRedraw = [layers];
+        var viewBox = this._camera.viewBox();
+        var zoom = this._camera.zoom();
+        layersToRedraw.forEach(function (layer) {
+            layer.redraw(viewBox, zoom);
+            layer.setRedrawArgs(viewBox, zoom);
+        });
+    };
+    MapRenderer.prototype.updateLayerManager = function (layers) {
+        this._layers = layers;
+    };
     return MapRenderer;
 }());
 var StateManager = (function () {

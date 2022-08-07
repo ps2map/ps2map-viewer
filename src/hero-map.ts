@@ -91,6 +91,6 @@ class HeroMap extends MapEngine {
 
     jumpTo(point: Point): void {
         this.camera.jumpTo(point);
-        this._redraw(this.camera.viewBox(), this.camera.zoom());
+        this.renderer.redraw();
     }
 }
