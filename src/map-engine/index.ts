@@ -142,8 +142,7 @@ class MapEngine {
             });
             this._constrainMapTarget();
             this.renderer.redraw();
-            this.viewport.dispatchEvent(
-                this._buildViewBoxChangedEvent(this.camera.viewBox()));
+            this.dispatchViewportChangedEvent();
         });
 
         // Global "mouseup" callback
@@ -194,7 +193,14 @@ class MapEngine {
         });
     }
 
-    private _buildViewBoxChangedEvent(viewBox: ViewBox): CustomEvent<ViewBoxChangedEvent> {
+    protected dispatchViewportChangedEvent(): void {
+        this.viewport.dispatchEvent(
+            this._buildViewBoxChangedEvent(this.camera.viewBox()));
+    }
+
+    private _buildViewBoxChangedEvent(
+        viewBox: ViewBox,
+    ): CustomEvent<ViewBoxChangedEvent> {
         return new CustomEvent("ps2map_viewboxchanged", {
             detail: { viewBox }, bubbles: true, cancelable: true,
         });

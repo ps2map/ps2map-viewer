@@ -422,7 +422,7 @@ var MapEngine = (function () {
             });
             _this._constrainMapTarget();
             _this.renderer.redraw();
-            _this.viewport.dispatchEvent(_this._buildViewBoxChangedEvent(_this.camera.viewBox()));
+            _this.dispatchViewportChangedEvent();
         });
         var up = function () {
             _this._setPanLock(false);
@@ -456,6 +456,9 @@ var MapEngine = (function () {
             else
                 element.style.removeProperty("transition");
         });
+    };
+    MapEngine.prototype.dispatchViewportChangedEvent = function () {
+        this.viewport.dispatchEvent(this._buildViewBoxChangedEvent(this.camera.viewBox()));
     };
     MapEngine.prototype._buildViewBoxChangedEvent = function (viewBox) {
         return new CustomEvent("ps2map_viewboxchanged", {
@@ -1074,9 +1077,12 @@ var HeroMap = (function (_super) {
                         return [4, Promise.all(allLayers).then(function (layers) {
                                 _this.layers.clear();
                                 var size = continent.map_size;
-                                _this.setMapSize({ width: size, height: size });
+                                if (_this._mapSize.width !== size) {
+                                    _this.setMapSize({ width: size, height: size });
+                                }
                                 _this.camera.resetZoom();
-                                _this.jumpTo({ x: size * 0.5, y: size * 0.5 });
+                                _this.jumpTo({ x: size / 2, y: size / 2 });
+                                _this.dispatchViewportChangedEvent();
                                 layers.forEach(function (layer) {
                                     _this.layers.addLayer(layer);
                                     layer.updateLayer();

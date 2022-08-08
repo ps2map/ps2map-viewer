@@ -63,28 +63,26 @@ class HeroMap extends MapEngine {
             CanvasLayer.factory(continent, "canvas"),
         ];
 
-        // TODO: Only change map size if the continent size changed
+        await Promise.all(allLayers).then(layers => {
+            // Remove old layers
+            this.layers.clear();
 
-        await Promise.all(allLayers).then(
-            layers => {
-                // Delete old layers
-                this.layers.clear();
-                // Update map size (required for camera)
-                const size = continent.map_size;
+            // Update map size if new continent's size is different
+            const size = continent.map_size;
+            if (this._mapSize.width !== size) {
                 this.setMapSize({ width: size, height: size });
-                this.camera.resetZoom();
-                this.jumpTo({ x: size * 0.5, y: size * 0.5 });
-                // Add new layers and force a redraw
-                layers.forEach(layer => {
-                    this.layers.addLayer(layer);
-                    layer.updateLayer();
-                });
-
-                // Update the current continent
-                this._continent = continent;
+            }
+            this.camera.resetZoom();
+            this.jumpTo({ x: size / 2, y: size / 2 });
+            this.dispatchViewportChangedEvent();
+            // Add new layers
+            layers.forEach(layer => {
+                this.layers.addLayer(layer);
+                layer.updateLayer();
             });
 
-        // TODO: Add and call "centre camera" utility
+            this._continent = continent;
+        });
     }
 
     jumpTo(point: Point): void {
