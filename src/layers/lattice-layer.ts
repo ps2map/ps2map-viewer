@@ -13,7 +13,7 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
         this.element.classList.add("ps2map__lattice");
     }
 
-    static async factory(continent: Continent, id: string
+    static async factory(continent: Continent, id: string,
     ): Promise<LatticeLayer> {
         return fetchContinentLattice(continent.id)
             .then(links => {
@@ -47,17 +47,16 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
                     let colour = "var(--ps2map__lattice-disabled)";
                     if (ownerA === undefined || ownerB === undefined) {
                         // Keep at default (disabled)
-                    }
-                    // If both bases are owned by the same non-neutral faction,
-                    // use the faction's colour
-                    else if (ownerA === ownerB) {
+                    } else if (ownerA === ownerB) {
+                        // If both bases are owned by the same non-neutral
+                        // faction, use the faction's colour
                         if (ownerA !== 0)
                             colour = `var(${this._factionIdToCssVar(ownerA)})`;
-                    }
-                    // If the bases are owned by different non-neutral
-                    // factions, flag is as contested
-                    else if (ownerA !== 0 && ownerB !== 0)
+                    } else if (ownerA !== 0 && ownerB !== 0) {
+                        // If the bases are owned by different non-neutral
+                        // factions, flag is as contested
                         colour = "var(--ps2map__lattice-contested)";
+                    }
                     element.style.stroke = colour;
                 }
             });

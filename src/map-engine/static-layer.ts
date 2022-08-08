@@ -12,7 +12,9 @@ class StaticLayer extends MapLayer {
         super(id, size);
     }
 
-    protected deferredLayerUpdate(_: ViewBox, __: number): void { }
+    protected deferredLayerUpdate(_: ViewBox, __: number): void {
+        // Nothing to do
+    }
 
     redraw(viewBox: ViewBox, zoom: number): void {
         const targetX = (viewBox.right + viewBox.left) * 0.5;
@@ -24,7 +26,7 @@ class StaticLayer extends MapLayer {
         let offsetY = -halfSizeY;
         // Another offset to shift the view box target to the origin
         offsetX += (halfSizeX - targetX) * zoom;
-        offsetY -= (halfSizeY - targetY) * zoom; // -1 to fix Y axis origin
+        offsetY -= (halfSizeY - targetY) * zoom;
         // Apply transform
         this.element.style.transform = (
             `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);

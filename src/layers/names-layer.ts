@@ -38,7 +38,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
         super(id, size);
     }
 
-    static async factory(continent: Continent, id: string
+    static async factory(continent: Continent, id: string,
     ): Promise<BaseNamesLayer> {
         const size = { width: continent.map_size, height: continent.map_size };
         const layer = new BaseNamesLayer(id, size);
@@ -58,7 +58,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
             2: "rgba(41, 83, 164, 1.0)",
             3: "rgba(186, 25, 25, 1.0)",
             4: "rgba(50, 50, 50, 1.0)",
-        }
+        };
 
         baseOwnershipMap.forEach((owner, baseId) => {
             const feat = this.features.find(f => f.id === baseId);
@@ -70,15 +70,13 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
 
     private _loadBaseInfo(bases: Base[]): void {
         const features: BaseNameFeature[] = [];
-        let i = bases.length;
-        while (i-- > 0) {
-            const baseInfo = bases[i]!;
+        bases.forEach(baseInfo => {
             if (baseInfo.type_code === "no-mans-land")
                 // "No man's land" bases do not get icons
-                continue;
+                return;
             const pos = {
                 x: baseInfo.map_pos[0],
-                y: baseInfo.map_pos[1]
+                y: baseInfo.map_pos[1],
             };
             const element = document.createElement("div");
             let name = baseInfo.name;
@@ -90,21 +88,21 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
                 });
 
             element.innerText = `${name}`;
-            element.classList.add("ps2map__base-names__icon")
+            element.classList.add("ps2map__base-names__icon");
             element.style.left = `${this.size.width * 0.5 + pos.x}px`;
             element.style.bottom = `${this.size.height * 0.5 + pos.y}px`;
 
             element.classList.add(
-                `ps2map__base-names__icon__${baseInfo.type_code}`)
+                `ps2map__base-names__icon__${baseInfo.type_code}`);
 
             let minZoom = 0;
-            if (baseInfo.type_code === "small-outpost") minZoom = 0.60
+            if (baseInfo.type_code === "small-outpost") minZoom = 0.60;
             if (baseInfo.type_code === "large-outpost") minZoom = 0.45;
 
             features.push(new BaseNameFeature(
                 pos, baseInfo.id, baseInfo.name, element, minZoom));
             this.element.appendChild(element);
-        }
+        });
         this.features = features;
     }
 
@@ -114,26 +112,21 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
      * This displays the name of the current base regardless of zoom level.
      */
     setHoveredBase(base: Base | null): void {
-        let i = this.features.length;
-        while (i-- > 0) {
-            const feat = this.features[i]!;
+        this.features.forEach(feat => {
             if (feat.id === base?.id) {
                 feat.forceVisible = true;
                 feat.element.innerText = feat.text;
-            }
-            else {
+            } else {
                 feat.forceVisible = false;
                 if (!feat.visible)
                     feat.element.innerText = "";
             }
-        }
+        });
     }
 
     protected deferredLayerUpdate(_: ViewBox, zoom: number) {
         const unzoom = 1 / zoom;
-        let i = this.features.length;
-        while (i-- > 0) {
-            const feat = this.features[i]!;
+        this.features.forEach(feat => {
             feat.element.style.transform = (
                 `translate(-50%, calc(var(--ps2map__base-icon-size) ` +
                 `* ${unzoom})) scale(${unzoom}, ${unzoom})`);
@@ -143,6 +136,6 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
                 else
                     feat.element.innerText = "";
             feat.visible = zoom >= feat.minZoom;
-        }
+        });
     }
 }

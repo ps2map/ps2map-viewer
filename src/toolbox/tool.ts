@@ -12,14 +12,18 @@ class Tool {
 
     protected readonly _map: HeroMap;
     protected readonly _viewport: HTMLDivElement;
-    protected readonly _tool_panel: HTMLDivElement;
+    protected readonly _toolPanel: HTMLDivElement;
 
     private _isActive = false;
 
-    constructor(viewport: HTMLDivElement, map: HeroMap, tool_panel: HTMLDivElement) {
+    constructor(
+        viewport: HTMLDivElement,
+        map: HeroMap,
+        toolPanel: HTMLDivElement,
+    ) {
         this._map = map;
         this._viewport = viewport;
-        this._tool_panel = tool_panel;
+        this._toolPanel = toolPanel;
     }
 
     public activate(): void {
@@ -29,8 +33,8 @@ class Tool {
 
     public deactivate(): void {
         this._isActive = false;
-        this._tool_panel.innerHTML = "";
-        this._tool_panel.removeAttribute("style");
+        this._toolPanel.innerHTML = "";
+        this._toolPanel.removeAttribute("style");
     }
 
     public isActive(): boolean {
@@ -52,12 +56,14 @@ class Tool {
      * implementation does nothing, but subclasses may override this to add
      * their own elements.
      */
-    protected _setUpToolPanel(): void { }
+    protected _setUpToolPanel(): void {
+        // Do nothing; subclasses may override this.
+    }
 }
 
 /**
  * Base class for canvas-based tools.
- * 
+ *
  * These are tools that use the canvas layer to draw on the map. This base
  * class handles interactions like zoom-dependent brush sizes and custom
  * cursors.
@@ -73,9 +79,9 @@ abstract class CanvasTool extends Tool {
     constructor(
         viewport: HTMLDivElement,
         map: HeroMap,
-        tool_panel: HTMLDivElement,
+        toolPanel: HTMLDivElement,
     ) {
-        super(viewport, map, tool_panel);
+        super(viewport, map, toolPanel);
 
         this._onDown = this._onDown.bind(this);
         this._onMove = this._onMove.bind(this);
@@ -108,8 +114,8 @@ abstract class CanvasTool extends Tool {
 
     /**
      * Callback invoked when the mouse is moved and active.
-     * 
-     * This is the primary action of the tool, i.e. the manipulation of the 
+     *
+     * This is the primary action of the tool, i.e. the manipulation of the
      * given canvas rendering context at the given position.
      */
     protected abstract _action(
@@ -121,7 +127,7 @@ abstract class CanvasTool extends Tool {
         if (event.button !== 0)
             return;
 
-        this._context = this._map.getCanvasContext()!;
+        this._context = this._map.getCanvasContext();
         this._halfMapSize = this._map.getMapSize().width * 0.5;
 
         this._mouseDown = true;
@@ -132,12 +138,14 @@ abstract class CanvasTool extends Tool {
 
         // Set up global event listener for mouse up
         const up = (evt: MouseEvent) => {
-            this._mouseDown = false;
-            this._action(
-                this._context!,
-                this._getActionPos(evt),
-                this._getScaling());
-            document.removeEventListener("mouseup", up);
+            if (this._context) {
+                this._mouseDown = false;
+                this._action(
+                    this._context,
+                    this._getActionPos(evt),
+                    this._getScaling());
+                document.removeEventListener("mouseup", up);
+            }
         };
         document.addEventListener("mouseup", up, { passive: true });
     }
@@ -146,8 +154,8 @@ abstract class CanvasTool extends Tool {
         // Update cursor position
         if (this._cursor) {
             const box = this._viewport.getBoundingClientRect();
-            this._cursor.style.left = (event.clientX - box.left) + "px";
-            this._cursor.style.top = (event.clientY - box.top) + "px";
+            this._cursor.style.left = `${event.clientX - box.left}px`;
+            this._cursor.style.top = `${event.clientY - box.top}px`;
         }
         // Run action if tool is active (i.e. LMB is pressed)
         if (this._mouseDown && this._context)

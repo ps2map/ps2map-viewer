@@ -518,7 +518,8 @@ var StaticLayer = (function (_super) {
     function StaticLayer(id, size) {
         return _super.call(this, id, size) || this;
     }
-    StaticLayer.prototype.deferredLayerUpdate = function (_, __) { };
+    StaticLayer.prototype.deferredLayerUpdate = function (_, __) {
+    };
     StaticLayer.prototype.redraw = function (viewBox, zoom) {
         var targetX = (viewBox.right + viewBox.left) * 0.5;
         var targetY = (viewBox.top + viewBox.bottom) * 0.5;
@@ -766,8 +767,9 @@ var LatticeLayer = (function (_super) {
                         if (ownerA !== 0)
                             colour = "var(".concat(_this._factionIdToCssVar(ownerA), ")");
                     }
-                    else if (ownerA !== 0 && ownerB !== 0)
+                    else if (ownerA !== 0 && ownerB !== 0) {
                         colour = "var(--ps2map__lattice-contested)";
+                    }
                     element.style.stroke = colour;
                 }
             });
@@ -850,27 +852,26 @@ var BaseNamesLayer = (function (_super) {
         });
     };
     BaseNamesLayer.prototype._loadBaseInfo = function (bases) {
+        var _this = this;
         var features = [];
-        var i = bases.length;
-        var _loop_2 = function () {
-            var baseInfo = bases[i];
+        bases.forEach(function (baseInfo) {
             if (baseInfo.type_code === "no-mans-land")
-                return "continue";
+                return;
             var pos = {
                 x: baseInfo.map_pos[0],
                 y: baseInfo.map_pos[1]
             };
             var element = document.createElement("div");
-            var name_1 = baseInfo.name;
+            var name = baseInfo.name;
             ["amp-station", "bio-lab", "interlink", "tech-plant", "trident"]
                 .forEach(function (type) {
                 if (baseInfo.type_code === type)
-                    name_1 += " ".concat(baseInfo.type_name);
+                    name += " ".concat(baseInfo.type_name);
             });
-            element.innerText = "".concat(name_1);
+            element.innerText = "".concat(name);
             element.classList.add("ps2map__base-names__icon");
-            element.style.left = "".concat(this_1.size.width * 0.5 + pos.x, "px");
-            element.style.bottom = "".concat(this_1.size.height * 0.5 + pos.y, "px");
+            element.style.left = "".concat(_this.size.width * 0.5 + pos.x, "px");
+            element.style.bottom = "".concat(_this.size.height * 0.5 + pos.y, "px");
             element.classList.add("ps2map__base-names__icon__".concat(baseInfo.type_code));
             var minZoom = 0;
             if (baseInfo.type_code === "small-outpost")
@@ -878,18 +879,12 @@ var BaseNamesLayer = (function (_super) {
             if (baseInfo.type_code === "large-outpost")
                 minZoom = 0.45;
             features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
-            this_1.element.appendChild(element);
-        };
-        var this_1 = this;
-        while (i-- > 0) {
-            _loop_2();
-        }
+            _this.element.appendChild(element);
+        });
         this.features = features;
     };
     BaseNamesLayer.prototype.setHoveredBase = function (base) {
-        var i = this.features.length;
-        while (i-- > 0) {
-            var feat = this.features[i];
+        this.features.forEach(function (feat) {
             if (feat.id === (base === null || base === void 0 ? void 0 : base.id)) {
                 feat.forceVisible = true;
                 feat.element.innerText = feat.text;
@@ -899,13 +894,11 @@ var BaseNamesLayer = (function (_super) {
                 if (!feat.visible)
                     feat.element.innerText = "";
             }
-        }
+        });
     };
     BaseNamesLayer.prototype.deferredLayerUpdate = function (_, zoom) {
         var unzoom = 1 / zoom;
-        var i = this.features.length;
-        while (i-- > 0) {
-            var feat = this.features[i];
+        this.features.forEach(function (feat) {
             feat.element.style.transform = ("translate(-50%, calc(var(--ps2map__base-icon-size) " +
                 "* ".concat(unzoom, ")) scale(").concat(unzoom, ", ").concat(unzoom, ")"));
             if (!feat.forceVisible)
@@ -914,7 +907,7 @@ var BaseNamesLayer = (function (_super) {
                 else
                     feat.element.innerText = "";
             feat.visible = zoom >= feat.minZoom;
-        }
+        });
     };
     return BaseNamesLayer;
 }(StaticLayer));
@@ -1349,11 +1342,11 @@ var MapListener = (function () {
     return MapListener;
 }());
 var Tool = (function () {
-    function Tool(viewport, map, tool_panel) {
+    function Tool(viewport, map, toolPanel) {
         this._isActive = false;
         this._map = map;
         this._viewport = viewport;
-        this._tool_panel = tool_panel;
+        this._toolPanel = toolPanel;
     }
     Tool.prototype.activate = function () {
         this._isActive = true;
@@ -1361,8 +1354,8 @@ var Tool = (function () {
     };
     Tool.prototype.deactivate = function () {
         this._isActive = false;
-        this._tool_panel.innerHTML = "";
-        this._tool_panel.removeAttribute("style");
+        this._toolPanel.innerHTML = "";
+        this._toolPanel.removeAttribute("style");
     };
     Tool.prototype.isActive = function () {
         return this._isActive;
@@ -1370,7 +1363,8 @@ var Tool = (function () {
     Tool.prototype.getId = function () {
         return Tool.id;
     };
-    Tool.prototype._setUpToolPanel = function () { };
+    Tool.prototype._setUpToolPanel = function () {
+    };
     Tool.id = "none";
     Tool.displayName = "None";
     Tool.hotkey = null;
@@ -1378,8 +1372,8 @@ var Tool = (function () {
 }());
 var CanvasTool = (function (_super) {
     __extends(CanvasTool, _super);
-    function CanvasTool(viewport, map, tool_panel) {
-        var _this = _super.call(this, viewport, map, tool_panel) || this;
+    function CanvasTool(viewport, map, toolPanel) {
+        var _this = _super.call(this, viewport, map, toolPanel) || this;
         _this._cursor = null;
         _this._mouseDown = false;
         _this._context = null;
@@ -1417,17 +1411,19 @@ var CanvasTool = (function (_super) {
         this._mouseDown = true;
         this._action(this._context, this._getActionPos(event), this._getScaling());
         var up = function (evt) {
-            _this._mouseDown = false;
-            _this._action(_this._context, _this._getActionPos(evt), _this._getScaling());
-            document.removeEventListener("mouseup", up);
+            if (_this._context) {
+                _this._mouseDown = false;
+                _this._action(_this._context, _this._getActionPos(evt), _this._getScaling());
+                document.removeEventListener("mouseup", up);
+            }
         };
         document.addEventListener("mouseup", up, { passive: true });
     };
     CanvasTool.prototype._onMove = function (event) {
         if (this._cursor) {
             var box = this._viewport.getBoundingClientRect();
-            this._cursor.style.left = (event.clientX - box.left) + "px";
-            this._cursor.style.top = (event.clientY - box.top) + "px";
+            this._cursor.style.left = "".concat(event.clientX - box.left, "px");
+            this._cursor.style.top = "".concat(event.clientY - box.top, "px");
         }
         if (this._mouseDown && this._context)
             this._action(this._context, this._getActionPos(event), this._getScaling());
@@ -1445,8 +1441,8 @@ var CanvasTool = (function (_super) {
 }(Tool));
 var Cursor = (function (_super) {
     __extends(Cursor, _super);
-    function Cursor(viewport, map, tool_panel) {
-        var _this = _super.call(this, viewport, map, tool_panel) || this;
+    function Cursor(viewport, map, toolPanel) {
+        var _this = _super.call(this, viewport, map, toolPanel) || this;
         _this._onMove = _this._onMove.bind(_this);
         return _this;
     }
@@ -1471,8 +1467,8 @@ var Cursor = (function (_super) {
         frag.appendChild(x);
         frag.appendChild(document.createTextNode(" Y:"));
         frag.appendChild(y);
-        this._tool_panel.appendChild(frag);
-        Object.assign(this._tool_panel.style, {
+        this._toolPanel.appendChild(frag);
+        Object.assign(this._toolPanel.style, {
             display: "grid",
             gridTemplateColumns: "1fr 3fr",
             minWidth: "120px",
@@ -1500,8 +1496,8 @@ var Cursor = (function (_super) {
 }(Tool));
 var BaseInfo = (function (_super) {
     __extends(BaseInfo, _super);
-    function BaseInfo(viewport, map, tool_panel) {
-        var _this = _super.call(this, viewport, map, tool_panel) || this;
+    function BaseInfo(viewport, map, toolPanel) {
+        var _this = _super.call(this, viewport, map, toolPanel) || this;
         _this._onHover = _this._onHover.bind(_this);
         return _this;
     }
@@ -1537,14 +1533,14 @@ var BaseInfo = (function (_super) {
             id: "tool-base-resource-name",
             classList: "ps2map__tool__base-info__resource-text"
         }));
-        this._tool_panel.appendChild(frag);
+        this._toolPanel.appendChild(frag);
     };
     BaseInfo.prototype._updateBaseInfo = function (base) {
         if (!base) {
-            this._tool_panel.removeAttribute("style");
+            this._toolPanel.removeAttribute("style");
             return;
         }
-        this._tool_panel.style.display = "block";
+        this._toolPanel.style.display = "block";
         var name = document.getElementById("tool-base-name");
         var typeIcon = document.getElementById("tool-base-icon");
         var type = document.getElementById("tool-base-type");
@@ -1574,8 +1570,10 @@ var Eraser = (function (_super) {
     Eraser.prototype._setUpCursor = function () {
         if (!this._cursor)
             return;
-        this._cursor.style.width = this._cursor.style.height = (Eraser.size + "px");
-        this._cursor.style.marginLeft = this._cursor.style.marginTop = ((-Eraser.size / 2) + "px");
+        this._cursor.style.width = this._cursor.style.height =
+            "".concat(Eraser.size, "px");
+        this._cursor.style.marginLeft = this._cursor.style.marginTop =
+            "".concat(-Eraser.size * 0.5, "px");
         this._cursor.style.border = "1px solid #fff";
     };
     Eraser.prototype._action = function (context, pos, scale) {
@@ -1586,8 +1584,8 @@ var Eraser = (function (_super) {
         _super.prototype._setUpToolPanel.call(this);
         var frag = document.createDocumentFragment();
         frag.appendChild(document.createTextNode("Hold LMB to erase, MMB to pan"));
-        this._tool_panel.appendChild(frag);
-        this._tool_panel.style.display = "block";
+        this._toolPanel.appendChild(frag);
+        this._toolPanel.style.display = "block";
     };
     Eraser.id = "eraser";
     Eraser.displayName = "Eraser";
@@ -1605,10 +1603,11 @@ var Brush = (function (_super) {
     Brush.prototype._setUpCursor = function () {
         if (!this._cursor)
             return;
-        this._cursor.style.width = this._cursor.style.height = Brush.size + "px";
-        this._cursor.style.marginLeft = this._cursor.style.marginTop = (-Brush.size / 2) + "px";
+        this._cursor.style.width = this._cursor.style.height =
+            "".concat(Brush.size, "px");
+        this._cursor.style.marginLeft = this._cursor.style.marginTop =
+            this._cursor.style.borderRadius = "".concat(-Brush.size / 2, "px");
         this._cursor.style.border = "1px solid #fff";
-        this._cursor.style.borderRadius = Brush.size * 0.5 + "px";
     };
     Brush.prototype._action = function (context, pos, scale) {
         var lineWeight = Brush.size * scale;
@@ -1647,8 +1646,8 @@ var Brush = (function (_super) {
             Brush.color = picker.value;
         });
         frag.appendChild(picker);
-        this._tool_panel.appendChild(frag);
-        this._tool_panel.style.display = "block";
+        this._toolPanel.appendChild(frag);
+        this._toolPanel.style.display = "block";
     };
     Brush.size = 10;
     Brush.color = "rgb(255, 255, 0)";

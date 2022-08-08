@@ -9,9 +9,9 @@ class Cursor extends Tool {
     constructor(
         viewport: HTMLDivElement,
         map: HeroMap,
-        tool_panel: HTMLDivElement
+        toolPanel: HTMLDivElement,
     ) {
-        super(viewport, map, tool_panel);
+        super(viewport, map, toolPanel);
         this._onMove = this._onMove.bind(this);
     }
 
@@ -29,7 +29,7 @@ class Cursor extends Tool {
     protected _setUpToolPanel(): void {
         super._setUpToolPanel();
 
-        // Dynamic elements        
+        // Dynamic elements
         const x = Object.assign(document.createElement("span"), {
             id: "tool-cursor_x",
         });
@@ -42,9 +42,9 @@ class Cursor extends Tool {
         frag.appendChild(x);
         frag.appendChild(document.createTextNode(" Y:"));
         frag.appendChild(y);
-        this._tool_panel.appendChild(frag);
+        this._toolPanel.appendChild(frag);
         // Set style
-        Object.assign(this._tool_panel.style, {
+        Object.assign(this._toolPanel.style, {
             display: "grid",
             gridTemplateColumns: "1fr 3fr",
             minWidth: "120px",
