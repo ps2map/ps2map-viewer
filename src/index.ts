@@ -127,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const servers = [...gameData.servers()];
         const continents = [...gameData.continents()];
         // Populate server picker
-        servers.sort((a, b) => b.name.localeCompare(a.name));
+        servers.sort((a, b) => a.name.localeCompare(b.name));
         servers.forEach(server => {
             const option = document.createElement("option");
             option.value = server.id.toString();
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
             serverPicker.appendChild(option);
         });
         // Populate continent picker
-        continents.sort((a, b) => b.name.localeCompare(a.name));
+        continents.sort((a, b) => a.name.localeCompare(b.name));
         continents.forEach(cont => {
             const option = document.createElement("option");
             option.value = cont.id.toString();
@@ -144,8 +144,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         // Set default server and continent
         StateManager.dispatch(State.user.serverChanged,
-            servers[servers.length - 1] as never);
+            servers[0] as never);
         StateManager.dispatch(State.user.continentChanged,
-            continents[continents.length - 1] as never);
+            continents[0] as never);
     });
 });

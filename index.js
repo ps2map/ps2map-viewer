@@ -1849,22 +1849,22 @@ document.addEventListener("DOMContentLoaded", function () {
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
         var continents = __spreadArray([], gameData.continents(), true);
-        servers.sort(function (a, b) { return b.name.localeCompare(a.name); });
+        servers.sort(function (a, b) { return a.name.localeCompare(b.name); });
         servers.forEach(function (server) {
             var option = document.createElement("option");
             option.value = server.id.toString();
             option.text = server.name;
             serverPicker.appendChild(option);
         });
-        continents.sort(function (a, b) { return b.name.localeCompare(a.name); });
+        continents.sort(function (a, b) { return a.name.localeCompare(b.name); });
         continents.forEach(function (cont) {
             var option = document.createElement("option");
             option.value = cont.id.toString();
             option.text = cont.name;
             continentPicker.appendChild(option);
         });
-        StateManager.dispatch(State.user.serverChanged, servers[servers.length - 1]);
-        StateManager.dispatch(State.user.continentChanged, continents[continents.length - 1]);
+        StateManager.dispatch(State.user.serverChanged, servers[0]);
+        StateManager.dispatch(State.user.continentChanged, continents[0]);
     });
 });
 var MapRenderer = (function () {
