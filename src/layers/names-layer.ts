@@ -51,21 +51,23 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
     }
 
     updateBaseOwnership(map: Map<number, number>): void {
-
-        const colours: any = {
-            0: "rgba(0, 0, 0, 1.0)",
-            1: "rgba(120, 37, 143, 1.0)",
-            2: "rgba(41, 83, 164, 1.0)",
-            3: "rgba(186, 25, 25, 1.0)",
-            4: "rgba(50, 50, 50, 1.0)",
-        };
-
         map.forEach((owner, baseId) => {
             const feat = this.features.find(f => f.id === baseId);
             if (feat)
-                feat.element.style.setProperty(
-                    "--ps2map__base-color", colours[owner]);
+                feat.element.style.setProperty("--ps2map__base-color",
+                    `var(${this._factionIdToCssVar(owner)}`);
         });
+    }
+
+    /**
+     * Return the CSS variable name for the given faction.
+     *
+    * @param factionId - The faction ID to get the colour for.
+    * @returns The CSS variable name for the faction's colour.
+     */
+    private _factionIdToCssVar(factionId: number): string {
+        const code = GameData.getInstance().getFaction(factionId).code;
+        return `--ps2map__faction-${code}-colour`;
     }
 
     private _loadBaseInfo(bases: Base[]): void {

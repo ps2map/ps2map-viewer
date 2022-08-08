@@ -768,18 +768,15 @@ var BaseNamesLayer = (function (_super) {
     };
     BaseNamesLayer.prototype.updateBaseOwnership = function (map) {
         var _this = this;
-        var colours = {
-            0: "rgba(0, 0, 0, 1.0)",
-            1: "rgba(120, 37, 143, 1.0)",
-            2: "rgba(41, 83, 164, 1.0)",
-            3: "rgba(186, 25, 25, 1.0)",
-            4: "rgba(50, 50, 50, 1.0)"
-        };
         map.forEach(function (owner, baseId) {
             var feat = _this.features.find(function (f) { return f.id === baseId; });
             if (feat)
-                feat.element.style.setProperty("--ps2map__base-color", colours[owner]);
+                feat.element.style.setProperty("--ps2map__base-color", "var(".concat(_this._factionIdToCssVar(owner)));
         });
+    };
+    BaseNamesLayer.prototype._factionIdToCssVar = function (factionId) {
+        var code = GameData.getInstance().getFaction(factionId).code;
+        return "--ps2map__faction-".concat(code, "-colour");
     };
     BaseNamesLayer.prototype._loadBaseInfo = function (bases) {
         var _this = this;
