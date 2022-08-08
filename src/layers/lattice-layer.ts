@@ -1,6 +1,6 @@
 /// <reference path="../interfaces/index.ts" />
 /// <reference path="../rest/index.ts" />
-/// <reference path="../map-engine/static-layer.ts" />
+/// <reference path="../map-engine/map-layer.ts" />
 /// <reference path="./base.ts" />
 
 /** A static layer rendering lattice links for a given continent. */

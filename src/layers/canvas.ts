@@ -1,4 +1,4 @@
-/// <reference path="../map-engine/static-layer.ts" />
+/// <reference path="../map-engine/map-layer.ts" />
 /// <reference path="./base.ts" />
 
 class CanvasLayer extends StaticLayer {

@@ -214,6 +214,21 @@ var Camera = (function () {
     };
     return Camera;
 }());
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var MapLayer = (function () {
     function MapLayer(id, size) {
         var _this = this;
@@ -251,6 +266,26 @@ var MapLayer = (function () {
     };
     return MapLayer;
 }());
+var StaticLayer = (function (_super) {
+    __extends(StaticLayer, _super);
+    function StaticLayer() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    StaticLayer.prototype.deferredLayerUpdate = function (_, __) {
+    };
+    StaticLayer.prototype.redraw = function (viewBox, zoom) {
+        var targetX = (viewBox.right + viewBox.left) * 0.5;
+        var targetY = (viewBox.top + viewBox.bottom) * 0.5;
+        var halfSizeX = this.size.width * 0.5;
+        var halfSizeY = this.size.height * 0.5;
+        var offsetX = -halfSizeX;
+        var offsetY = -halfSizeY;
+        offsetX += (halfSizeX - targetX) * zoom;
+        offsetY -= (halfSizeY - targetY) * zoom;
+        this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
+    };
+    return StaticLayer;
+}(MapLayer));
 var LayerManager = (function () {
     function LayerManager(viewport, mapSize) {
         this._layers = [];
@@ -429,41 +464,6 @@ var MapEngine = (function () {
     };
     return MapEngine;
 }());
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var StaticLayer = (function (_super) {
-    __extends(StaticLayer, _super);
-    function StaticLayer(id, size) {
-        return _super.call(this, id, size) || this;
-    }
-    StaticLayer.prototype.deferredLayerUpdate = function (_, __) {
-    };
-    StaticLayer.prototype.redraw = function (viewBox, zoom) {
-        var targetX = (viewBox.right + viewBox.left) * 0.5;
-        var targetY = (viewBox.top + viewBox.bottom) * 0.5;
-        var halfSizeX = this.size.width * 0.5;
-        var halfSizeY = this.size.height * 0.5;
-        var offsetX = -halfSizeX;
-        var offsetY = -halfSizeY;
-        offsetX += (halfSizeX - targetX) * zoom;
-        offsetY -= (halfSizeY - targetY) * zoom;
-        this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
-    };
-    return StaticLayer;
-}(MapLayer));
 var SupportsBaseOwnership = (function () {
     function SupportsBaseOwnership() {
     }
