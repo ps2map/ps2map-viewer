@@ -382,6 +382,7 @@ var MapEngine = (function () {
         if (mapSize === this._mapSize)
             return;
         this.layers.clear();
+        this.viewport.removeChild(this.layers.anchor);
         this.layers = new LayerManager(this.viewport, mapSize);
         this.renderer.updateLayerManager(this.layers);
         this.camera.updateViewportSize(mapSize, {

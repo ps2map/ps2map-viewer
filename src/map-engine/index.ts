@@ -58,6 +58,7 @@ class MapEngine {
             return;
         // Discard all layers and recreate the layer manager
         this.layers.clear();
+        this.viewport.removeChild(this.layers.anchor);
         this.layers = new LayerManager(this.viewport, mapSize);
         this.renderer.updateLayerManager(this.layers);
         // Update camera for new map size
