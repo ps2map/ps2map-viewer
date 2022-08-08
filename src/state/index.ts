@@ -14,7 +14,11 @@ namespace State {
         user: UserState;
     }
 
-    export function appReducer(state: AppState, action: string, data: any): AppState {
+    export function appReducer(
+        state: AppState,
+        action: string,
+        data: never,
+    ): AppState {
         return {
             map: mapReducer(state.map, action, data),
             toolbox: toolboxReducer(state.toolbox, action, data),

@@ -20,7 +20,10 @@ function fetchBasesForContinent(continentId: number): Promise<Base[]> {
         .then(response => response.json());
 }
 
-function fetchBaseStatus(continentId: number, serverId: number): Promise<BaseStatus[]> {
+function fetchBaseStatus(
+    continentId: number,
+    serverId: number,
+): Promise<BaseStatus[]> {
     return fetch(UrlGen.baseStatus(continentId, serverId))
         .then(response => response.json());
 }

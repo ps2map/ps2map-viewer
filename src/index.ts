@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const listener = new MapListener();
     listener.subscribe((name, data) => {
-        StateManager.dispatch(`map/${name}`, data);
+        StateManager.dispatch(`map/${name}`, data as never);
     });
 
     StateManager.subscribe(State.map.baseCaptured, state => {
@@ -84,15 +84,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Set up toolbox
-    StateManager.dispatch(State.toolbox.setup, heroMap);
-    StateManager.dispatch(State.toolbox.setTool, Tool.id);
+    StateManager.dispatch(State.toolbox.setup, heroMap as never);
+    StateManager.dispatch(State.toolbox.setTool, Tool.id as never);
 
     // Hook up base hover event
     heroMap.viewport.addEventListener("ps2map_basehover", event => {
         const evt = (event as CustomEvent<BaseHoverEvent>).detail;
         const base = GameData.getInstance().getBase(evt.baseId);
         if (base)
-            StateManager.dispatch(State.user.baseHovered, base);
+            StateManager.dispatch(State.user.baseHovered, base as never);
     });
 
     // Set up minimap
@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .find(s => s.id === parseInt(serverPicker.value, 10));
         if (!server)
             throw new Error(`No server found with id ${serverPicker.value}`);
-        StateManager.dispatch(State.user.serverChanged, server);
+        StateManager.dispatch(State.user.serverChanged, server as never);
     });
     const continentPicker = document.getElementById("continent-picker") as HTMLSelectElement;
     continentPicker.addEventListener("change", () => {
@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .find(c => c.id === parseInt(continentPicker.value, 10));
         if (!continent)
             throw new Error(`No continent found with id ${continentPicker.value}`);
-        StateManager.dispatch(State.user.continentChanged, continent);
+        StateManager.dispatch(State.user.continentChanged, continent as never);
     });
 
     // Load game data
@@ -143,9 +143,9 @@ document.addEventListener("DOMContentLoaded", () => {
             continentPicker.appendChild(option);
         });
         // Set default server and continent
-        StateManager.dispatch(
-            State.user.serverChanged, servers[servers.length - 1]);
-        StateManager.dispatch(
-            State.user.continentChanged, continents[continents.length - 1]);
+        StateManager.dispatch(State.user.serverChanged,
+            servers[servers.length - 1] as never);
+        StateManager.dispatch(State.user.continentChanged,
+            continents[continents.length - 1] as never);
     });
 });

@@ -19,11 +19,11 @@
     user-select: none;
 }
 
-.ps2map__base-hexes__svg {
+#hexes {
     --ps2map__base-hexes__stroke-width: 4px;
 }
 
-.ps2map__base-hexes__svg>polygon {
+#hexes>svg>polygon {
     fill: rgb(255, 255, 255);
     fill-opacity: 0.3;
     pointer-events: visiblePainted;

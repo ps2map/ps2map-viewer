@@ -10,7 +10,7 @@ function fetchContinentOutlines(continentCode: string): Promise<SVGElement> {
             // Extract the SVG element from the template
             const svg = factory.content.firstElementChild;
             if (!(svg instanceof SVGElement))
-                throw "Unable to load contents from map hex SVG";
+                throw new Error("Failed to extract outline SVG.");
             return svg;
         });
 }

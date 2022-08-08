@@ -523,7 +523,8 @@ var UrlGen = (function () {
         return "".concat(this.restEndpoint, "static/hex/").concat(code, "-minimal.svg");
     };
     UrlGen.baseStatus = function (continentId, serverId) {
-        return "".concat(this.restEndpoint, "base/status?continent_id=").concat(continentId, "&server_id=").concat(serverId);
+        return "".concat(this.restEndpoint, "base/status") +
+            "?continent_id=".concat(continentId, "&server_id=").concat(serverId);
     };
     UrlGen.restEndpoint = "http://127.0.0.1:5000/";
     return UrlGen;
@@ -556,7 +557,7 @@ function fetchContinentOutlines(continentCode) {
         factory.innerHTML = payload;
         var svg = factory.content.firstElementChild;
         if (!(svg instanceof SVGElement))
-            throw "Unable to load contents from map hex SVG";
+            throw new Error("Failed to extract outline SVG.");
         return svg;
     });
 }
@@ -565,7 +566,6 @@ var BasePolygonsLayer = (function (_super) {
     function BasePolygonsLayer(id, size, svg) {
         var _this = _super.call(this, id, size) || this;
         _this.svg = svg;
-        _this.element.classList.add("ps2map__base-hexes");
         return _this;
     }
     BasePolygonsLayer.factory = function (continent, id) {
@@ -578,7 +578,6 @@ var BasePolygonsLayer = (function (_super) {
                             height: continent.map_size
                         };
                         var layer = new BasePolygonsLayer(id, size, svg);
-                        svg.classList.add("ps2map__base-hexes__svg");
                         layer.element.appendChild(svg);
                         layer._initialisePolygons(svg);
                         var data = GameData.getInstance();
@@ -1217,7 +1216,7 @@ var MapListener = (function () {
         if (server === void 0) { server = undefined; }
         this._server = server;
         this._subscribers = [];
-        this._baseUpdateIntervalId = undefined;
+        this._baseUpdateIntervalId = null;
     }
     MapListener.prototype.subscribe = function (callback) {
         this._subscribers.push(callback);
@@ -1242,12 +1241,14 @@ var MapListener = (function () {
                 if (!this._server)
                     return [2];
                 fetchContinents().then(function (continents) {
-                    var status = [];
+                    var bases = [];
                     continents.forEach(function (continent) {
-                        status.push(fetchBaseStatus(continent.id, _this._server.id));
+                        if (!_this._server)
+                            return;
+                        bases.push(fetchBaseStatus(continent.id, _this._server.id));
                     });
                     var baseOwnership = new Map();
-                    Promise.all(status).then(function (results) {
+                    Promise.all(bases).then(function (results) {
                         results.forEach(function (status) {
                             status.forEach(function (base) {
                                 baseOwnership.set(base.base_id, base.owning_faction_id);
@@ -1363,7 +1364,10 @@ var CanvasTool = (function (_super) {
         var pos = this._map.screenToMap(event);
         if (!this._halfMapSize)
             return { x: 0, y: 0 };
-        return { x: this._halfMapSize + pos.x, y: this._halfMapSize - pos.y };
+        return {
+            x: this._halfMapSize + pos.x,
+            y: this._halfMapSize - pos.y
+        };
     };
     CanvasTool.prototype._getScaling = function () {
         return 1 / this._map.getZoom();
@@ -1590,19 +1594,21 @@ var Brush = (function (_super) {
 document.addEventListener("DOMContentLoaded", function () {
     var availableTools = [Tool, Cursor, BaseInfo, Eraser, Brush];
     var toolInstances = new Map();
-    var toolbar_container = document.getElementById("toolbar-container");
-    toolbar_container.innerHTML = "";
-    availableTools.forEach(function (tool) {
-        var btn = document.createElement("input");
-        btn.type = "button";
-        btn.value = tool.displayName;
-        btn.classList.add("toolbar__button");
-        btn.id = "tool-".concat(tool.id);
-        btn.addEventListener("click", function () {
-            StateManager.dispatch(State.toolbox.setTool, tool.id);
+    var toolBox = document.getElementById("toolbar-container");
+    if (toolBox) {
+        toolBox.innerHTML = "";
+        availableTools.forEach(function (tool) {
+            var btn = document.createElement("input");
+            btn.type = "button";
+            btn.value = tool.displayName;
+            btn.classList.add("toolbar__button");
+            btn.id = "tool-".concat(tool.id);
+            btn.addEventListener("click", function () {
+                StateManager.dispatch(State.toolbox.setTool, tool.id);
+            });
+            toolBox.appendChild(btn);
         });
-        toolbar_container.appendChild(btn);
-    });
+    }
     document.addEventListener("keydown", function (event) {
         var tool = "";
         if (event.key === "Escape")
@@ -1703,7 +1709,6 @@ var State;
         user.serverChanged = "user/serverChanged";
         user.baseHovered = "user/baseHovered";
     })(user = State.user || (State.user = {}));
-    ;
     State.defaultUserState = {
         server: undefined,
         continent: undefined,
@@ -1923,8 +1928,10 @@ var StateManager = (function () {
     };
     StateManager.subscribe = function (action, callback) {
         var subscriptions = this._subscriptions.get(action);
-        if (!subscriptions)
-            this._subscriptions.set(action, subscriptions = []);
+        if (!subscriptions) {
+            subscriptions = [];
+            this._subscriptions.set(action, subscriptions);
+        }
         subscriptions.push(callback);
     };
     StateManager.unsubscribe = function (action, callback) {

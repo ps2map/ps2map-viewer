@@ -8,7 +8,7 @@ abstract class SupportsBaseOwnership {
     /**
      * Callback invoked when the current continent's base ownership changes.
      *
-     * @param ownershipMap - A map of base IDs to their owning faction ID.
+     * @param map - A map of base IDs to their owning faction ID.
      */
-    public abstract updateBaseOwnership(ownershipMap: Map<number, number>): void;
+    public abstract updateBaseOwnership(map: Map<number, number>): void;
 }

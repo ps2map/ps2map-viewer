@@ -1,14 +1,16 @@
 /// <reference path="./index.ts" />
 
+type _Subs = Map<string, ((state: State.AppState) => void)[]>;
+
 class StateManager {
     private static _state: State.AppState = {
         map: State.defaultMapState,
         toolbox: State.defaultToolboxState,
         user: State.defaultUserState,
     };
-    private static _subscriptions: Map<string, ((state: State.AppState) => void)[]> = new Map();
+    private static readonly _subscriptions: _Subs = new Map();
 
-    static dispatch(action: string, data: any): void {
+    static dispatch(action: string, data: never): void {
         const newState = this._update(action, data);
 
         if (newState === this._state) {
@@ -24,8 +26,10 @@ class StateManager {
 
     static subscribe(action: string, callback: (state: State.AppState) => void): void {
         let subscriptions = this._subscriptions.get(action);
-        if (!subscriptions)
-            this._subscriptions.set(action, subscriptions = []);
+        if (!subscriptions) {
+            subscriptions = [];
+            this._subscriptions.set(action, subscriptions);
+        }
         subscriptions.push(callback);
     }
 
@@ -43,7 +47,7 @@ class StateManager {
         return this._state;
     }
 
-    private static _update(action: string, data: any): State.AppState {
+    private static _update(action: string, data: never): State.AppState {
         return State.appReducer(this._state, action, data);
     }
 }

@@ -169,7 +169,10 @@ abstract class CanvasTool extends Tool {
         const pos = this._map.screenToMap(event);
         if (!this._halfMapSize)
             return { x: 0, y: 0 };
-        return { x: this._halfMapSize + pos.x, y: this._halfMapSize - pos.y };
+        return {
+            x: this._halfMapSize + pos.x,
+            y: this._halfMapSize - pos.y,
+        };
     }
 
     private _getScaling(): number {

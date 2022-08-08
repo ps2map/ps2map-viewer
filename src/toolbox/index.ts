@@ -10,19 +10,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const toolInstances = new Map<string, Tool>();
 
     // Create toolbar buttons
-    const toolbar_container = document.getElementById("toolbar-container") as HTMLDivElement;
-    toolbar_container.innerHTML = "";
-    availableTools.forEach(tool => {
-        const btn = document.createElement("input");
-        btn.type = "button";
-        btn.value = tool.displayName;
-        btn.classList.add("toolbar__button");
-        btn.id = `tool-${tool.id}`;
-        btn.addEventListener("click", () => {
-            StateManager.dispatch(State.toolbox.setTool, tool.id);
+    const toolBox = document.getElementById("toolbar-container");
+    if (toolBox) {
+        toolBox.innerHTML = "";
+        availableTools.forEach(tool => {
+            const btn = document.createElement("input");
+            btn.type = "button";
+            btn.value = tool.displayName;
+            btn.classList.add("toolbar__button");
+            btn.id = `tool-${tool.id}`;
+            btn.addEventListener("click", () => {
+                StateManager.dispatch(State.toolbox.setTool, tool.id as never);
+            });
+            toolBox.appendChild(btn);
         });
-        toolbar_container.appendChild(btn);
-    });
+    }
 
     // Tool hotkeys
     document.addEventListener("keydown", event => {
@@ -36,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         if (!tool)
             return;
-        StateManager.dispatch(State.toolbox.setTool, tool);
+        StateManager.dispatch(State.toolbox.setTool, tool as never);
     });
     StateManager.subscribe(State.toolbox.setTool, state => {
         // Create the tool if it does not exist

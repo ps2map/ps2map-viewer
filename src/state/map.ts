@@ -13,13 +13,17 @@ namespace State {
     };
 
     /** State reducer for "map/" actions. */
-    export function mapReducer(state: MapState, action: string, data: any): MapState {
+    export function mapReducer(
+        state: MapState,
+        action: string,
+        data: never,
+    ): MapState {
         switch (action) {
             case State.map.baseCaptured:
                 return {
                     ...state,
-                    baseOwnership: data
-                }
+                    baseOwnership: data,
+                };
             default:
                 return state;
         }

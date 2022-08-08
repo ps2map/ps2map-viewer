@@ -9,7 +9,9 @@ class TerrainLayer extends TileLayer {
     /** Internal identifier for the current tileset. */
     private _code: string = "";
 
-    static async factory(continent: Continent, id: string
+    static async factory(
+        continent: Continent,
+        id: string,
     ): Promise<TerrainLayer> {
         const size = { width: continent.map_size, height: continent.map_size };
         const initialLod = 3;

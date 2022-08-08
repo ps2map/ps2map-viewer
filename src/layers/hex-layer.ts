@@ -27,10 +27,11 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
     private constructor(id: string, size: Box, svg: SVGElement) {
         super(id, size);
         this.svg = svg;
-        this.element.classList.add("ps2map__base-hexes");
     }
 
-    static async factory(continent: Continent, id: string
+    static async factory(
+        continent: Continent,
+        id: string,
     ): Promise<BasePolygonsLayer> {
         return fetchContinentOutlines(continent.code)
             .then(svg => {
@@ -39,7 +40,6 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
                     height: continent.map_size,
                 };
                 const layer = new BasePolygonsLayer(id, size, svg);
-                svg.classList.add("ps2map__base-hexes__svg");
                 layer.element.appendChild(svg);
                 layer._initialisePolygons(svg);
                 // Remove "no man's land" hexes like the "Shattered Warp Gate"
@@ -62,12 +62,10 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
                     polygon.style.removeProperty("display");
                     polygon.style.fill =
                         `var(${this._factionIdToCssVar(owner)})`;
-                }
-                else {
+                } else {
                     polygon.style.display = "none";
                 }
-            }
-            else {
+            } else {
                 // TODO: This should not be logged at all; remove this once
                 // Oshur map data is fixed.
                 console.warn(`Could not find polygon for base ${baseId}`);
