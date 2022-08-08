@@ -28,7 +28,6 @@ class Minimap {
     /** CSS size of the minimap. */
     private _cssSize: number;
 
-    private readonly _minimapHexAlpha: number = 0.5;
     private _polygons: Map<number, SVGPolygonElement> = new Map();
 
     constructor(element: HTMLDivElement) {
@@ -37,6 +36,7 @@ class Minimap {
         this.element.classList.add("ps2map__minimap");
         this._cssSize = this.element.clientWidth;
         this.element.style.height = `${this._cssSize}px`;
+        this.element.style.fillOpacity = "0.5";
         this._viewBoxElement = document.createElement("div");
         this._viewBoxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this._viewBoxElement);
@@ -73,22 +73,25 @@ class Minimap {
         this._viewBoxElement.style.bottom = `${this._cssSize * relTop}px`;
     }
 
-    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-
-        // TODO: Read faction colours from CSS variables/user config
-        const colours: any = {
-            0: `rgba(0, 0, 0, ${this._minimapHexAlpha})`,
-            1: `rgba(160, 77, 183, ${this._minimapHexAlpha})`,
-            2: `rgba(81, 123, 204, ${this._minimapHexAlpha})`,
-            3: `rgba(226, 25, 25, ${this._minimapHexAlpha})`,
-            4: `rgba(255, 255, 255, ${this._minimapHexAlpha})`,
-        };
-
-        baseOwnershipMap.forEach((factionId, baseId) => {
+    updateBaseOwnership(map: Map<number, number>): void {
+        // The CSS variables are not available
+        map.forEach((factionId, baseId) => {
             const polygon = this._polygons.get(baseId);
             if (polygon)
-                polygon.style.fill = colours[factionId];
+                polygon.style.fill =
+                    `var(${this._factionIdToCssVar(factionId)})`;
         });
+    }
+
+    /**
+     * Return the CSS variable name for the given faction.
+     *
+    * @param factionId - The faction ID to get the colour for.
+    * @returns The CSS variable name for the faction's colour.
+     */
+    private _factionIdToCssVar(factionId: number): string {
+        const code = GameData.getInstance().getFaction(factionId).code;
+        return `--ps2map__faction-${code}-colour`;
     }
 
     async switchContinent(continent: Continent): Promise<void> {

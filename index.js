@@ -1104,12 +1104,12 @@ var Minimap = (function () {
         var _this = this;
         this._mapSize = 0;
         this._baseOutlineSvg = undefined;
-        this._minimapHexAlpha = 0.5;
         this._polygons = new Map();
         this.element = element;
         this.element.classList.add("ps2map__minimap");
         this._cssSize = this.element.clientWidth;
         this.element.style.height = "".concat(this._cssSize, "px");
+        this.element.style.fillOpacity = "0.5";
         this._viewBoxElement = document.createElement("div");
         this._viewBoxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this._viewBoxElement);
@@ -1137,20 +1137,18 @@ var Minimap = (function () {
         this._viewBoxElement.style.left = "".concat(this._cssSize * relLeft, "px");
         this._viewBoxElement.style.bottom = "".concat(this._cssSize * relTop, "px");
     };
-    Minimap.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+    Minimap.prototype.updateBaseOwnership = function (map) {
         var _this = this;
-        var colours = {
-            0: "rgba(0, 0, 0, ".concat(this._minimapHexAlpha, ")"),
-            1: "rgba(160, 77, 183, ".concat(this._minimapHexAlpha, ")"),
-            2: "rgba(81, 123, 204, ".concat(this._minimapHexAlpha, ")"),
-            3: "rgba(226, 25, 25, ".concat(this._minimapHexAlpha, ")"),
-            4: "rgba(255, 255, 255, ".concat(this._minimapHexAlpha, ")")
-        };
-        baseOwnershipMap.forEach(function (factionId, baseId) {
+        map.forEach(function (factionId, baseId) {
             var polygon = _this._polygons.get(baseId);
             if (polygon)
-                polygon.style.fill = colours[factionId];
+                polygon.style.fill =
+                    "var(".concat(_this._factionIdToCssVar(factionId), ")");
         });
+    };
+    Minimap.prototype._factionIdToCssVar = function (factionId) {
+        var code = GameData.getInstance().getFaction(factionId).code;
+        return "--ps2map__faction-".concat(code, "-colour");
     };
     Minimap.prototype.switchContinent = function (continent) {
         return __awaiter(this, void 0, void 0, function () {

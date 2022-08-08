@@ -1,11 +1,13 @@
-.ps2map__viewport {
+html {
     --ps2map__faction-ns-colour: rgba(255, 255, 255, 0.8);
     --ps2map__faction-vs-colour: rgba(160, 77, 183, 0.8);
     --ps2map__faction-nc-colour: rgba(81, 123, 204, 0.8);
     --ps2map__faction-tr-colour: rgba(226, 25, 25, 0.8);
     --ps2map__lattice-disabled: rgba(255, 255, 255, 0.15);
     --ps2map__lattice-contested: rgba(255, 160, 0, 1.0);
+}
 
+.ps2map__viewport {
     background-color: #051110;
     overflow: hidden;
 }
