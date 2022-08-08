@@ -53,8 +53,8 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
             });
     }
 
-    public updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-        baseOwnershipMap.forEach((owner, baseId) => {
+    public updateBaseOwnership(map: Map<number, number>): void {
+        map.forEach((owner, baseId) => {
             const query = `#${this._baseIdToPolygonId(baseId)}`;
             const polygon = this.svg.querySelector<SVGPolygonElement>(query);
             if (polygon) {
@@ -107,7 +107,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
 
                 // Set up event handler for removing hover effects
                 const removeHoverFx = () => {
-                    polygon.style.removeProperty("stroke")
+                    polygon.style.removeProperty("stroke");
                 };
                 polygon.addEventListener(
                     "mouseleave", removeHoverFx, { passive: true });
@@ -143,7 +143,9 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
      * @param element - The SVG polygon associated with this base.
      * @returns A custom base hover event, ready to be dispatched.
      */
-    private _buildBaseHoverEvent(baseId: number, element: SVGPolygonElement
+    private _buildBaseHoverEvent(
+        baseId: number,
+        element: SVGPolygonElement,
     ): CustomEvent<BaseHoverEvent> {
         return new CustomEvent("ps2map_basehover", {
             detail: { baseId, element },
@@ -162,7 +164,7 @@ class BasePolygonsLayer extends StaticLayer implements SupportsBaseOwnership {
      */
     private _polygonIdToBaseId(id: string): number {
         // Convert the string "base-outline-<baseId>" to a number
-        return parseInt(id.substring(id.lastIndexOf("-") + 1));
+        return parseInt(id.substring(id.lastIndexOf("-") + 1), 10);
     }
 
     /**

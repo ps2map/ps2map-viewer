@@ -592,9 +592,9 @@ var BasePolygonsLayer = (function (_super) {
             });
         });
     };
-    BasePolygonsLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+    BasePolygonsLayer.prototype.updateBaseOwnership = function (map) {
         var _this = this;
-        baseOwnershipMap.forEach(function (owner, baseId) {
+        map.forEach(function (owner, baseId) {
             var query = "#".concat(_this._baseIdToPolygonId(baseId));
             var polygon = _this.svg.querySelector(query);
             if (polygon) {
@@ -647,7 +647,7 @@ var BasePolygonsLayer = (function (_super) {
         });
     };
     BasePolygonsLayer.prototype._polygonIdToBaseId = function (id) {
-        return parseInt(id.substring(id.lastIndexOf("-") + 1));
+        return parseInt(id.substring(id.lastIndexOf("-") + 1), 10);
     };
     BasePolygonsLayer.prototype._baseIdToPolygonId = function (baseId) {
         return "base-outline-".concat(baseId);
@@ -680,13 +680,13 @@ var LatticeLayer = (function (_super) {
             });
         });
     };
-    LatticeLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+    LatticeLayer.prototype.updateBaseOwnership = function (map) {
         var _this = this;
-        baseOwnershipMap.forEach(function (_, baseId) {
+        map.forEach(function (_, baseId) {
             var links = _this._links.filter(function (l) { return l.base_a_id === baseId || l.base_b_id === baseId; });
             links.forEach(function (link) {
-                var ownerA = baseOwnershipMap.get(link.base_a_id);
-                var ownerB = baseOwnershipMap.get(link.base_b_id);
+                var ownerA = map.get(link.base_a_id);
+                var ownerB = map.get(link.base_b_id);
                 var id = "#lattice-link-".concat(link.base_a_id, "-").concat(link.base_b_id);
                 var element = _this.element.querySelector(id);
                 if (element) {
@@ -766,7 +766,7 @@ var BaseNamesLayer = (function (_super) {
             });
         });
     };
-    BaseNamesLayer.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+    BaseNamesLayer.prototype.updateBaseOwnership = function (map) {
         var _this = this;
         var colours = {
             0: "rgba(0, 0, 0, 1.0)",
@@ -775,7 +775,7 @@ var BaseNamesLayer = (function (_super) {
             3: "rgba(186, 25, 25, 1.0)",
             4: "rgba(50, 50, 50, 1.0)"
         };
-        baseOwnershipMap.forEach(function (owner, baseId) {
+        map.forEach(function (owner, baseId) {
             var feat = _this.features.find(function (f) { return f.id === baseId; });
             if (feat)
                 feat.element.style.setProperty("--ps2map__base-color", colours[owner]);
@@ -1039,11 +1039,11 @@ var HeroMap = (function (_super) {
             throw new Error("Layer '".concat(id, "' does not exist"));
         return layer;
     };
-    HeroMap.prototype.updateBaseOwnership = function (baseOwnershipMap) {
+    HeroMap.prototype.updateBaseOwnership = function (map) {
         var _this = this;
         var data = GameData.getInstance();
         var continentMap = new Map();
-        baseOwnershipMap.forEach(function (owner, baseId) {
+        map.forEach(function (owner, baseId) {
             var _a;
             var base = data.getBase(baseId);
             if (base && base.continent_id === ((_a = _this._continent) === null || _a === void 0 ? void 0 : _a.id))

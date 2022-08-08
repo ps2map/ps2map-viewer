@@ -28,12 +28,12 @@ class HeroMap extends MapEngine {
         return layer as Type;
     }
 
-    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+    updateBaseOwnership(map: Map<number, number>): void {
         const data = GameData.getInstance();
         // Filter the base ownership map to only include bases that are in the
         // current continent
         const continentMap = new Map<number, number>();
-        baseOwnershipMap.forEach((owner, baseId) => {
+        map.forEach((owner, baseId) => {
             const base = data.getBase(baseId);
             if (base && base.continent_id === this._continent?.id)
                 continentMap.set(baseId, owner);

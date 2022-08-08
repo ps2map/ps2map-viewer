@@ -29,15 +29,15 @@ class LatticeLayer extends StaticLayer implements SupportsBaseOwnership {
             });
     }
 
-    public updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-        baseOwnershipMap.forEach((_, baseId) => {
+    public updateBaseOwnership(map: Map<number, number>): void {
+        map.forEach((_, baseId) => {
             // For each base, get the links that connect to it
             const links = this._links.filter(
                 l => l.base_a_id === baseId || l.base_b_id === baseId);
             // For each link, check the ownership of its adjacent bases
             links.forEach(link => {
-                const ownerA = baseOwnershipMap.get(link.base_a_id);
-                const ownerB = baseOwnershipMap.get(link.base_b_id);
+                const ownerA = map.get(link.base_a_id);
+                const ownerB = map.get(link.base_b_id);
 
                 // Retrieve the SVG element of the link
                 const id = `#lattice-link-${link.base_a_id}-${link.base_b_id}`;

@@ -50,7 +50,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
             });
     }
 
-    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
+    updateBaseOwnership(map: Map<number, number>): void {
 
         const colours: any = {
             0: "rgba(0, 0, 0, 1.0)",
@@ -60,7 +60,7 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
             4: "rgba(50, 50, 50, 1.0)",
         };
 
-        baseOwnershipMap.forEach((owner, baseId) => {
+        map.forEach((owner, baseId) => {
             const feat = this.features.find(f => f.id === baseId);
             if (feat)
                 feat.element.style.setProperty(
