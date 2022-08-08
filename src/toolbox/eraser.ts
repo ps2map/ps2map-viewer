@@ -11,10 +11,10 @@ class Eraser extends CanvasTool {
     protected _setUpCursor(): void {
         if (!this._cursor)
             return;
-        this._cursor.style.width = this._cursor.style.height = (
-            Eraser.size + "px");
-        this._cursor.style.marginLeft = this._cursor.style.marginTop = (
-            (-Eraser.size / 2) + "px");
+        this._cursor.style.width = this._cursor.style.height =
+            `${Eraser.size}px`;
+        this._cursor.style.marginLeft = this._cursor.style.marginTop =
+            `${-Eraser.size * 0.5}px`;
         this._cursor.style.border = "1px solid #fff";
     }
 
@@ -32,7 +32,7 @@ class Eraser extends CanvasTool {
 
         const frag = document.createDocumentFragment();
         frag.appendChild(document.createTextNode("Hold LMB to erase, MMB to pan"));
-        this._tool_panel.appendChild(frag);
-        this._tool_panel.style.display = "block";
+        this._toolPanel.appendChild(frag);
+        this._toolPanel.style.display = "block";
     }
 }

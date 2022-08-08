@@ -14,10 +14,11 @@ class Brush extends CanvasTool {
     protected _setUpCursor(): void {
         if (!this._cursor)
             return;
-        this._cursor.style.width = this._cursor.style.height = Brush.size + "px";
-        this._cursor.style.marginLeft = this._cursor.style.marginTop = (-Brush.size / 2) + "px";
+        this._cursor.style.width = this._cursor.style.height =
+            `${Brush.size}px`;
+        this._cursor.style.marginLeft = this._cursor.style.marginTop =
+            this._cursor.style.borderRadius = `${-Brush.size / 2}px`;
         this._cursor.style.border = "1px solid #fff";
-        this._cursor.style.borderRadius = Brush.size * 0.5 + "px";
     }
 
     protected _action(
@@ -34,8 +35,7 @@ class Brush extends CanvasTool {
         if (!this._last) {
             context.arc(pos.x, pos.y, lineWeight * 0.5, 0, 2 * Math.PI, false);
             this._last = pos;
-        }
-        else {
+        } else {
             // Subsequent points in a stroke
             context.lineWidth = lineWeight;
             context.lineCap = "round";
@@ -44,9 +44,7 @@ class Brush extends CanvasTool {
                 context.lineTo(pos.x, pos.y);
                 context.stroke();
                 this._last = pos;
-            }
-            // Last point in a stroke
-            else {
+            } else {
                 // Don't draw anything, just reset the "_last" marker
                 this._last = null;
             }
@@ -57,7 +55,8 @@ class Brush extends CanvasTool {
         super._setUpToolPanel();
 
         const frag = document.createDocumentFragment();
-        frag.appendChild(document.createTextNode("Hold LMB to draw, MMB to pan"));
+        frag.appendChild(
+            document.createTextNode("Hold LMB to draw, MMB to pan"));
         frag.appendChild(document.createElement("br"));
         frag.appendChild(document.createTextNode("Color:"));
         const picker = document.createElement("input");
@@ -67,8 +66,8 @@ class Brush extends CanvasTool {
         picker.addEventListener("change", () => {
             Brush.color = picker.value;
         });
-        frag.appendChild(picker)
-        this._tool_panel.appendChild(frag);
-        this._tool_panel.style.display = "block";
+        frag.appendChild(picker);
+        this._toolPanel.appendChild(frag);
+        this._toolPanel.style.display = "block";
     }
 }

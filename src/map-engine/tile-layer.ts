@@ -35,25 +35,27 @@ abstract class TileLayer extends MapLayer {
     /** Map tiles for the current grid. */
     protected tiles: MapTile[] = [];
 
-    constructor(id: string, mapSize: number, initialLod: number) {
-        super(id, mapSize);
+    private readonly _sizeNum: number;
+
+    constructor(id: string, size: Box, initialLod: number) {
+        if (size.height !== size.width)
+            throw new Error("Non-square tile layers are not supported.");
+        super(id, size);
         this.lod = initialLod;
+        this._sizeNum = size.width;
     }
 
     /** Generate new tiles for the given grid size. */
     protected defineTiles(gridSize: number): void {
         const newTiles: MapTile[] = [];
-        const tileSize = this.mapSize / gridSize;
-        const baseSize = this.mapSize / gridSize;
+        const tileSize = this._sizeNum / gridSize;
+        const baseSize = this._sizeNum / gridSize;
         // Y loop has to count negative as it is populated top-to-bototm
         let y = gridSize;
         while (y-- > 0)
             // X loop is positive, left-to-right
             for (let x = 0; x < gridSize; x++) {
-                const pos: GridPos = {
-                    x: x,
-                    y: y
-                };
+                const pos: GridPos = { x, y };
                 const tile = this.createTile(pos, gridSize);
                 tile.element.style.height = tile.element.style.width = (
                     `${tileSize.toFixed()}px`);
@@ -89,7 +91,8 @@ abstract class TileLayer extends MapLayer {
      * @returns true if the tile is in view, otherwise false
      */
     protected tileIsVisible(tile: MapTile, viewBox: ViewBox): boolean {
-        return Utils.rectanglesIntersect(tile.box, viewBox);
+        return (tile.box.left < viewBox.right && tile.box.right > viewBox.left
+            && tile.box.top > viewBox.bottom && tile.box.bottom < viewBox.top);
     }
 
     /**
@@ -99,18 +102,14 @@ abstract class TileLayer extends MapLayer {
     protected updateTileVisibility(viewBox: ViewBox): void {
         // Process all tiles to determine which ones are active
         const activeTiles: HTMLElement[] = [];
-        let i = this.tiles.length;
-        while (i-- > 0) {
-            const tile = this.tiles[i]!;
+        this.tiles.forEach(tile => {
             if (this.tileIsVisible(tile, viewBox))
                 activeTiles.push(tile.element);
-        }
+        });
         // Load active tiles
         requestAnimationFrame(() => {
             this.element.innerHTML = "";
-            i = activeTiles.length;
-            while (i-- > 0)
-                this.element.append(activeTiles[i]!);
+            activeTiles.forEach(tile => this.element.appendChild(tile));
         });
 
     }
@@ -123,12 +122,12 @@ abstract class TileLayer extends MapLayer {
         const targetX = (viewBox.right + viewBox.left) * 0.5;
         const targetY = (viewBox.top + viewBox.bottom) * 0.5;
         // Initial offset to move the centre of the SVG to its CSS origin
-        const halfMapSize = this.mapSize * 0.5;
-        let offsetX = -halfMapSize;
-        let offsetY = -halfMapSize;
+        const halfSize = this._sizeNum * 0.5;
+        let offsetX = -halfSize;
+        let offsetY = -halfSize;
         // Another offset to shift the view box target to the origin
-        offsetX += (halfMapSize - targetX) * zoom;
-        offsetY -= (halfMapSize - targetY) * zoom; // -1 to fix Y axis origin
+        offsetX += (halfSize - targetX) * zoom;
+        offsetY -= (halfSize - targetY) * zoom;
         // Apply transform
         this.element.style.transform = (
             `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);

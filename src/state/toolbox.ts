@@ -21,7 +21,7 @@ namespace State {
     export function toolboxReducer(
         state: ToolBoxState,
         action: string,
-        data: any
+        data: never,
     ): ToolBoxState {
         switch (action) {
             case toolbox.setup:

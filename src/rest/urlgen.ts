@@ -2,7 +2,7 @@
  * Endpoint definition and URL generation for the API.
  */
 class UrlGen {
-    private static restEndpoint = "http://127.0.0.1:5000/";
+    private static readonly restEndpoint = "http://127.0.0.1:5000/";
 
     public static serverList(): string {
         return `${this.restEndpoint}server`;
@@ -24,7 +24,11 @@ class UrlGen {
         return `${this.restEndpoint}static/minimap/${code}.jpg`;
     }
 
-    public static terrainTile(code: string, pos: [string, string], lod: number): string {
+    public static terrainTile(
+        code: string,
+        pos: [string, string],
+        lod: number,
+    ): string {
         const filename = `${code}_tile_${pos[0]}_${pos[1]}_lod${lod}.jpeg`;
         return `${this.restEndpoint}static/tile/${filename}`;
     }
@@ -34,6 +38,7 @@ class UrlGen {
     }
 
     public static baseStatus(continentId: number, serverId: number): string {
-        return `${this.restEndpoint}base/status?continent_id=${continentId}&server_id=${serverId}`;
+        return `${this.restEndpoint}base/status` +
+            `?continent_id=${continentId}&server_id=${serverId}`;
     }
 }

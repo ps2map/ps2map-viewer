@@ -31,14 +31,11 @@ class GameData {
     public servers(): Server[] { return this._servers; }
 
     public getBase(id: number): Base | undefined {
-        let i = this._bases.length;
-        while (i-- > 0)
-            if (this._bases[i]!.id === id)
-                return this._bases[i];
-        return undefined;
+        return this._bases.find(b => b.id === id);
     }
 
     public getFaction(id: number): { [key: string]: string } {
+        // TODO: Load faction data from API
         switch (id) {
             case 0: return { code: "ns" };
             case 1: return { code: "vs" };
@@ -49,14 +46,13 @@ class GameData {
     }
 
     public async setActiveContinent(
-        continent: Continent | undefined
+        continent: Continent | undefined,
     ): Promise<void> {
         this._bases = [];
         if (continent)
             return fetchBasesForContinent(continent.id)
                 .then(bases => {
                     this._bases = bases;
-                    console.log(`Loaded ${this._bases.length} bases`);
                 });
         else
             return Promise.resolve();
@@ -87,9 +83,7 @@ class GameData {
     }
 
     private static async _loadInternal(): Promise<GameData> {
-        const continents = fetchContinents();
-        const servers = fetchServers();
-        const loading = Promise.all([continents, servers])
+        return Promise.all([fetchContinents(), fetchServers()])
             .then(([continents, servers]) => {
                 const instance = new GameData();
                 instance._continents = continents;
@@ -98,6 +92,5 @@ class GameData {
                 this._loaded = true;
                 return instance;
             });
-        return loading;
     }
 }

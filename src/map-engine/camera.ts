@@ -11,39 +11,67 @@ interface Box {
  * the current camera position and zoom level, and the size of the viewport.
  */
 class Camera {
-    private _viewportDimensions: Readonly<Box>;
-    private readonly _mapDimensions: Readonly<Box>;
-    private readonly _maxZoom: number;
-    private readonly _stepSize: number;
+    // Current camera target in map coordinates
+    public target: Readonly<Point>;
 
-    private _zoomIndex: number = -1;
+    // Zoom level configuration
+    private readonly _maxZoom: number = 4.0;
+    private readonly _stepSize: number = 1.5;
+    // Dynamic zoom levels calculated depending on viewport and map size
     private _zoomLevels: Readonly<number[]> = [];
-
-    target: Readonly<Point>;
+    private _zoomIndex: number = -1;
+    // Cached viewport dimensions
+    private _viewportSize: Readonly<Box>;
 
     constructor(
-        mapDimensions: Readonly<Box>,
-        viewportDimensions: Readonly<Box>,
-        stepSize: number = 1.5,
-        maxZoom: number = 4.0,
+        mapSize: Readonly<Box>,
+        viewportSize: Readonly<Box>,
+        stepSize: number | undefined = undefined,
+        maxZoom: number | undefined = undefined,
     ) {
-        this._mapDimensions = mapDimensions;
-        this._viewportDimensions = viewportDimensions;
-        this._stepSize = stepSize;
-        this._maxZoom = maxZoom;
+        this._viewportSize = viewportSize;
+        if (stepSize !== undefined) this._stepSize = stepSize;
+        if (maxZoom !== undefined) this._maxZoom = maxZoom;
 
         // Calculate zoom levels for the given viewport and map
-        this._zoomLevels = this._calculateZoomLevels();
+        this._zoomLevels = this._calculateZoomLevels(mapSize);
 
         // Set default zoom and centre the camera
         this._zoomIndex = this._zoomLevels.length - 1;
+        const factor = 0.5;
         this.target = {
-            x: mapDimensions.width * 0.5,
-            y: mapDimensions.height * 0.5,
+            x: mapSize.width * factor,
+            y: mapSize.height * factor,
         };
     }
 
-    public getZoom(): number {
+    /**
+     * Return the current camera view box.
+     *
+     * The view box is the part of the map that is visible to the user.
+     */
+    public viewBox(): Readonly<ViewBox> {
+        // Calculate the map area covered by the viewport
+        const zoom = this.zoom();
+        const half = 0.5;
+        const halfViewboxHeight = this._viewportSize.height * half / zoom;
+        const halfViewboxWidth = this._viewportSize.width * half / zoom;
+        // Calculate the edges of the viewport in map coordinates
+        return {
+            top: this.target.y + halfViewboxHeight,
+            right: this.target.x + halfViewboxWidth,
+            bottom: this.target.y - halfViewboxHeight,
+            left: this.target.x - halfViewboxWidth,
+        };
+    }
+
+    /**
+     * Return the current zoom level of the camera.
+     *
+     * The returned value represents the number of CSS pixels covered by a
+     * single map unit.
+     */
+    public zoom(): number {
         const zoom = this._zoomLevels[this._zoomIndex];
         if (zoom === undefined)
             throw new Error("Invalid zoom level");
@@ -53,6 +81,7 @@ class Camera {
     /**
      * Update the camera's zoom level.
      *
+     * @remarks
      * A positive value will zoom in while a negative value will zoom out.
      * Zoom levels are clamped according to the `maxZoom` property and map
      * size. The new zoom level will be applied immediately and returned. A
@@ -76,34 +105,38 @@ class Camera {
         // Update zoom level
         this._zoomIndex = index;
         // Array value can't be undefined due to clamping
-        return this._zoomLevels[index]!;
+        const zoom = this._zoomLevels[index];
+        if (zoom === undefined)
+            throw new Error("Invalid zoom level");
+        return zoom;
     }
 
     /**
-     * Return the current camera view box.
+     * Reset the camera zoom to either extreme.
      *
-     * The view box is the part of the map that is visible to the user.
+     * @param max If true, the maximum zoom level will be used. Otherwise the
+     *           minimum zoom level will be used.
      */
-    public currentViewBox(): Readonly<ViewBox> {
-        // Calculate the map area covered by the viewport
-        const zoom = this.getZoom();
-        const height = this._viewportDimensions.height / zoom;
-        const width = this._viewportDimensions.width / zoom;
-        // Calculate the edges of the viewport in map coordinates
-        return {
-            top: this.target.y + height * 0.5,
-            right: this.target.x + width * 0.5,
-            bottom: this.target.y - height * 0.5,
-            left: this.target.x - width * 0.5,
-        };
+    public resetZoom(max: boolean = false): void {
+        this._zoomIndex = max ? 0 : this._zoomLevels.length - 1;
     }
 
-    public updateViewportSize(viewportDimensions: Readonly<Box>): void {
-        this._viewportDimensions = viewportDimensions;
+    /**
+     * Update the camera for a new viewport size.
+     *
+     * This method should be called in response to DOM size changes and will
+     * adjust all zoom levels accordingly. A redraw is required after calling
+     * this method.
+     *
+     * @param mapSize Size of the map in map units.
+     * @param viewportSize CSS dimensions of the viewport.
+     */
+    public updateViewportSize(mapSize: Readonly<Box>, viewportSize: Readonly<Box>): void {
+        this._viewportSize = viewportSize;
+        // Recalculate zoom levels for the new viewport size
         const zoomIndex = this._zoomIndex;
-        this._zoomLevels = this._calculateZoomLevels();
+        this._zoomLevels = this._calculateZoomLevels(mapSize);
         this._zoomIndex = zoomIndex;
-        this.zoomTowards(0, { x: 0.5, y: 0.5 }); // Updates camera target
     }
 
     /**
@@ -126,17 +159,17 @@ class Camera {
      * @returns New camera target in map coordinates.
      */
     public zoomTowards(value: number, viewportRelPos: Readonly<Point>): Point {
-        const oldZoom = this.getZoom();
+        const oldZoom = this.zoom();
         const zoom = this.bumpZoom(value);
         // Calculate the viewport size change for the zoom level change
-        const deltaX = (this._viewportDimensions.width / oldZoom)
-            - (this._viewportDimensions.width / zoom);
-        const deltaY = (this._viewportDimensions.height / oldZoom)
-            - (this._viewportDimensions.height / zoom);
-        // Bias the viewport change towards the fixed point
-        const ratioX = -0.5 + viewportRelPos.x;
-        const ratioY = +0.5 - viewportRelPos.y;  // TODO: Why is Y inverted?
-        // Calculate the new camera target
+        const deltaX = (this._viewportSize.width / oldZoom)
+            - (this._viewportSize.width / zoom);
+        const deltaY = (this._viewportSize.height / oldZoom)
+            - (this._viewportSize.height / zoom);
+        // "Steer" the viewport size delta towards the fixed point
+        const half = 0.5;
+        const ratioX = -half + viewportRelPos.x;
+        const ratioY = half - viewportRelPos.y;
         this.target = {
             x: Math.round(this.target.x + deltaX * ratioX),
             y: Math.round(this.target.y + deltaY * ratioY),
@@ -144,29 +177,36 @@ class Camera {
         return this.target;
     }
 
-    private _calculateZoomLevels(): Readonly<number[]> {
+    private _calculateZoomLevels(mapDimensions: Box): Readonly<number[]> {
         // Find the minor axis of the viewport and the major axis of the map
         const minViewport = Math.min(
-            this._viewportDimensions.width,
-            this._viewportDimensions.height);
+            this._viewportSize.width,
+            this._viewportSize.height,
+        );
         const maxMap = Math.max(
-            this._mapDimensions.width,
-            this._mapDimensions.height);
+            mapDimensions.width,
+            mapDimensions.height,
+        );
 
-        let zoomLevels: number[] = [this._maxZoom];
-
-        // If the viewport has no area, disable zoom
+        // The maximum zoom level is fixed and always available
+        const zoomLevels: number[] = [this._maxZoom];
         if (minViewport === 0)
             return zoomLevels;
 
-        // Starting with the maximum zoom level, keep adding zoom levels until
-        // the map is smaller than the viewport
+        const base = 10;
+        const numDecimals = 2;
+        const round = (value: number): number => {
+            const scale = base ** numDecimals;
+            // EPSILON helps avoid most rounding errors, but not all - too bad!
+            return Math.round((value + Number.EPSILON) * scale) / scale;
+        };
+        // Starting with the maximum zoom level, keep zooming out until the CSS
+        // size of the map is smaller than the available viewport.
         const factor = 1 / this._stepSize;
         let zoom = this._maxZoom;
         while (maxMap * zoom > minViewport) {
             zoom *= factor;
-            const newZoom = Math.round((zoom + Number.EPSILON) * 100) / 100;
-            zoomLevels.push(newZoom);
+            zoomLevels.push(round(zoom));
         }
         return zoomLevels;
     }

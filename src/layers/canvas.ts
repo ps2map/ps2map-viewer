@@ -1,17 +1,17 @@
-/// <reference path="../map-engine/static-layer.ts" />
+/// <reference path="../map-engine/map-layer.ts" />
 /// <reference path="./base.ts" />
 
 class CanvasLayer extends StaticLayer {
 
     public readonly canvas: HTMLCanvasElement;
 
-    private constructor(id: string, mapSize: number, canvas: HTMLCanvasElement) {
-        super(id, mapSize);
+    private constructor(id: string, size: Box, canvas: HTMLCanvasElement) {
+        super(id, size);
         this.canvas = canvas;
         this.element.classList.add("ps2map__canvas");
     }
 
-    static async factory(continent: Continent, id: string
+    static async factory(continent: Continent, id: string,
     ): Promise<CanvasLayer> {
         // Attempt to create an HTML canvas. If this fails, fail the promise
         // and let the caller handle the lack of canvas support.
@@ -20,14 +20,15 @@ class CanvasLayer extends StaticLayer {
             return Promise.reject("HTML Canvas not supported");
         canvas.width = canvas.height = continent.map_size;
 
-        const layer = new CanvasLayer(id, continent.map_size, canvas);
+        const size = { width: continent.map_size, height: continent.map_size };
+        const layer = new CanvasLayer(id, size, canvas);
         layer.element.appendChild(canvas);
         return layer;
     }
 
     /**
      * Return the appropriate stroke width for the current zoom level.
-     * 
+     *
      * @remarks
      * This function is quite magic and tied to the zoom level calculation
      * logic. This keeps the stroke width consistent across zoom levels.

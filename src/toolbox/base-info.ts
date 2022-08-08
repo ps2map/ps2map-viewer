@@ -9,9 +9,9 @@ class BaseInfo extends Tool {
     constructor(
         viewport: HTMLDivElement,
         map: HeroMap,
-        tool_panel: HTMLDivElement
+        toolPanel: HTMLDivElement,
     ) {
-        super(viewport, map, tool_panel);
+        super(viewport, map, toolPanel);
         this._onHover = this._onHover.bind(this);
     }
 
@@ -50,15 +50,15 @@ class BaseInfo extends Tool {
             id: "tool-base-resource-name",
             classList: "ps2map__tool__base-info__resource-text",
         }));
-        this._tool_panel.appendChild(frag);
+        this._toolPanel.appendChild(frag);
     }
 
     private _updateBaseInfo(base: Base | null): void {
         if (!base) {
-            this._tool_panel.removeAttribute("style");
+            this._toolPanel.removeAttribute("style");
             return;
         }
-        this._tool_panel.style.display = "block";
+        this._toolPanel.style.display = "block";
 
         const name = document.getElementById("tool-base-name") as HTMLSpanElement;
         const typeIcon = document.getElementById("tool-base-icon") as HTMLImageElement;
