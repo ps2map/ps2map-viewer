@@ -7,9 +7,97 @@
 /// <reference path="./state/index.ts" />
 /// <reference path="./game-data.ts" />
 
-/** Initialisation hook for components that need to be run on DOM load. */
-document.addEventListener("DOMContentLoaded", () => {
+function setUpHeroMap(element: HTMLDivElement): HeroMap {
+    const heroMap = new HeroMap(element);
 
+    document.addEventListener("ps2map_minimapjump", event => {
+        const evt = (event as CustomEvent<MinimapJumpEvent>).detail;
+        heroMap.jumpTo(evt.target);
+    }, { passive: true });
+
+    heroMap.viewport.addEventListener("ps2map_basehover", event => {
+        const evt = (event as CustomEvent<BaseHoverEvent>).detail;
+        const base = GameData.getInstance().getBase(evt.baseId);
+        if (base)
+            StateManager.dispatch(State.user.baseHovered, base as never);
+    });
+
+    StateManager.subscribe(State.map.baseCaptured, state => {
+        heroMap.updateBaseOwnership(state.map.baseOwnership);
+    });
+
+    StateManager.subscribe(State.user.continentChanged, state => {
+        const cont = state.user.continent;
+        if (!cont)
+            return;
+        const mapSize = cont.map_size;
+        GameData.getInstance().setActiveContinent(cont)
+            .then(() => {
+                heroMap.switchContinent(cont).then(() => {
+                    heroMap.updateBaseOwnership(state.map.baseOwnership);
+                    heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
+                });
+            });
+    });
+
+    return heroMap;
+}
+
+function setUpMapPickers(): [HTMLSelectElement, HTMLSelectElement] {
+
+    // Server picker
+    const serverPicker = document.getElementById(
+        "server-picker") as HTMLSelectElement;
+    serverPicker.addEventListener("change", () => {
+        const server = GameData.getInstance().servers()
+            .find(s => s.id === parseInt(serverPicker.value, 10));
+        if (!server)
+            throw new Error(`Server ${serverPicker.value} not found`);
+        StateManager.dispatch(State.user.serverChanged, server as never);
+    });
+
+    // Continent picker
+    const continentPicker = document.getElementById(
+        "continent-picker") as HTMLSelectElement;
+    continentPicker.addEventListener("change", () => {
+        const continent = GameData.getInstance().continents()
+            .find(c => c.id === parseInt(continentPicker.value, 10));
+        if (!continent)
+            throw new Error(`Continent ${continentPicker.value} not found`);
+        StateManager.dispatch(State.user.continentChanged, continent as never);
+    });
+
+    return [serverPicker, continentPicker];
+}
+
+function setUpMinimap(element: HTMLDivElement): Minimap {
+    const minimap = new Minimap(element);
+
+    document.addEventListener("ps2map_viewboxchanged", event => {
+        const evt = (event as CustomEvent<ViewBoxChangedEvent>).detail;
+        minimap.updateViewbox(evt.viewBox);
+    }, { passive: true });
+
+    StateManager.subscribe(State.map.baseCaptured, state => {
+        minimap.updateBaseOwnership(state.map.baseOwnership);
+    });
+
+    StateManager.subscribe(State.user.continentChanged, state => {
+        const cont = state.user.continent;
+        if (!cont)
+            return;
+        GameData.getInstance().setActiveContinent(cont)
+            .then(() => {
+                minimap.switchContinent(cont).then(() => {
+                    minimap.updateBaseOwnership(state.map.baseOwnership);
+                });
+            });
+    });
+
+    return minimap;
+}
+
+function setUpSidebarResizing(minimap: Minimap): void {
     const grabber = document.getElementById("sidebar-selector") as HTMLDivElement;
     grabber.addEventListener("mousedown", (event: MouseEvent) => {
         document.body.style.cursor = "col-resize";
@@ -43,84 +131,40 @@ document.addEventListener("DOMContentLoaded", () => {
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
     });
+}
 
-    const heroMap = new HeroMap(document.getElementById("hero-map") as HTMLDivElement);
-    const minimap = new Minimap(document.getElementById("minimap") as HTMLDivElement);
+function setUpToolbox(heroMap: HeroMap): void {
+    StateManager.dispatch(State.toolbox.setup, heroMap as never);
+    StateManager.dispatch(State.toolbox.setTool, Tool.id as never);
+}
 
+/** Initialisation hook for components that need to be run on DOM load. */
+document.addEventListener("DOMContentLoaded", () => {
+
+    // Create main components
+    const heroMap = setUpHeroMap(
+        document.getElementById("hero-map") as HTMLDivElement);
+    const minimap = setUpMinimap(
+        document.getElementById("minimap") as HTMLDivElement);
+
+    // Hook up sidebar resize grabber
+    setUpSidebarResizing(minimap);
+
+    // Create map state listener
     const listener = new MapListener();
     listener.subscribe((name, data) => {
         StateManager.dispatch(`map/${name}`, data as never);
     });
-
-    StateManager.subscribe(State.map.baseCaptured, state => {
-        heroMap.updateBaseOwnership(state.map.baseOwnership);
-        minimap.updateBaseOwnership(state.map.baseOwnership);
-    });
-    StateManager.subscribe(State.user.continentChanged, state => {
-        const cont = state.user.continent;
-        const mapSize = cont ? cont.map_size : 0;
-        GameData.getInstance().setActiveContinent(state.user.continent)
-            .then(() => {
-                if (state.user.continent) {
-                    heroMap.switchContinent(state.user.continent).then(() => {
-                        heroMap.updateBaseOwnership(state.map.baseOwnership);
-                        heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
-                    });
-                    minimap.switchContinent(state.user.continent).then(() => {
-                        minimap.updateBaseOwnership(state.map.baseOwnership);
-                    });
-                }
-            });
-    });
-
     StateManager.subscribe(State.user.serverChanged, state => {
         if (state.user.server)
             listener.switchServer(state.user.server);
     });
-    StateManager.subscribe(State.user.baseHovered, state => {
-        const names = heroMap.getLayer<BaseNamesLayer>("names");
-        if (names)
-            names.setHoveredBase(state.user.hoveredBase);
-    });
 
     // Set up toolbox
-    StateManager.dispatch(State.toolbox.setup, heroMap as never);
-    StateManager.dispatch(State.toolbox.setTool, Tool.id as never);
+    setUpToolbox(heroMap);
 
-    // Hook up base hover event
-    heroMap.viewport.addEventListener("ps2map_basehover", event => {
-        const evt = (event as CustomEvent<BaseHoverEvent>).detail;
-        const base = GameData.getInstance().getBase(evt.baseId);
-        if (base)
-            StateManager.dispatch(State.user.baseHovered, base as never);
-    });
-
-    // Set up minimap
-    document.addEventListener("ps2map_viewboxchanged", event => {
-        const evt = (event as CustomEvent<ViewBoxChangedEvent>).detail;
-        minimap.updateViewbox(evt.viewBox);
-    }, { passive: true });
-    document.addEventListener("ps2map_minimapjump", event => {
-        const evt = (event as CustomEvent<MinimapJumpEvent>).detail;
-        heroMap.jumpTo(evt.target);
-    }, { passive: true });
-
-    const serverPicker = document.getElementById("server-picker") as HTMLSelectElement;
-    serverPicker.addEventListener("change", () => {
-        const server = GameData.getInstance().servers()
-            .find(s => s.id === parseInt(serverPicker.value, 10));
-        if (!server)
-            throw new Error(`No server found with id ${serverPicker.value}`);
-        StateManager.dispatch(State.user.serverChanged, server as never);
-    });
-    const continentPicker = document.getElementById("continent-picker") as HTMLSelectElement;
-    continentPicker.addEventListener("change", () => {
-        const continent = GameData.getInstance().continents()
-            .find(c => c.id === parseInt(continentPicker.value, 10));
-        if (!continent)
-            throw new Error(`No continent found with id ${continentPicker.value}`);
-        StateManager.dispatch(State.user.continentChanged, continent as never);
-    });
+    // Hook up map pickers
+    const [serverPicker, continentPicker] = setUpMapPickers();
 
     // Load game data
     GameData.load().then(gameData => {
@@ -147,5 +191,11 @@ document.addEventListener("DOMContentLoaded", () => {
             servers[0] as never);
         StateManager.dispatch(State.user.continentChanged,
             continents[0] as never);
+    });
+
+    StateManager.subscribe(State.user.baseHovered, state => {
+        const names = heroMap.getLayer<BaseNamesLayer>("names");
+        if (names)
+            names.setHoveredBase(state.user.hoveredBase);
     });
 });

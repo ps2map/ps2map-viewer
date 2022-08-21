@@ -1751,7 +1751,78 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-document.addEventListener("DOMContentLoaded", function () {
+function setUpHeroMap(element) {
+    var heroMap = new HeroMap(element);
+    document.addEventListener("ps2map_minimapjump", function (event) {
+        var evt = event.detail;
+        heroMap.jumpTo(evt.target);
+    }, { passive: true });
+    heroMap.viewport.addEventListener("ps2map_basehover", function (event) {
+        var evt = event.detail;
+        var base = GameData.getInstance().getBase(evt.baseId);
+        if (base)
+            StateManager.dispatch(State.user.baseHovered, base);
+    });
+    StateManager.subscribe(State.map.baseCaptured, function (state) {
+        heroMap.updateBaseOwnership(state.map.baseOwnership);
+    });
+    StateManager.subscribe(State.user.continentChanged, function (state) {
+        var cont = state.user.continent;
+        if (!cont)
+            return;
+        var mapSize = cont.map_size;
+        GameData.getInstance().setActiveContinent(cont)
+            .then(function () {
+            heroMap.switchContinent(cont).then(function () {
+                heroMap.updateBaseOwnership(state.map.baseOwnership);
+                heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
+            });
+        });
+    });
+    return heroMap;
+}
+function setUpMapPickers() {
+    var serverPicker = document.getElementById("server-picker");
+    serverPicker.addEventListener("change", function () {
+        var server = GameData.getInstance().servers()
+            .find(function (s) { return s.id === parseInt(serverPicker.value, 10); });
+        if (!server)
+            throw new Error("Server ".concat(serverPicker.value, " not found"));
+        StateManager.dispatch(State.user.serverChanged, server);
+    });
+    var continentPicker = document.getElementById("continent-picker");
+    continentPicker.addEventListener("change", function () {
+        var continent = GameData.getInstance().continents()
+            .find(function (c) { return c.id === parseInt(continentPicker.value, 10); });
+        if (!continent)
+            throw new Error("Continent ".concat(continentPicker.value, " not found"));
+        StateManager.dispatch(State.user.continentChanged, continent);
+    });
+    return [serverPicker, continentPicker];
+}
+function setUpMinimap(element) {
+    var minimap = new Minimap(element);
+    document.addEventListener("ps2map_viewboxchanged", function (event) {
+        var evt = event.detail;
+        minimap.updateViewbox(evt.viewBox);
+    }, { passive: true });
+    StateManager.subscribe(State.map.baseCaptured, function (state) {
+        minimap.updateBaseOwnership(state.map.baseOwnership);
+    });
+    StateManager.subscribe(State.user.continentChanged, function (state) {
+        var cont = state.user.continent;
+        if (!cont)
+            return;
+        GameData.getInstance().setActiveContinent(cont)
+            .then(function () {
+            minimap.switchContinent(cont).then(function () {
+                minimap.updateBaseOwnership(state.map.baseOwnership);
+            });
+        });
+    });
+    return minimap;
+}
+function setUpSidebarResizing(minimap) {
     var grabber = document.getElementById("sidebar-selector");
     grabber.addEventListener("mousedown", function (event) {
         document.body.style.cursor = "col-resize";
@@ -1781,73 +1852,25 @@ document.addEventListener("DOMContentLoaded", function () {
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
     });
-    var heroMap = new HeroMap(document.getElementById("hero-map"));
-    var minimap = new Minimap(document.getElementById("minimap"));
+}
+function setUpToolbox(heroMap) {
+    StateManager.dispatch(State.toolbox.setup, heroMap);
+    StateManager.dispatch(State.toolbox.setTool, Tool.id);
+}
+document.addEventListener("DOMContentLoaded", function () {
+    var heroMap = setUpHeroMap(document.getElementById("hero-map"));
+    var minimap = setUpMinimap(document.getElementById("minimap"));
+    setUpSidebarResizing(minimap);
     var listener = new MapListener();
     listener.subscribe(function (name, data) {
         StateManager.dispatch("map/".concat(name), data);
-    });
-    StateManager.subscribe(State.map.baseCaptured, function (state) {
-        heroMap.updateBaseOwnership(state.map.baseOwnership);
-        minimap.updateBaseOwnership(state.map.baseOwnership);
-    });
-    StateManager.subscribe(State.user.continentChanged, function (state) {
-        var cont = state.user.continent;
-        var mapSize = cont ? cont.map_size : 0;
-        GameData.getInstance().setActiveContinent(state.user.continent)
-            .then(function () {
-            if (state.user.continent) {
-                heroMap.switchContinent(state.user.continent).then(function () {
-                    heroMap.updateBaseOwnership(state.map.baseOwnership);
-                    heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
-                });
-                minimap.switchContinent(state.user.continent).then(function () {
-                    minimap.updateBaseOwnership(state.map.baseOwnership);
-                });
-            }
-        });
     });
     StateManager.subscribe(State.user.serverChanged, function (state) {
         if (state.user.server)
             listener.switchServer(state.user.server);
     });
-    StateManager.subscribe(State.user.baseHovered, function (state) {
-        var names = heroMap.getLayer("names");
-        if (names)
-            names.setHoveredBase(state.user.hoveredBase);
-    });
-    StateManager.dispatch(State.toolbox.setup, heroMap);
-    StateManager.dispatch(State.toolbox.setTool, Tool.id);
-    heroMap.viewport.addEventListener("ps2map_basehover", function (event) {
-        var evt = event.detail;
-        var base = GameData.getInstance().getBase(evt.baseId);
-        if (base)
-            StateManager.dispatch(State.user.baseHovered, base);
-    });
-    document.addEventListener("ps2map_viewboxchanged", function (event) {
-        var evt = event.detail;
-        minimap.updateViewbox(evt.viewBox);
-    }, { passive: true });
-    document.addEventListener("ps2map_minimapjump", function (event) {
-        var evt = event.detail;
-        heroMap.jumpTo(evt.target);
-    }, { passive: true });
-    var serverPicker = document.getElementById("server-picker");
-    serverPicker.addEventListener("change", function () {
-        var server = GameData.getInstance().servers()
-            .find(function (s) { return s.id === parseInt(serverPicker.value, 10); });
-        if (!server)
-            throw new Error("No server found with id ".concat(serverPicker.value));
-        StateManager.dispatch(State.user.serverChanged, server);
-    });
-    var continentPicker = document.getElementById("continent-picker");
-    continentPicker.addEventListener("change", function () {
-        var continent = GameData.getInstance().continents()
-            .find(function (c) { return c.id === parseInt(continentPicker.value, 10); });
-        if (!continent)
-            throw new Error("No continent found with id ".concat(continentPicker.value));
-        StateManager.dispatch(State.user.continentChanged, continent);
-    });
+    setUpToolbox(heroMap);
+    var _a = setUpMapPickers(), serverPicker = _a[0], continentPicker = _a[1];
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
         var continents = __spreadArray([], gameData.continents(), true);
@@ -1867,6 +1890,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         StateManager.dispatch(State.user.serverChanged, servers[0]);
         StateManager.dispatch(State.user.continentChanged, continents[0]);
+    });
+    StateManager.subscribe(State.user.baseHovered, function (state) {
+        var names = heroMap.getLayer("names");
+        if (names)
+            names.setHoveredBase(state.user.hoveredBase);
     });
 });
 var MapRenderer = (function () {
