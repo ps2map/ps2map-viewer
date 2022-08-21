@@ -121,3 +121,7 @@ body {
     display: grid;
     grid-template-columns: 40px 1fr;
 }
+
+#base-finder {
+    height: 21px;
+}
