@@ -10,15 +10,15 @@ namespace State {
     }
 
     export interface UserState {
-        server: Server | undefined;
-        continent: Continent | undefined;
+        server: Server | null;
+        continent: Continent | null;
         hoveredBase: Base | null;
         layerVisibility: Map<string, boolean>;
     }
 
     export const defaultUserState: UserState = {
-        server: undefined,
-        continent: undefined,
+        server: null,
+        continent: null,
         hoveredBase: null,
         layerVisibility: new Map<string, boolean>(),
     };

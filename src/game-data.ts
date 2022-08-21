@@ -34,6 +34,16 @@ class GameData {
         return this._bases.find(b => b.id === id);
     }
 
+    public async getBasesForContinent(continent: Continent | null): Promise<Base[]> {
+        if (continent) {
+            if (this._bases.length === 0)
+                return fetchBasesForContinent(continent.id);
+            return this._bases.filter(b => b.continent_id === continent.id);
+        } else {
+            return [];
+        }
+    }
+
     public getFaction(id: number): { [key: string]: string } {
         // TODO: Load faction data from API
         switch (id) {

@@ -246,22 +246,22 @@ document.addEventListener("DOMContentLoaded", () => {
         if (finder.value)
             heroMap.jumpToBase(parseInt(finder.value, 10));
     });
-    // TODO: This is hacky and should be replaced with a proper "onLoadDone"
-    // event tied to the game data and/or continent/server change loading.
-    setTimeout(() => {
-        const baseNames = heroMap.layers.getLayer<BaseNamesLayer>("names");
-        console.log(baseNames);
-        if (baseNames) {
-            const finder = document.getElementById("base-finder") as HTMLSelectElement;
-            baseNames.features.forEach(feature => {
-                console.log(feature.text);
-                const option = document.createElement("option");
-                option.value = feature.id.toString();
-                option.text = feature.text;
-                finder.appendChild(option);
-            });
-        }
-    }, 500);
+    StateManager.subscribe(State.user.continentChanged, async state => {
+        const bases = await GameData.getInstance().getBasesForContinent(
+            state.user.continent);
+        console.log(bases);
+        bases.sort((a, b) => a.name.localeCompare(b.name));
+        const options: HTMLOptionElement[] = [];
+        bases.forEach(base => {
+            const option = document.createElement("option");
+            option.value = base.id.toString();
+            option.text = base.name;
+            options.push(option);
+        });
+        const finder = document.getElementById("base-finder") as HTMLSelectElement;
+        finder.innerHTML = "";
+        options.forEach(option => finder.appendChild(option));
+    });
 
     StateManager.subscribe(State.user.baseHovered, state => {
         const names = heroMap.getLayer<BaseNamesLayer>("names");

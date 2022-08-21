@@ -46,6 +46,21 @@ var GameData = (function () {
     GameData.prototype.getBase = function (id) {
         return this._bases.find(function (b) { return b.id === id; });
     };
+    GameData.prototype.getBasesForContinent = function (continent) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                if (continent) {
+                    if (this._bases.length === 0)
+                        return [2, fetchBasesForContinent(continent.id)];
+                    return [2, this._bases.filter(function (b) { return b.continent_id === continent.id; })];
+                }
+                else {
+                    return [2, []];
+                }
+                return [2];
+            });
+        });
+    };
     GameData.prototype.getFaction = function (id) {
         switch (id) {
             case 0: return { code: "ns" };
@@ -1720,8 +1735,8 @@ var State;
         user.layerVisibilityChanged = "user/layerVisibilityChanged";
     })(user = State.user || (State.user = {}));
     State.defaultUserState = {
-        server: undefined,
-        continent: undefined,
+        server: null,
+        continent: null,
         hoveredBase: null,
         layerVisibility: new Map()
     };
@@ -1953,20 +1968,29 @@ document.addEventListener("DOMContentLoaded", function () {
         if (finder.value)
             heroMap.jumpToBase(parseInt(finder.value, 10));
     });
-    setTimeout(function () {
-        var baseNames = heroMap.layers.getLayer("names");
-        console.log(baseNames);
-        if (baseNames) {
-            var finder_1 = document.getElementById("base-finder");
-            baseNames.features.forEach(function (feature) {
-                console.log(feature.text);
-                var option = document.createElement("option");
-                option.value = feature.id.toString();
-                option.text = feature.text;
-                finder_1.appendChild(option);
-            });
-        }
-    }, 500);
+    StateManager.subscribe(State.user.continentChanged, function (state) { return __awaiter(void 0, void 0, void 0, function () {
+        var bases, options, finder;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4, GameData.getInstance().getBasesForContinent(state.user.continent)];
+                case 1:
+                    bases = _a.sent();
+                    console.log(bases);
+                    bases.sort(function (a, b) { return a.name.localeCompare(b.name); });
+                    options = [];
+                    bases.forEach(function (base) {
+                        var option = document.createElement("option");
+                        option.value = base.id.toString();
+                        option.text = base.name;
+                        options.push(option);
+                    });
+                    finder = document.getElementById("base-finder");
+                    finder.innerHTML = "";
+                    options.forEach(function (option) { return finder.appendChild(option); });
+                    return [2];
+            }
+        });
+    }); });
     StateManager.subscribe(State.user.baseHovered, function (state) {
         var names = heroMap.getLayer("names");
         if (names)
