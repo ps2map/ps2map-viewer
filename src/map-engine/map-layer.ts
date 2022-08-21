@@ -122,11 +122,9 @@ class StaticLayer extends MapLayer {
         // Initial offset to move the centre of the SVG to its CSS origin
         const halfSizeX = this.size.width * 0.5;
         const halfSizeY = this.size.height * 0.5;
-        let offsetX = -halfSizeX;
-        let offsetY = -halfSizeY;
         // Another offset to shift the view box target to the origin
-        offsetX += (halfSizeX - targetX) * zoom;
-        offsetY -= (halfSizeY - targetY) * zoom;
+        const offsetX = -halfSizeX - targetX * zoom;
+        const offsetY = -halfSizeY + targetY * zoom;
         // Apply transform
         this.element.style.transform = (
             `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);

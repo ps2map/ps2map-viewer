@@ -61,11 +61,13 @@ class TerrainLayer extends TileLayer {
 
     protected createTile(pos: GridPos, gridSize: number): MapTile {
         const mapStep = this.size.width / gridSize;
+        const halfWidth = this.size.width / 2;
+        const halfHeight = this.size.height / 2;
         const box = {
-            left: mapStep * pos.x,
-            right: mapStep * (pos.x + 1),
-            top: mapStep * (pos.y + 1),
-            bottom: mapStep * pos.y,
+            left: mapStep * pos.x - halfWidth,
+            right: mapStep * (pos.x + 1) - halfWidth,
+            top: mapStep * (pos.y + 1) - halfHeight,
+            bottom: mapStep * pos.y - halfHeight,
         };
         // Create tile element
         const element = document.createElement("div");

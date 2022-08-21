@@ -123,11 +123,9 @@ abstract class TileLayer extends MapLayer {
         const targetY = (viewBox.top + viewBox.bottom) * 0.5;
         // Initial offset to move the centre of the SVG to its CSS origin
         const halfSize = this._sizeNum * 0.5;
-        let offsetX = -halfSize;
-        let offsetY = -halfSize;
         // Another offset to shift the view box target to the origin
-        offsetX += (halfSize - targetX) * zoom;
-        offsetY -= (halfSize - targetY) * zoom;
+        const offsetX = -halfSize - targetX * zoom;
+        const offsetY = -halfSize + targetY * zoom;
         // Apply transform
         this.element.style.transform = (
             `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);

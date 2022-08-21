@@ -64,13 +64,13 @@ class Minimap {
         };
         const relHeight = relViewBox.top - relViewBox.bottom;
         const relWidth = relViewBox.right - relViewBox.left;
-        const relLeft = relViewBox.left - 0.5;
-        const relTop = relViewBox.bottom - 0.5;
         // Project the relative percentages onto the minimap
-        this._viewBoxElement.style.height = `${this._cssSize * relHeight}px`;
-        this._viewBoxElement.style.width = `${this._cssSize * relWidth}px`;
-        this._viewBoxElement.style.left = `${this._cssSize * relLeft}px`;
-        this._viewBoxElement.style.bottom = `${this._cssSize * relTop}px`;
+        Object.assign(this._viewBoxElement.style, {
+            height: `${this._cssSize * relHeight}px`,
+            width: `${this._cssSize * relWidth}px`,
+            left: `${this._cssSize * relViewBox.left}px`,
+            bottom: `${this._cssSize * relViewBox.bottom}px`,
+        });
     }
 
     updateBaseOwnership(map: Map<number, number>): void {
@@ -144,8 +144,8 @@ class Minimap {
             const relY = (evtDrag.clientY - rect.top) / (rect.height);
             // Calculate target cursor position
             const target: Point = {
-                x: Math.round(relX * this._mapSize),
-                y: Math.round((1 - relY) * this._mapSize),
+                x: Math.round(relX * this._mapSize) + this._mapSize * -0.5,
+                y: Math.round((1 - relY) * this._mapSize) + this._mapSize * -0.5,
             };
             this.element.dispatchEvent(this._buildMinimapJumpEvent(target));
         });

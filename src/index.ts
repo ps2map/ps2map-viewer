@@ -30,12 +30,11 @@ function setUpHeroMap(element: HTMLDivElement): HeroMap {
         const cont = state.user.continent;
         if (!cont)
             return;
-        const mapSize = cont.map_size;
         GameData.getInstance().setActiveContinent(cont)
             .then(() => {
                 heroMap.switchContinent(cont).then(() => {
                     heroMap.updateBaseOwnership(state.map.baseOwnership);
-                    heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
+                    heroMap.jumpTo({ x: 0, y: 0 });
                 });
             });
     });

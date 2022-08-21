@@ -38,11 +38,7 @@ class Camera {
 
         // Set default zoom and centre the camera
         this._zoomIndex = this._zoomLevels.length - 1;
-        const factor = 0.5;
-        this.target = {
-            x: mapSize.width * factor,
-            y: mapSize.height * factor,
-        };
+        this.target = { x: 0, y: 0 };
     }
 
     /**

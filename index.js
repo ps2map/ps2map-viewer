@@ -123,11 +123,7 @@ var Camera = (function () {
             this._maxZoom = maxZoom;
         this._zoomLevels = this._calculateZoomLevels(mapSize);
         this._zoomIndex = this._zoomLevels.length - 1;
-        var factor = 0.5;
-        this.target = {
-            x: mapSize.width * factor,
-            y: mapSize.height * factor
-        };
+        this.target = { x: 0, y: 0 };
     }
     Camera.prototype.viewBox = function () {
         var zoom = this.zoom();
@@ -281,10 +277,8 @@ var StaticLayer = (function (_super) {
         var targetY = (viewBox.top + viewBox.bottom) * 0.5;
         var halfSizeX = this.size.width * 0.5;
         var halfSizeY = this.size.height * 0.5;
-        var offsetX = -halfSizeX;
-        var offsetY = -halfSizeY;
-        offsetX += (halfSizeX - targetX) * zoom;
-        offsetY -= (halfSizeY - targetY) * zoom;
+        var offsetX = -halfSizeX - targetX * zoom;
+        var offsetY = -halfSizeY + targetY * zoom;
         this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
     };
     return StaticLayer;
@@ -399,10 +393,9 @@ var MapEngine = (function () {
         var relX = (screen.x - vp.offsetLeft) / vp.clientWidth;
         var relY = (screen.y - vp.offsetTop) / vp.clientHeight;
         var box = this.camera.viewBox();
-        var halfSize = this.layers.mapSize.height * 0.5;
         return {
-            x: -halfSize + box.left + (box.right - box.left) * relX,
-            y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY)
+            x: box.left + (box.right - box.left) * relX,
+            y: box.bottom + (box.top - box.bottom) * (1 - relY)
         };
     };
     MapEngine.prototype._mousePan = function (evtDown) {
@@ -438,18 +431,18 @@ var MapEngine = (function () {
         this.viewport.addEventListener("mousemove", drag, { passive: true });
     };
     MapEngine.prototype._constrainMapTarget = function () {
-        var targetX = this.camera.target.x;
-        var targetY = this.camera.target.y;
-        var mapSize = this.layers.mapSize;
-        if (targetX < 0)
-            targetX = 0;
-        if (targetX > mapSize.width)
-            targetX = mapSize.width;
-        if (targetY < 0)
-            targetY = 0;
-        if (targetY > mapSize.height)
-            targetY = mapSize.height;
-        this.camera.target = { x: targetX, y: targetY };
+        var halfWidth = this.layers.mapSize.width * 0.5;
+        var halfHeight = this.layers.mapSize.height * 0.5;
+        var _a = this.camera.target, x = _a.x, y = _a.y;
+        if (x < -halfWidth)
+            x = -halfWidth;
+        if (x > halfWidth)
+            x = halfWidth;
+        if (y < -halfHeight)
+            y = -halfHeight;
+        if (y > halfHeight)
+            y = halfHeight;
+        this.camera.target = { x: x, y: y };
     };
     MapEngine.prototype._setPanLock = function (locked) {
         this._isPanning = locked;
@@ -907,10 +900,8 @@ var TileLayer = (function (_super) {
         var targetX = (viewBox.right + viewBox.left) * 0.5;
         var targetY = (viewBox.top + viewBox.bottom) * 0.5;
         var halfSize = this._sizeNum * 0.5;
-        var offsetX = -halfSize;
-        var offsetY = -halfSize;
-        offsetX += (halfSize - targetX) * zoom;
-        offsetY -= (halfSize - targetY) * zoom;
+        var offsetX = -halfSize - targetX * zoom;
+        var offsetY = -halfSize + targetY * zoom;
         this.element.style.transform = ("matrix(".concat(zoom, ", 0.0, 0.0, ").concat(zoom, ", ").concat(offsetX, ", ").concat(offsetY, ")"));
     };
     return TileLayer;
@@ -956,11 +947,13 @@ var TerrainLayer = (function (_super) {
     };
     TerrainLayer.prototype.createTile = function (pos, gridSize) {
         var mapStep = this.size.width / gridSize;
+        var halfWidth = this.size.width / 2;
+        var halfHeight = this.size.height / 2;
         var box = {
-            left: mapStep * pos.x,
-            right: mapStep * (pos.x + 1),
-            top: mapStep * (pos.y + 1),
-            bottom: mapStep * pos.y
+            left: mapStep * pos.x - halfWidth,
+            right: mapStep * (pos.x + 1) - halfWidth,
+            top: mapStep * (pos.y + 1) - halfHeight,
+            bottom: mapStep * pos.y - halfHeight
         };
         var element = document.createElement("div");
         element.classList.add("ps2map__terrain__tile");
@@ -1137,12 +1130,12 @@ var Minimap = (function () {
         };
         var relHeight = relViewBox.top - relViewBox.bottom;
         var relWidth = relViewBox.right - relViewBox.left;
-        var relLeft = relViewBox.left - 0.5;
-        var relTop = relViewBox.bottom - 0.5;
-        this._viewBoxElement.style.height = "".concat(this._cssSize * relHeight, "px");
-        this._viewBoxElement.style.width = "".concat(this._cssSize * relWidth, "px");
-        this._viewBoxElement.style.left = "".concat(this._cssSize * relLeft, "px");
-        this._viewBoxElement.style.bottom = "".concat(this._cssSize * relTop, "px");
+        Object.assign(this._viewBoxElement.style, {
+            height: "".concat(this._cssSize * relHeight, "px"),
+            width: "".concat(this._cssSize * relWidth, "px"),
+            left: "".concat(this._cssSize * relViewBox.left, "px"),
+            bottom: "".concat(this._cssSize * relViewBox.bottom, "px")
+        });
     };
     Minimap.prototype.updateBaseOwnership = function (map) {
         var _this = this;
@@ -1198,8 +1191,8 @@ var Minimap = (function () {
             var relX = (evtDrag.clientX - rect.left) / (rect.width);
             var relY = (evtDrag.clientY - rect.top) / (rect.height);
             var target = {
-                x: Math.round(relX * _this._mapSize),
-                y: Math.round((1 - relY) * _this._mapSize)
+                x: Math.round(relX * _this._mapSize) + _this._mapSize * -0.5,
+                y: Math.round((1 - relY) * _this._mapSize) + _this._mapSize * -0.5
             };
             _this.element.dispatchEvent(_this._buildMinimapJumpEvent(target));
         });
@@ -1366,9 +1359,9 @@ var CanvasTool = (function (_super) {
             this._action(this._context, this._getActionPos(event), this._getScaling());
     };
     CanvasTool.prototype._getActionPos = function (event) {
-        var pos = this._map.screenToMap(event);
         if (!this._halfMapSize)
             return { x: 0, y: 0 };
+        var pos = this._map.screenToMap(event);
         return {
             x: this._halfMapSize + pos.x,
             y: this._halfMapSize - pos.y
@@ -1779,12 +1772,11 @@ function setUpHeroMap(element) {
         var cont = state.user.continent;
         if (!cont)
             return;
-        var mapSize = cont.map_size;
         GameData.getInstance().setActiveContinent(cont)
             .then(function () {
             heroMap.switchContinent(cont).then(function () {
                 heroMap.updateBaseOwnership(state.map.baseOwnership);
-                heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
+                heroMap.jumpTo({ x: 0, y: 0 });
             });
         });
     });

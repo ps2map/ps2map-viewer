@@ -86,11 +86,10 @@ class MapEngine {
         const relY = (screen.y - vp.offsetTop) / vp.clientHeight;
         // Interpolate the relative position within the view box
         const box = this.camera.viewBox();
-        const halfSize = this.layers.mapSize.height * 0.5;
         return {
-            x: -halfSize + box.left + (box.right - box.left) * relX,
+            x: box.left + (box.right - box.left) * relX,
             // (1 - relY) takes care of the Y axis inversion
-            y: -halfSize + box.bottom + (box.top - box.bottom) * (1 - relY),
+            y: box.bottom + (box.top - box.bottom) * (1 - relY),
         };
     }
 
@@ -164,16 +163,16 @@ class MapEngine {
      * This avoids users moving the map out of frame, never to be seen again.
      */
     private _constrainMapTarget(): void {
-        let targetX = this.camera.target.x;
-        let targetY = this.camera.target.y;
-        const mapSize = this.layers.mapSize;
+        const halfWidth = this.layers.mapSize.width * 0.5;
+        const halfHeight = this.layers.mapSize.height * 0.5;
+        let { x, y } = this.camera.target;
         // Constrain pan limits
-        if (targetX < 0) targetX = 0;
-        if (targetX > mapSize.width) targetX = mapSize.width;
-        if (targetY < 0) targetY = 0;
-        if (targetY > mapSize.height) targetY = mapSize.height;
+        if (x < -halfWidth) x = -halfWidth;
+        if (x > halfWidth) x = halfWidth;
+        if (y < -halfHeight) y = -halfHeight;
+        if (y > halfHeight) y = halfHeight;
         // Update camera
-        this.camera.target = { x: targetX, y: targetY };
+        this.camera.target = { x, y };
     }
 
     /**
