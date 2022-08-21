@@ -1975,7 +1975,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 case 0: return [4, GameData.getInstance().getBasesForContinent(state.user.continent)];
                 case 1:
                     bases = _a.sent();
-                    console.log(bases);
                     bases.sort(function (a, b) { return a.name.localeCompare(b.name); });
                     options = [];
                     bases.forEach(function (base) {

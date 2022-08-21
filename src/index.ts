@@ -249,7 +249,6 @@ document.addEventListener("DOMContentLoaded", () => {
     StateManager.subscribe(State.user.continentChanged, async state => {
         const bases = await GameData.getInstance().getBasesForContinent(
             state.user.continent);
-        console.log(bases);
         bases.sort((a, b) => a.name.localeCompare(b.name));
         const options: HTMLOptionElement[] = [];
         bases.forEach(base => {
