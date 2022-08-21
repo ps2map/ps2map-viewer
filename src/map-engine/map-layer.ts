@@ -53,10 +53,12 @@ abstract class MapLayer {
     setVisibility(visible: boolean): void {
         if (this.isVisible === visible)
             return;
-        if (visible)
+        if (visible) {
             this.element.style.removeProperty("display");
-        else
+            this.element.dispatchEvent(new Event("transitionend"));
+        } else {
             this.element.style.display = "none";
+        }
         this.isVisible = visible;
     }
 

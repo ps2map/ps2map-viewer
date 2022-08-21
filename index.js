@@ -255,10 +255,13 @@ var MapLayer = (function () {
     MapLayer.prototype.setVisibility = function (visible) {
         if (this.isVisible === visible)
             return;
-        if (visible)
+        if (visible) {
             this.element.style.removeProperty("display");
-        else
+            this.element.dispatchEvent(new Event("transitionend"));
+        }
+        else {
             this.element.style.display = "none";
+        }
         this.isVisible = visible;
     };
     MapLayer.prototype.updateLayer = function () {
