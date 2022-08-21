@@ -60,11 +60,13 @@ function setUpHeroMap(element: HTMLDivElement): HeroMap {
                 return "Lattice Links";
             case "terrain":
                 return "Terrain";
+            case "canvas":
+                return "Drawing Canvas";
             default:
                 return "Unknown";
         }
     };
-    ["terrain", "hexes", "lattice", "names"].forEach(id => {
+    ["terrain", "hexes", "lattice", "names", "canvas"].forEach(id => {
         const name = layerNameFromId(id);
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";

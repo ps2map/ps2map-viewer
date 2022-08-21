@@ -1804,11 +1804,13 @@ function setUpHeroMap(element) {
                 return "Lattice Links";
             case "terrain":
                 return "Terrain";
+            case "canvas":
+                return "Drawing Canvas";
             default:
                 return "Unknown";
         }
     };
-    ["terrain", "hexes", "lattice", "names"].forEach(function (id) {
+    ["terrain", "hexes", "lattice", "names", "canvas"].forEach(function (id) {
         var name = layerNameFromId(id);
         var checkbox = document.createElement("input");
         checkbox.type = "checkbox";
