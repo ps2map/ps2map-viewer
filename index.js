@@ -1086,7 +1086,6 @@ var HeroMap = (function (_super) {
                                 }
                                 _this.camera.resetZoom();
                                 _this.jumpTo({ x: size / 2, y: size / 2 });
-                                _this.dispatchViewportChangedEvent();
                                 layers.forEach(function (layer) {
                                     _this.layers.addLayer(layer);
                                     layer.updateLayer();
@@ -1103,6 +1102,7 @@ var HeroMap = (function (_super) {
     HeroMap.prototype.jumpTo = function (point) {
         this.camera.jumpTo(point);
         this.renderer.redraw();
+        this.dispatchViewportChangedEvent();
     };
     return HeroMap;
 }(MapEngine));

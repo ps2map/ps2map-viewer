@@ -74,7 +74,6 @@ class HeroMap extends MapEngine {
             }
             this.camera.resetZoom();
             this.jumpTo({ x: size / 2, y: size / 2 });
-            this.dispatchViewportChangedEvent();
             // Add new layers
             layers.forEach(layer => {
                 this.layers.addLayer(layer);
@@ -88,5 +87,6 @@ class HeroMap extends MapEngine {
     jumpTo(point: Point): void {
         this.camera.jumpTo(point);
         this.renderer.redraw();
+        this.dispatchViewportChangedEvent();
     }
 }
