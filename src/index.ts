@@ -240,6 +240,29 @@ document.addEventListener("DOMContentLoaded", () => {
             continents[0] as never);
     });
 
+    const baseFinderBtn = document.getElementById("base-finder-btn") as HTMLInputElement;
+    baseFinderBtn.addEventListener("click", () => {
+        const finder = document.getElementById("base-finder") as HTMLSelectElement;
+        if (finder.value)
+            heroMap.jumpToBase(parseInt(finder.value, 10));
+    });
+    // TODO: This is hacky and should be replaced with a proper "onLoadDone"
+    // event tied to the game data and/or continent/server change loading.
+    setTimeout(() => {
+        const baseNames = heroMap.layers.getLayer<BaseNamesLayer>("names");
+        console.log(baseNames);
+        if (baseNames) {
+            const finder = document.getElementById("base-finder") as HTMLSelectElement;
+            baseNames.features.forEach(feature => {
+                console.log(feature.text);
+                const option = document.createElement("option");
+                option.value = feature.id.toString();
+                option.text = feature.text;
+                finder.appendChild(option);
+            });
+        }
+    }, 500);
+
     StateManager.subscribe(State.user.baseHovered, state => {
         const names = heroMap.getLayer<BaseNamesLayer>("names");
         if (names)

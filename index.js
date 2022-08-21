@@ -1097,6 +1097,16 @@ var HeroMap = (function (_super) {
         this.renderer.redraw();
         this.dispatchViewportChangedEvent();
     };
+    HeroMap.prototype.jumpToBase = function (baseId) {
+        var base = GameData.getInstance().getBase(baseId);
+        if (base) {
+            var _a = base.map_pos, x = _a[0], y = _a[1];
+            this.camera.resetZoom(true);
+            for (var i = 0; i < 4; i++)
+                this.camera.bumpZoom(1);
+            this.jumpTo({ x: x, y: y });
+        }
+    };
     return HeroMap;
 }(MapEngine));
 var Minimap = (function () {
@@ -1937,6 +1947,26 @@ document.addEventListener("DOMContentLoaded", function () {
         StateManager.dispatch(State.user.serverChanged, servers[0]);
         StateManager.dispatch(State.user.continentChanged, continents[0]);
     });
+    var baseFinderBtn = document.getElementById("base-finder-btn");
+    baseFinderBtn.addEventListener("click", function () {
+        var finder = document.getElementById("base-finder");
+        if (finder.value)
+            heroMap.jumpToBase(parseInt(finder.value, 10));
+    });
+    setTimeout(function () {
+        var baseNames = heroMap.layers.getLayer("names");
+        console.log(baseNames);
+        if (baseNames) {
+            var finder_1 = document.getElementById("base-finder");
+            baseNames.features.forEach(function (feature) {
+                console.log(feature.text);
+                var option = document.createElement("option");
+                option.value = feature.id.toString();
+                option.text = feature.text;
+                finder_1.appendChild(option);
+            });
+        }
+    }, 500);
     StateManager.subscribe(State.user.baseHovered, function (state) {
         var names = heroMap.getLayer("names");
         if (names)

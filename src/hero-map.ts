@@ -89,4 +89,15 @@ class HeroMap extends MapEngine {
         this.renderer.redraw();
         this.dispatchViewportChangedEvent();
     }
+
+    public jumpToBase(baseId: number): void {
+        const base = GameData.getInstance().getBase(baseId);
+        if (base) {
+            const [x, y] = base.map_pos;
+            this.camera.resetZoom(true);
+            for (let i = 0; i < 4; i++)
+                this.camera.bumpZoom(1);
+            this.jumpTo({ x, y });
+        }
+    }
 }
