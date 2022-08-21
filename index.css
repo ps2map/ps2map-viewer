@@ -70,6 +70,7 @@ body {
 
 .sidebar__widget__label {
     display: block;
+    margin-top: 10px;
 }
 
 #minimap {
