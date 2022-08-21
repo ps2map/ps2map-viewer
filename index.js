@@ -1710,12 +1710,13 @@ var State;
         user.continentChanged = "user/continentChanged";
         user.serverChanged = "user/serverChanged";
         user.baseHovered = "user/baseHovered";
+        user.layerVisibilityChanged = "user/layerVisibilityChanged";
     })(user = State.user || (State.user = {}));
     State.defaultUserState = {
         server: undefined,
         continent: undefined,
         hoveredBase: null,
-        canvas: []
+        layerVisibility: new Map()
     };
     function userReducer(state, action, data) {
         switch (action) {
@@ -1725,6 +1726,10 @@ var State;
                 return __assign(__assign({}, state), { continent: data });
             case user.baseHovered:
                 return __assign(__assign({}, state), { hoveredBase: data });
+            case user.layerVisibilityChanged:
+                var visibility = new Map(state.layerVisibility);
+                visibility.set(data.id, data.visible);
+                return __assign(__assign({}, state), { layerVisibility: visibility });
             default:
                 return state;
         }
@@ -1777,6 +1782,49 @@ function setUpHeroMap(element) {
                 heroMap.updateBaseOwnership(state.map.baseOwnership);
                 heroMap.jumpTo({ x: mapSize / 2, y: mapSize / 2 });
             });
+        });
+    });
+    var visibility = document.getElementById("layer-visibility-container");
+    StateManager.subscribe(State.user.layerVisibilityChanged, function (state) {
+        var vis = state.user.layerVisibility;
+        heroMap.layers.forEachLayer(function (layer) {
+            layer.setVisibility(vis.get(layer.id) || false);
+        });
+    });
+    var layerNameFromId = function (id) {
+        switch (id) {
+            case "names":
+                return "Facility Names";
+            case "hexes":
+                return "Facility Outlines";
+            case "lattice":
+                return "Lattice Links";
+            case "terrain":
+                return "Terrain";
+            default:
+                return "Unknown";
+        }
+    };
+    ["terrain", "hexes", "lattice", "names"].forEach(function (id) {
+        var name = layerNameFromId(id);
+        var checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = "layer-visibility-".concat(id);
+        checkbox.checked = true;
+        checkbox.addEventListener("change", function () {
+            StateManager.dispatch(State.user.layerVisibilityChanged, {
+                id: id,
+                visible: checkbox.checked
+            });
+        });
+        var label = document.createElement("label");
+        label.htmlFor = checkbox.id;
+        label.innerText = name;
+        visibility.appendChild(checkbox);
+        visibility.appendChild(label);
+        StateManager.dispatch(State.user.layerVisibilityChanged, {
+            id: id,
+            visible: true
         });
     });
     return heroMap;

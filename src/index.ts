@@ -40,6 +40,52 @@ function setUpHeroMap(element: HTMLDivElement): HeroMap {
             });
     });
 
+    // Set up layer visibility hooks
+    const visibility = document.getElementById(
+        "layer-visibility-container") as HTMLDivElement;
+    StateManager.subscribe(State.user.layerVisibilityChanged, state => {
+        const vis = state.user.layerVisibility;
+        heroMap.layers.forEachLayer(layer => {
+            layer.setVisibility(vis.get(layer.id) || false);
+        });
+    });
+
+    const layerNameFromId = (id: string) => {
+        switch (id) {
+            case "names":
+                return "Facility Names";
+            case "hexes":
+                return "Facility Outlines";
+            case "lattice":
+                return "Lattice Links";
+            case "terrain":
+                return "Terrain";
+            default:
+                return "Unknown";
+        }
+    };
+    ["terrain", "hexes", "lattice", "names"].forEach(id => {
+        const name = layerNameFromId(id);
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = `layer-visibility-${id}`;
+        checkbox.checked = true;
+        checkbox.addEventListener("change", () => {
+            StateManager.dispatch(State.user.layerVisibilityChanged, {
+                id, visible: checkbox.checked,
+            } as never);
+        });
+        const label = document.createElement("label");
+        label.htmlFor = checkbox.id;
+        label.innerText = name;
+        visibility.appendChild(checkbox);
+        visibility.appendChild(label);
+
+        StateManager.dispatch(State.user.layerVisibilityChanged, {
+            id, visible: true,
+        } as never);
+    });
+
     return heroMap;
 }
 

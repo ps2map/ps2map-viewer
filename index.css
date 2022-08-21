@@ -114,3 +114,9 @@ body {
 #sidebar-selector:hover {
     background-color: #666666;
 }
+
+#layer-visibility-container {
+    user-select: none;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+}
