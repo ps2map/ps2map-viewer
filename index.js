@@ -1548,6 +1548,7 @@ var Brush = (function (_super) {
         this._cursor.style.marginLeft = this._cursor.style.marginTop =
             this._cursor.style.borderRadius = "".concat(-Brush.size / 2, "px");
         this._cursor.style.border = "1px solid #fff";
+        this._cursor.style.borderRadius = "50%";
     };
     Brush.prototype._action = function (context, pos, scale) {
         var lineWeight = Brush.size * scale;
