@@ -98,10 +98,16 @@ body {
 }
 
 .logo {
+    position: relative;
+    width: 100%;
+    padding-top: 20%;
     display: block;
     cursor: pointer;
     color: var(--text-light);
     font-size: 12pt;
+    background-image: url(./img/logo-ps2.png);
+    background-size: 100%;
+    background-repeat: no-repeat;
     text-decoration: none;
     -webkit-user-select: none;
     user-select: none;
@@ -112,18 +118,15 @@ body {
     background-color: var(--widget-color-bg-hover);
 }
 
-.logo>img {
-    width: 100%;
-}
-
 .logo>span {
-    display: block;
-    text-align: center;
     margin-top: -10px;
     padding-bottom: 10px;
+    display: block;
+    text-align: center;
 }
 
 .sidebar h4 {
+    margin: 8px 0px;
     color: var(--text-light);
     font-size: 12pt;
     display: grid;
