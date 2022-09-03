@@ -1,6 +1,6 @@
 /// <reference path="./index.ts" />
 
-type _Subs = Map<string, ((state: State.AppState) => void)[]>;
+type _Subs = Map<string, ((state: State.AppState, data: unknown) => void)[]>;
 
 class StateManager {
     private static _state: State.AppState = {
@@ -21,10 +21,10 @@ class StateManager {
 
         const subscriptions = this._subscriptions.get(action);
         if (subscriptions)
-            subscriptions.forEach(callback => callback(this._state));
+            subscriptions.forEach(callback => callback(this._state, data));
     }
 
-    static subscribe(action: string, callback: (state: State.AppState) => void): void {
+    static subscribe(action: string, callback: (state: State.AppState, data: unknown) => void): void {
         let subscriptions = this._subscriptions.get(action);
         if (!subscriptions) {
             subscriptions = [];
@@ -33,7 +33,7 @@ class StateManager {
         subscriptions.push(callback);
     }
 
-    static unsubscribe(action: string, callback: (state: State.AppState) => void): void {
+    static unsubscribe(action: string, callback: (state: State.AppState, data: unknown) => void): void {
         const subscriptions = this._subscriptions.get(action);
         if (!subscriptions)
             return;

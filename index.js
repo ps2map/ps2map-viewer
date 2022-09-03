@@ -1806,11 +1806,23 @@ function setUpHeroMap(element) {
         });
     });
     var container = document.getElementById("layer-toggle-container");
-    StateManager.subscribe(State.user.layerVisibilityChanged, function (state) {
+    StateManager.subscribe(State.user.layerVisibilityChanged, function (state, data) {
         var vis = state.user.layerVisibility;
-        heroMap.layers.forEachLayer(function (layer) {
-            layer.setVisibility(vis.get(layer.id) || false);
-        });
+        var layer = heroMap.getLayer(data.id);
+        if (!layer)
+            return;
+        var isVisible = vis.get(layer.id) || false;
+        layer.setVisibility(isVisible);
+        var toggles = container.getElementsByTagName("div");
+        for (var i = 0; i < toggles.length; i++) {
+            var toggle = toggles[i];
+            if ((toggle === null || toggle === void 0 ? void 0 : toggle.getAttribute("data-layer-id")) !== layer.id)
+                continue;
+            if (isVisible)
+                toggle.setAttribute("data-active", "");
+            else
+                toggle.removeAttribute("data-active");
+        }
     });
     var layerNameFromId = function (id) {
         switch (id) {
@@ -1832,19 +1844,15 @@ function setUpHeroMap(element) {
         var name = layerNameFromId(id);
         var toggle = document.createElement("div");
         toggle.setAttribute("data-active", "");
-        toggle.setAttribute("layer-id", id);
+        toggle.setAttribute("data-layer-id", id);
         toggle.innerText = name;
-        toggle.addEventListener("change", function () {
+        toggle.addEventListener("click", function () {
             StateManager.dispatch(State.user.layerVisibilityChanged, {
                 id: id,
-                visible: toggle.hasAttribute("data-active")
+                visible: !toggle.hasAttribute("data-active")
             });
-        });
+        }, { passive: true });
         container.insertAdjacentElement("afterbegin", toggle);
-        StateManager.dispatch(State.user.layerVisibilityChanged, {
-            id: id,
-            visible: true
-        });
     });
     return heroMap;
 }
@@ -1922,7 +1930,7 @@ function setUpToolbox(heroMap) {
     StateManager.dispatch(State.toolbox.setTool, Tool.id);
 }
 document.addEventListener("DOMContentLoaded", function () {
-    var heroMap = setUpHeroMap(document.getElementById("map"));
+    setUpHeroMap(document.getElementById("map"));
     setUpSidebarResizing();
     var listener = new MapListener();
     listener.subscribe(function (name, data) {
@@ -2011,7 +2019,7 @@ var StateManager = (function () {
         this._state = newState;
         var subscriptions = this._subscriptions.get(action);
         if (subscriptions)
-            subscriptions.forEach(function (callback) { return callback(_this._state); });
+            subscriptions.forEach(function (callback) { return callback(_this._state, data); });
     };
     StateManager.subscribe = function (action, callback) {
         var subscriptions = this._subscriptions.get(action);

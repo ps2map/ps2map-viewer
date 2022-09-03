@@ -42,11 +42,24 @@ function setUpHeroMap(element: HTMLDivElement): HeroMap {
     // Set up layer visibility hooks
     const container = document.getElementById(
         "layer-toggle-container") as HTMLDivElement;
-    StateManager.subscribe(State.user.layerVisibilityChanged, state => {
+    StateManager.subscribe(State.user.layerVisibilityChanged, (state, data) => {
         const vis = state.user.layerVisibility;
-        heroMap.layers.forEachLayer(layer => {
-            layer.setVisibility(vis.get(layer.id) || false);
-        });
+        const layer = heroMap.getLayer((data as any).id);
+        if (!layer)
+            return;
+        const isVisible = vis.get(layer.id) || false;
+        layer.setVisibility(isVisible);
+        const toggles = container.getElementsByTagName("div");
+        for (let i = 0; i < toggles.length; i++) {
+            const toggle = toggles[i];
+            if (toggle?.getAttribute("data-layer-id") !== layer.id)
+                continue;
+
+            if (isVisible)
+                toggle.setAttribute("data-active", "");
+            else
+                toggle.removeAttribute("data-active");
+        }
     });
 
     const layerNameFromId = (id: string) => {
@@ -69,18 +82,14 @@ function setUpHeroMap(element: HTMLDivElement): HeroMap {
         const name = layerNameFromId(id);
         const toggle = document.createElement("div");
         toggle.setAttribute("data-active", "");
-        toggle.setAttribute("layer-id", id);
+        toggle.setAttribute("data-layer-id", id);
         toggle.innerText = name;
-        toggle.addEventListener("change", () => {
+        toggle.addEventListener("click", () => {
             StateManager.dispatch(State.user.layerVisibilityChanged, {
-                id, visible: toggle.hasAttribute("data-active"),
+                id, visible: !toggle.hasAttribute("data-active"),
             } as never);
-        });
+        }, { passive: true });
         container.insertAdjacentElement("afterbegin", toggle);
-
-        StateManager.dispatch(State.user.layerVisibilityChanged, {
-            id, visible: true,
-        } as never);
     });
 
     return heroMap;
@@ -185,7 +194,7 @@ function setUpToolbox(heroMap: HeroMap): void {
 document.addEventListener("DOMContentLoaded", () => {
 
     // Create main components
-    const heroMap = setUpHeroMap(
+    setUpHeroMap(
         document.getElementById("map") as HTMLDivElement);
     // const minimap = setUpMinimap(
     //     document.getElementById("minimap") as HTMLDivElement);
