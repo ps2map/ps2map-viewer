@@ -1,7 +1,6 @@
 /// <reference path="./interfaces/index.ts" />
 /// <reference path="./rest/index.ts" />
 /// <reference path="./hero-map.ts" />
-/// <reference path="./minimap.ts" />
 /// <reference path="./listener.ts" />
 /// <reference path="./toolbox/index.ts" />
 /// <reference path="./state/index.ts" />
@@ -9,11 +8,6 @@
 
 function setUpHeroMap(element: HTMLDivElement): HeroMap {
     const heroMap = new HeroMap(element);
-
-    document.addEventListener("ps2map_minimapjump", event => {
-        const evt = (event as CustomEvent<MinimapJumpEvent>).detail;
-        heroMap.jumpTo(evt.target);
-    }, { passive: true });
 
     heroMap.viewport.addEventListener("ps2map_basehover", event => {
         const evt = (event as CustomEvent<BaseHoverEvent>).detail;
@@ -122,39 +116,10 @@ function setUpMapPickers(): [HTMLSelectElement, HTMLSelectElement] {
     return [serverPicker, continentPicker];
 }
 
-function setUpMinimap(element: HTMLDivElement): Minimap {
-    const minimap = new Minimap(element);
-
-    document.addEventListener("ps2map_viewboxchanged", event => {
-        const evt = (event as CustomEvent<ViewBoxChangedEvent>).detail;
-        minimap.updateViewbox(evt.viewBox);
-    }, { passive: true });
-
-    StateManager.subscribe(State.map.baseCaptured, state => {
-        minimap.updateBaseOwnership(state.map.baseOwnership);
-    });
-
-    StateManager.subscribe(State.user.continentChanged, state => {
-        const cont = state.user.continent;
-        if (!cont)
-            return;
-        GameData.getInstance().setActiveContinent(cont)
-            .then(() => {
-                minimap.switchContinent(cont).then(() => {
-                    minimap.updateBaseOwnership(state.map.baseOwnership);
-                });
-            });
-    });
-
-    return minimap;
-}
-
 function setUpSidebarResizing(): void {
     const grabber = document.getElementById("sidebar-grabber") as HTMLDivElement;
     grabber.addEventListener("mousedown", (event: MouseEvent) => {
         document.body.style.cursor = "col-resize";
-        // const box = minimap.element.firstElementChild as HTMLDivElement;
-        // box.style.transition = "none";
 
         const sidebar = document.getElementById("sidebar") as HTMLDivElement;
         const initialWidth = sidebar.clientWidth;
@@ -177,7 +142,6 @@ function setUpSidebarResizing(): void {
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
             document.body.style.removeProperty("cursor");
-            // box.style.removeProperty("transition");
         };
 
         document.addEventListener("mousemove", onMove);
@@ -194,10 +158,7 @@ function setUpToolbox(heroMap: HeroMap): void {
 document.addEventListener("DOMContentLoaded", () => {
 
     // Create main components
-    setUpHeroMap(
-        document.getElementById("map") as HTMLDivElement);
-    // const minimap = setUpMinimap(
-    //     document.getElementById("minimap") as HTMLDivElement);
+    setUpHeroMap(document.getElementById("map") as HTMLDivElement);
 
     // Hook up sidebar resize grabber
     setUpSidebarResizing();

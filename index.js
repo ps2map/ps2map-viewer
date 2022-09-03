@@ -1124,116 +1124,6 @@ var HeroMap = (function (_super) {
     };
     return HeroMap;
 }(MapEngine));
-var Minimap = (function () {
-    function Minimap(element) {
-        var _this = this;
-        this._mapSize = 0;
-        this._baseOutlineSvg = undefined;
-        this._polygons = new Map();
-        this.element = element;
-        this.element.classList.add("ps2map__minimap");
-        this._cssSize = this.element.clientWidth;
-        this.element.style.height = "".concat(this._cssSize, "px");
-        this.element.style.fillOpacity = "0.5";
-        this._viewBoxElement = document.createElement("div");
-        this._viewBoxElement.classList.add("ps2map__minimap__viewbox");
-        this.element.appendChild(this._viewBoxElement);
-        this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), { passive: true });
-        var obj = new ResizeObserver(function () {
-            _this._cssSize = _this.element.clientWidth;
-            _this.element.style.height = "".concat(_this._cssSize, "px");
-        });
-        obj.observe(this.element);
-    }
-    Minimap.prototype.updateViewbox = function (viewBox) {
-        var mapSize = this._mapSize;
-        var relViewBox = {
-            top: (viewBox.top + mapSize * 0.5) / mapSize,
-            left: (viewBox.left + mapSize * 0.5) / mapSize,
-            bottom: (viewBox.bottom + mapSize * 0.5) / mapSize,
-            right: (viewBox.right + mapSize * 0.5) / mapSize
-        };
-        var relHeight = relViewBox.top - relViewBox.bottom;
-        var relWidth = relViewBox.right - relViewBox.left;
-        Object.assign(this._viewBoxElement.style, {
-            height: "".concat(this._cssSize * relHeight, "px"),
-            width: "".concat(this._cssSize * relWidth, "px"),
-            left: "".concat(this._cssSize * relViewBox.left, "px"),
-            bottom: "".concat(this._cssSize * relViewBox.bottom, "px")
-        });
-    };
-    Minimap.prototype.updateBaseOwnership = function (map) {
-        var _this = this;
-        map.forEach(function (factionId, baseId) {
-            var polygon = _this._polygons.get(baseId);
-            if (polygon)
-                polygon.style.fill =
-                    "var(".concat(_this._factionIdToCssVar(factionId), ")");
-        });
-    };
-    Minimap.prototype._factionIdToCssVar = function (factionId) {
-        var code = GameData.getInstance().getFaction(factionId).code;
-        return "--ps2map__faction-".concat(code, "-colour");
-    };
-    Minimap.prototype.switchContinent = function (continent) {
-        return __awaiter(this, void 0, void 0, function () {
-            var svg;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, fetchContinentOutlines(continent.code)];
-                    case 1:
-                        svg = _a.sent();
-                        this._mapSize = continent.map_size;
-                        this.element.style.backgroundImage =
-                            "url(".concat(UrlGen.mapBackground(continent.code), ")");
-                        if (this._baseOutlineSvg)
-                            this.element.removeChild(this._baseOutlineSvg);
-                        this._polygons = new Map();
-                        svg.classList.add("ps2map__minimap__hexes");
-                        this._baseOutlineSvg = svg;
-                        this.element.appendChild(this._baseOutlineSvg);
-                        svg.querySelectorAll("polygon").forEach(function (poly) {
-                            _this._polygons.set(parseInt(poly.id, 10), poly);
-                            poly.id = _this._polygonIdFromBaseId(poly.id);
-                        });
-                        return [2];
-                }
-            });
-        });
-    };
-    Minimap.prototype._buildMinimapJumpEvent = function (target) {
-        return new CustomEvent("ps2map_minimapjump", {
-            detail: { target: target }, bubbles: true, cancelable: true
-        });
-    };
-    Minimap.prototype._jumpToPosition = function (evtDown) {
-        var _this = this;
-        if (this._mapSize === 0 || evtDown.button !== 0)
-            return;
-        var drag = rafDebounce(function (evtDrag) {
-            var rect = _this.element.getBoundingClientRect();
-            var relX = (evtDrag.clientX - rect.left) / (rect.width);
-            var relY = (evtDrag.clientY - rect.top) / (rect.height);
-            var target = {
-                x: Math.round(relX * _this._mapSize) + _this._mapSize * -0.5,
-                y: Math.round((1 - relY) * _this._mapSize) + _this._mapSize * -0.5
-            };
-            _this.element.dispatchEvent(_this._buildMinimapJumpEvent(target));
-        });
-        var up = function () {
-            _this.element.removeEventListener("mousemove", drag);
-            document.removeEventListener("mouseup", up);
-        };
-        document.addEventListener("mouseup", up);
-        this.element.addEventListener("mousemove", drag, { passive: true });
-        drag(evtDown);
-    };
-    Minimap.prototype._polygonIdFromBaseId = function (baseId) {
-        return "minimap-baseId-".concat(baseId);
-    };
-    return Minimap;
-}());
 var MapListener = (function () {
     function MapListener(server) {
         if (server === void 0) { server = undefined; }
@@ -1780,10 +1670,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 };
 function setUpHeroMap(element) {
     var heroMap = new HeroMap(element);
-    document.addEventListener("ps2map_minimapjump", function (event) {
-        var evt = event.detail;
-        heroMap.jumpTo(evt.target);
-    }, { passive: true });
     heroMap.viewport.addEventListener("ps2map_basehover", function (event) {
         var evt = event.detail;
         var base = GameData.getInstance().getBase(evt.baseId);
@@ -1875,28 +1761,6 @@ function setUpMapPickers() {
     });
     return [serverPicker, continentPicker];
 }
-function setUpMinimap(element) {
-    var minimap = new Minimap(element);
-    document.addEventListener("ps2map_viewboxchanged", function (event) {
-        var evt = event.detail;
-        minimap.updateViewbox(evt.viewBox);
-    }, { passive: true });
-    StateManager.subscribe(State.map.baseCaptured, function (state) {
-        minimap.updateBaseOwnership(state.map.baseOwnership);
-    });
-    StateManager.subscribe(State.user.continentChanged, function (state) {
-        var cont = state.user.continent;
-        if (!cont)
-            return;
-        GameData.getInstance().setActiveContinent(cont)
-            .then(function () {
-            minimap.switchContinent(cont).then(function () {
-                minimap.updateBaseOwnership(state.map.baseOwnership);
-            });
-        });
-    });
-    return minimap;
-}
 function setUpSidebarResizing() {
     var grabber = document.getElementById("sidebar-grabber");
     grabber.addEventListener("mousedown", function (event) {
@@ -1962,6 +1826,116 @@ document.addEventListener("DOMContentLoaded", function () {
         StateManager.dispatch(State.user.continentChanged, continents[0]);
     });
 });
+var Minimap = (function () {
+    function Minimap(element) {
+        var _this = this;
+        this._mapSize = 0;
+        this._baseOutlineSvg = undefined;
+        this._polygons = new Map();
+        this.element = element;
+        this.element.classList.add("ps2map__minimap");
+        this._cssSize = this.element.clientWidth;
+        this.element.style.height = "".concat(this._cssSize, "px");
+        this.element.style.fillOpacity = "0.5";
+        this._viewBoxElement = document.createElement("div");
+        this._viewBoxElement.classList.add("ps2map__minimap__viewbox");
+        this.element.appendChild(this._viewBoxElement);
+        this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), { passive: true });
+        var obj = new ResizeObserver(function () {
+            _this._cssSize = _this.element.clientWidth;
+            _this.element.style.height = "".concat(_this._cssSize, "px");
+        });
+        obj.observe(this.element);
+    }
+    Minimap.prototype.updateViewbox = function (viewBox) {
+        var mapSize = this._mapSize;
+        var relViewBox = {
+            top: (viewBox.top + mapSize * 0.5) / mapSize,
+            left: (viewBox.left + mapSize * 0.5) / mapSize,
+            bottom: (viewBox.bottom + mapSize * 0.5) / mapSize,
+            right: (viewBox.right + mapSize * 0.5) / mapSize
+        };
+        var relHeight = relViewBox.top - relViewBox.bottom;
+        var relWidth = relViewBox.right - relViewBox.left;
+        Object.assign(this._viewBoxElement.style, {
+            height: "".concat(this._cssSize * relHeight, "px"),
+            width: "".concat(this._cssSize * relWidth, "px"),
+            left: "".concat(this._cssSize * relViewBox.left, "px"),
+            bottom: "".concat(this._cssSize * relViewBox.bottom, "px")
+        });
+    };
+    Minimap.prototype.updateBaseOwnership = function (map) {
+        var _this = this;
+        map.forEach(function (factionId, baseId) {
+            var polygon = _this._polygons.get(baseId);
+            if (polygon)
+                polygon.style.fill =
+                    "var(".concat(_this._factionIdToCssVar(factionId), ")");
+        });
+    };
+    Minimap.prototype._factionIdToCssVar = function (factionId) {
+        var code = GameData.getInstance().getFaction(factionId).code;
+        return "--ps2map__faction-".concat(code, "-colour");
+    };
+    Minimap.prototype.switchContinent = function (continent) {
+        return __awaiter(this, void 0, void 0, function () {
+            var svg;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, fetchContinentOutlines(continent.code)];
+                    case 1:
+                        svg = _a.sent();
+                        this._mapSize = continent.map_size;
+                        this.element.style.backgroundImage =
+                            "url(".concat(UrlGen.mapBackground(continent.code), ")");
+                        if (this._baseOutlineSvg)
+                            this.element.removeChild(this._baseOutlineSvg);
+                        this._polygons = new Map();
+                        svg.classList.add("ps2map__minimap__hexes");
+                        this._baseOutlineSvg = svg;
+                        this.element.appendChild(this._baseOutlineSvg);
+                        svg.querySelectorAll("polygon").forEach(function (poly) {
+                            _this._polygons.set(parseInt(poly.id, 10), poly);
+                            poly.id = _this._polygonIdFromBaseId(poly.id);
+                        });
+                        return [2];
+                }
+            });
+        });
+    };
+    Minimap.prototype._buildMinimapJumpEvent = function (target) {
+        return new CustomEvent("ps2map_minimapjump", {
+            detail: { target: target }, bubbles: true, cancelable: true
+        });
+    };
+    Minimap.prototype._jumpToPosition = function (evtDown) {
+        var _this = this;
+        if (this._mapSize === 0 || evtDown.button !== 0)
+            return;
+        var drag = rafDebounce(function (evtDrag) {
+            var rect = _this.element.getBoundingClientRect();
+            var relX = (evtDrag.clientX - rect.left) / (rect.width);
+            var relY = (evtDrag.clientY - rect.top) / (rect.height);
+            var target = {
+                x: Math.round(relX * _this._mapSize) + _this._mapSize * -0.5,
+                y: Math.round((1 - relY) * _this._mapSize) + _this._mapSize * -0.5
+            };
+            _this.element.dispatchEvent(_this._buildMinimapJumpEvent(target));
+        });
+        var up = function () {
+            _this.element.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", up);
+        };
+        document.addEventListener("mouseup", up);
+        this.element.addEventListener("mousemove", drag, { passive: true });
+        drag(evtDown);
+    };
+    Minimap.prototype._polygonIdFromBaseId = function (baseId) {
+        return "minimap-baseId-".concat(baseId);
+    };
+    return Minimap;
+}());
 var MapRenderer = (function () {
     function MapRenderer(camera, layers) {
         this._camera = camera;
