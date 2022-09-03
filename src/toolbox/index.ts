@@ -7,7 +7,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     const availableTools = [Tool, Cursor, BaseInfo, Eraser, Brush];
-    const toolInstances = new Map<string, Tool>();
+    const toolInstances = new Map<string, { tool: Tool, help: string }>();
 
     // Create toolbar buttons
     const toolBox = document.getElementById("toolbox") as HTMLDivElement;
@@ -45,28 +45,37 @@ document.addEventListener("DOMContentLoaded", () => {
             const map = state.toolbox.map;
             if (!map)
                 return;
-            const toolPanel = document.getElementById("tool-panel") as HTMLDivElement;
+            const dummy = document.createElement("div");
             availableTools.forEach(tool => {
                 if (tool.id === state.toolbox.current)
                     toolInstances.set(
                         tool.id,
-                        new tool(map.viewport, map, toolPanel));
+                        {
+                            tool: new tool(map.viewport, map, dummy),
+                            help: tool.help
+                        });
             });
         }
-        toolInstances.forEach((instance, id) => {
+        toolInstances.forEach((data, id) => {
+            const instance = data.tool;
             if (instance.isActive() && id !== state.toolbox.current) {
                 instance.deactivate();
                 document.querySelector<HTMLDivElement>(
                     `[data-tool-id="${id}"]`)
                     ?.removeAttribute("data-active");
+                document.getElementById("tool-help")!.innerText = "";
             }
         });
-        const current = toolInstances.get(state.toolbox.current || "");
+        const data = toolInstances.get(state.toolbox.current || "");
+        const current = data?.tool;
+        const help = data?.help;
         if (current && !current.isActive()) {
             current.activate();
             document.querySelector<HTMLDivElement>(
                 `[data-tool-id="${state.toolbox.current}"]`)
                 ?.setAttribute("data-active", "");
+            if (help)
+                document.getElementById("tool-help")!.innerText = help;
         }
     });
 });

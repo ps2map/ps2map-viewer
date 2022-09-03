@@ -4,6 +4,7 @@ class BaseInfo extends Tool {
 
     static readonly id = "base-info";
     static readonly displayName = "Base Info";
+    static readonly help = "Hover over a base for contextual information.";
     static readonly hotkey = "f";
 
     constructor(

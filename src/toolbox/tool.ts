@@ -8,6 +8,7 @@ class Tool {
 
     static readonly id: string = "none";
     static readonly displayName: string = "None";
+    static readonly help: string = "";
     static readonly hotkey: string | null = null;
 
     protected readonly _map: HeroMap;

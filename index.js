@@ -1212,6 +1212,7 @@ var Tool = (function () {
     };
     Tool.id = "none";
     Tool.displayName = "None";
+    Tool.help = "";
     Tool.hotkey = null;
     return Tool;
 }());
@@ -1339,6 +1340,7 @@ var Cursor = (function (_super) {
     };
     Cursor.id = "cursor";
     Cursor.displayName = "Map Cursor";
+    Cursor.help = "Displays the current map coordinates.";
     Cursor.hotkey = "q";
     return Cursor;
 }(Tool));
@@ -1407,6 +1409,7 @@ var BaseInfo = (function (_super) {
     };
     BaseInfo.id = "base-info";
     BaseInfo.displayName = "Base Info";
+    BaseInfo.help = "Hover over a base for contextual information.";
     BaseInfo.hotkey = "f";
     return BaseInfo;
 }(Tool));
@@ -1437,6 +1440,9 @@ var Eraser = (function (_super) {
     };
     Eraser.id = "eraser";
     Eraser.displayName = "Eraser";
+    Eraser.help = "Hold LMB and drag on the map to erase. LMB "
+        + "panning is disabled while Brush tool is active, use MMB to drag "
+        + "while erasing. Eraser size is relative to your current zoom level.";
     Eraser.hotkey = "e";
     Eraser.size = 40;
     return Eraser;
@@ -1502,6 +1508,9 @@ var Brush = (function (_super) {
     Brush.color = "rgb(255, 255, 0)";
     Brush.id = "brush";
     Brush.displayName = "Brush";
+    Brush.help = "Hold LMB and drag on the map to draw. LMB "
+        + "panning is disabled while Brush tool is active, use MMB to drag "
+        + "while drawing. Brush size is relative to your current zoom level.";
     Brush.hotkey = "b";
     return Brush;
 }(CanvasTool));
@@ -1540,23 +1549,32 @@ document.addEventListener("DOMContentLoaded", function () {
             var map_1 = state.toolbox.map;
             if (!map_1)
                 return;
-            var toolPanel_1 = document.getElementById("tool-panel");
+            var dummy_1 = document.createElement("div");
             availableTools.forEach(function (tool) {
                 if (tool.id === state.toolbox.current)
-                    toolInstances.set(tool.id, new tool(map_1.viewport, map_1, toolPanel_1));
+                    toolInstances.set(tool.id, {
+                        tool: new tool(map_1.viewport, map_1, dummy_1),
+                        help: tool.help
+                    });
             });
         }
-        toolInstances.forEach(function (instance, id) {
+        toolInstances.forEach(function (data, id) {
             var _a;
+            var instance = data.tool;
             if (instance.isActive() && id !== state.toolbox.current) {
                 instance.deactivate();
                 (_a = document.querySelector("[data-tool-id=\"".concat(id, "\"]"))) === null || _a === void 0 ? void 0 : _a.removeAttribute("data-active");
+                document.getElementById("tool-help").innerText = "";
             }
         });
-        var current = toolInstances.get(state.toolbox.current || "");
+        var data = toolInstances.get(state.toolbox.current || "");
+        var current = data === null || data === void 0 ? void 0 : data.tool;
+        var help = data === null || data === void 0 ? void 0 : data.help;
         if (current && !current.isActive()) {
             current.activate();
             (_a = document.querySelector("[data-tool-id=\"".concat(state.toolbox.current, "\"]"))) === null || _a === void 0 ? void 0 : _a.setAttribute("data-active", "");
+            if (help)
+                document.getElementById("tool-help").innerText = help;
         }
     });
 });

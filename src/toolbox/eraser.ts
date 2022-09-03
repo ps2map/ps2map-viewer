@@ -4,6 +4,9 @@ class Eraser extends CanvasTool {
 
     static readonly id = "eraser";
     static readonly displayName = "Eraser";
+    static readonly help = "Hold LMB and drag on the map to erase. LMB "
+        + "panning is disabled while Brush tool is active, use MMB to drag "
+        + "while erasing. Eraser size is relative to your current zoom level.";
     static readonly hotkey = "e";
 
     static size = 40;

@@ -7,6 +7,9 @@ class Brush extends CanvasTool {
 
     static readonly id = "brush";
     static readonly displayName = "Brush";
+    static readonly help = "Hold LMB and drag on the map to draw. LMB "
+        + "panning is disabled while Brush tool is active, use MMB to drag "
+        + "while drawing. Brush size is relative to your current zoom level.";
     static readonly hotkey = "b";
 
     private _last: Readonly<Point> | null = null;
