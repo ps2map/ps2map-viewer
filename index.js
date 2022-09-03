@@ -1794,7 +1794,7 @@ function setUpToolbox(heroMap) {
     StateManager.dispatch(State.toolbox.setTool, Tool.id);
 }
 document.addEventListener("DOMContentLoaded", function () {
-    setUpHeroMap(document.getElementById("map"));
+    var heroMap = setUpHeroMap(document.getElementById("map"));
     setUpSidebarResizing();
     var listener = new MapListener();
     listener.subscribe(function (name, data) {
@@ -1824,6 +1824,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         StateManager.dispatch(State.user.serverChanged, servers[0]);
         StateManager.dispatch(State.user.continentChanged, continents[0]);
+    });
+    StateManager.subscribe(State.user.baseHovered, function (state) {
+        var names = heroMap.getLayer("names");
+        if (names)
+            names.setHoveredBase(state.user.hoveredBase);
     });
 });
 var Minimap = (function () {

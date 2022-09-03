@@ -158,7 +158,8 @@ function setUpToolbox(heroMap: HeroMap): void {
 document.addEventListener("DOMContentLoaded", () => {
 
     // Create main components
-    setUpHeroMap(document.getElementById("map") as HTMLDivElement);
+    const heroMap = setUpHeroMap(
+        document.getElementById("map") as HTMLDivElement);
 
     // Hook up sidebar resize grabber
     setUpSidebarResizing();
@@ -228,9 +229,9 @@ document.addEventListener("DOMContentLoaded", () => {
     //     options.forEach(option => finder.appendChild(option));
     // });
 
-    // StateManager.subscribe(State.user.baseHovered, state => {
-    //     const names = heroMap.getLayer<BaseNamesLayer>("names");
-    //     if (names)
-    //         names.setHoveredBase(state.user.hoveredBase);
-    // });
+    StateManager.subscribe(State.user.baseHovered, state => {
+        const names = heroMap.getLayer<BaseNamesLayer>("names");
+        if (names)
+            names.setHoveredBase(state.user.hoveredBase);
+    });
 });
