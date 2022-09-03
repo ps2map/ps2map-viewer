@@ -7,13 +7,15 @@
   <meta name="viewport" content="width=device-width" />
   <title>Indar - PS2Map</title>
   <link rel="stylesheet" href="./index.css" />
+  <link rel="stylesheet" href="./ps2-map.css" />
+  <script src="./index.js"></script>
 </head>
 
 <body>
-  <div class="map"></div>
+  <div id="map"></div>
 
   <aside class="sidebar">
-    <div class="sidebar-grabber"></div>
+    <div id="sidebar-grabber"></div>
     <div class="sidebar-scroll">
 
       <a href="#" class="logo">
@@ -26,35 +28,20 @@
       </p>
       <div class="map-selector">
         <select id="continent-dropdown" title="Continent">
-          <option value="amerish">Amerish</option>
-          <option value="emerald">Esamir</option>
-          <option value="hossin">Hossin</option>
-          <option value="indar">Indar</option>
-          <option value="oshur">Oshur</option>
         </select>
         <select id="server-dropdown" title="Server">
           <option>Select a server</option>
           <option disabled>─────────────</option>
-          <option value="cobalt">Cobalt</option>
-          <option value="connery">Connery</option>
-          <option value="emerald">Emerald</option>
-          <option value="jaeger">Jaeger</option>
-          <option value="miller">Miller</option>
-          <option value="soltech">SolTech</option>
         </select>
         <div class="button">Select</div>
         <div class="button">Connect</div>
       </div>
 
       <h4>Layers</h4>
-      <div class="grid-col-2 ">
-        <div class="layer-toggle" data-active>Terrain</div>
-        <div class="layer-toggle">Territory Control</div>
-        <div class="layer-toggle">Lattice Links</div>
-        <div class="layer-toggle">Facility Icons</div>
-        <div class="layer-toggle" data-disabled>Control Points</div>
-        <div class="layer-toggle" data-disabled>Air Spawns</div>
-        <div class="layer-toggle" data-disabled>Drawing Canvas</div>
+      <div id="layer-toggle-container" class="grid-col-2">
+        <div data-disabled>Control Points</div>
+        <div data-disabled>Air Spawns</div>
+        <div data-disabled>Drawing Canvas</div>
       </div>
 
       <h4>Tools</h4>

@@ -40,8 +40,8 @@ function setUpHeroMap(element: HTMLDivElement): HeroMap {
     });
 
     // Set up layer visibility hooks
-    const visibility = document.getElementById(
-        "layer-visibility-container") as HTMLDivElement;
+    const container = document.getElementById(
+        "layer-toggle-container") as HTMLDivElement;
     StateManager.subscribe(State.user.layerVisibilityChanged, state => {
         const vis = state.user.layerVisibility;
         heroMap.layers.forEachLayer(layer => {
@@ -65,22 +65,18 @@ function setUpHeroMap(element: HTMLDivElement): HeroMap {
                 return "Unknown";
         }
     };
-    ["terrain", "hexes", "lattice", "names", "canvas"].forEach(id => {
+    ["canvas", "names", "lattice", "hexes", "terrain"].forEach(id => {
         const name = layerNameFromId(id);
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.id = `layer-visibility-${id}`;
-        checkbox.checked = true;
-        checkbox.addEventListener("change", () => {
+        const toggle = document.createElement("div");
+        toggle.setAttribute("data-active", "");
+        toggle.setAttribute("layer-id", id);
+        toggle.innerText = name;
+        toggle.addEventListener("change", () => {
             StateManager.dispatch(State.user.layerVisibilityChanged, {
-                id, visible: checkbox.checked,
+                id, visible: toggle.hasAttribute("data-active"),
             } as never);
         });
-        const label = document.createElement("label");
-        label.htmlFor = checkbox.id;
-        label.innerText = name;
-        visibility.appendChild(checkbox);
-        visibility.appendChild(label);
+        container.insertAdjacentElement("afterbegin", toggle);
 
         StateManager.dispatch(State.user.layerVisibilityChanged, {
             id, visible: true,
@@ -94,7 +90,7 @@ function setUpMapPickers(): [HTMLSelectElement, HTMLSelectElement] {
 
     // Server picker
     const serverPicker = document.getElementById(
-        "server-picker") as HTMLSelectElement;
+        "server-dropdown") as HTMLSelectElement;
     serverPicker.addEventListener("change", () => {
         const server = GameData.getInstance().servers()
             .find(s => s.id === parseInt(serverPicker.value, 10));
@@ -105,7 +101,7 @@ function setUpMapPickers(): [HTMLSelectElement, HTMLSelectElement] {
 
     // Continent picker
     const continentPicker = document.getElementById(
-        "continent-picker") as HTMLSelectElement;
+        "continent-dropdown") as HTMLSelectElement;
     continentPicker.addEventListener("change", () => {
         const continent = GameData.getInstance().continents()
             .find(c => c.id === parseInt(continentPicker.value, 10));
@@ -144,12 +140,12 @@ function setUpMinimap(element: HTMLDivElement): Minimap {
     return minimap;
 }
 
-function setUpSidebarResizing(minimap: Minimap): void {
-    const grabber = document.getElementById("sidebar-selector") as HTMLDivElement;
+function setUpSidebarResizing(): void {
+    const grabber = document.getElementById("sidebar-grabber") as HTMLDivElement;
     grabber.addEventListener("mousedown", (event: MouseEvent) => {
         document.body.style.cursor = "col-resize";
-        const box = minimap.element.firstElementChild as HTMLDivElement;
-        box.style.transition = "none";
+        // const box = minimap.element.firstElementChild as HTMLDivElement;
+        // box.style.transition = "none";
 
         const sidebar = document.getElementById("sidebar") as HTMLDivElement;
         const initialWidth = sidebar.clientWidth;
@@ -172,7 +168,7 @@ function setUpSidebarResizing(minimap: Minimap): void {
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
             document.body.style.removeProperty("cursor");
-            box.style.removeProperty("transition");
+            // box.style.removeProperty("transition");
         };
 
         document.addEventListener("mousemove", onMove);
@@ -190,12 +186,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Create main components
     const heroMap = setUpHeroMap(
-        document.getElementById("hero-map") as HTMLDivElement);
-    const minimap = setUpMinimap(
-        document.getElementById("minimap") as HTMLDivElement);
+        document.getElementById("map") as HTMLDivElement);
+    // const minimap = setUpMinimap(
+    //     document.getElementById("minimap") as HTMLDivElement);
 
     // Hook up sidebar resize grabber
-    setUpSidebarResizing(minimap);
+    setUpSidebarResizing();
 
     // Create map state listener
     const listener = new MapListener();
@@ -208,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Set up toolbox
-    setUpToolbox(heroMap);
+    // setUpToolbox(heroMap);
 
     // Hook up map pickers
     const [serverPicker, continentPicker] = setUpMapPickers();
@@ -240,31 +236,31 @@ document.addEventListener("DOMContentLoaded", () => {
             continents[0] as never);
     });
 
-    const baseFinderBtn = document.getElementById("base-finder-btn") as HTMLInputElement;
-    baseFinderBtn.addEventListener("click", () => {
-        const finder = document.getElementById("base-finder") as HTMLSelectElement;
-        if (finder.value)
-            heroMap.jumpToBase(parseInt(finder.value, 10));
-    });
-    StateManager.subscribe(State.user.continentChanged, async state => {
-        const bases = await GameData.getInstance().getBasesForContinent(
-            state.user.continent);
-        bases.sort((a, b) => a.name.localeCompare(b.name));
-        const options: HTMLOptionElement[] = [];
-        bases.forEach(base => {
-            const option = document.createElement("option");
-            option.value = base.id.toString();
-            option.text = base.name;
-            options.push(option);
-        });
-        const finder = document.getElementById("base-finder") as HTMLSelectElement;
-        finder.innerHTML = "";
-        options.forEach(option => finder.appendChild(option));
-    });
+    // const baseFinderBtn = document.getElementById("base-finder-btn") as HTMLInputElement;
+    // baseFinderBtn.addEventListener("click", () => {
+    //     const finder = document.getElementById("base-finder") as HTMLSelectElement;
+    //     if (finder.value)
+    //         heroMap.jumpToBase(parseInt(finder.value, 10));
+    // });
+    // StateManager.subscribe(State.user.continentChanged, async state => {
+    //     const bases = await GameData.getInstance().getBasesForContinent(
+    //         state.user.continent);
+    //     bases.sort((a, b) => a.name.localeCompare(b.name));
+    //     const options: HTMLOptionElement[] = [];
+    //     bases.forEach(base => {
+    //         const option = document.createElement("option");
+    //         option.value = base.id.toString();
+    //         option.text = base.name;
+    //         options.push(option);
+    //     });
+    //     const finder = document.getElementById("base-finder") as HTMLSelectElement;
+    //     finder.innerHTML = "";
+    //     options.forEach(option => finder.appendChild(option));
+    // });
 
-    StateManager.subscribe(State.user.baseHovered, state => {
-        const names = heroMap.getLayer<BaseNamesLayer>("names");
-        if (names)
-            names.setHoveredBase(state.user.hoveredBase);
-    });
+    // StateManager.subscribe(State.user.baseHovered, state => {
+    //     const names = heroMap.getLayer<BaseNamesLayer>("names");
+    //     if (names)
+    //         names.setHoveredBase(state.user.hoveredBase);
+    // });
 });

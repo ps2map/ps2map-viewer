@@ -1805,7 +1805,7 @@ function setUpHeroMap(element) {
             });
         });
     });
-    var visibility = document.getElementById("layer-visibility-container");
+    var container = document.getElementById("layer-toggle-container");
     StateManager.subscribe(State.user.layerVisibilityChanged, function (state) {
         var vis = state.user.layerVisibility;
         heroMap.layers.forEachLayer(function (layer) {
@@ -1828,23 +1828,19 @@ function setUpHeroMap(element) {
                 return "Unknown";
         }
     };
-    ["terrain", "hexes", "lattice", "names", "canvas"].forEach(function (id) {
+    ["canvas", "names", "lattice", "hexes", "terrain"].forEach(function (id) {
         var name = layerNameFromId(id);
-        var checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.id = "layer-visibility-".concat(id);
-        checkbox.checked = true;
-        checkbox.addEventListener("change", function () {
+        var toggle = document.createElement("div");
+        toggle.setAttribute("data-active", "");
+        toggle.setAttribute("layer-id", id);
+        toggle.innerText = name;
+        toggle.addEventListener("change", function () {
             StateManager.dispatch(State.user.layerVisibilityChanged, {
                 id: id,
-                visible: checkbox.checked
+                visible: toggle.hasAttribute("data-active")
             });
         });
-        var label = document.createElement("label");
-        label.htmlFor = checkbox.id;
-        label.innerText = name;
-        visibility.appendChild(checkbox);
-        visibility.appendChild(label);
+        container.insertAdjacentElement("afterbegin", toggle);
         StateManager.dispatch(State.user.layerVisibilityChanged, {
             id: id,
             visible: true
@@ -1853,7 +1849,7 @@ function setUpHeroMap(element) {
     return heroMap;
 }
 function setUpMapPickers() {
-    var serverPicker = document.getElementById("server-picker");
+    var serverPicker = document.getElementById("server-dropdown");
     serverPicker.addEventListener("change", function () {
         var server = GameData.getInstance().servers()
             .find(function (s) { return s.id === parseInt(serverPicker.value, 10); });
@@ -1861,7 +1857,7 @@ function setUpMapPickers() {
             throw new Error("Server ".concat(serverPicker.value, " not found"));
         StateManager.dispatch(State.user.serverChanged, server);
     });
-    var continentPicker = document.getElementById("continent-picker");
+    var continentPicker = document.getElementById("continent-dropdown");
     continentPicker.addEventListener("change", function () {
         var continent = GameData.getInstance().continents()
             .find(function (c) { return c.id === parseInt(continentPicker.value, 10); });
@@ -1893,12 +1889,10 @@ function setUpMinimap(element) {
     });
     return minimap;
 }
-function setUpSidebarResizing(minimap) {
-    var grabber = document.getElementById("sidebar-selector");
+function setUpSidebarResizing() {
+    var grabber = document.getElementById("sidebar-grabber");
     grabber.addEventListener("mousedown", function (event) {
         document.body.style.cursor = "col-resize";
-        var box = minimap.element.firstElementChild;
-        box.style.transition = "none";
         var sidebar = document.getElementById("sidebar");
         var initialWidth = sidebar.clientWidth;
         var minWidth = 0.1;
@@ -1918,7 +1912,6 @@ function setUpSidebarResizing(minimap) {
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
             document.body.style.removeProperty("cursor");
-            box.style.removeProperty("transition");
         };
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
@@ -1929,9 +1922,8 @@ function setUpToolbox(heroMap) {
     StateManager.dispatch(State.toolbox.setTool, Tool.id);
 }
 document.addEventListener("DOMContentLoaded", function () {
-    var heroMap = setUpHeroMap(document.getElementById("hero-map"));
-    var minimap = setUpMinimap(document.getElementById("minimap"));
-    setUpSidebarResizing(minimap);
+    var heroMap = setUpHeroMap(document.getElementById("map"));
+    setUpSidebarResizing();
     var listener = new MapListener();
     listener.subscribe(function (name, data) {
         StateManager.dispatch("map/".concat(name), data);
@@ -1940,7 +1932,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (state.user.server)
             listener.switchServer(state.user.server);
     });
-    setUpToolbox(heroMap);
     var _a = setUpMapPickers(), serverPicker = _a[0], continentPicker = _a[1];
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
@@ -1961,39 +1952,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         StateManager.dispatch(State.user.serverChanged, servers[0]);
         StateManager.dispatch(State.user.continentChanged, continents[0]);
-    });
-    var baseFinderBtn = document.getElementById("base-finder-btn");
-    baseFinderBtn.addEventListener("click", function () {
-        var finder = document.getElementById("base-finder");
-        if (finder.value)
-            heroMap.jumpToBase(parseInt(finder.value, 10));
-    });
-    StateManager.subscribe(State.user.continentChanged, function (state) { return __awaiter(void 0, void 0, void 0, function () {
-        var bases, options, finder;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4, GameData.getInstance().getBasesForContinent(state.user.continent)];
-                case 1:
-                    bases = _a.sent();
-                    bases.sort(function (a, b) { return a.name.localeCompare(b.name); });
-                    options = [];
-                    bases.forEach(function (base) {
-                        var option = document.createElement("option");
-                        option.value = base.id.toString();
-                        option.text = base.name;
-                        options.push(option);
-                    });
-                    finder = document.getElementById("base-finder");
-                    finder.innerHTML = "";
-                    options.forEach(function (option) { return finder.appendChild(option); });
-                    return [2];
-            }
-        });
-    }); });
-    StateManager.subscribe(State.user.baseHovered, function (state) {
-        var names = heroMap.getLayer("names");
-        if (names)
-            names.setHoveredBase(state.user.hoveredBase);
     });
 });
 var MapRenderer = (function () {
