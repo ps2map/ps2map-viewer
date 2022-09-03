@@ -150,8 +150,8 @@ function setUpSidebarResizing(): void {
 }
 
 function setUpToolbox(heroMap: HeroMap): void {
-    StateManager.dispatch(State.toolbox.setup, heroMap as never);
-    StateManager.dispatch(State.toolbox.setTool, Tool.id as never);
+    StateManager.dispatch(State.toolbox.setup, { map: heroMap } as never);
+    StateManager.dispatch(State.toolbox.setTool, { id: Tool.id } as never);
 }
 
 /** Initialisation hook for components that need to be run on DOM load. */
@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Set up toolbox
-    // setUpToolbox(heroMap);
+    setUpToolbox(heroMap);
 
     // Hook up map pickers
     const [serverPicker, continentPicker] = setUpMapPickers();

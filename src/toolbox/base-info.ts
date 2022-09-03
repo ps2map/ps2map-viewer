@@ -4,7 +4,7 @@ class BaseInfo extends Tool {
 
     static readonly id = "base-info";
     static readonly displayName = "Base Info";
-    static readonly hotkey = "q";
+    static readonly hotkey = "f";
 
     constructor(
         viewport: HTMLDivElement,

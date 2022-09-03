@@ -212,7 +212,7 @@ body {
     left: 8px;
 }
 
-.tool-button {
+#toolbox>div {
     position: relative;
     padding: 4px 8px 4px calc(8px + var(--sidebar-icon-size));
     font-size: 12pt;
@@ -223,16 +223,16 @@ body {
     user-select: none;
 }
 
-.tool-button:hover {
+#toolbox>div:hover {
     background-color: var(--widget-color-bg-hover);
     color: var(--text-hover);
 }
 
-.tool-button:active {
+#toolbox>div:active {
     opacity: var(--widget-active-opacity);
 }
 
-.tool-button[data-active]::before {
+#toolbox>div[data-active]::before {
     position: absolute;
     content: "⯈";
     left: 8px;

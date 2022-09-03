@@ -28,12 +28,12 @@ namespace State {
                 return {
                     ...state,
                     ...defaultToolboxState,
-                    map: data,
+                    map: (data as any).map,
                 };
             case toolbox.setTool:
                 return {
                     ...state,
-                    current: data,
+                    current: (data as any).id,
                 };
             default:
                 return state;

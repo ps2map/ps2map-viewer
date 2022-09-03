@@ -1407,7 +1407,7 @@ var BaseInfo = (function (_super) {
     };
     BaseInfo.id = "base-info";
     BaseInfo.displayName = "Base Info";
-    BaseInfo.hotkey = "q";
+    BaseInfo.hotkey = "f";
     return BaseInfo;
 }(Tool));
 var Eraser = (function (_super) {
@@ -1508,17 +1508,15 @@ var Brush = (function (_super) {
 document.addEventListener("DOMContentLoaded", function () {
     var availableTools = [Tool, Cursor, BaseInfo, Eraser, Brush];
     var toolInstances = new Map();
-    var toolBox = document.getElementById("toolbar-container");
+    var toolBox = document.getElementById("toolbox");
     if (toolBox) {
         toolBox.innerHTML = "";
         availableTools.forEach(function (tool) {
-            var btn = document.createElement("input");
-            btn.type = "button";
-            btn.value = tool.displayName;
-            btn.classList.add("toolbar__button");
-            btn.id = "tool-".concat(tool.id);
+            var btn = document.createElement("div");
+            btn.innerText = tool.displayName;
+            btn.setAttribute("data-tool-id", tool.id);
             btn.addEventListener("click", function () {
-                StateManager.dispatch(State.toolbox.setTool, tool.id);
+                StateManager.dispatch(State.toolbox.setTool, { id: tool.id });
             });
             toolBox.appendChild(btn);
         });
@@ -1534,9 +1532,10 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         if (!tool)
             return;
-        StateManager.dispatch(State.toolbox.setTool, tool);
+        StateManager.dispatch(State.toolbox.setTool, { id: tool });
     });
     StateManager.subscribe(State.toolbox.setTool, function (state) {
+        var _a;
         if (!toolInstances.has(state.toolbox.current || "")) {
             var map_1 = state.toolbox.map;
             if (!map_1)
@@ -1548,18 +1547,17 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
         toolInstances.forEach(function (instance, id) {
-            if (instance.isActive() && id !== state.toolbox.current)
+            var _a;
+            if (instance.isActive() && id !== state.toolbox.current) {
                 instance.deactivate();
+                (_a = document.querySelector("[data-tool-id=\"".concat(id, "\"]"))) === null || _a === void 0 ? void 0 : _a.removeAttribute("data-active");
+            }
         });
         var current = toolInstances.get(state.toolbox.current || "");
-        if (current && !current.isActive())
+        if (current && !current.isActive()) {
             current.activate();
-        document.querySelectorAll(".toolbar__button").forEach(function (btn) {
-            if (btn.id === "tool-".concat(state.toolbox.current))
-                btn.classList.add("toolbar__button__active");
-            else
-                btn.classList.remove("toolbar__button__active");
-        });
+            (_a = document.querySelector("[data-tool-id=\"".concat(state.toolbox.current, "\"]"))) === null || _a === void 0 ? void 0 : _a.setAttribute("data-active", "");
+        }
     });
 });
 var __assign = (this && this.__assign) || function () {
@@ -1606,9 +1604,9 @@ var State;
     function toolboxReducer(state, action, data) {
         switch (action) {
             case toolbox.setup:
-                return __assign(__assign(__assign({}, state), State.defaultToolboxState), { map: data });
+                return __assign(__assign(__assign({}, state), State.defaultToolboxState), { map: data.map });
             case toolbox.setTool:
-                return __assign(__assign({}, state), { current: data });
+                return __assign(__assign({}, state), { current: data.id });
             default:
                 return state;
         }
@@ -1790,8 +1788,8 @@ function setUpSidebarResizing() {
     });
 }
 function setUpToolbox(heroMap) {
-    StateManager.dispatch(State.toolbox.setup, heroMap);
-    StateManager.dispatch(State.toolbox.setTool, Tool.id);
+    StateManager.dispatch(State.toolbox.setup, { map: heroMap });
+    StateManager.dispatch(State.toolbox.setTool, { id: Tool.id });
 }
 document.addEventListener("DOMContentLoaded", function () {
     var heroMap = setUpHeroMap(document.getElementById("map"));
@@ -1804,6 +1802,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (state.user.server)
             listener.switchServer(state.user.server);
     });
+    setUpToolbox(heroMap);
     var _a = setUpMapPickers(), serverPicker = _a[0], continentPicker = _a[1];
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
