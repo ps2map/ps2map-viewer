@@ -53,7 +53,7 @@ body {
     background-color: #051110;
 }
 
-.sidebar {
+#sidebar {
     position: fixed;
     height: 100%;
     width: var(--sidebar-width);
@@ -117,7 +117,7 @@ body {
     text-align: center;
 }
 
-.sidebar h4 {
+#sidebar h4 {
     margin: 8px 0px;
     color: var(--text-light);
     font-size: 12pt;
@@ -128,8 +128,8 @@ body {
     gap: var(--sidebar-margin);
 }
 
-.sidebar h4::before,
-.sidebar h4::after {
+#sidebar h4::before,
+#sidebar h4::after {
     content: "";
     margin-top: 4px;
     border-top: 1px solid var(--text-normal);

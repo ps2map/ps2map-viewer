@@ -119,13 +119,11 @@ function setUpMapPickers(): [HTMLSelectElement, HTMLSelectElement] {
 function setUpSidebarResizing(): void {
     const grabber = document.getElementById("sidebar-grabber") as HTMLDivElement;
     grabber.addEventListener("mousedown", (event: MouseEvent) => {
-        document.body.style.cursor = "col-resize";
 
         const sidebar = document.getElementById("sidebar") as HTMLDivElement;
         const initialWidth = sidebar.clientWidth;
-        let minWidth = 0.1;
-        minWidth *= document.body.clientWidth;
-        const maxWidth = 512;
+        const minWidth = 360;
+        const maxWidth = 540;
 
         const startX = event.clientX;
         const onMove = (evt: MouseEvent) => {
@@ -141,7 +139,6 @@ function setUpSidebarResizing(): void {
         const onUp = () => {
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
-            document.body.style.removeProperty("cursor");
         };
 
         document.addEventListener("mousemove", onMove);

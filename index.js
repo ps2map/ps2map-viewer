@@ -1780,12 +1780,10 @@ function setUpMapPickers() {
 function setUpSidebarResizing() {
     var grabber = document.getElementById("sidebar-grabber");
     grabber.addEventListener("mousedown", function (event) {
-        document.body.style.cursor = "col-resize";
         var sidebar = document.getElementById("sidebar");
         var initialWidth = sidebar.clientWidth;
-        var minWidth = 0.1;
-        minWidth *= document.body.clientWidth;
-        var maxWidth = 512;
+        var minWidth = 360;
+        var maxWidth = 540;
         var startX = event.clientX;
         var onMove = function (evt) {
             var delta = evt.clientX - startX;
@@ -1799,7 +1797,6 @@ function setUpSidebarResizing() {
         var onUp = function () {
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup", onUp);
-            document.body.style.removeProperty("cursor");
         };
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
