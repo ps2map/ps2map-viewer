@@ -29,13 +29,4 @@ class Eraser extends CanvasTool {
         const size = Eraser.size * scale;
         context.clearRect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
     }
-
-    protected _setUpToolPanel(): void {
-        super._setUpToolPanel();
-
-        const frag = document.createDocumentFragment();
-        frag.appendChild(document.createTextNode("Hold LMB to erase, MMB to pan"));
-        this._toolPanel.appendChild(frag);
-        this._toolPanel.style.display = "block";
-    }
 }

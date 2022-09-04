@@ -1192,13 +1192,16 @@ var Tool = (function () {
         this._map = map;
         this._viewport = viewport;
         this._toolPanel = toolPanel;
+        this._onMoveBase = this._onMoveBase.bind(this);
     }
     Tool.prototype.activate = function () {
         this._isActive = true;
+        this._viewport.addEventListener("mousemove", this._onMoveBase, { passive: true });
         this._setUpToolPanel();
     };
     Tool.prototype.deactivate = function () {
         this._isActive = false;
+        this._viewport.removeEventListener("mousemove", this._onMoveBase);
         this._toolPanel.innerHTML = "";
         this._toolPanel.removeAttribute("style");
     };
@@ -1207,6 +1210,23 @@ var Tool = (function () {
     };
     Tool.prototype.getId = function () {
         return Tool.id;
+    };
+    Tool.prototype._onMoveBase = function (event) {
+        var offsetX = 20;
+        var offsetY = 10;
+        if (this._toolPanel) {
+            var box = this._viewport.getBoundingClientRect();
+            var left = event.clientX - box.left;
+            var top_1 = event.clientY - box.top;
+            top_1 -= this._toolPanel.clientHeight + offsetY;
+            left += offsetX;
+            if (left + this._toolPanel.clientWidth > box.width)
+                left = box.width - this._toolPanel.clientWidth;
+            if (top_1 < 0)
+                top_1 = 0;
+            this._toolPanel.style.left = "".concat(left, "px");
+            this._toolPanel.style.top = "".concat(top_1, "px");
+        }
     };
     Tool.prototype._setUpToolPanel = function () {
     };
@@ -1431,13 +1451,6 @@ var Eraser = (function (_super) {
         var size = Eraser.size * scale;
         context.clearRect(pos.x - size * 0.5, pos.y - size * 0.5, size, size);
     };
-    Eraser.prototype._setUpToolPanel = function () {
-        _super.prototype._setUpToolPanel.call(this);
-        var frag = document.createDocumentFragment();
-        frag.appendChild(document.createTextNode("Hold LMB to erase, MMB to pan"));
-        this._toolPanel.appendChild(frag);
-        this._toolPanel.style.display = "block";
-    };
     Eraser.id = "eraser";
     Eraser.displayName = "Eraser";
     Eraser.help = "Hold LMB and drag on the map to erase. LMB "
@@ -1487,23 +1500,6 @@ var Brush = (function (_super) {
             }
         }
     };
-    Brush.prototype._setUpToolPanel = function () {
-        _super.prototype._setUpToolPanel.call(this);
-        var frag = document.createDocumentFragment();
-        frag.appendChild(document.createTextNode("Hold LMB to draw, MMB to pan"));
-        frag.appendChild(document.createElement("br"));
-        frag.appendChild(document.createTextNode("Color:"));
-        var picker = document.createElement("input");
-        picker.type = "color";
-        picker.value = "#ffff00";
-        picker.style.margin = "10px";
-        picker.addEventListener("change", function () {
-            Brush.color = picker.value;
-        });
-        frag.appendChild(picker);
-        this._toolPanel.appendChild(frag);
-        this._toolPanel.style.display = "block";
-    };
     Brush.size = 10;
     Brush.color = "rgb(255, 255, 0)";
     Brush.id = "brush";
@@ -1549,11 +1545,11 @@ document.addEventListener("DOMContentLoaded", function () {
             var map_1 = state.toolbox.map;
             if (!map_1)
                 return;
-            var dummy_1 = document.createElement("div");
+            var toolCtx_1 = document.getElementById("tool-context");
             availableTools.forEach(function (tool) {
                 if (tool.id === state.toolbox.current)
                     toolInstances.set(tool.id, {
-                        tool: new tool(map_1.viewport, map_1, dummy_1),
+                        tool: new tool(map_1.viewport, map_1, toolCtx_1),
                         help: tool.help
                     });
             });

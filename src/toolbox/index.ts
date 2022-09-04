@@ -45,13 +45,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const map = state.toolbox.map;
             if (!map)
                 return;
-            const dummy = document.createElement("div");
+            const toolCtx = document.getElementById("tool-context") as HTMLDivElement;
             availableTools.forEach(tool => {
                 if (tool.id === state.toolbox.current)
                     toolInstances.set(
                         tool.id,
                         {
-                            tool: new tool(map.viewport, map, dummy),
+                            tool: new tool(map.viewport, map, toolCtx),
                             help: tool.help
                         });
             });

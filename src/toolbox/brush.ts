@@ -54,24 +54,4 @@ class Brush extends CanvasTool {
             }
         }
     }
-
-    protected _setUpToolPanel(): void {
-        super._setUpToolPanel();
-
-        const frag = document.createDocumentFragment();
-        frag.appendChild(
-            document.createTextNode("Hold LMB to draw, MMB to pan"));
-        frag.appendChild(document.createElement("br"));
-        frag.appendChild(document.createTextNode("Color:"));
-        const picker = document.createElement("input");
-        picker.type = "color";
-        picker.value = "#ffff00";
-        picker.style.margin = "10px";
-        picker.addEventListener("change", () => {
-            Brush.color = picker.value;
-        });
-        frag.appendChild(picker);
-        this._toolPanel.appendChild(frag);
-        this._toolPanel.style.display = "block";
-    }
 }

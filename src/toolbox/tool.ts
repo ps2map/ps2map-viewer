@@ -25,15 +25,19 @@ class Tool {
         this._map = map;
         this._viewport = viewport;
         this._toolPanel = toolPanel;
+
+        this._onMoveBase = this._onMoveBase.bind(this);
     }
 
     public activate(): void {
         this._isActive = true;
+        this._viewport.addEventListener("mousemove", this._onMoveBase, { passive: true });
         this._setUpToolPanel();
     }
 
     public deactivate(): void {
         this._isActive = false;
+        this._viewport.removeEventListener("mousemove", this._onMoveBase);
         this._toolPanel.innerHTML = "";
         this._toolPanel.removeAttribute("style");
     }
@@ -48,6 +52,27 @@ class Tool {
         // lets us find out what subclass an instance is of by comparing this
         // method's return value to the static "id" field of the classes.
         return Tool.id;
+    }
+
+    private _onMoveBase(event: MouseEvent): void {
+        const offsetX = 20;
+        const offsetY = 10;
+        if (this._toolPanel) {
+            const box = this._viewport.getBoundingClientRect();
+            let left = event.clientX - box.left;
+            let top = event.clientY - box.top;
+            // Add a small offset so the context widget does not obscure the
+            // mouse cursor. Also move the menu to the top right of the cursor.
+            top -= this._toolPanel.clientHeight + offsetY;
+            left += offsetX;
+            // Clamp the menu to the viewport so it does not go off-screen.
+            if (left + this._toolPanel.clientWidth > box.width)
+                left = box.width - this._toolPanel.clientWidth;
+            if (top < 0)
+                top = 0;
+            this._toolPanel.style.left = `${left}px`;
+            this._toolPanel.style.top = `${top}px`;
+        }
     }
 
     /**
