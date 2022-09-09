@@ -54,6 +54,12 @@ function setUpHeroMap(element: HTMLDivElement): HeroMap {
             else
                 toggle.removeAttribute("data-active");
         }
+        if (layer.id == "canvas") {
+            if (isVisible)
+                StateManager.dispatch(State.toolbox.canvasEnabled, {} as never);
+            else
+                StateManager.dispatch(State.toolbox.canvasDisabled, {} as never);
+        }
     });
 
     const layerNameFromId = (id: string) => {

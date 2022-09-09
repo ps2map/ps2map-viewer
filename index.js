@@ -1521,6 +1521,8 @@ document.addEventListener("DOMContentLoaded", function () {
             btn.innerText = tool.displayName;
             btn.setAttribute("data-tool-id", tool.id);
             btn.addEventListener("click", function () {
+                if (btn.hasAttribute("data-disabled"))
+                    return;
                 StateManager.dispatch(State.toolbox.setTool, { id: tool.id });
             });
             toolBox.appendChild(btn);
@@ -1573,6 +1575,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("tool-help").innerText = help;
         }
     });
+    var onCanvasToggle = function (state) {
+        var isEnabled = state.toolbox.canvasEnabled;
+        ["brush", "eraser"].forEach(function (id) {
+            var tool = toolInstances.get(id);
+            if (tool && state.toolbox.current === id && !isEnabled)
+                StateManager.dispatch(State.toolbox.setTool, { id: Tool.id });
+            var btn = document.querySelector("[data-tool-id=\"".concat(id, "\"]"));
+            if (isEnabled)
+                btn === null || btn === void 0 ? void 0 : btn.removeAttribute("data-disabled");
+            else
+                btn === null || btn === void 0 ? void 0 : btn.setAttribute("data-disabled", "");
+        });
+    };
+    StateManager.subscribe(State.toolbox.canvasEnabled, onCanvasToggle);
+    StateManager.subscribe(State.toolbox.canvasDisabled, onCanvasToggle);
 });
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
@@ -1608,15 +1625,22 @@ var State;
 (function (State) {
     var toolbox;
     (function (toolbox) {
+        toolbox.canvasDisabled = "toolbox/canvas/disabled";
+        toolbox.canvasEnabled = "toolbox/canvas/enabled";
         toolbox.setup = "toolbox/setup";
         toolbox.setTool = "toolbox/setTool";
     })(toolbox = State.toolbox || (State.toolbox = {}));
     State.defaultToolboxState = {
         current: null,
+        canvasEnabled: true,
         map: null
     };
     function toolboxReducer(state, action, data) {
         switch (action) {
+            case toolbox.canvasDisabled:
+                return __assign(__assign({}, state), { canvasEnabled: false });
+            case toolbox.canvasEnabled:
+                return __assign(__assign({}, state), { canvasEnabled: true });
             case toolbox.setup:
                 return __assign(__assign(__assign({}, state), State.defaultToolboxState), { map: data.map });
             case toolbox.setTool:
@@ -1720,6 +1744,12 @@ function setUpHeroMap(element) {
                 toggle.setAttribute("data-active", "");
             else
                 toggle.removeAttribute("data-active");
+        }
+        if (layer.id == "canvas") {
+            if (isVisible)
+                StateManager.dispatch(State.toolbox.canvasEnabled, {});
+            else
+                StateManager.dispatch(State.toolbox.canvasDisabled, {});
         }
     });
     var layerNameFromId = function (id) {

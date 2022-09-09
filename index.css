@@ -234,12 +234,12 @@ body {
     user-select: none;
 }
 
-#toolbox>div:hover {
+#toolbox>div:not([data-disabled]):hover {
     background-color: var(--widget-color-bg-hover);
     color: var(--text-hover);
 }
 
-#toolbox>div:active {
+#toolbox>div:not([data-disabled]):active {
     opacity: var(--widget-active-opacity);
 }
 
@@ -247,6 +247,11 @@ body {
     position: absolute;
     content: "⯈";
     left: 8px;
+}
+
+#toolbox>div[data-disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .settings-form {
