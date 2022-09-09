@@ -237,4 +237,30 @@ document.addEventListener("DOMContentLoaded", () => {
         if (names)
             names.setHoveredBase(state.user.hoveredBase);
     });
+
+    const tags = ["tr", "nc", "vs", "ns"];
+    const html = document.querySelector("html") as HTMLHtmlElement;
+    tags.forEach(tag => {
+        const input = document.getElementById(`color-${tag}`) as HTMLInputElement;
+        input.addEventListener("input", () => {
+            const color = input.value;
+            html.style.setProperty(`--ps2map__faction-${tag}-colour`, color);
+        });
+    });
+
+    document.getElementById("color-reset")?.addEventListener("click", () => {
+        const defaults = new Map([
+            ["ns", "#3f3f3f"],
+            ["vs", "#b74dd5"],
+            ["nc", "#3c7fff"],
+            ["tr", "#e21919"]]);
+        tags.forEach(tag => {
+            const input = document.getElementById(`color-${tag}`) as HTMLInputElement;
+            const color = defaults.get(tag);
+            if (!color)
+                return;
+            input.value = color;
+            html.style.setProperty(`--ps2map__faction-${tag}-colour`, color);
+        });
+    });
 });

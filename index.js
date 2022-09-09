@@ -1833,6 +1833,7 @@ function setUpToolbox(heroMap) {
     StateManager.dispatch(State.toolbox.setTool, { id: Tool.id });
 }
 document.addEventListener("DOMContentLoaded", function () {
+    var _a;
     var heroMap = setUpHeroMap(document.getElementById("map"));
     setUpSidebarResizing();
     var listener = new MapListener();
@@ -1844,7 +1845,7 @@ document.addEventListener("DOMContentLoaded", function () {
             listener.switchServer(state.user.server);
     });
     setUpToolbox(heroMap);
-    var _a = setUpMapPickers(), serverPicker = _a[0], continentPicker = _a[1];
+    var _b = setUpMapPickers(), serverPicker = _b[0], continentPicker = _b[1];
     GameData.load().then(function (gameData) {
         var servers = __spreadArray([], gameData.servers(), true);
         var continents = __spreadArray([], gameData.continents(), true);
@@ -1869,6 +1870,31 @@ document.addEventListener("DOMContentLoaded", function () {
         var names = heroMap.getLayer("names");
         if (names)
             names.setHoveredBase(state.user.hoveredBase);
+    });
+    var tags = ["tr", "nc", "vs", "ns"];
+    var html = document.querySelector("html");
+    tags.forEach(function (tag) {
+        var input = document.getElementById("color-".concat(tag));
+        input.addEventListener("input", function () {
+            var color = input.value;
+            html.style.setProperty("--ps2map__faction-".concat(tag, "-colour"), color);
+        });
+    });
+    (_a = document.getElementById("color-reset")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", function () {
+        var defaults = new Map([
+            ["ns", "#3f3f3f"],
+            ["vs", "#b74dd5"],
+            ["nc", "#3c7fff"],
+            ["tr", "#e21919"]
+        ]);
+        tags.forEach(function (tag) {
+            var input = document.getElementById("color-".concat(tag));
+            var color = defaults.get(tag);
+            if (!color)
+                return;
+            input.value = color;
+            html.style.setProperty("--ps2map__faction-".concat(tag, "-colour"), color);
+        });
     });
 });
 var Minimap = (function () {
