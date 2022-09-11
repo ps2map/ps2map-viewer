@@ -15,7 +15,7 @@ This application is not yet live and requires a local API server to function. Re
 - [ ] Support text and icon annotations ("help needed", "attack here", etc.)
 - [ ] Implement shared rooms allowing multiple users to view the same map and annotations
 
-![Work-in-progress interface](./img/status.PNG)
+![Work-in-progress interface](https://raw.githubusercontent.com/leonhard-s/ps2-map-viewer/main/img/status.png)
 
 *The above is a development version for testing the map rendering internals. The CSS/HTML should be considered a placeholder that will see significant redesigns in the future.*
 
