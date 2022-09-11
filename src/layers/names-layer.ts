@@ -1,6 +1,6 @@
 /// <reference path="../interfaces/index.ts" />
 /// <reference path="../rest/index.ts" />
-/// <reference path="../map-engine/static-layer.ts" />
+/// <reference path="../map-engine/map-layer.ts" />
 /// <reference path="./base.ts" />
 
 class BaseNameFeature {
@@ -32,10 +32,16 @@ class BaseNameFeature {
 
 /** Base name and icon layer subclass. */
 class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
-    features: BaseNameFeature[] = []
+    features: BaseNameFeature[] = [];
 
-    static async factory(continent: Continent, id: string): Promise<BaseNamesLayer> {
-        const layer = new BaseNamesLayer(id, continent.map_size);
+    private constructor(id: string, size: Box) {
+        super(id, size);
+    }
+
+    static async factory(continent: Continent, id: string,
+    ): Promise<BaseNamesLayer> {
+        const size = { width: continent.map_size, height: continent.map_size };
+        const layer = new BaseNamesLayer(id, size);
         return fetchBasesForContinent(continent.id)
             .then((bases: Base[]) => {
                 layer._loadBaseInfo(bases);
@@ -44,59 +50,61 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
             });
     }
 
-    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-
-        const colours: any = {
-            0: "rgba(0, 0, 0, 1.0)",
-            1: "rgba(120, 37, 143, 1.0)",
-            2: "rgba(41, 83, 164, 1.0)",
-            3: "rgba(186, 25, 25, 1.0)",
-            4: "rgba(50, 50, 50, 1.0)",
-        }
-
-        baseOwnershipMap.forEach((owner, baseId) => {
+    updateBaseOwnership(map: Map<number, number>): void {
+        map.forEach((owner, baseId) => {
             const feat = this.features.find(f => f.id === baseId);
             if (feat)
-                feat.element.style.setProperty(
-                    "--ps2map__base-color", colours[owner]);
+                feat.element.style.setProperty("--ps2map__base-color",
+                    `var(${this._factionIdToCssVar(owner)}`);
         });
+    }
+
+    /**
+     * Return the CSS variable name for the given faction.
+     *
+    * @param factionId - The faction ID to get the colour for.
+    * @returns The CSS variable name for the faction's colour.
+     */
+    private _factionIdToCssVar(factionId: number): string {
+        const code = GameData.getInstance().getFaction(factionId).code;
+        return `--ps2map__faction-${code}-colour`;
     }
 
     private _loadBaseInfo(bases: Base[]): void {
         const features: BaseNameFeature[] = [];
-        let i = bases.length;
-        while (i-- > 0) {
-            const baseInfo = bases[i]!;
+        bases.forEach(baseInfo => {
             if (baseInfo.type_code === "no-mans-land")
-                continue; // "No man's land" bases do not get icons
+                // "No man's land" bases do not get icons
+                return;
             const pos = {
                 x: baseInfo.map_pos[0],
-                y: baseInfo.map_pos[1]
+                y: baseInfo.map_pos[1],
             };
             const element = document.createElement("div");
             let name = baseInfo.name;
             // Append the facility type for primary bases
-            if (baseInfo.type_code === "amp-station" ||
-                baseInfo.type_code === "bio-lab" ||
-                baseInfo.type_code === "interlink" ||
-                baseInfo.type_code === "tech-plant" ||
-                baseInfo.type_code === "trident")
+            ["amp-station", "bio-lab", "interlink", "tech-plant", "trident"]
+                .forEach(type => {
+                    if (baseInfo.type_code === type)
+                        name += ` ${baseInfo.type_name}`;
+                });
 
-                name += ` ${baseInfo.type_name}`;
             element.innerText = `${name}`;
-            element.classList.add("ps2map__base-names__icon")
-            element.style.left = `${this.mapSize * 0.5 + pos.x}px`;
-            element.style.bottom = `${this.mapSize * 0.5 + pos.y}px`;
+            element.classList.add("ps2map__base-names__icon");
+            element.style.left = `${this.size.width * 0.5 + pos.x}px`;
+            element.style.bottom = `${this.size.height * 0.5 + pos.y}px`;
 
-            element.classList.add(`ps2map__base-names__icon__${baseInfo.type_code}`)
+            element.classList.add(
+                `ps2map__base-names__icon__${baseInfo.type_code}`);
 
             let minZoom = 0;
-            if (baseInfo.type_code === "small-outpost") minZoom = 0.60
+            if (baseInfo.type_code === "small-outpost") minZoom = 0.60;
             if (baseInfo.type_code === "large-outpost") minZoom = 0.45;
 
-            features.push(new BaseNameFeature(pos, baseInfo.id, baseInfo.name, element, minZoom));
+            features.push(new BaseNameFeature(
+                pos, baseInfo.id, baseInfo.name, element, minZoom));
             this.element.appendChild(element);
-        }
+        });
         this.features = features;
     }
 
@@ -106,35 +114,30 @@ class BaseNamesLayer extends StaticLayer implements SupportsBaseOwnership {
      * This displays the name of the current base regardless of zoom level.
      */
     setHoveredBase(base: Base | null): void {
-        let i = this.features.length;
-        while (i-- > 0) {
-            const feat = this.features[i]!;
+        this.features.forEach(feat => {
             if (feat.id === base?.id) {
                 feat.forceVisible = true;
                 feat.element.innerText = feat.text;
-            }
-            else {
+            } else {
                 feat.forceVisible = false;
                 if (!feat.visible)
                     feat.element.innerText = "";
             }
-        }
+        });
     }
 
     protected deferredLayerUpdate(_: ViewBox, zoom: number) {
         const unzoom = 1 / zoom;
-        let i = this.features.length;
-        while (i-- > 0) {
-            const feat = this.features[i]!;
+        this.features.forEach(feat => {
             feat.element.style.transform = (
-                `translate(-50%, calc(var(--ps2map__base-icon-size) * ${unzoom})) ` +
-                `scale(${unzoom}, ${unzoom})`);
+                `translate(-50%, calc(var(--ps2map__base-icon-size) ` +
+                `* ${unzoom})) scale(${unzoom}, ${unzoom})`);
             if (!feat.forceVisible)
                 if (zoom >= feat.minZoom)
                     feat.element.innerText = feat.text;
                 else
                     feat.element.innerText = "";
             feat.visible = zoom >= feat.minZoom;
-        }
+        });
     }
 }

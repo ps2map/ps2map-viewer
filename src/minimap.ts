@@ -28,7 +28,6 @@ class Minimap {
     /** CSS size of the minimap. */
     private _cssSize: number;
 
-    private _minimapHexAlpha: number = 0.5;
     private _polygons: Map<number, SVGPolygonElement> = new Map();
 
     constructor(element: HTMLDivElement) {
@@ -37,14 +36,14 @@ class Minimap {
         this.element.classList.add("ps2map__minimap");
         this._cssSize = this.element.clientWidth;
         this.element.style.height = `${this._cssSize}px`;
+        this.element.style.fillOpacity = "0.5";
         this._viewBoxElement = document.createElement("div");
         this._viewBoxElement.classList.add("ps2map__minimap__viewbox");
         this.element.appendChild(this._viewBoxElement);
 
         // Attach event listener
-        this.element.addEventListener("mousedown", this._jumpToPosition.bind(this), {
-            passive: true
-        });
+        this.element.addEventListener(
+            "mousedown", this._jumpToPosition.bind(this), { passive: true });
 
         const obj = new ResizeObserver(() => {
             this._cssSize = this.element.clientWidth;
@@ -61,35 +60,38 @@ class Minimap {
             top: (viewBox.top + mapSize * 0.5) / mapSize,
             left: (viewBox.left + mapSize * 0.5) / mapSize,
             bottom: (viewBox.bottom + mapSize * 0.5) / mapSize,
-            right: (viewBox.right + mapSize * 0.5) / mapSize
+            right: (viewBox.right + mapSize * 0.5) / mapSize,
         };
         const relHeight = relViewBox.top - relViewBox.bottom;
         const relWidth = relViewBox.right - relViewBox.left;
-        const relLeft = relViewBox.left - 0.5;
-        const relTop = relViewBox.bottom - 0.5;
         // Project the relative percentages onto the minimap
-        this._viewBoxElement.style.height = `${this._cssSize * relHeight}px`;
-        this._viewBoxElement.style.width = `${this._cssSize * relWidth}px`;
-        this._viewBoxElement.style.left = `${this._cssSize * relLeft}px`;
-        this._viewBoxElement.style.bottom = `${this._cssSize * relTop}px`;
+        Object.assign(this._viewBoxElement.style, {
+            height: `${this._cssSize * relHeight}px`,
+            width: `${this._cssSize * relWidth}px`,
+            left: `${this._cssSize * relViewBox.left}px`,
+            bottom: `${this._cssSize * relViewBox.bottom}px`,
+        });
     }
 
-    updateBaseOwnership(baseOwnershipMap: Map<number, number>): void {
-
-        // TODO: Read faction colours from CSS variables/user config
-        const colours: any = {
-            0: `rgba(0, 0, 0, ${this._minimapHexAlpha})`,
-            1: `rgba(160, 77, 183, ${this._minimapHexAlpha})`,
-            2: `rgba(81, 123, 204, ${this._minimapHexAlpha})`,
-            3: `rgba(226, 25, 25, ${this._minimapHexAlpha})`,
-            4: `rgba(255, 255, 255, ${this._minimapHexAlpha})`,
-        };
-
-        baseOwnershipMap.forEach((factionId, baseId) => {
+    updateBaseOwnership(map: Map<number, number>): void {
+        // The CSS variables are not available
+        map.forEach((factionId, baseId) => {
             const polygon = this._polygons.get(baseId);
             if (polygon)
-                polygon.style.fill = colours[factionId];
+                polygon.style.fill =
+                    `var(${this._factionIdToCssVar(factionId)})`;
         });
+    }
+
+    /**
+     * Return the CSS variable name for the given faction.
+     *
+    * @param factionId - The faction ID to get the colour for.
+    * @returns The CSS variable name for the faction's colour.
+     */
+    private _factionIdToCssVar(factionId: number): string {
+        const code = GameData.getInstance().getFaction(factionId).code;
+        return `--ps2map__faction-${code}-colour`;
     }
 
     async switchContinent(continent: Continent): Promise<void> {
@@ -114,23 +116,16 @@ class Minimap {
         this.element.appendChild(this._baseOutlineSvg);
 
         // Add the polygons to the local cache
-        const polygons = svg.querySelectorAll("polygon");
-        let i = polygons.length;
-        while (i-- > 0) {
-            const poly = polygons[i]!;
-            this._polygons.set(parseInt(poly.id), poly);
+        svg.querySelectorAll("polygon").forEach(poly => {
+            this._polygons.set(parseInt(poly.id, 10), poly);
             // Update polygon IDs to be unique
             poly.id = this._polygonIdFromBaseId(poly.id);
-        }
+        });
     }
 
     private _buildMinimapJumpEvent(target: Point): CustomEvent<MinimapJumpEvent> {
         return new CustomEvent("ps2map_minimapjump", {
-            detail: {
-                target: target
-            },
-            bubbles: true,
-            cancelable: true,
+            detail: { target }, bubbles: true, cancelable: true,
         });
     }
 
@@ -142,15 +137,15 @@ class Minimap {
         if (this._mapSize === 0 || evtDown.button !== 0)
             return;
         // Continuous "mousemove" callback
-        const drag = Utils.rafDebounce((evtDrag: MouseEvent) => {
+        const drag = rafDebounce((evtDrag: MouseEvent) => {
             // Get relative cursor position
             const rect = this.element.getBoundingClientRect();
             const relX = (evtDrag.clientX - rect.left) / (rect.width);
             const relY = (evtDrag.clientY - rect.top) / (rect.height);
             // Calculate target cursor position
             const target: Point = {
-                x: Math.round(relX * this._mapSize),
-                y: Math.round((1 - relY) * this._mapSize)
+                x: Math.round(relX * this._mapSize) + this._mapSize * -0.5,
+                y: Math.round((1 - relY) * this._mapSize) + this._mapSize * -0.5,
             };
             this.element.dispatchEvent(this._buildMinimapJumpEvent(target));
         });
@@ -161,14 +156,12 @@ class Minimap {
         };
         // Add listeners
         document.addEventListener("mouseup", up);
-        this.element.addEventListener("mousemove", drag, {
-            passive: true
-        });
+        this.element.addEventListener("mousemove", drag, { passive: true });
         // Manually invoke the "drag" callback once to handle single click pans
         drag(evtDown);
     }
 
     private _polygonIdFromBaseId(baseId: number | string): string {
-        return `minimap-baseId-${baseId}`
+        return `minimap-baseId-${baseId}`;
     }
 }

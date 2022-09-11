@@ -2,25 +2,25 @@
 
 class MapListener {
 
-    private _subscribers: ((arg0: string, arg1: any) => void)[];
-    private _baseUpdateIntervalId: number | undefined;
+    private _subscribers: ((arg0: string, arg1: never) => void)[];
+    private _baseUpdateIntervalId: number | null;
     private _server: Server | undefined;
 
     constructor(server: Server | undefined = undefined) {
         this._server = server;
         this._subscribers = [];
-        this._baseUpdateIntervalId = undefined;
+        this._baseUpdateIntervalId = null;
     }
 
-    public subscribe(callback: (arg0: string, arg1: any) => void) {
+    public subscribe(callback: (arg0: string, arg1: never) => void) {
         this._subscribers.push(callback);
     }
 
-    public unsubscribe(callback: (arg0: string, arg1: any) => void) {
+    public unsubscribe(callback: (arg0: string, arg1: never) => void) {
         this._subscribers = this._subscribers.filter(subscriber => subscriber !== callback);
     }
 
-    public notify(event: string, data: any) {
+    public notify(event: string, data: never) {
         this._subscribers.forEach(subscriber => subscriber(event, data));
     }
 
@@ -37,20 +37,22 @@ class MapListener {
         if (!this._server)
             return;
 
-        fetchContinents().then((continents) => {
-            const status: Promise<BaseStatus[]>[] = [];
-            continents.forEach((continent) => {
-                status.push(fetchBaseStatus(continent.id, this._server!.id));
+        fetchContinents().then(continents => {
+            const bases: Promise<BaseStatus[]>[] = [];
+            continents.forEach(continent => {
+                if (!this._server)
+                    return;
+                bases.push(fetchBaseStatus(continent.id, this._server.id));
             });
             const baseOwnership = new Map<number, number>();
-            Promise.all(status).then((results) => {
-                results.forEach((status) => {
-                    status.forEach((base) => {
+            Promise.all(bases).then(results => {
+                results.forEach(status => {
+                    status.forEach(base => {
                         baseOwnership.set(base.base_id, base.owning_faction_id);
                     });
                 });
             }).then(() => {
-                this.notify("baseCaptured", baseOwnership);
+                this.notify("baseCaptured", baseOwnership as never);
             });
         });
     }

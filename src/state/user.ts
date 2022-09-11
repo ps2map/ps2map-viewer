@@ -6,24 +6,29 @@ namespace State {
         export const continentChanged = "user/continentChanged";
         export const serverChanged = "user/serverChanged";
         export const baseHovered = "user/baseHovered";
+        export const layerVisibilityChanged = "user/layerVisibilityChanged";
     }
 
     export interface UserState {
-        server: Server | undefined;
-        continent: Continent | undefined;
+        server: Server | null;
+        continent: Continent | null;
         hoveredBase: Base | null;
-        canvas: Point[][];
-    };
+        layerVisibility: Map<string, boolean>;
+    }
 
     export const defaultUserState: UserState = {
-        server: undefined,
-        continent: undefined,
+        server: null,
+        continent: null,
         hoveredBase: null,
-        canvas: [],
+        layerVisibility: new Map<string, boolean>(),
     };
 
     /** State reducer for "user/" actions. */
-    export function userReducer(state: UserState, action: string, data: any): UserState {
+    export function userReducer(
+        state: UserState,
+        action: string,
+        data: never,
+    ): UserState {
         switch (action) {
             case user.serverChanged:
                 return {
@@ -39,6 +44,13 @@ namespace State {
                 return {
                     ...state,
                     hoveredBase: data,
+                };
+            case user.layerVisibilityChanged:
+                const visibility = new Map(state.layerVisibility);
+                visibility.set((data as any).id, (data as any).visible);
+                return {
+                    ...state,
+                    layerVisibility: visibility,
                 };
             default:
                 return state;

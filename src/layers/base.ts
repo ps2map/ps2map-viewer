@@ -1,7 +1,14 @@
 /**
- * Class interface for layers supporting base ownership updates.
+ * Abstract base class for layers that respond to base ownership updates.
+ *
+ * This is primarily used as a type hinting mechanism, the actual test is done
+ * by checking for the presence of a updateBaseOwnership() method at runtime.
  */
 abstract class SupportsBaseOwnership {
-
-    abstract updateBaseOwnership(baseOwnershipMap: Map<number, number>): void;
-};
+    /**
+     * Callback invoked when the current continent's base ownership changes.
+     *
+     * @param map - A map of base IDs to their owning faction ID.
+     */
+    public abstract updateBaseOwnership(map: Map<number, number>): void;
+}

@@ -31,11 +31,41 @@ class GameData {
     public servers(): Server[] { return this._servers; }
 
     public getBase(id: number): Base | undefined {
-        let i = this._bases.length;
-        while (i-- > 0)
-            if (this._bases[i]!.id === id)
-                return this._bases[i];
-        return undefined;
+        return this._bases.find(b => b.id === id);
+    }
+
+    public async getBasesForContinent(continent: Continent | null): Promise<Base[]> {
+        if (continent) {
+            if (this._bases.length === 0)
+                return fetchBasesForContinent(continent.id);
+            return this._bases.filter(b => b.continent_id === continent.id);
+        } else {
+            return [];
+        }
+    }
+
+    public getFaction(id: number): { [key: string]: string } {
+        // TODO: Load faction data from API
+        switch (id) {
+            case 0: return { code: "ns" };
+            case 1: return { code: "vs" };
+            case 2: return { code: "nc" };
+            case 3: return { code: "tr" };
+            default: throw new Error(`Invalid faction ID ${id}`);
+        }
+    }
+
+    public async setActiveContinent(
+        continent: Continent | undefined,
+    ): Promise<void> {
+        this._bases = [];
+        if (continent)
+            return fetchBasesForContinent(continent.id)
+                .then(bases => {
+                    this._bases = bases;
+                });
+        else
+            return Promise.resolve();
     }
 
     /**
@@ -63,9 +93,7 @@ class GameData {
     }
 
     private static async _loadInternal(): Promise<GameData> {
-        const continents = fetchContinents();
-        const servers = fetchServers();
-        const loading = Promise.all([continents, servers])
+        return Promise.all([fetchContinents(), fetchServers()])
             .then(([continents, servers]) => {
                 const instance = new GameData();
                 instance._continents = continents;
@@ -73,15 +101,6 @@ class GameData {
                 this._instance = instance;
                 this._loaded = true;
                 return instance;
-            }).then((instance) => {
-                instance._continents.forEach(c => {
-                    fetchBasesForContinent(c.id)
-                        .then(bases => {
-                            instance._bases.push(...bases);
-                        });
-                });
-                return instance;
             });
-        return loading;
     }
 }

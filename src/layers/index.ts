@@ -1,3 +1,4 @@
+/// <reference path="./canvas.ts" />
 /// <reference path="./hex-layer.ts" />
 /// <reference path="./lattice-layer.ts" />
 /// <reference path="./names-layer.ts" />

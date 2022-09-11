@@ -10,7 +10,7 @@ abstract class MapLayer {
     /** Unique identifier for this layer and the DOM element it represents. */
     readonly id: string;
     /** Base size of the map layer in CSS pixels. */
-    readonly mapSize: number;
+    readonly size: Box;
     /** DOM element containing the layer's features. */
     readonly element: HTMLDivElement;
 
@@ -20,17 +20,18 @@ abstract class MapLayer {
     /** Internal cache for deferred layer updates. */
     private _lastRedraw: [ViewBox, number] | null = null;
 
-    constructor(id: string, mapSize: number) {
+    constructor(id: string, size: Box) {
         this.id = id;
-        this.mapSize = mapSize;
+        this.size = size;
         // Create content element
         this.element = document.createElement("div");
         this.element.id = id;
         this.element.classList.add("ps2map__layer");
-        this.element.style.height = this.element.style.width = `${mapSize}px`;
+        this.element.style.height = `${size.height}px`;
+        this.element.style.width = `${size.width}px`;
         // Add event listener for deferred updates
-        this.element.addEventListener(
-            "transitionend", this._runDeferredLayerUpdate.bind(this), { passive: true });
+        this.element.addEventListener("transitionend",
+            this._runDeferredLayerUpdate.bind(this), { passive: true });
     }
 
     /**
@@ -52,10 +53,12 @@ abstract class MapLayer {
     setVisibility(visible: boolean): void {
         if (this.isVisible === visible)
             return;
-        if (visible)
+        if (visible) {
             this.element.style.removeProperty("display");
-        else
+            this.element.dispatchEvent(new Event("transitionend"));
+        } else {
             this.element.style.display = "none";
+        }
         this.isVisible = visible;
     }
 
@@ -65,7 +68,7 @@ abstract class MapLayer {
     }
 
     /** Wrapper to run deferred layer updates from event listeners. */
-    private _runDeferredLayerUpdate = Utils.rafDebounce(() => {
+    private readonly _runDeferredLayerUpdate = rafDebounce(() => {
         if (!this._lastRedraw)
             return;
         const [viewBox, zoom] = this._lastRedraw;
@@ -95,5 +98,35 @@ abstract class MapLayer {
      * @param viewBox New view box of the client
      * @param zoom New zoom level
      */
-    protected abstract deferredLayerUpdate(viewBox: ViewBox, zoom: number): void;
+    protected abstract deferredLayerUpdate(
+        viewBox: ViewBox,
+        zoom: number,
+    ): void;
+}
+
+/**
+ * Static MapLayer implementation.
+ *
+ * Static layers are the simplest form, only getting panned and scaled as the
+ * user interacts with the map. They are always rendered and no occlusion
+ * checks or optimisations are used whatsoever - avoid them when possible.
+ */
+class StaticLayer extends MapLayer {
+    protected deferredLayerUpdate(_: ViewBox, __: number): void {
+        // Nothing to do
+    }
+
+    redraw(viewBox: ViewBox, zoom: number): void {
+        const targetX = (viewBox.right + viewBox.left) * 0.5;
+        const targetY = (viewBox.top + viewBox.bottom) * 0.5;
+        // Initial offset to move the centre of the SVG to its CSS origin
+        const halfSizeX = this.size.width * 0.5;
+        const halfSizeY = this.size.height * 0.5;
+        // Another offset to shift the view box target to the origin
+        const offsetX = -halfSizeX - targetX * zoom;
+        const offsetY = -halfSizeY + targetY * zoom;
+        // Apply transform
+        this.element.style.transform = (
+            `matrix(${zoom}, 0.0, 0.0, ${zoom}, ${offsetX}, ${offsetY})`);
+    }
 }

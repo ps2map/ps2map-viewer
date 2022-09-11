@@ -6,12 +6,25 @@ A lean, high performance HTML5 web app for viewing and annotating (soon:tm:) [Pl
 
 This application is not yet live and requires a local API server to function. Refer to the [PS2 Map API repository](https://github.com/leonhard-s/ps2-map-api) for details.
 
+## Status
+
+- [x] Live map support is implemented
+- [x] Mini map displays current viewport and supports panning/jumping
+- [x] Users may draw and erase from the map canvas
+- [x] Add controls for map layer visibility (show, hide, etc.)
+- [ ] Support text and icon annotations ("help needed", "attack here", etc.)
+- [ ] Implement shared rooms allowing multiple users to view the same map and annotations
+
+![Work-in-progress interface](./img/status.PNG)
+
+*The above is a development version for testing the map rendering internals. The CSS/HTML should be considered a placeholder that will see significant redesigns in the future.*
+
 ## Features
 
 - Client-side rendering
 - Smooth 60 FPS map interactions
 - Touch support
-- Annotation and drawing canvas (deferred)
+- Annotation and drawing canvas
 - Shared rooms (deferred)
 
 ## Development notes

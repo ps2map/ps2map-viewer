@@ -7,22 +7,25 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     const availableTools = [Tool, Cursor, BaseInfo, Eraser, Brush];
-    const toolInstances = new Map<string, Tool>();
+    const toolInstances = new Map<string, { tool: Tool, help: string }>();
 
     // Create toolbar buttons
-    const toolbar_container = document.getElementById("toolbar-container") as HTMLDivElement;
-    toolbar_container.innerHTML = "";
-    availableTools.forEach(tool => {
-        const btn = document.createElement("input");
-        btn.type = "button";
-        btn.value = tool.displayName;
-        btn.classList.add("toolbar__button");
-        btn.id = `tool-${tool.id}`;
-        btn.addEventListener("click", () => {
-            StateManager.dispatch(State.toolbox.setTool, tool.id);
+    const toolBox = document.getElementById("toolbox") as HTMLDivElement;
+    if (toolBox) {
+        toolBox.innerHTML = "";
+        availableTools.forEach(tool => {
+            const btn = document.createElement("div");
+            btn.innerText = tool.displayName;
+            btn.setAttribute("data-tool-id", tool.id);
+            btn.addEventListener("click", () => {
+                if (btn.hasAttribute("data-disabled"))
+                    return;
+                StateManager.dispatch(
+                    State.toolbox.setTool, { id: tool.id } as never);
+            });
+            toolBox.appendChild(btn);
         });
-        toolbar_container.appendChild(btn);
-    });
+    }
 
     // Tool hotkeys
     document.addEventListener("keydown", event => {
@@ -36,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         if (!tool)
             return;
-        StateManager.dispatch(State.toolbox.setTool, tool);
+        StateManager.dispatch(State.toolbox.setTool, { id: tool } as never);
     });
     StateManager.subscribe(State.toolbox.setTool, state => {
         // Create the tool if it does not exist
@@ -44,26 +47,56 @@ document.addEventListener("DOMContentLoaded", () => {
             const map = state.toolbox.map;
             if (!map)
                 return;
-            const toolPanel = document.getElementById("tool-panel") as HTMLDivElement;
+            const toolCtx = document.getElementById("tool-context") as HTMLDivElement;
             availableTools.forEach(tool => {
                 if (tool.id === state.toolbox.current)
                     toolInstances.set(
                         tool.id,
-                        new tool(map.renderer.viewport, map, toolPanel));
+                        {
+                            tool: new tool(map.viewport, map, toolCtx),
+                            help: tool.help
+                        });
             });
         }
-        toolInstances.forEach((instance, id) => {
-            if (instance.isActive() && id !== state.toolbox.current)
+        toolInstances.forEach((data, id) => {
+            const instance = data.tool;
+            if (instance.isActive() && id !== state.toolbox.current) {
                 instance.deactivate();
+                document.querySelector<HTMLDivElement>(
+                    `[data-tool-id="${id}"]`)
+                    ?.removeAttribute("data-active");
+                document.getElementById("tool-help")!.innerText = "";
+            }
         });
-        const current = toolInstances.get(state.toolbox.current || "");
-        if (current && !current.isActive())
+        const data = toolInstances.get(state.toolbox.current || "");
+        const current = data?.tool;
+        const help = data?.help;
+        if (current && !current.isActive()) {
             current.activate();
-        document.querySelectorAll(".toolbar__button").forEach(btn => {
-            if (btn.id === `tool-${state.toolbox.current}`)
-                btn.classList.add("toolbar__button__active");
-            else
-                btn.classList.remove("toolbar__button__active");
-        });
+            document.querySelector<HTMLDivElement>(
+                `[data-tool-id="${state.toolbox.current}"]`)
+                ?.setAttribute("data-active", "");
+            if (help)
+                document.getElementById("tool-help")!.innerText = help;
+        }
     });
+
+    // Toggle canvas
+    const onCanvasToggle = (state: State.AppState) => {
+        const isEnabled = state.toolbox.canvasEnabled;
+        ["brush", "eraser"].forEach(id => {
+            const tool = toolInstances.get(id);
+            if (tool && state.toolbox.current === id && !isEnabled)
+                StateManager.dispatch(State.toolbox.setTool, { id: Tool.id } as never);
+
+            const btn = document.querySelector<HTMLDivElement>(
+                `[data-tool-id="${id}"]`);
+            if (isEnabled)
+                btn?.removeAttribute("data-disabled");
+            else
+                btn?.setAttribute("data-disabled", "");
+        });
+    };
+    StateManager.subscribe(State.toolbox.canvasEnabled, onCanvasToggle);
+    StateManager.subscribe(State.toolbox.canvasDisabled, onCanvasToggle);
 });
