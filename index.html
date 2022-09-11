@@ -2,50 +2,86 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="description" content="Interactive online world map and population tracker for PlanetSide 2." />
-    <meta name="viewport" content="width=device-width" />
-    <title>PS2 Map Viewer - Dev</title>
-    <link rel="stylesheet" href="./index.css" />
-    <link rel="stylesheet" href="./minimap.css" />
-    <link rel="stylesheet" href="./ps2-map.css" />
-    <link rel="stylesheet" href="./tools.css" />
-    <script src="./index.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Interactive online world map and population tracker for PlanetSide 2." />
+  <meta name="viewport" content="width=device-width" />
+  <title>Indar - PS2Map</title>
+  <link rel="stylesheet" href="./index.css" />
+  <link rel="stylesheet" href="./ps2-map.css" />
+  <link rel="stylesheet" href="./tools.css" />
+  <script src="./index.js"></script>
 </head>
 
 <body>
-    <div id="sidebar">
-        <div id="minimap" class="sidebar__widget"></div>
-        <div id="toolbar" class="sidebar__widget">
-            <span class="sidebar__widget__label">Tools</span>
-            <div id="toolbar-container"></div>
-        </div>
-        <div id="layer-visibility" class="sidebar__widget">
-            <span class="sidebar__widget__label">Layer visibility</span>
-            <div id="layer-visibility-container"></div>
-        </div>
-        <div class="sidebar__widget">
-            <span class="sidebar__widget__label">Base finder</span>
-            <select id="base-finder"></select>
-            <input type="button" id="base-finder-btn" value="JumpTo" />
-        </div>
-        <div id="map-switcher">
-            <span class="map_switcher__label map_switcher__row1">Server:</span>
-            <select id="server-picker" class="map_switcher__dropdown map_switcher__row1" title="Server Dropdown">
-                <!-- To be populated upon load -->
-            </select>
-            <span class="map_switcher__label map_switcher__row2">Continent:</span>
-            <select id="continent-picker" class="map_switcher__dropdown map_switcher__row2" title="Continent Dropdown">
-                <!-- To be populated upon load -->
-            </select>
-        </div>
-        <div id="sidebar-selector"></div>
-    </div>
-    <div id="hero-map"></div>
+  <div id="map">
+    <div id="tool-context"></div>
+  </div>
 
-    <aside id="tool-panel">
-        <!-- Populated dynamically based on the current tool -->
-    </aside>
+  <aside id="sidebar">
+    <div id="sidebar-grabber"></div>
+    <div class="sidebar-scroll">
+
+      <a href="#" class="logo">
+        <span>PlanetSide 2 Interactive Map</span>
+      </a>
+
+      <h4>Map Selection</h4>
+      <p class="placeholder">
+        This section is temporary and will be replaced with a pop-up menu of maps and available instances in the future.
+      </p>
+      <div class="map-selector">
+        <select id="continent-dropdown" title="Continent">
+        </select>
+        <select id="server-dropdown" title="Server">
+          <option>Select a server</option>
+          <option disabled>─────────────</option>
+        </select>
+        <div class="button">Select</div>
+        <div class="button">Connect</div>
+      </div>
+
+      <h4>Layers</h4>
+      <div id="layer-toggle-container" class="grid-col-2">
+        <div data-disabled>Control Points</div>
+        <div data-disabled>Air Spawns</div>
+        <div data-disabled>Drawing Canvas</div>
+      </div>
+
+      <h4>Tools</h4>
+      <div id="toolbox" class="grid-col-2"></div>
+      <p id="tool-help"></p>
+      <!-- <div class="settings-form">
+        <label class="label" for="brush-color">Brush Color</label>
+        <input type="color" id="brush-color" value="#FFFF66" />
+      </div> -->
+
+      <h4>Settings</h4>
+      <details open>
+        <summary>Faction Colors</summary>
+        <div class="settings-form">
+          <label class="label" for="color-ns">Neutral Territory</label>
+          <input type="color" id="color-ns" value="#3f3f3f" />
+          <label class="label" for="color-tr">Terran Republic</label>
+          <input type="color" id="color-tr" value="#e21919" />
+          <label class="label" for="color-nc">New Conglomerate</label>
+          <input type="color" id="color-nc" value="#3c7fff" />
+          <label class="label" for="color-vs">Vanu Sovereignty</label>
+          <input type="color" id="color-vs" value="#b84dd5" />
+          <div></div>
+          <div class="button" id="color-reset">Reset</div>
+        </div>
+      </details>
+      <br />
+    </div>
+
+    <footer>
+      <p>
+        &copy; 2022 PS2Map. All rights reserved.
+        <br />
+        PlanetSide 2 is a registered trademark of Daybreak Game Company LLC.
+      </p>
+    </footer>
+  </aside>
 </body>
 
 </html>

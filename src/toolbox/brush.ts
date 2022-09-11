@@ -7,6 +7,9 @@ class Brush extends CanvasTool {
 
     static readonly id = "brush";
     static readonly displayName = "Brush";
+    static readonly help = "Hold LMB and drag on the map to draw. LMB "
+        + "panning is disabled while Brush tool is active, use MMB to drag "
+        + "while drawing. Brush size is relative to your current zoom level.";
     static readonly hotkey = "b";
 
     private _last: Readonly<Point> | null = null;
@@ -50,25 +53,5 @@ class Brush extends CanvasTool {
                 this._last = null;
             }
         }
-    }
-
-    protected _setUpToolPanel(): void {
-        super._setUpToolPanel();
-
-        const frag = document.createDocumentFragment();
-        frag.appendChild(
-            document.createTextNode("Hold LMB to draw, MMB to pan"));
-        frag.appendChild(document.createElement("br"));
-        frag.appendChild(document.createTextNode("Color:"));
-        const picker = document.createElement("input");
-        picker.type = "color";
-        picker.value = "#ffff00";
-        picker.style.margin = "10px";
-        picker.addEventListener("change", () => {
-            Brush.color = picker.value;
-        });
-        frag.appendChild(picker);
-        this._toolPanel.appendChild(frag);
-        this._toolPanel.style.display = "block";
     }
 }

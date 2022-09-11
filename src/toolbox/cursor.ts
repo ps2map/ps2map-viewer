@@ -4,6 +4,7 @@ class Cursor extends Tool {
 
     static readonly id = "cursor";
     static readonly displayName = "Map Cursor";
+    static readonly help = "Displays the current map coordinates.";
     static readonly hotkey = "q";
 
     constructor(
